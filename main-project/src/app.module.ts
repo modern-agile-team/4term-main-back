@@ -5,12 +5,14 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { typeOrmConfig } from './common/configs/typeorm.config';
 import { MeetingsModule } from './meetings/meetings.module';
+import { BoardsModule } from './boards/boards.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync(typeOrmConfig),
     MeetingsModule,
+    BoardsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
