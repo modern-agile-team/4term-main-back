@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { typeOrmConfig } from './common/configs/typeorm.config';
 import { MeetingsModule } from './meetings/meetings.module';
 import { BoardsModule } from './boards/boards.module';
+import { MembersModule } from './members/members.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { BoardsModule } from './boards/boards.module';
     TypeOrmModule.forRootAsync(typeOrmConfig),
     MeetingsModule,
     BoardsModule,
+    MembersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

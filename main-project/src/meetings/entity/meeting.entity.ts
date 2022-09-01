@@ -1,3 +1,5 @@
+import { GuestMembers } from 'src/members/entity/guest-members.entity';
+import { HostMembers } from 'src/members/entity/host-members.entity';
 import {
   BaseEntity,
   Column,
@@ -42,6 +44,12 @@ export class Meeting extends BaseEntity {
   @DeleteDateColumn({ nullable: true })
   deleted_date: Date;
 
-  @OneToOne((type) => MeetingInfo, (meetingInfo) => meetingInfo.meeting)
-  meeting_info: MeetingInfo;
+  @OneToOne((type) => MeetingInfo, (meetingInfo) => meetingInfo.meetingNo)
+  meetingInfo: MeetingInfo;
+
+  @OneToOne((type) => HostMembers, (hostMembers) => hostMembers.meetingNo)
+  hostMembers: MeetingInfo;
+
+  @OneToOne((type) => GuestMembers, (guestMembers) => guestMembers.meetingNo)
+  guestMembers: MeetingInfo;
 }
