@@ -13,8 +13,8 @@ export class HostMembers extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @Column()
-  user_no: number;
+  @Column({ name: 'user_no' })
+  userNo: number;
 
   @OneToOne((type) => Meeting, (meeting) => meeting.meetingHostMembers, {
     nullable: false,
