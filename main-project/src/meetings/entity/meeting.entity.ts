@@ -6,6 +6,7 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -47,9 +48,9 @@ export class Meeting extends BaseEntity {
   @OneToOne((type) => MeetingInfo, (meetingInfo) => meetingInfo.meetingNo)
   meetingInfo: MeetingInfo;
 
-  @OneToOne((type) => HostMembers, (hostMembers) => hostMembers.meetingNo)
-  hostMembers: MeetingInfo;
+  @OneToMany((type) => HostMembers, (hostMembers) => hostMembers.meetingNo)
+  hostMembers: HostMembers[];
 
-  @OneToOne((type) => GuestMembers, (guestMembers) => guestMembers.meetingNo)
-  guestMembers: MeetingInfo;
+  @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.meetingNo)
+  guestMembers: GuestMembers[];
 }
