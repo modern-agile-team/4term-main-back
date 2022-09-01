@@ -4,11 +4,13 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { MeetingInfo } from './meeting-info.entity';
 
-@Entity()
+@Entity('meetings')
 export class Meeting extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
@@ -39,4 +41,7 @@ export class Meeting extends BaseEntity {
 
   @DeleteDateColumn({ nullable: true })
   deleted_date: Date;
+
+  @OneToOne((type) => MeetingInfo, (meetingInfo) => meetingInfo.meeting)
+  meeting_info: MeetingInfo;
 }
