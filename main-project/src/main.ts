@@ -6,8 +6,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const port = process.env.PORT;
 
-  await app.listen(port);
-
-  Logger.debug(`서버 연결 port : ${port}`);
+  await app.listen(3000);
+  Logger.debug(`서버 가동 port : ${port}`);
 }
 bootstrap();
