@@ -14,12 +14,14 @@ export class MeetingInfo extends BaseEntity {
   no: number;
 
   @Column()
-  host_no: number;
+  host: number;
 
   @Column()
-  guest_no: number;
+  guest: number;
 
-  @OneToOne((type) => Meeting, (meeting) => meeting.meeting_info)
+  @OneToOne((type) => Meeting, (meeting) => meeting.meeting_info, {
+    nullable: false,
+  })
   @JoinColumn({ name: 'meeting_no' })
   meeting: Meeting;
 }
