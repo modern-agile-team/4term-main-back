@@ -4,7 +4,7 @@ import {
   Column,
   Entity,
   JoinColumn,
-  OneToOne,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -16,9 +16,7 @@ export class HostMembers extends BaseEntity {
   @Column({ name: 'user_no' })
   userNo: number;
 
-  @OneToOne((type) => Meeting, (meeting) => meeting.hostMembers, {
-    nullable: false,
-  })
+  @ManyToOne((type) => Meeting, (meeting) => meeting.hostMembers)
   @JoinColumn({ name: 'meeting_no' })
   meetingNo: Meeting;
 }
