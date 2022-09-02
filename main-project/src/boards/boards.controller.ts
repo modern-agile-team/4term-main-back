@@ -1,4 +1,4 @@
-import { Body, Controller, Logger, Post } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Post } from '@nestjs/common';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { Board } from './entity/board.entity';
@@ -7,6 +7,12 @@ import { Board } from './entity/board.entity';
 export class BoardsController {
   private logger = new Logger('BoardsController');
   constructor(private boardService: BoardsService) {}
+  @Get()
+  getAllBoards(): Promise<Board[]> {
+    this.logger.debug(`Get all boards.`);
+
+    return this.boardService.getAllBoards();
+  }
 
   @Post()
   //   @UsePipes(ValidationPipe)
