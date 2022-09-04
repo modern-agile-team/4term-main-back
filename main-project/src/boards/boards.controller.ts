@@ -3,8 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpCode,
-  HttpStatus,
   Logger,
   Param,
   ParseIntPipe,
@@ -12,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { Board } from './entity/board.entity';
 
 @Controller('boards')
 export class BoardsController {
@@ -21,32 +18,42 @@ export class BoardsController {
 
   constructor(private boardService: BoardsService) {}
 
-  @HttpCode(200)
   @Get()
-  getAllBoards(): Promise<Board[]> {
-    this.logger.debug(`Get all boards.`);
+  async getAllBoards(): Promise<object> {
+    const boards: object = await this.boardService.getAllBoards();
+    const response = {
+      success: true,
+      boards,
+    };
 
-    return this.boardService.getAllBoards();
-    // 바로 return이 아닌 변수로 빼서 return 필요
+    return response;
   }
 
   @Get('/:boardNo')
-  getBoardByNo(@Param('boardNo') boardNo: number): Promise<Board> {
-    this.logger.debug(`Get board by boardNo.`);
+  async getBoardByNo(@Param('boardNo') boardNo: number): Promise<object> {
+    const board: object = await this.boardService.getBoardByNo(boardNo);
+    const response = {
+      success: true,
+      board,
+    };
 
-    return this.boardService.getBoardByNo(boardNo);
+    return response;
   }
 
   @Post()
-  createBoard(
+  async createBoard(
     @Body()
     createBoarddto: CreateBoardDto,
-  ): Promise<Board> {
-    return this.boardService.createBoard(createBoarddto);
+  ): Promise<object> {
+    await this.boardService.createBoard(createBoarddto);
+
+    return { success: true };
   }
 
   @Delete('/:boardNo')
-  deleteBoard(@Param('boardNo', ParseIntPipe) boardNo): Promise<boolean> {
-    return this.boardService.deleteBoardByNo(boardNo);
+  async deleteBoard(@Param('boardNo', ParseIntPipe) boardNo): Promise<object> {
+    await this.boardService.deleteBoardByNo(boardNo);
+
+    return { success: true };
   }
 }
