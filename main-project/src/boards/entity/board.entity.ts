@@ -14,7 +14,7 @@ export class Board extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   title: string;
 
   @Column({
@@ -22,24 +22,25 @@ export class Board extends BaseEntity {
     width: 1,
     default: false,
     comment: '인원 모집 여부',
+    nullable: false,
   })
   done: boolean;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   location: string;
 
-  @Column({ type: 'date' })
+  @Column({ type: 'date', nullable: true })
   time: Date;
 
-  @CreateDateColumn()
-  created_date: Date;
+  @CreateDateColumn({ nullable: false })
+  createdDate: Date;
 
-  @UpdateDateColumn({ nullable: true })
-  updated_date: Date;
+  @UpdateDateColumn({ nullable: false })
+  updatedDate: Date;
 
   @DeleteDateColumn({ nullable: true })
-  deleted_date: Date;
+  deletedDate: Date;
 }
