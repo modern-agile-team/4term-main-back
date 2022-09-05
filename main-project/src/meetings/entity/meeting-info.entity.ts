@@ -19,9 +19,9 @@ export class MeetingInfo extends BaseEntity {
   @Column()
   guest: number;
 
-  @OneToOne((type) => Meeting, (meeting) => meeting.meeting_info, {
+  @OneToOne((type) => Meeting, (meeting) => meeting.meetingInfo, {
     nullable: false,
   })
   @JoinColumn({ name: 'meeting_no' })
-  meeting: Meeting;
+  meetingNo: Meeting;
 }
