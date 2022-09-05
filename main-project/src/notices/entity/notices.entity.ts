@@ -23,8 +23,10 @@ export class Notices extends BaseEntity {
   @Column({ name: 'read_datetime', nullable: true })
   readDatetime: Date;
 
-  @CreateDateColumn()
-  datetime: Date;
+  @CreateDateColumn({
+    name: 'created_date',
+  })
+  createdDate: Date;
 
   @Column('varchar', { length: 100, nullable: true })
   value: string;
