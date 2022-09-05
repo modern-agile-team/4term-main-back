@@ -4,21 +4,19 @@ import {
   Column,
   Entity,
   JoinColumn,
-  OneToOne,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 @Entity('guest_members')
 export class GuestMembers extends BaseEntity {
   @PrimaryGeneratedColumn()
-  noo: number;
+  no: number;
 
-  @Column()
-  user_no: number;
+  @Column({ name: 'user_no' })
+  userNo: number;
 
-  @OneToOne((type) => Meeting, (meeting) => meeting.meetingGuestMembers, {
-    nullable: false,
-  })
+  @ManyToOne((type) => Meeting, (meeting) => meeting.guestMembers)
   @JoinColumn({ name: 'meeting_no' })
-  meeting: Meeting;
+  meetingNo: Meeting;
 }
