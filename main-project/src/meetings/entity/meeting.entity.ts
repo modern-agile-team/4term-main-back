@@ -39,7 +39,7 @@ export class Meeting extends BaseEntity {
   //   })
   //   updated_date: string;
 
-  @UpdateDateColumn({ nullable: true, name: 'updated_date' })
+  @UpdateDateColumn({ default: null, nullable: true, name: 'updated_date' })
   updatedDate: Date;
 
   @DeleteDateColumn({ nullable: true, name: 'deleted_date' })
