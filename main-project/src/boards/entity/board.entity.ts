@@ -38,12 +38,12 @@ export class Board extends BaseEntity {
   @Column({ type: 'date', nullable: true })
   time: Date;
 
-  @CreateDateColumn()
-  created_date: Date;
+  @CreateDateColumn({ nullable: false })
+  createdDate: Date;
 
-  @UpdateDateColumn()
-  updated_date: Date;
+  @UpdateDateColumn({ nullable: false })
+  updatedDate: Date;
 
   @DeleteDateColumn({ nullable: true })
-  deleted_date: Date;
+  deletedDate: Date;
 }
