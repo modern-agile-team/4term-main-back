@@ -13,7 +13,6 @@ export class BoardRepository extends Repository<Board> {
     const { title, description, done, location, time } = createBoardDto;
 
     const board = this.create({
-      // 이미 repository에 들어왔으니 this는 class를 호출하는 것
       title,
       description,
       done,

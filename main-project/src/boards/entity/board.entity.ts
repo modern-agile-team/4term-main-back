@@ -4,9 +4,12 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { BoardMemberInfo } from './board-member-info.entity';
 
 // fk없음, entity취합 후 생성예정
 @Entity()
