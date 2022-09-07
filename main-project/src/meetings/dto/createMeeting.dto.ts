@@ -1,5 +1,15 @@
+import { IsDate, IsNotEmpty, IsString, IsObject } from 'class-validator';
+
 export class CreateMeetingDto {
-  host: number;
+  @IsNotEmpty()
+  @IsObject()
+  host: object;
+
+  @IsNotEmpty()
+  @IsString()
   location: string;
+
+  @IsNotEmpty()
+  @IsDate()
   time: Date;
 }

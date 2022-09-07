@@ -1,4 +1,4 @@
-import { EntityRepository, Repository } from 'typeorm';
+import { EntityRepository, Repository, UpdateResult } from 'typeorm';
 import { CreateMeetingDto } from '../dto/createMeeting.dto';
 import { Meeting } from '../entity/meeting.entity';
 
@@ -16,6 +16,34 @@ export class MeetingRepository extends Repository<Meeting> {
       return meeting;
     } catch (err) {
       throw err;
+    }
+  }
+
+  async updateMeeting(meetingNo, updatedMeetingInfo): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(Meeting)
+        .set(updatedMeetingInfo)
+        .where('no = :no', { no: meetingNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async acceptMeeting(meetingNo): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(Meeting)
+        .set({ isAccepted: true })
+        .where('no = :no', { no: meetingNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw error;
     }
   }
 }
