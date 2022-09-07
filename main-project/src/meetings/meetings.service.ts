@@ -30,9 +30,10 @@ export class MeetingsService {
     }
   }
 
-  async updateMeeting(updateMeetingDto: UpdateMeetingDto): Promise<void> {
-    const { meetingNo } = updateMeetingDto;
-    delete updateMeetingDto.meetingNo;
+  async updateMeeting(
+    meetingNo,
+    updateMeetingDto: UpdateMeetingDto,
+  ): Promise<void> {
     const affected = await this.meetingRepository.updateMeeting(
       meetingNo,
       updateMeetingDto,
