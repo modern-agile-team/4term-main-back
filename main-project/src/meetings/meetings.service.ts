@@ -11,6 +11,8 @@ export class MeetingsService {
   constructor(
     @InjectRepository(MeetingRepository)
     private readonly meetingRepository: MeetingRepository,
+
+    @InjectRepository(MeetingInfoRepository)
     private readonly meetingInfoRepository: MeetingInfoRepository,
   ) {}
 
@@ -44,9 +46,13 @@ export class MeetingsService {
   }
 
   async acceptMeeting(meetingNo): Promise<void> {
-    const affected = await this.meetingRepository.acceptMeeting(meetingNo);
-    if (!affected) {
-      throw new BadGatewayException(`약속 수락 관련 오류입니다.`);
+    try {
+      const affected = await this.meetingRepository.acceptMeeting(meetingNo);
+      if (!affected) {
+        throw new BadGatewayException(`약속 수락 관련 오류입니다.`);
+      }
+    } catch (error) {
+      throw error;
     }
   }
 }
