@@ -17,7 +17,7 @@ export class UpdateBoardDto {
 
   @IsBoolean()
   @IsNotEmpty()
-  done: boolean;
+  isDone: boolean;
 
   @IsString()
   location: string;

@@ -9,7 +9,7 @@ import {
 import { Board } from './board.entity';
 
 // fk없음, entity취합 후 생성예정
-@Entity()
+@Entity('board_member_infos')
 export class BoardMemberInfo extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
@@ -20,7 +20,7 @@ export class BoardMemberInfo extends BaseEntity {
   @Column({ type: 'int' })
   female: number;
 
-  @OneToOne((type) => Board, (board) => board.no)
-  @JoinColumn()
-  board: Board;
+  @OneToOne((type) => Board, (board) => board.boardMemberaInfo)
+  @JoinColumn({ name: 'board_no' })
+  boardNo: Board;
 }

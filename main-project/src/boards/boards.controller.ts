@@ -7,9 +7,11 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Patch,
 } from '@nestjs/common';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
+import { UpdateBoardDto } from './dto/update-board.dto';
 
 @Controller('boards')
 export class BoardsController {
@@ -46,6 +48,20 @@ export class BoardsController {
     createBoarddto: CreateBoardDto,
   ): Promise<object> {
     const board: object = await this.boardService.createBoard(createBoarddto);
+    const response = { success: true, board };
+
+    return response;
+  }
+
+  @Patch('/:boardNo')
+  async updateBoardStatus(
+    @Param('boardNo', ParseIntPipe) boardNo: number,
+    @Body() updateBoardDto: UpdateBoardDto,
+  ) {
+    const board: object = await this.boardService.updateBoard(
+      boardNo,
+      updateBoardDto,
+    );
     const response = { success: true, board };
 
     return response;

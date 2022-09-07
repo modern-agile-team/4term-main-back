@@ -10,7 +10,7 @@ export class CreateBoardDto {
 
   @IsBoolean()
   @IsNotEmpty()
-  done: boolean;
+  isDone: boolean;
 
   @IsString()
   location: string;
