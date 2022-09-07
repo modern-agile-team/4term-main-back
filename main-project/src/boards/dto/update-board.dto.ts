@@ -23,7 +23,7 @@ export class UpdateBoardDto {
   location: string;
 
   @IsDate()
-  time: Date;
+  meetingTime: Date;
 
   @IsNotEmpty()
   @IsNumber()

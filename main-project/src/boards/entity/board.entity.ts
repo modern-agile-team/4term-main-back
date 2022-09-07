@@ -36,7 +36,7 @@ export class Board extends BaseEntity {
   location: string;
 
   @Column({ type: 'date', nullable: true })
-  time: Date;
+  meetingTime: Date;
 
   @CreateDateColumn({ nullable: false })
   createdDate: Date;

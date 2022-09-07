@@ -12,14 +12,15 @@ export class BoardRepository extends Repository<Board> {
   /**게시글 생성 */
   async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
     try {
-      const { title, description, isDone, location, time } = createBoardDto;
+      const { title, description, isDone, location, meetingTime } =
+        createBoardDto;
 
       const board = this.create({
         title,
         description,
         isDone,
         location,
-        time,
+        meetingTime,
       });
 
       await this.save(board);
@@ -38,13 +39,14 @@ export class BoardRepository extends Repository<Board> {
     updateBoardDto: UpdateBoardDto,
   ): Promise<object> {
     try {
-      const { title, description, isDone, location, time } = updateBoardDto;
+      const { title, description, isDone, location, meetingTime } =
+        updateBoardDto;
 
       dbData.title = title;
       dbData.description = description;
       dbData.isDone = isDone;
       dbData.location = location;
-      dbData.time = time;
+      dbData.meetingTime = meetingTime;
 
       const save = await this.save(dbData);
 

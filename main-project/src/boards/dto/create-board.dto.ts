@@ -16,5 +16,5 @@ export class CreateBoardDto {
   location: string;
 
   @IsDate()
-  time: Date;
+  meetingTime: Date;
 }
