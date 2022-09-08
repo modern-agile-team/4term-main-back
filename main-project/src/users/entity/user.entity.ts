@@ -18,14 +18,14 @@ export class Users extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   email: string;
 
-  @Column({ type: 'tinyint', nullable: true })
-  gender: number;
+  @Column({ nullable: true })
+  gender: boolean;
 
   @Column({ type: 'varchar', length: 45 })
   nickname: string;
 
-  @Column({ type: 'tinyint' })
-  admin: number;
+  @Column()
+  admin: boolean;
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
