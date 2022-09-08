@@ -1,5 +1,12 @@
-import { IsBoolean, IsDate, IsNotEmpty, IsString } from 'class-validator';
-export class CreateBoardDto {
+import {
+  IsBoolean,
+  IsDate,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+} from 'class-validator';
+
+export class UpdateBoardDto {
   @IsNotEmpty()
   @IsString()
   title: string;
@@ -17,4 +24,12 @@ export class CreateBoardDto {
 
   @IsDate()
   meetingTime: Date;
+
+  @IsNotEmpty()
+  @IsNumber()
+  male: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  female: number;
 }

@@ -4,12 +4,15 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { BoardBookmark } from './board-bookmark.entity';
+import { BoardMemberInfo } from './board-member-info.entity';
 
 // fk없음, entity취합 후 생성예정
-@Entity()
+@Entity('boards')
 export class Board extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
@@ -24,7 +27,7 @@ export class Board extends BaseEntity {
     comment: '인원 모집 여부',
     nullable: false,
   })
-  done: boolean;
+  isDone: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
@@ -33,7 +36,7 @@ export class Board extends BaseEntity {
   location: string;
 
   @Column({ type: 'date', nullable: true })
-  time: Date;
+  meetingTime: Date;
 
   @CreateDateColumn({ nullable: false })
   createdDate: Date;
@@ -43,4 +46,13 @@ export class Board extends BaseEntity {
 
   @DeleteDateColumn({ nullable: true })
   deletedDate: Date;
+
+  @OneToOne(
+    (type) => BoardMemberInfo,
+    (boardMemberInfo) => boardMemberInfo.boardNo,
+  )
+  boardMemberaInfo: BoardMemberInfo;
+
+  @OneToOne((type) => BoardBookmark, (boardBookmark) => boardBookmark.boardNo)
+  boardBookmark: BoardBookmark;
 }
