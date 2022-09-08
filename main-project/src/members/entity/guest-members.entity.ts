@@ -1,7 +1,7 @@
 import { Meeting } from 'src/meetings/entity/meeting.entity';
+import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
-  Column,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -13,8 +13,9 @@ export class GuestMembers extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @Column({ name: 'user_no' })
-  userNo: number;
+  @ManyToOne((type) => Users, (user) => user.guestMembers)
+  @JoinColumn({ name: 'user_no' })
+  userNo: Users;
 
   @ManyToOne((type) => Meeting, (meeting) => meeting.guestMembers)
   @JoinColumn({ name: 'meeting_no' })

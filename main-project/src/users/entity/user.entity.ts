@@ -1,8 +1,11 @@
+import { GuestMembers } from 'src/members/entity/guest-members.entity';
+import { HostMembers } from 'src/members/entity/host-members.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -28,4 +31,10 @@ export class Users extends BaseEntity {
 
   @CreateDateColumn({ name: 'deleted_date', nullable: true })
   deletedDate: Date;
+
+  @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.userNo)
+  guestMembers: GuestMembers[];
+
+  @OneToMany((type) => HostMembers, (hostMembers) => hostMembers.userNo)
+  hostMembers: HostMembers[];
 }
