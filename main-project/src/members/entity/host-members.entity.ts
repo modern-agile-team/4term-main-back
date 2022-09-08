@@ -1,7 +1,7 @@
-import { Meeting } from 'src/meetings/entity/meeting.entity';
+import { Meetings } from 'src/meetings/entity/meeting.entity';
+import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
-  Column,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -13,10 +13,11 @@ export class HostMembers extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @Column({ name: 'user_no' })
-  userNo: number;
+  @ManyToOne((type) => Users, (user) => user.hostMembers)
+  @JoinColumn({ name: 'user_no' })
+  userNo: Users;
 
-  @ManyToOne((type) => Meeting, (meeting) => meeting.hostMembers)
+  @ManyToOne((type) => Meetings, (meeting) => meeting.hostMembers)
   @JoinColumn({ name: 'meeting_no' })
-  meetingNo: Meeting;
+  meetingNo: Meetings;
 }

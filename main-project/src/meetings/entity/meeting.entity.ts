@@ -14,7 +14,7 @@ import {
 import { MeetingInfo } from './meeting-info.entity';
 
 @Entity('meetings')
-export class Meeting extends BaseEntity {
+export class Meetings extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
@@ -27,19 +27,10 @@ export class Meeting extends BaseEntity {
   @Column({ type: 'tinyint', width: 1, default: false, name: 'is_accepted' })
   isAccepted: boolean;
 
-  //   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
-  //   created_date: string;
-
   @CreateDateColumn()
   created_date: Date;
 
-  //   @Column({
-  //     type: 'datetime',
-  //     onUpdate: 'CURRENT_TIMESTAMP',
-  //   })
-  //   updated_date: string;
-
-  @UpdateDateColumn({ nullable: true, name: 'updated_date' })
+  @UpdateDateColumn({ default: null, nullable: true, name: 'updated_date' })
   updatedDate: Date;
 
   @DeleteDateColumn({ nullable: true, name: 'deleted_date' })
