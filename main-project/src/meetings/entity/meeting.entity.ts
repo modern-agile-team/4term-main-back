@@ -14,7 +14,7 @@ import {
 import { MeetingInfo } from './meeting-info.entity';
 
 @Entity('meetings')
-export class Meeting extends BaseEntity {
+export class Meetings extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 

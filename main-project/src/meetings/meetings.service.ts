@@ -2,7 +2,7 @@ import { Injectable, BadGatewayException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
-import { Meeting } from './entity/meeting.entity';
+import { Meetings } from './entity/meeting.entity';
 import { MeetingInfoRepository } from './repository/meeting-info.repository';
 import { MeetingRepository } from './repository/meeting.repository';
 
@@ -16,9 +16,9 @@ export class MeetingsService {
     private readonly meetingInfoRepository: MeetingInfoRepository,
   ) {}
 
-  async createMeeting(createMeetingDto: CreateMeetingDto): Promise<Meeting> {
+  async createMeeting(createMeetingDto: CreateMeetingDto): Promise<Meetings> {
     try {
-      const meeting: Meeting = await this.meetingRepository.createMeeting(
+      const meeting: Meetings = await this.meetingRepository.createMeeting(
         createMeetingDto,
       );
       await this.meetingInfoRepository.createMeetingInfo(

@@ -1,4 +1,4 @@
-import { Meeting } from 'src/meetings/entity/meeting.entity';
+import { Meetings } from 'src/meetings/entity/meeting.entity';
 import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
@@ -17,7 +17,7 @@ export class HostMembers extends BaseEntity {
   @JoinColumn({ name: 'user_no' })
   userNo: Users;
 
-  @ManyToOne((type) => Meeting, (meeting) => meeting.hostMembers)
+  @ManyToOne((type) => Meetings, (meeting) => meeting.hostMembers)
   @JoinColumn({ name: 'meeting_no' })
-  meetingNo: Meeting;
+  meetingNo: Meetings;
 }

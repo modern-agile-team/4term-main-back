@@ -11,7 +11,7 @@ import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { MeetingsService } from './meetings.service';
 import { ApiCreatedResponse, ApiOkResponse, ApiBody } from '@nestjs/swagger';
-import { Meeting } from './entity/meeting.entity';
+import { Meetings } from './entity/meeting.entity';
 
 @Controller('meetings')
 export class MeetingsController {
@@ -41,7 +41,7 @@ export class MeetingsController {
   @ApiBody({ type: UpdateMeetingDto })
   @Patch('/:meetingNo')
   async updateMeeting(
-    @Param('meetingNo') meetingNo: Meeting,
+    @Param('meetingNo') meetingNo: Meetings,
     @Body() updateMeetingDto: UpdateMeetingDto,
   ): Promise<object> {
     await this.meetingsService.updateMeeting(meetingNo, updateMeetingDto);

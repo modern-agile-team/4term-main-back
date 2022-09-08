@@ -1,3 +1,4 @@
+import { MeetingInfo } from 'src/meetings/entity/meeting-info.entity';
 import { GuestMembers } from 'src/members/entity/guest-members.entity';
 import { HostMembers } from 'src/members/entity/host-members.entity';
 import {
@@ -37,4 +38,10 @@ export class Users extends BaseEntity {
 
   @OneToMany((type) => HostMembers, (hostMembers) => hostMembers.userNo)
   hostMembers: HostMembers[];
+
+  @OneToMany((type) => MeetingInfo, (meetingInfo) => meetingInfo.guest)
+  meetingGuest: MeetingInfo[];
+
+  @OneToMany((type) => MeetingInfo, (meetingInfo) => meetingInfo.host)
+  meetingHost: MeetingInfo[];
 }

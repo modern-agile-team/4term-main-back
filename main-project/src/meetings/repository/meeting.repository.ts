@@ -1,10 +1,10 @@
 import { EntityRepository, Repository, UpdateResult } from 'typeorm';
 import { CreateMeetingDto } from '../dto/createMeeting.dto';
-import { Meeting } from '../entity/meeting.entity';
+import { Meetings } from '../entity/meeting.entity';
 
-@EntityRepository(Meeting)
-export class MeetingRepository extends Repository<Meeting> {
-  async createMeeting(createMeetingDto: CreateMeetingDto): Promise<Meeting> {
+@EntityRepository(Meetings)
+export class MeetingRepository extends Repository<Meetings> {
+  async createMeeting(createMeetingDto: CreateMeetingDto): Promise<Meetings> {
     try {
       const { location, time } = createMeetingDto;
       const meeting = this.create({
@@ -22,7 +22,7 @@ export class MeetingRepository extends Repository<Meeting> {
   async updateMeeting(meetingNo, updatedMeetingInfo): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
-        .update(Meeting)
+        .update(Meetings)
         .set(updatedMeetingInfo)
         .where('no = :no', { no: meetingNo })
         .execute();
@@ -36,7 +36,7 @@ export class MeetingRepository extends Repository<Meeting> {
   async acceptMeeting(meetingNo): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
-        .update(Meeting)
+        .update(Meetings)
         .set({ isAccepted: true })
         .where('no = :no', { no: meetingNo })
         .execute();

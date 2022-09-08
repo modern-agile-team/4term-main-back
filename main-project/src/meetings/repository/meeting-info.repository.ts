@@ -1,12 +1,13 @@
+import { Users } from 'src/users/entity/user.entity';
 import { EntityRepository, Repository } from 'typeorm';
 import { MeetingInfo } from '../entity/meeting-info.entity';
-import { Meeting } from '../entity/meeting.entity';
+import { Meetings } from '../entity/meeting.entity';
 
 @EntityRepository(MeetingInfo)
 export class MeetingInfoRepository extends Repository<MeetingInfo> {
   async createMeetingInfo(
-    host: number,
-    meetingNo: Meeting,
+    host: Users,
+    meetingNo: Meetings,
   ): Promise<MeetingInfo> {
     try {
       const meetingInfo = this.create({
@@ -14,7 +15,6 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
         host,
       });
       await this.save(meetingInfo);
-
       return meetingInfo;
     } catch (error) {
       throw error;
