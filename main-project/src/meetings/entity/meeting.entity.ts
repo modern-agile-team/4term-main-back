@@ -1,15 +1,21 @@
+import { Boards } from 'src/boards/entity/board.entity';
+import { GuestMembers } from 'src/members/entity/guest-members.entity';
+import { HostMembers } from 'src/members/entity/host-members.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { MeetingInfo } from './meeting-info.entity';
 
-@Entity()
-export class Meeting extends BaseEntity {
+@Entity('meetings')
+export class Meetings extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
@@ -19,24 +25,27 @@ export class Meeting extends BaseEntity {
   @Column({ type: 'datetime' })
   time: Date;
 
-  @Column({ type: 'tinyint', width: 1, default: false })
-  is_accepted: boolean;
-
-  //   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
-  //   created_date: string;
+  @Column({ type: 'tinyint', width: 1, default: false, name: 'is_accepted' })
+  isAccepted: boolean;
 
   @CreateDateColumn()
   created_date: Date;
 
-  //   @Column({
-  //     type: 'datetime',
-  //     onUpdate: 'CURRENT_TIMESTAMP',
-  //   })
-  //   updated_date: string;
+  @UpdateDateColumn({ default: null, nullable: true, name: 'updated_date' })
+  updatedDate: Date;
 
-  @UpdateDateColumn({ nullable: true })
-  updated_date: Date;
+  @DeleteDateColumn({ nullable: true, name: 'deleted_date' })
+  deletedDate: Date;
 
-  @DeleteDateColumn({ nullable: true })
-  deleted_date: Date;
+  @OneToOne((type) => MeetingInfo, (meetingInfo) => meetingInfo.meetingNo)
+  meetingInfo: MeetingInfo;
+
+  @OneToMany((type) => HostMembers, (hostMembers) => hostMembers.meetingNo)
+  hostMembers: HostMembers[];
+
+  @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.meetingNo)
+  guestMembers: GuestMembers[];
+
+  @OneToOne((type) => Boards, (board) => board.meetingNo)
+  board: Boards;
 }
