@@ -18,7 +18,7 @@ export class Users extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   email: string;
 
-  @Column({ nullable: true })
+  @Column()
   gender: boolean;
 
   @Column({ type: 'varchar', length: 45 })
