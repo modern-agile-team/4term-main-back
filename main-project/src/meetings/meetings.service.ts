@@ -41,10 +41,7 @@ export class MeetingsService {
         throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
       }
 
-      const meeting: Meetings = await this.meetingRepository.findMeetingById(
-        insertId,
-      );
-
+      const meeting: Meetings = await this.findMeetingById(insertId);
       const createMeetingInfoResult: number =
         await this.meetingInfoRepository.createMeetingInfo(host[0], meeting);
       if (!createMeetingInfoResult) {
@@ -75,14 +72,7 @@ export class MeetingsService {
     updateMeetingDto: UpdateMeetingDto,
   ): Promise<void> {
     try {
-      const meeting: Meetings = await this.meetingRepository.findMeetingById(
-        meetingNo,
-      );
-      if (!meeting) {
-        throw new NotFoundException(
-          `meetingNo가 ${meetingNo}인 약속을 찾지 못했습니다.`,
-        );
-      }
+      const meeting: Meetings = await this.findMeetingById(meetingNo);
 
       const affected: number = await this.meetingRepository.updateMeeting(
         meeting,
@@ -96,14 +86,29 @@ export class MeetingsService {
     }
   }
 
-  async acceptMeeting(meetingNo): Promise<void> {
+  async acceptMeeting(meetingNo: number): Promise<void> {
     try {
-      const affected = await this.meetingRepository.acceptMeeting(meetingNo);
+      const meeting: Meetings = await this.findMeetingById(meetingNo);
+      const affected: number = await this.meetingRepository.acceptMeeting(
+        meeting,
+      );
       if (!affected) {
         throw new InternalServerErrorException(`약속 수락 관련 오류입니다.`);
       }
     } catch (error) {
       throw error;
     }
+  }
+
+  async findMeetingById(meetingNo: number): Promise<Meetings> {
+    const meeting: Meetings = await this.meetingRepository.findMeetingById(
+      meetingNo,
+    );
+    if (!meeting) {
+      throw new NotFoundException(
+        `meetingNo가 ${meetingNo}인 약속을 찾지 못했습니다.`,
+      );
+    }
+    return meeting;
   }
 }

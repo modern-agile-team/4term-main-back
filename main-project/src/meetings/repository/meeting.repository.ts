@@ -42,14 +42,14 @@ export class MeetingRepository extends Repository<Meetings> {
   }
 
   async updateMeeting(
-    meetingNo: Meetings,
+    meeting: Meetings,
     updatedMeetingInfo: UpdateMeetingDto,
   ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Meetings)
         .set(updatedMeetingInfo)
-        .where('no = :no', { no: meetingNo })
+        .where('no = :no', { no: meeting.no })
         .execute();
 
       return affected;
@@ -60,17 +60,19 @@ export class MeetingRepository extends Repository<Meetings> {
     }
   }
 
-  async acceptMeeting(meetingNo): Promise<number> {
+  async acceptMeeting(meeting: Meetings): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Meetings)
         .set({ isAccepted: true })
-        .where('no = :no', { no: meetingNo })
+        .where('no = :no', { no: meeting.no })
         .execute();
 
       return affected;
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 수락 에러(acceptMeeting): 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 }
