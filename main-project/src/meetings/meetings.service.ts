@@ -1,6 +1,9 @@
-import { Injectable, BadGatewayException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { GuestMembersRepository } from 'src/members/repository/guest-members.repository';
 import { HostMembersRepository } from 'src/members/repository/host-members.repository';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
@@ -22,38 +25,43 @@ export class MeetingsService {
     @InjectRepository(MeetingInfoRepository)
     private readonly meetingInfoRepository: MeetingInfoRepository,
 
-    @InjectRepository(GuestMembersRepository)
-    private readonly guestMembersRepository: GuestMembersRepository,
-
     @InjectRepository(HostMembersRepository)
     private readonly hosttMembersRepository: HostMembersRepository,
   ) {}
 
   async createMeeting(createMeetingDto: CreateMeetingDto): Promise<Meetings> {
     try {
-      const { location, time, host } = createMeetingDto;
-      const { affectedRows, insertId } =
+      const { location, time, host }: CreateMeetingDto = createMeetingDto;
+      const { affectedRows, insertId }: meetingResponseInfo =
         await this.meetingRepository.createMeeting({
           location,
           time,
         });
       if (!affectedRows) {
-        throw new BadGatewayException(`meeting 생성 오류입니다.`);
+        throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
       }
-      const meeting = await this.meetingRepository.findMeetingById(insertId);
-      const createInfoResult =
+
+      const meeting: Meetings = await this.meetingRepository.findMeetingById(
+        insertId,
+      );
+
+      const createMeetingInfoResult: number =
         await this.meetingInfoRepository.createMeetingInfo(host[0], meeting);
-      if (!createInfoResult) {
-        throw new BadGatewayException(`meeting 생성 오류입니다.`);
+      if (!createMeetingInfoResult) {
+        throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
       }
-      const hostsInfo = host.reduce((values, userNo) => {
+
+      const hostsInfo: object[] = host.reduce((values, userNo) => {
         values.push({ meetingNo: meeting.no, userNo });
         return values;
       }, []);
-      const addHostInfoResult =
+
+      const addHostsResult: number =
         await this.hosttMembersRepository.addHostMembers(hostsInfo);
-      if (addHostInfoResult !== host.length) {
-        throw new BadGatewayException(`약속 host 데이터 추가 오류입니다`);
+      if (addHostsResult !== host.length) {
+        throw new InternalServerErrorException(
+          `약속 host 데이터 추가 오류입니다`,
+        );
       }
 
       return meeting;
@@ -63,15 +71,28 @@ export class MeetingsService {
   }
 
   async updateMeeting(
-    meetingNo,
+    meetingNo: number,
     updateMeetingDto: UpdateMeetingDto,
   ): Promise<void> {
-    const affected = await this.meetingRepository.updateMeeting(
-      meetingNo,
-      updateMeetingDto,
-    );
-    if (!affected) {
-      throw new BadGatewayException(`약속 수정 관련 오류입니다.`);
+    try {
+      const meeting: Meetings = await this.meetingRepository.findMeetingById(
+        meetingNo,
+      );
+      if (!meeting) {
+        throw new NotFoundException(
+          `meetingNo가 ${meetingNo}인 약속을 찾지 못했습니다.`,
+        );
+      }
+
+      const affected: number = await this.meetingRepository.updateMeeting(
+        meeting,
+        updateMeetingDto,
+      );
+      if (!affected) {
+        throw new InternalServerErrorException(`약속 수정 관련 오류입니다.`);
+      }
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -79,7 +100,7 @@ export class MeetingsService {
     try {
       const affected = await this.meetingRepository.acceptMeeting(meetingNo);
       if (!affected) {
-        throw new BadGatewayException(`약속 수락 관련 오류입니다.`);
+        throw new InternalServerErrorException(`약속 수락 관련 오류입니다.`);
       }
     } catch (error) {
       throw error;
