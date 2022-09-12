@@ -5,7 +5,7 @@ import { Meetings } from '../entity/meeting.entity';
 
 @EntityRepository(MeetingInfo)
 export class MeetingInfoRepository extends Repository<MeetingInfo> {
-  async createMeetingInfo(host: Users, meetingNo: Meetings): Promise<number> {
+  async createMeetingInfo(host: Users, meeting: Meetings): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
         'meeting_info',
@@ -13,7 +13,7 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
         .insert()
         .into(MeetingInfo)
         .values({
-          meetingNo,
+          meetingNo: meeting,
           host,
         })
         .execute();

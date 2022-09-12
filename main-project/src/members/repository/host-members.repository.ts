@@ -4,7 +4,7 @@ import { InternalServerErrorException } from '@nestjs/common';
 
 @EntityRepository(HostMembers)
 export class HostMembersRepository extends Repository<HostMembers> {
-  async addHostMembers(hostsInfo: object[]): Promise<number> {
+  async saveHostMembers(hostsInfo: object[]): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
         'host_members',

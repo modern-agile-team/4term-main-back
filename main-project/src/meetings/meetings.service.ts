@@ -5,16 +5,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { HostMembersRepository } from 'src/members/repository/host-members.repository';
+import { Users } from 'src/users/entity/user.entity';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { Meetings } from './entity/meeting.entity';
+import { MeetingDetail, MeetingResponse } from './interface/meeting.interface';
 import { MeetingInfoRepository } from './repository/meeting-info.repository';
 import { MeetingRepository } from './repository/meeting.repository';
-
-export interface meetingResponseInfo {
-  affectedRows: number;
-  insertId?: number;
-}
 
 @Injectable()
 export class MeetingsService {
@@ -29,37 +26,51 @@ export class MeetingsService {
     private readonly hosttMembersRepository: HostMembersRepository,
   ) {}
 
+  private async setMeetingDetail(
+    meetingDetail: MeetingDetail,
+  ): Promise<Meetings> {
+    const { affectedRows, insertId }: MeetingResponse =
+      await this.meetingRepository.createMeeting(meetingDetail);
+    if (!affectedRows) {
+      throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
+    }
+    const meeting: Meetings = await this.findMeetingById(insertId);
+
+    return meeting;
+  }
+
+  private async setMeetingInfo(host: Users, meeting: Meetings): Promise<void> {
+    const setMeetingInfoResult: number =
+      await this.meetingInfoRepository.createMeetingInfo(host, meeting);
+    if (!setMeetingInfoResult) {
+      throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
+    }
+  }
+
+  private async setHostMembers(
+    host: Users[],
+    meetingNo: number,
+  ): Promise<void> {
+    const hostsInfo: object[] = host.reduce((values, userNo) => {
+      values.push({ meetingNo, userNo });
+      return values;
+    }, []);
+
+    const saveHostsResult: number =
+      await this.hosttMembersRepository.saveHostMembers(hostsInfo);
+    if (saveHostsResult !== host.length) {
+      throw new InternalServerErrorException(
+        `약속 host 데이터 추가 오류입니다`,
+      );
+    }
+  }
+
   async createMeeting(createMeetingDto: CreateMeetingDto): Promise<Meetings> {
     try {
       const { location, time, host }: CreateMeetingDto = createMeetingDto;
-      const { affectedRows, insertId }: meetingResponseInfo =
-        await this.meetingRepository.createMeeting({
-          location,
-          time,
-        });
-      if (!affectedRows) {
-        throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
-      }
-
-      const meeting: Meetings = await this.findMeetingById(insertId);
-      const createMeetingInfoResult: number =
-        await this.meetingInfoRepository.createMeetingInfo(host[0], meeting);
-      if (!createMeetingInfoResult) {
-        throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
-      }
-
-      const hostsInfo: object[] = host.reduce((values, userNo) => {
-        values.push({ meetingNo: meeting.no, userNo });
-        return values;
-      }, []);
-
-      const addHostsResult: number =
-        await this.hosttMembersRepository.addHostMembers(hostsInfo);
-      if (addHostsResult !== host.length) {
-        throw new InternalServerErrorException(
-          `약속 host 데이터 추가 오류입니다`,
-        );
-      }
+      const meeting: Meetings = await this.setMeetingDetail({ location, time });
+      await this.setMeetingInfo(host[0], meeting);
+      await this.setHostMembers(host, meeting.no);
 
       return meeting;
     } catch (err) {
