@@ -1,5 +1,6 @@
 import { IsDate, IsNotEmpty, IsString, IsObject } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Users } from 'src/users/entity/user.entity';
 
 export class CreateMeetingDto {
   @IsNotEmpty()
@@ -9,7 +10,7 @@ export class CreateMeetingDto {
     description: '약속 주최자 측 정보, 배열 0번지가 게시물 작성자',
     required: true,
   })
-  host;
+  host: Users[];
 
   @IsNotEmpty()
   @IsString()
