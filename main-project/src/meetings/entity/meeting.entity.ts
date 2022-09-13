@@ -1,3 +1,4 @@
+import { Boards } from 'src/boards/entity/board.entity';
 import { GuestMembers } from 'src/members/entity/guest-members.entity';
 import { HostMembers } from 'src/members/entity/host-members.entity';
 import {
@@ -44,4 +45,7 @@ export class Meetings extends BaseEntity {
 
   @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.meetingNo)
   guestMembers: GuestMembers[];
+
+  @OneToOne((type) => Boards, (board) => board.meetingNo)
+  board: Boards;
 }
