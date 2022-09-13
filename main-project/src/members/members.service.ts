@@ -12,18 +12,4 @@ export class MembersService {
     @InjectRepository(HostMembersRepository)
     private readonly hostMembersRepository: HostMembersRepository,
   ) {}
-
-  async addGuestMembers(meetingNo, host) {
-    const raw = await this.guestMembersRepository.addGuestMembers(
-      meetingNo,
-      host,
-    );
-  }
-
-  async addHostMembers(meetingNo, host) {
-    const raw = await this.hostMembersRepository.addHostMembers(
-      meetingNo,
-      host,
-    );
-  }
 }
