@@ -6,11 +6,10 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Board } from './board.entity';
+import { Boards } from './board.entity';
 
-// fk없음, entity취합 후 생성예정
 @Entity('board_member_infos')
-export class BoardMemberInfo extends BaseEntity {
+export class BoardMemberInfos extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
@@ -20,7 +19,7 @@ export class BoardMemberInfo extends BaseEntity {
   @Column({ type: 'int' })
   female: number;
 
-  @OneToOne((type) => Board, (board) => board.boardMemberaInfo)
+  @OneToOne((type) => Boards, (board) => board.boardMemberInfo)
   @JoinColumn({ name: 'board_no' })
-  boardNo: Board;
+  boardNo: Boards;
 }

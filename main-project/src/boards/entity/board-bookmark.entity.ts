@@ -1,19 +1,24 @@
+import { Users } from 'src/users/entity/user.entity';
+import { Boards } from './board.entity';
 import {
   BaseEntity,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Board } from './board.entity';
 
-// fk없음, entity취합 후 생성예정
 @Entity('board_bookmarks')
-export class BoardBookmark extends BaseEntity {
+export class BoardBookmarks extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @OneToOne((type) => Board, (board) => board.boardBookmark)
+  @OneToOne((type) => Boards, (board) => board.boardBookmark)
   @JoinColumn({ name: 'board_no' })
-  boardNo: Board;
+  boardNo: Boards;
+
+  @ManyToOne((type) => Users, (user) => user.boardBookmark)
+  @JoinColumn({ name: 'user_no' })
+  userNo: Users;
 }

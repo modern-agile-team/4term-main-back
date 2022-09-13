@@ -15,13 +15,12 @@ import { Meetings } from './entity/meeting.entity';
 
 @Controller('meetings')
 export class MeetingsController {
-  constructor(private meetingsService: MeetingsService) {}
+  constructor(private readonly meetingsService: MeetingsService) {}
 
   @HttpCode(HttpStatus.CREATED)
   @ApiCreatedResponse({
     description: '새로운 약속 생성',
   })
-  @ApiBody({ type: CreateMeetingDto })
   @Post()
   async createMeeting(
     @Body() createMeetingDto: CreateMeetingDto,
@@ -38,10 +37,9 @@ export class MeetingsController {
   @ApiOkResponse({
     description: '약속 장소/시간 수정',
   })
-  @ApiBody({ type: UpdateMeetingDto })
   @Patch('/:meetingNo')
   async updateMeeting(
-    @Param('meetingNo') meetingNo: Meetings,
+    @Param('meetingNo') meetingNo: number,
     @Body() updateMeetingDto: UpdateMeetingDto,
   ): Promise<object> {
     await this.meetingsService.updateMeeting(meetingNo, updateMeetingDto);
