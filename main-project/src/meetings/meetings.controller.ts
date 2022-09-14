@@ -9,8 +9,9 @@ import {
 } from '@nestjs/common';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
+import { SetGuestMembersDto } from 'src/members/dto/setGuestMembers.dto';
 import { MeetingsService } from './meetings.service';
-import { ApiCreatedResponse, ApiOkResponse, ApiBody } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 
 @Controller('meetings')
 export class MeetingsController {
@@ -55,5 +56,14 @@ export class MeetingsController {
     await this.meetingsService.acceptMeeting(meetingNo);
 
     return { success: true, msg: `약속이 수락되었습니다` };
+  }
+
+  @Post('/guest')
+  async setGuestMembers(
+    @Body() setGuestMembersDto: SetGuestMembersDto,
+  ): Promise<object> {
+    await this.meetingsService.setGuestMembers(setGuestMembersDto);
+
+    return { success: true, msg: `게스트가 추가되었습니다` };
   }
 }

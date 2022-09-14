@@ -4,6 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { SetGuestMembersDto } from 'src/members/dto/setGuestMembers.dto';
+import { GuestMembersRepository } from 'src/members/repository/guest-members.repository';
 import { HostMembersRepository } from 'src/members/repository/host-members.repository';
 import { Users } from 'src/users/entity/user.entity';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
@@ -23,7 +25,10 @@ export class MeetingsService {
     private readonly meetingInfoRepository: MeetingInfoRepository,
 
     @InjectRepository(HostMembersRepository)
-    private readonly hosttMembersRepository: HostMembersRepository,
+    private readonly hostMembersRepository: HostMembersRepository,
+
+    @InjectRepository(GuestMembersRepository)
+    private readonly guestMembersRepository: GuestMembersRepository,
   ) {}
 
   private async setMeetingDetail(
@@ -57,7 +62,7 @@ export class MeetingsService {
     }, []);
 
     const saveHostsResult: number =
-      await this.hosttMembersRepository.saveHostMembers(hostsInfo);
+      await this.hostMembersRepository.saveHostMembers(hostsInfo);
     if (saveHostsResult !== host.length) {
       throw new InternalServerErrorException(
         `약속 host 데이터 추가 오류입니다`,
@@ -121,5 +126,32 @@ export class MeetingsService {
       );
     }
     return meeting;
+  }
+
+  async setGuestMembers(setGuestMembersDto: SetGuestMembersDto): Promise<void> {
+    const { meetingNo, guest }: SetGuestMembersDto = setGuestMembersDto;
+
+    const meeting: Meetings = await this.findMeetingById(meetingNo);
+    const affected: number = await this.meetingInfoRepository.saveMeetingGuest(
+      guest[0],
+      meeting,
+    );
+    if (!affected) {
+      throw new InternalServerErrorException(
+        `약속 guest 데이터 추가 오류입니다`,
+      );
+    }
+
+    const guestsInfo: object[] = guest.reduce((values, userNo) => {
+      values.push({ meetingNo, userNo });
+      return values;
+    }, []);
+    const setGuestResult: number =
+      await this.guestMembersRepository.saveGuestMembers(guestsInfo);
+    if (setGuestResult !== guest.length) {
+      throw new InternalServerErrorException(
+        `약속 guest 데이터 추가 오류입니다`,
+      );
+    }
   }
 }

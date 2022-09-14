@@ -9,7 +9,7 @@ import { HostMembersRepository } from './repository/host-members.repository';
   imports: [
     TypeOrmModule.forFeature([HostMembersRepository, GuestMembersRepository]),
   ],
-  providers: [MembersService, HostMembersRepository],
+  providers: [MembersService, HostMembersRepository, GuestMembersRepository],
   controllers: [MembersController],
 })
 export class MembersModule {}
