@@ -1,19 +1,24 @@
-import { EntityRepository, Repository } from 'typeorm';
+import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { HostMembers } from '../entity/host-members.entity';
+import { InternalServerErrorException } from '@nestjs/common';
 
 @EntityRepository(HostMembers)
 export class HostMembersRepository extends Repository<HostMembers> {
-  async addHostMembers(meetingNo, host) {
-    const hostMember = await this.createQueryBuilder('host_members')
-      .insert()
-      .into(HostMembers)
-      .values(
-        host.reduce((values, userNo) => {
-          values.push({ meetingNo, userNo });
-        }, []),
+  async saveHostMembers(hostsInfo: object[]): Promise<number> {
+    try {
+      const { raw }: InsertResult = await this.createQueryBuilder(
+        'host_members',
       )
-      .execute();
+        .insert()
+        .into(HostMembers)
+        .values(hostsInfo)
+        .execute();
 
-    return hostMember.raw;
+      return raw.affectedRows;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} addHostMembers: 알 수 없는 서버 에러입니다.`,
+      );
+    }
   }
 }
