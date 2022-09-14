@@ -128,9 +128,10 @@ export class MeetingsService {
     return meeting;
   }
 
-  async setGuestMembers(setGuestMembersDto: SetGuestMembersDto): Promise<void> {
-    const { meetingNo, guest }: SetGuestMembersDto = setGuestMembersDto;
-
+  async setGuestMembers({
+    meetingNo,
+    guest,
+  }: SetGuestMembersDto): Promise<void> {
     const meeting: Meetings = await this.findMeetingById(meetingNo);
     const affected: number = await this.meetingInfoRepository.saveMeetingGuest(
       guest[0],
