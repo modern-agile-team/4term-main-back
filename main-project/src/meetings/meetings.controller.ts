@@ -11,7 +11,6 @@ import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { MeetingsService } from './meetings.service';
 import { ApiCreatedResponse, ApiOkResponse, ApiBody } from '@nestjs/swagger';
-import { Meetings } from './entity/meeting.entity';
 
 @Controller('meetings')
 export class MeetingsController {
