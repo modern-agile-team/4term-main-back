@@ -6,12 +6,14 @@ import {
   HttpCode,
   HttpStatus,
   Patch,
+  Delete,
 } from '@nestjs/common';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { MeetingsService } from './meetings.service';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
 import { Users } from 'src/users/entity/user.entity';
+import { DeleteGeustDto } from 'src/members/dto/deleteGuest.dto';
 
 @Controller('meetings')
 export class MeetingsController {
@@ -66,5 +68,15 @@ export class MeetingsController {
     await this.meetingsService.setGuestMembers({ meetingNo, guest });
 
     return { success: true, msg: `게스트가 추가되었습니다` };
+  }
+
+  @Delete('/guest/:meetingNo/:userNo') //후에 토큰에서 userNo 받아오도록 수정
+  async deleteGuest(
+    @Param('meetingNo') meetingNo: number,
+    @Param('userNo') userNo: number,
+    @Body('adminGuest') adminGuest: number,
+  ) {
+    const deleteGuestDto: DeleteGeustDto = { meetingNo, userNo, adminGuest };
+    await this.meetingsService.deleteGuest(deleteGuestDto);
   }
 }

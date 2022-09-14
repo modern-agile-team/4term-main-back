@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { DeleteGeustDto } from 'src/members/dto/deleteGuest.dto';
 import { SetGuestMembersDto } from 'src/members/dto/setGuestMembers.dto';
 import { GuestMembersRepository } from 'src/members/repository/guest-members.repository';
 import { HostMembersRepository } from 'src/members/repository/host-members.repository';
@@ -155,4 +156,6 @@ export class MeetingsService {
       );
     }
   }
+
+  async deleteGuest(deleteGuestDto: DeleteGeustDto) {}
 }
