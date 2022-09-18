@@ -1,6 +1,7 @@
 import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
+  Column,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -13,6 +14,12 @@ import { Meetings } from './meeting.entity';
 export class MeetingInfo extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
+
+  @Column('int', { name: 'guest_headcount', default: 0 })
+  guestHeadcount: number;
+
+  @Column('int', { name: 'host_headcount', default: 0 })
+  hostHeadcount: number;
 
   @ManyToOne((type) => Users, (user) => user.meetingGuest)
   guest: Users;

@@ -10,17 +10,16 @@ import { Meetings } from '../entity/meeting.entity';
 
 @EntityRepository(MeetingInfo)
 export class MeetingInfoRepository extends Repository<MeetingInfo> {
-  async createMeetingInfo(host: Users, meeting: Meetings): Promise<number> {
+  async createMeetingInfo(meetingInfo): Promise<number> {
     try {
+      meetingInfo.meetingNo = meetingInfo.meeting;
+      delete meetingInfo.meeting;
       const { raw }: InsertResult = await this.createQueryBuilder(
         'meeting_info',
       )
         .insert()
         .into(MeetingInfo)
-        .values({
-          meetingNo: meeting,
-          host,
-        })
+        .values(meetingInfo)
         .execute();
 
       return raw.affectedRows;

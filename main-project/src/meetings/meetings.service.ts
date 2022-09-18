@@ -12,7 +12,11 @@ import { Users } from 'src/users/entity/user.entity';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { Meetings } from './entity/meeting.entity';
-import { MeetingDetail, MeetingResponse } from './interface/meeting.interface';
+import {
+  MeetingDetail,
+  MeetingMemberDetail,
+  MeetingResponse,
+} from './interface/meeting.interface';
 import { MeetingInfoRepository } from './repository/meeting-info.repository';
 import { MeetingRepository } from './repository/meeting.repository';
 
@@ -45,9 +49,11 @@ export class MeetingsService {
     return meeting;
   }
 
-  private async setMeetingInfo(host: Users, meeting: Meetings): Promise<void> {
+  private async setMeetingInfo(
+    meetingInfo: MeetingMemberDetail,
+  ): Promise<void> {
     const setMeetingInfoResult: number =
-      await this.meetingInfoRepository.createMeetingInfo(host, meeting);
+      await this.meetingInfoRepository.createMeetingInfo(meetingInfo);
     if (!setMeetingInfoResult) {
       throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
     }
@@ -73,9 +79,17 @@ export class MeetingsService {
 
   async createMeeting(createMeetingDto: CreateMeetingDto): Promise<Meetings> {
     try {
-      const { location, time, host }: CreateMeetingDto = createMeetingDto;
+      const { location, time, host, guestHeadcount }: CreateMeetingDto =
+        createMeetingDto;
       const meeting: Meetings = await this.setMeetingDetail({ location, time });
-      await this.setMeetingInfo(host[0], meeting);
+
+      const meetingInfo: MeetingMemberDetail = {
+        host: host[0],
+        meeting,
+        guestHeadcount,
+        hostHeadcount: host.length,
+      };
+      await this.setMeetingInfo(meetingInfo);
       await this.setHostMembers(host, meeting.no);
 
       return meeting;

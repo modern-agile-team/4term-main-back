@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsObject } from 'class-validator';
+import { IsNotEmpty, IsString, IsObject, IsInt } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Users } from 'src/users/entity/user.entity';
 
@@ -27,4 +27,13 @@ export class CreateMeetingDto {
     required: true,
   })
   time: Date;
+
+  @IsNotEmpty()
+  @IsInt()
+  @ApiProperty({
+    example: 3,
+    description: '원하는 게스트 인원',
+    required: true,
+  })
+  guestHeadcount: number;
 }
