@@ -22,10 +22,12 @@ export class MeetingInfo extends BaseEntity {
   hostHeadcount: number;
 
   @ManyToOne((type) => Users, (user) => user.meetingGuest)
-  guest: Users;
+  @JoinColumn({ name: 'guest' })
+  guest: Users | number;
 
   @ManyToOne((type) => Users, (user) => user.meetingHost)
-  host: Users;
+  @JoinColumn({ name: 'host' })
+  host: Users | number;
 
   @OneToOne((type) => Meetings, (meeting) => meeting.meetingInfo, {
     nullable: false,

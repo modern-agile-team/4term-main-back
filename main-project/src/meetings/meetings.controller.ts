@@ -12,7 +12,6 @@ import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { MeetingsService } from './meetings.service';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
-import { Users } from 'src/users/entity/user.entity';
 import { DeleteGeustDto } from 'src/members/dto/deleteGuest.dto';
 
 @Controller('meetings')
@@ -60,12 +59,12 @@ export class MeetingsController {
     return { success: true, msg: `약속이 수락되었습니다` };
   }
 
-  @Post('/guest/initial/:meetingNo')
+  @Post('/guest/apply/:meetingNo')
   async setGuestMembers(
     @Param('meetingNo') meetingNo: number,
-    @Body('guest') guest: Users[],
+    @Body('guest') guest: number[],
   ): Promise<object> {
-    await this.meetingsService.setGuestMembers({ meetingNo, guest });
+    await this.meetingsService.applyForMeeting({ meetingNo, guest });
 
     return { success: true, msg: `게스트가 추가되었습니다` };
   }

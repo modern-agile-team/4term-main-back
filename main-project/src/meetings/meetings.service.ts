@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -6,11 +7,13 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteGeustDto } from 'src/members/dto/deleteGuest.dto';
 import { SetGuestMembersDto } from 'src/members/dto/setGuestMembers.dto';
+import { UserNo } from 'src/members/interface/member.interface';
 import { GuestMembersRepository } from 'src/members/repository/guest-members.repository';
 import { HostMembersRepository } from 'src/members/repository/host-members.repository';
 import { Users } from 'src/users/entity/user.entity';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
+import { MeetingInfo } from './entity/meeting-info.entity';
 import { Meetings } from './entity/meeting.entity';
 import {
   MeetingDetail,
@@ -77,6 +80,38 @@ export class MeetingsService {
     }
   }
 
+  private async checkNewGuestConflict(
+    guest: number[],
+    meetingNo: number,
+  ): Promise<void> {
+    const host: UserNo[] = await this.hostMembersRepository.getHostByMeetingNo(
+      meetingNo,
+    );
+    host.forEach((host) => {
+      if (guest.includes(host.no)) {
+        throw new BadRequestException(`이미 약속에 참여 중인 유저입니다.`);
+      }
+    });
+  }
+
+  private async checkGuestApplyAvailable(
+    guestHeadcount: number,
+    meetingNo: number,
+  ): Promise<void> {
+    const meetingInfo: MeetingInfo =
+      await this.meetingInfoRepository.getMeetingInfoById(meetingNo);
+    console.log(meetingInfo);
+
+    if (meetingInfo.guest) {
+      throw new BadRequestException(`신청이 마감되었습니다.`);
+    }
+    if (guestHeadcount != meetingInfo.guestHeadcount) {
+      throw new BadRequestException(
+        `게스트가 ${meetingInfo.guestHeadcount}명 필요합니다.`,
+      );
+    }
+  }
+
   async createMeeting(createMeetingDto: CreateMeetingDto): Promise<Meetings> {
     try {
       const { location, time, host, guestHeadcount }: CreateMeetingDto =
@@ -104,6 +139,9 @@ export class MeetingsService {
   ): Promise<void> {
     try {
       const meeting: Meetings = await this.findMeetingById(meetingNo);
+      if (meeting.isAccepted) {
+        throw new BadRequestException(`이미 수락된 약속은 수정할 수 없습니다`);
+      }
 
       const affected: number = await this.meetingRepository.updateMeeting(
         meeting,
@@ -143,11 +181,14 @@ export class MeetingsService {
     return meeting;
   }
 
-  async setGuestMembers({
+  async applyForMeeting({
     meetingNo,
     guest,
   }: SetGuestMembersDto): Promise<void> {
     const meeting: Meetings = await this.findMeetingById(meetingNo);
+    await this.checkGuestApplyAvailable(guest.length, meetingNo);
+    await this.checkNewGuestConflict(guest, meetingNo);
+
     const affected: number = await this.meetingInfoRepository.saveMeetingGuest(
       guest[0],
       meeting,

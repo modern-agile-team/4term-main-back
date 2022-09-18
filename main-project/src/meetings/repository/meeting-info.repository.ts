@@ -1,4 +1,3 @@
-import { Users } from 'src/users/entity/user.entity';
 import {
   EntityRepository,
   InsertResult,
@@ -28,7 +27,7 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
     }
   }
 
-  async saveMeetingGuest(guest: Users, meeting: Meetings): Promise<number> {
+  async saveMeetingGuest(guest: number, meeting: Meetings): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder(
         'meeting_info',
@@ -42,5 +41,21 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
     } catch (error) {
       throw error;
     }
+  }
+
+  async getMeetingInfoById(meetingNo: number): Promise<MeetingInfo> {
+    const meetingInfo: MeetingInfo = await this.createQueryBuilder(
+      'meeting_info',
+    )
+      .select([
+        'meeting_info.host',
+        'meeting_info.guest',
+        'meeting_info.guestHeadcount AS guestHeadcount',
+        'meeting_info.hostHeadcount AS hostHeadcount',
+      ])
+      .where('meeting_info.meetingNo = :meetingNo', { meetingNo })
+      .getRawOne();
+
+    return meetingInfo;
   }
 }
