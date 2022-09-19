@@ -23,7 +23,7 @@ export class HostMembersRepository extends Repository<HostMembers> {
     }
   }
 
-  async getHostByMeetingNo(meetingNo: number): Promise<UserNo[]> {
+  async getHostsByMeetingNo(meetingNo: number): Promise<UserNo[]> {
     const hostMembers: UserNo[] = await this.createQueryBuilder('host_members')
       .where('host_members.meetingNo = :meetingNo', { meetingNo })
       .getMany();

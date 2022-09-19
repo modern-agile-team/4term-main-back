@@ -17,3 +17,13 @@ export interface MeetingMemberDetail {
   hostHeadcount: number;
   guestHeadcount: number;
 }
+
+export interface InviteAvailability {
+  meetingNo: number;
+  guestHeadcount: number;
+  hostHeadcount: number;
+  guests: string;
+  hosts: string;
+  addGuestAvailable: string;
+  addHostAvailable: string;
+}

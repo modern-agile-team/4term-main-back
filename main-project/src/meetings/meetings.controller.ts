@@ -18,6 +18,20 @@ import { DeleteGeustDto } from 'src/members/dto/deleteGuest.dto';
 export class MeetingsController {
   constructor(private readonly meetingsService: MeetingsService) {}
 
+  @Post('test')
+  async test() {
+    return await this.meetingsService.test();
+  }
+
+  @Patch('guest/invite/:meetingNo/:userNo')
+  async inviteGuest(
+    @Body('guestNo') guest: number,
+    @Param('meetingNo') meetingNo: number,
+    @Param('userNo') userNo: number, //후에 토큰에서 받도록 수정
+  ) {
+    await this.meetingsService.inviteGuest(meetingNo, guest, userNo);
+  }
+
   @HttpCode(HttpStatus.CREATED)
   @ApiCreatedResponse({
     description: '새로운 약속 생성',
