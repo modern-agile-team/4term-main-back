@@ -1,11 +1,13 @@
+import { Users } from 'src/users/entity/user.entity';
+
 export interface NoticeResponse {
   affectedRows: number;
   insertId?: number;
 }
 
 export interface NoticeDetail {
-  userNo: number;
+  userNo: number | Users;
   targetUserNo: number;
   type: number;
-  value: object[];
+  value: string;
 }
