@@ -6,7 +6,7 @@ import { NoticesRepository } from './repository/notices.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([NoticesRepository])],
-  providers: [NoticesService],
+  providers: [NoticesService, NoticesRepository],
   controllers: [NoticesController],
 })
 export class NoticesModule {}

@@ -7,11 +7,11 @@ import {
 import { UpdateMeetingDto } from '../dto/updateMeeting.dto';
 import { Meetings } from '../entity/meeting.entity';
 import { InternalServerErrorException } from '@nestjs/common';
-import { MeetingResponse } from '../interface/meeting.interface';
+import { MeetingDetail, MeetingResponse } from '../interface/meeting.interface';
 
 @EntityRepository(Meetings)
 export class MeetingRepository extends Repository<Meetings> {
-  async createMeeting(meetingInfo: object): Promise<MeetingResponse> {
+  async createMeeting(meetingInfo: MeetingDetail): Promise<MeetingResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('meetings')
         .insert()
