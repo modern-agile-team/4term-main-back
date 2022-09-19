@@ -11,7 +11,6 @@ import { UserNo } from 'src/members/interface/member.interface';
 import { GuestMembersRepository } from 'src/members/repository/guest-members.repository';
 import { HostMembersRepository } from 'src/members/repository/host-members.repository';
 import { Notices } from 'src/notices/entity/notices.entity';
-import { NoticeDetail } from 'src/notices/interface/notice.interface';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { Users } from 'src/users/entity/user.entity';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
@@ -155,6 +154,21 @@ export class MeetingsService {
     }
   }
 
+  private async setNotice(userNo, targetUserNo, type, value): Promise<void> {
+    value = JSON.stringify(value);
+    const { affectedRows }: MeetingResponse =
+      await this.noticesRepository.saveNotice({
+        userNo,
+        targetUserNo,
+        type,
+        value,
+      });
+
+    if (!affectedRows) {
+      throw new InternalServerErrorException(`약속 알람 생성 에러입니다.`);
+    }
+  }
+
   async createMeeting(createMeetingDto: CreateMeetingDto): Promise<Meetings> {
     try {
       const { location, time, host, guestHeadcount }: CreateMeetingDto =
@@ -230,18 +244,12 @@ export class MeetingsService {
   }: SetGuestMembersDto): Promise<void> {
     try {
       await this.findMeetingById(meetingNo);
-      const meetingInfo: MeetingInfo = await this.checkGuestConflict(
+      const { host }: MeetingInfo = await this.checkGuestConflict(
         guest,
         meetingNo,
       );
 
-      const noticeDetail: NoticeDetail = {
-        userNo: meetingInfo.host,
-        targetUserNo: guest[0],
-        type: 1,
-        value: JSON.stringify({ guest, meetingNo }),
-      };
-      await this.noticesRepository.saveNotice(noticeDetail);
+      await this.setNotice(host, guest[0], 1, { guest, meetingNo });
     } catch (error) {
       throw error;
     }
