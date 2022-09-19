@@ -2,6 +2,7 @@ import { BoardBookmarks } from 'src/boards/entity/board-bookmark.entity';
 import { MeetingInfo } from 'src/meetings/entity/meeting-info.entity';
 import { GuestMembers } from 'src/members/entity/guest-members.entity';
 import { HostMembers } from 'src/members/entity/host-members.entity';
+import { Notices } from 'src/notices/entity/notices.entity';
 import {
   BaseEntity,
   Column,
@@ -48,4 +49,10 @@ export class Users extends BaseEntity {
 
   @OneToMany((type) => BoardBookmarks, (boardBookmark) => boardBookmark.userNo)
   boardBookmark: BoardBookmarks;
+
+  @OneToMany((type) => Notices, (notices) => notices.userNo)
+  noticeUser: Notices[];
+
+  @OneToMany((type) => Notices, (notices) => notices.targetUserNo)
+  noticeTargetUser: Notices[];
 }
