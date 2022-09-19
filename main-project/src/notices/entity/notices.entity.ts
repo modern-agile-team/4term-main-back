@@ -1,8 +1,11 @@
+import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -11,11 +14,15 @@ export class Notices extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @Column({ name: 'user_no' })
-  userNo: number;
+  @ManyToOne((type) => Users, (user) => user.noticeUser)
+  @JoinColumn({ name: 'user_no' })
+  userNo: Users | number;
 
-  @Column({ name: 'target_user_no', nullable: true })
-  targetUserNo: number;
+  @ManyToOne((type) => Users, (user) => user.noticeTargetUser, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'target_user_no' })
+  targetUserNo: Users | number;
 
   @Column()
   type: number;
