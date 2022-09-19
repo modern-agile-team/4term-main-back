@@ -11,7 +11,6 @@ export class UpdateMeetingDto {
   location: string;
 
   @IsOptional()
-  @IsDate()
   @ApiProperty({
     example: '2022-06-27 15:22:31',
     description: '약속 시간',
