@@ -7,7 +7,7 @@ export interface NoticeResponse {
 
 export interface NoticeDetail {
   userNo: number | Users;
-  targetUserNo: number;
+  targetUserNo: number | Users;
   type: number;
   value: string;
 }
