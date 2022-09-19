@@ -5,25 +5,25 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteGeustDto } from 'src/members/dto/deleteGuest.dto';
-import { SetGuestMembersDto } from 'src/members/dto/setGuestMembers.dto';
-import { UserNo } from 'src/members/interface/member.interface';
+import { MeetingRepository } from './repository/meeting.repository';
 import { GuestMembersRepository } from 'src/members/repository/guest-members.repository';
 import { HostMembersRepository } from 'src/members/repository/host-members.repository';
-import { Notices } from 'src/notices/entity/notices.entity';
+import { MeetingInfoRepository } from './repository/meeting-info.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
-import { Users } from 'src/users/entity/user.entity';
+import { SetGuestMembersDto } from 'src/members/dto/setGuestMembers.dto';
+import { DeleteGeustDto } from 'src/members/dto/deleteGuest.dto';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
+import { Notices } from 'src/notices/entity/notices.entity';
 import { MeetingInfo } from './entity/meeting-info.entity';
 import { Meetings } from './entity/meeting.entity';
+import { UserNo } from 'src/members/interface/member.interface';
 import {
   MeetingDetail,
   MeetingMemberDetail,
   MeetingResponse,
 } from './interface/meeting.interface';
-import { MeetingInfoRepository } from './repository/meeting-info.repository';
-import { MeetingRepository } from './repository/meeting.repository';
+import { Users } from 'src/users/entity/user.entity';
 
 @Injectable()
 export class MeetingsService {
@@ -191,8 +191,12 @@ export class MeetingsService {
     }
   }
 
-  private async setNotice(userNo, targetUserNo, type, value): Promise<void> {
-    value = JSON.stringify(value);
+  private async setNotice(
+    userNo: number | Users,
+    targetUserNo: number,
+    type: number,
+    value: string,
+  ): Promise<void> {
     const { affectedRows }: MeetingResponse =
       await this.noticesRepository.saveNotice({
         userNo,
@@ -286,13 +290,14 @@ export class MeetingsService {
         meetingNo,
       );
 
-      await this.setNotice(host, guest[0], 1, { guest, meetingNo });
+      const value = JSON.stringify({ guest, meetingNo });
+      await this.setNotice(host, guest[0], 1, value);
     } catch (error) {
       throw error;
     }
   }
 
-  async acceptMeetingGuest(noticeNo) {
+  async acceptMeetingGuest(noticeNo: number): Promise<void> {
     try {
       const notice: Notices = await this.noticesRepository.getNoticeById(
         noticeNo,
@@ -305,6 +310,8 @@ export class MeetingsService {
       throw error;
     }
   }
+
+  async askGuestforJoin(meetingNo: number, guest: number): Promise<void> {}
 
   async deleteGuest(deleteGuestDto: DeleteGeustDto) {}
 }
