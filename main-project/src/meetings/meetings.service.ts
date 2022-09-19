@@ -75,8 +75,23 @@ export class MeetingsService {
     }
   }
 
+  private async setAdminGuest(meetingNo: number, guest: number): Promise<void> {
+    try {
+      const meeting: Meetings = await this.findMeetingById(meetingNo);
+      const affected: number =
+        await this.meetingInfoRepository.saveMeetingGuest(guest, meeting);
+      if (!affected) {
+        throw new InternalServerErrorException(
+          `약속 adimGuest 추가 오류입니다`,
+        );
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
   private async setHostMembers(
-    host: Users[],
+    host: number[],
     meetingNo: number,
   ): Promise<void> {
     try {
@@ -90,6 +105,28 @@ export class MeetingsService {
       if (saveHostsResult !== host.length) {
         throw new InternalServerErrorException(
           `약속 host 데이터 추가 오류입니다`,
+        );
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private async setGuestMembers(
+    guest: number[],
+    meetingNo: number,
+  ): Promise<void> {
+    try {
+      const guestInfo: object[] = guest.reduce((values, userNo) => {
+        values.push({ meetingNo, userNo });
+        return values;
+      }, []);
+
+      const saveGuestsResult: number =
+        await this.guestMembersRepository.saveGuestMembers(guestInfo);
+      if (saveGuestsResult !== guest.length) {
+        throw new InternalServerErrorException(
+          `약속 guest member 추가 오류입니다`,
         );
       }
     } catch (error) {
@@ -262,25 +299,8 @@ export class MeetingsService {
       );
       const { guest, meetingNo } = JSON.parse(notice.value);
 
-      const meeting: Meetings = await this.findMeetingById(meetingNo);
-      const affected: number =
-        await this.meetingInfoRepository.saveMeetingGuest(guest[0], meeting);
-      if (!affected) {
-        throw new InternalServerErrorException(
-          `약속 guest 데이터 추가 오류입니다`,
-        );
-      }
-      const guestsInfo: object[] = guest.reduce((values, userNo) => {
-        values.push({ meetingNo, userNo });
-        return values;
-      }, []);
-      const setGuestResult: number =
-        await this.guestMembersRepository.saveGuestMembers(guestsInfo);
-      if (setGuestResult !== guest.length) {
-        throw new InternalServerErrorException(
-          `약속 guest 데이터 추가 오류입니다`,
-        );
-      }
+      await this.setAdminGuest(meetingNo, guest[0]);
+      await this.setGuestMembers(guest, meetingNo);
     } catch (error) {
       throw error;
     }
