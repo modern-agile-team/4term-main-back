@@ -24,6 +24,7 @@ import {
 } from './interface/meeting.interface';
 import { Users } from 'src/users/entity/user.entity';
 import { NOTICE_TYPE } from 'src/common/configs/notice-type.config';
+import { MeetingInfo } from './entity/meeting-info.entity';
 
 @Injectable()
 export class MeetingsService {
@@ -46,16 +47,15 @@ export class MeetingsService {
 
   private async setMeetingDetail(
     meetingDetail: MeetingDetail,
-  ): Promise<Meetings> {
+  ): Promise<number> {
     try {
       const { affectedRows, insertId }: MeetingResponse =
         await this.meetingRepository.createMeeting(meetingDetail);
-      if (!affectedRows) {
+      if (!(affectedRows && insertId)) {
         throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
       }
-      const meeting: Meetings = await this.findMeetingById(insertId);
 
-      return meeting;
+      return insertId;
     } catch (error) {
       throw error;
     }
@@ -67,6 +67,7 @@ export class MeetingsService {
     try {
       const setMeetingInfoResult: number =
         await this.meetingInfoRepository.createMeetingInfo(meetingInfo);
+
       if (!setMeetingInfoResult) {
         throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
       }
@@ -120,6 +121,120 @@ export class MeetingsService {
     }
   }
 
+  async createMeeting(createMeetingDto: CreateMeetingDto): Promise<number> {
+    try {
+      const { location, time, host, guestHeadcount }: CreateMeetingDto =
+        createMeetingDto;
+      const meetingNo: number = await this.setMeetingDetail({ location, time });
+
+      const meetingInfo: MeetingMemberDetail = {
+        host: host[0], //후에 토큰 유저넘버로 변경
+        meetingNo,
+        guestHeadcount,
+        hostHeadcount: host.length,
+      };
+      await this.setMeetingInfo(meetingInfo);
+      await this.setHostMembers(host, meetingNo);
+
+      return meetingNo;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async findMeetingById(meetingNo: number): Promise<Meetings> {
+    try {
+      const meeting: Meetings = await this.meetingRepository.findMeetingById(
+        meetingNo,
+      );
+      if (!meeting) {
+        throw new NotFoundException(
+          `meetingNo가 ${meetingNo}인 약속을 찾지 못했습니다.`,
+        );
+      }
+      return meeting;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async checkModifiable(meetingNo: number): Promise<MeetingInfo> {
+    try {
+      const meeting: Meetings = await this.findMeetingById(meetingNo);
+      if (meeting.isAccepted) {
+        throw new BadRequestException(`이미 수락된 약속입니다.`);
+      }
+      return await this.meetingInfoRepository.getMeetingInfoById(meetingNo);
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async checkUpdateAvailable(
+    meetingNo: number,
+    userNo: number,
+  ): Promise<void> {
+    try {
+      const { host }: MeetingInfo = await this.checkModifiable(meetingNo);
+      if (userNo !== host) {
+        throw new BadRequestException(`약속 수정 권한이 없는 유저입니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async updateMeeting(
+    meetingNo: number,
+    userNo: number,
+    updateMeetingDto: UpdateMeetingDto,
+  ): Promise<void> {
+    try {
+      await this.checkUpdateAvailable(meetingNo, userNo);
+      const affected: number = await this.meetingRepository.updateMeeting(
+        meetingNo,
+        updateMeetingDto,
+      );
+
+      if (!affected) {
+        throw new InternalServerErrorException(`약속 수정 관련 오류입니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async checkAcceptAvailable(meetingNo: number, userNo: number) {
+    try {
+      const { guest }: MeetingInfo = await this.checkModifiable(meetingNo);
+
+      if (!guest) {
+        throw new BadRequestException(
+          `아직 게스트가 참여하지 않은 약속입니다.`,
+        );
+      }
+      if (userNo !== guest) {
+        throw new BadRequestException(`약속 수락 권한이 없는 유저입니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async acceptMeeting(meetingNo: number, userNo: number): Promise<void> {
+    try {
+      await this.checkAcceptAvailable(meetingNo, userNo);
+      const affected: number = await this.meetingRepository.acceptMeeting(
+        meetingNo,
+      );
+      if (!affected) {
+        throw new InternalServerErrorException(`약속 수락 관련 오류입니다.`);
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
   private async setGuestMembers(
     guest: number[],
     meetingNo: number,
@@ -142,7 +257,10 @@ export class MeetingsService {
     }
   }
 
-  async castMembersAsNumber(guests: string, hosts: string): Promise<number[]> {
+  private async castMembersAsNumber(
+    guests: string,
+    hosts: string,
+  ): Promise<number[]> {
     const members: number[] = guests
       ? hosts.split(',').concat(guests.split(',')).map(Number)
       : hosts.split(',').map(Number);
@@ -227,79 +345,6 @@ export class MeetingsService {
 
     if (!affectedRows) {
       throw new InternalServerErrorException(`약속 알람 생성 에러입니다.`);
-    }
-  }
-
-  async createMeeting(createMeetingDto: CreateMeetingDto): Promise<Meetings> {
-    try {
-      const { location, time, host, guestHeadcount }: CreateMeetingDto =
-        createMeetingDto;
-      const meeting: Meetings = await this.setMeetingDetail({ location, time });
-
-      const meetingInfo: MeetingMemberDetail = {
-        host: host[0],
-        meeting,
-        guestHeadcount,
-        hostHeadcount: host.length,
-      };
-      await this.setMeetingInfo(meetingInfo);
-      await this.setHostMembers(host, meeting.no);
-
-      return meeting;
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  async updateMeeting(
-    meetingNo: number,
-    updateMeetingDto: UpdateMeetingDto,
-  ): Promise<void> {
-    try {
-      const meeting: Meetings = await this.findMeetingById(meetingNo);
-      if (meeting.isAccepted) {
-        throw new BadRequestException(`이미 수락된 약속은 수정할 수 없습니다`);
-      }
-
-      const affected: number = await this.meetingRepository.updateMeeting(
-        meeting,
-        updateMeetingDto,
-      );
-      if (!affected) {
-        throw new InternalServerErrorException(`약속 수정 관련 오류입니다.`);
-      }
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async acceptMeeting(meetingNo: number): Promise<void> {
-    try {
-      const meeting: Meetings = await this.findMeetingById(meetingNo);
-      const affected: number = await this.meetingRepository.acceptMeeting(
-        meeting,
-      );
-      if (!affected) {
-        throw new InternalServerErrorException(`약속 수락 관련 오류입니다.`);
-      }
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async findMeetingById(meetingNo: number): Promise<Meetings> {
-    try {
-      const meeting: Meetings = await this.meetingRepository.findMeetingById(
-        meetingNo,
-      );
-      if (!meeting) {
-        throw new NotFoundException(
-          `meetingNo가 ${meetingNo}인 약속을 찾지 못했습니다.`,
-        );
-      }
-      return meeting;
-    } catch (err) {
-      throw err;
     }
   }
 

@@ -7,13 +7,12 @@ import {
 } from 'typeorm';
 import { MeetingInfo } from '../entity/meeting-info.entity';
 import { Meetings } from '../entity/meeting.entity';
+import { MeetingMemberDetail } from '../interface/meeting.interface';
 
 @EntityRepository(MeetingInfo)
 export class MeetingInfoRepository extends Repository<MeetingInfo> {
-  async createMeetingInfo(meetingInfo): Promise<number> {
+  async createMeetingInfo(meetingInfo: MeetingMemberDetail): Promise<number> {
     try {
-      meetingInfo.meetingNo = meetingInfo.meeting;
-      delete meetingInfo.meeting;
       const { raw }: InsertResult = await this.createQueryBuilder(
         'meeting_info',
       )
@@ -54,6 +53,7 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
         'meeting_info',
       )
         .select([
+          'meeting_info.meetingNo',
           'meeting_info.host',
           'meeting_info.guest',
           'meeting_info.guestHeadcount AS guestHeadcount',
