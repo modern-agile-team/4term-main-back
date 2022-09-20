@@ -41,14 +41,30 @@ export class MeetingsController {
   @ApiOkResponse({
     description: '약속 장소/시간 수정',
   })
-  @Patch('/:meetingNo')
+  @Patch('/:meetingNo/:userNo') //후에 토큰에서 userNo 받아오도록 수정
   async updateMeeting(
     @Param('meetingNo') meetingNo: number,
+    @Param('userNo') userNo: number,
     @Body() updateMeetingDto: UpdateMeetingDto,
   ): Promise<object> {
-    await this.meetingsService.updateMeeting(meetingNo, updateMeetingDto);
+    await this.meetingsService.updateMeeting(
+      meetingNo,
+      userNo,
+      updateMeetingDto,
+    );
 
     return { success: true, msg: `약속이 수정되었습니다` };
+  }
+
+  @HttpCode(HttpStatus.ACCEPTED)
+  @ApiOkResponse({
+    description: '약속 수락',
+  })
+  @Patch('/accept/:meetingNo')
+  async acceptMeeting(@Param('meetingNo') meetingNo: number): Promise<object> {
+    await this.meetingsService.acceptMeeting(meetingNo);
+
+    return { success: true, msg: `약속이 수락되었습니다` };
   }
 
   @Patch('guest/invite/:meetingNo/:userNo')
@@ -58,17 +74,6 @@ export class MeetingsController {
     @Param('userNo') userNo: number, //후에 토큰에서 받도록 수정
   ) {
     await this.meetingsService.inviteGuest(meetingNo, guest, userNo);
-  }
-
-  @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({
-    description: '약속 수락',
-  })
-  @Patch('/accept/:meetingNo')
-  async acceptMeeting(@Param('meetingNo') meetingNo: number): Promise<object> {
-    await this.meetingsService.acceptMeeting(meetingNo);
-
-    return { success: true, msg: `약속이 수락되었습니다` };
   }
 
   @Post('/guest/apply/:meetingNo')

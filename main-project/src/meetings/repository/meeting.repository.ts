@@ -46,14 +46,14 @@ export class MeetingRepository extends Repository<Meetings> {
   }
 
   async updateMeeting(
-    meeting: Meetings,
+    meetingNo: number,
     updatedMeetingInfo: UpdateMeetingDto,
   ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Meetings)
         .set(updatedMeetingInfo)
-        .where('no = :no', { no: meeting.no })
+        .where('no = :meetingNo', { meetingNo })
         .execute();
 
       return affected;
@@ -64,12 +64,12 @@ export class MeetingRepository extends Repository<Meetings> {
     }
   }
 
-  async acceptMeeting(meeting: Meetings): Promise<number> {
+  async acceptMeeting(meetingNo: number): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Meetings)
         .set({ isAccepted: true })
-        .where('no = :no', { no: meeting.no })
+        .where('no = :no', { no: meetingNo })
         .execute();
 
       return affected;
@@ -109,7 +109,7 @@ export class MeetingRepository extends Repository<Meetings> {
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err} 초대 관련 정보 조회(getInviteAvailability): 알 수 없는 서버 에러입니다.`,
+        `${err} 참여 중인 유저 조회(getParticipatingMembers): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
