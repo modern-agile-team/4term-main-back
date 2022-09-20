@@ -37,15 +37,6 @@ export class MeetingsController {
     };
   }
 
-  @Patch('guest/invite/:meetingNo/:userNo')
-  async inviteGuest(
-    @Body('guestNo') guest: number,
-    @Param('meetingNo') meetingNo: number,
-    @Param('userNo') userNo: number, //후에 토큰에서 받도록 수정
-  ) {
-    await this.meetingsService.inviteGuest(meetingNo, guest, userNo);
-  }
-
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     description: '약속 장소/시간 수정',
@@ -58,6 +49,15 @@ export class MeetingsController {
     await this.meetingsService.updateMeeting(meetingNo, updateMeetingDto);
 
     return { success: true, msg: `약속이 수정되었습니다` };
+  }
+
+  @Patch('guest/invite/:meetingNo/:userNo')
+  async inviteGuest(
+    @Body('guestNo') guest: number,
+    @Param('meetingNo') meetingNo: number,
+    @Param('userNo') userNo: number, //후에 토큰에서 받도록 수정
+  ) {
+    await this.meetingsService.inviteGuest(meetingNo, guest, userNo);
   }
 
   @HttpCode(HttpStatus.OK)
