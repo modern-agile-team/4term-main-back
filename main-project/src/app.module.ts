@@ -15,6 +15,8 @@ import { MembersModule } from './members/members.module';
     MeetingsModule,
     BoardsModule,
     MembersModule,
+    NoticesModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

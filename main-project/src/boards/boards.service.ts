@@ -1,8 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
-import { Board } from './entity/board.entity';
+import { Boards } from './entity/board.entity';
 import { BoardRepository } from './repository/board.repository';
 
 @Injectable()
@@ -12,37 +16,45 @@ export class BoardsService {
     private boardRepository: BoardRepository,
   ) {}
 
-  async getAllBoards(): Promise<Board[]> {
+  async getAllBoards(): Promise<Boards[]> {
     try {
       const found = await this.boardRepository.find();
 
       return found;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(
+        `${error} getAllBoards-service: 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 
-  async getBoardByNo(boardNo: number): Promise<Board> {
+  async getBoardByNo(boardNo: number): Promise<Boards> {
     try {
       const found = await this.boardRepository.findOne(boardNo);
 
       if (!found) {
-        throw new NotFoundException(`Can't find Board with boardNo ${boardNo}`);
+        throw new NotFoundException(
+          `Can't find Boards with boardNo ${boardNo}`,
+        );
       }
 
       return found;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(
+        `${error} getBoardByNo-service: 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 
-  async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
+  async createBoard(createBoardDto: CreateBoardDto): Promise<Boards> {
     try {
       const board = await this.boardRepository.createBoard(createBoardDto);
 
       return board;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(
+        `${error} createBoard-service: 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 
@@ -59,7 +71,9 @@ export class BoardsService {
 
       return reqData;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(
+        `${error} updateBoard-service: 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 
@@ -68,12 +82,16 @@ export class BoardsService {
       const result = await this.boardRepository.delete(boardNo);
 
       if (result.affected === 0) {
-        throw new NotFoundException(`Can't find Board with boardNo ${boardNo}`);
+        throw new NotFoundException(
+          `Can't find Boards with boardNo ${boardNo}`,
+        );
       }
 
       return true;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(
+        `${error} deleteBoardByNo-service: 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 }

@@ -1,19 +1,20 @@
+import { Meetings } from 'src/meetings/entity/meeting.entity';
+import { BoardBookmarks } from './board-bookmark.entity';
+import { BoardMemberInfos } from './board-member-info.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { BoardBookmark } from './board-bookmark.entity';
-import { BoardMemberInfo } from './board-member-info.entity';
 
-// fk없음, entity취합 후 생성예정
 @Entity('boards')
-export class Board extends BaseEntity {
+export class Boards extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
@@ -38,21 +39,25 @@ export class Board extends BaseEntity {
   @Column({ type: 'date', nullable: true })
   meetingTime: Date;
 
-  @CreateDateColumn({ nullable: false })
+  @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
 
-  @UpdateDateColumn({ nullable: false })
+  @UpdateDateColumn({ default: null, nullable: false, name: 'updated_date' })
   updatedDate: Date;
 
-  @DeleteDateColumn({ nullable: true })
+  @DeleteDateColumn({ nullable: true, name: 'deleted_date' })
   deletedDate: Date;
 
   @OneToOne(
-    (type) => BoardMemberInfo,
+    (type) => BoardMemberInfos,
     (boardMemberInfo) => boardMemberInfo.boardNo,
   )
-  boardMemberaInfo: BoardMemberInfo;
+  boardMemberInfo: BoardMemberInfos;
 
-  @OneToOne((type) => BoardBookmark, (boardBookmark) => boardBookmark.boardNo)
-  boardBookmark: BoardBookmark;
+  @OneToOne((type) => BoardBookmarks, (boardBookmark) => boardBookmark.boardNo)
+  boardBookmark: BoardBookmarks;
+
+  @OneToOne((type) => Meetings, (meeting) => meeting.board)
+  @JoinColumn({ name: 'board_no' })
+  meetingNo: Meetings;
 }

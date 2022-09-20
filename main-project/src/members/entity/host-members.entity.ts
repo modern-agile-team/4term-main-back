@@ -1,10 +1,10 @@
-import { Meeting } from 'src/meetings/entity/meeting.entity';
+import { Meetings } from 'src/meetings/entity/meeting.entity';
+import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
-  Column,
   Entity,
   JoinColumn,
-  OneToOne,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -13,12 +13,11 @@ export class HostMembers extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @Column()
-  user_no: number;
+  @ManyToOne((type) => Users, (user) => user.hostMembers)
+  @JoinColumn({ name: 'user_no' })
+  userNo: Users;
 
-  @OneToOne((type) => Meeting, (meeting) => meeting.meetingHostMembers, {
-    nullable: false,
-  })
+  @ManyToOne((type) => Meetings, (meeting) => meeting.hostMembers)
   @JoinColumn({ name: 'meeting_no' })
-  meeting: Meeting;
+  meetingNo: Meetings;
 }
