@@ -79,9 +79,6 @@ export class MeetingRepository extends Repository<Meetings> {
       );
     }
   }
-<<<<<<< HEAD
-}
-=======
 
   async getParticipatingMembers(
     meetingNo: number,
@@ -117,4 +114,3 @@ export class MeetingRepository extends Repository<Meetings> {
     }
   }
 }
->>>>>>> a62eca5a72f5f41fb72155c28572f6b44d4fc772
