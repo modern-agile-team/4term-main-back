@@ -33,5 +33,5 @@ export class MeetingInfo extends BaseEntity {
     nullable: false,
   })
   @JoinColumn({ name: 'meeting_no' })
-  meetingNo: Meetings;
+  meetingNo: Meetings | number;
 }
