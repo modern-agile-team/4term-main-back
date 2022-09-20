@@ -12,8 +12,19 @@ export interface MeetingDetail {
 }
 
 export interface MeetingMemberDetail {
-  host: Users;
+  host: Users | number;
   meeting: Meetings;
   hostHeadcount: number;
   guestHeadcount: number;
+}
+
+export interface ParticipatingMembers {
+  adminHost: number;
+  adminGuest: number;
+  guestHeadcount: number;
+  hostHeadcount: number;
+  guests: string;
+  hosts: string;
+  addGuestAvailable: string;
+  addHostAvailable: string;
 }

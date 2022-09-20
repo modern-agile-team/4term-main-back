@@ -1,3 +1,4 @@
+import { InternalServerErrorException } from '@nestjs/common';
 import {
   EntityRepository,
   InsertResult,
@@ -22,8 +23,10 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
         .execute();
 
       return raw.affectedRows;
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 데이터 생성(createMeetingInfo): 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 
@@ -38,24 +41,32 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
         .execute();
 
       return affected;
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 게스트 추가(saveMeetingGuest): 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 
   async getMeetingInfoById(meetingNo: number): Promise<MeetingInfo> {
-    const meetingInfo: MeetingInfo = await this.createQueryBuilder(
-      'meeting_info',
-    )
-      .select([
-        'meeting_info.host',
-        'meeting_info.guest',
-        'meeting_info.guestHeadcount AS guestHeadcount',
-        'meeting_info.hostHeadcount AS hostHeadcount',
-      ])
-      .where('meeting_info.meetingNo = :meetingNo', { meetingNo })
-      .getRawOne();
+    try {
+      const meetingInfo: MeetingInfo = await this.createQueryBuilder(
+        'meeting_info',
+      )
+        .select([
+          'meeting_info.host',
+          'meeting_info.guest',
+          'meeting_info.guestHeadcount AS guestHeadcount',
+          'meeting_info.hostHeadcount AS hostHeadcount',
+        ])
+        .where('meeting_info.meetingNo = :meetingNo', { meetingNo })
+        .getRawOne();
 
-    return meetingInfo;
+      return meetingInfo;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 상세 조회(getMeetingInfoById): 알 수 없는 서버 에러입니다.`,
+      );
+    }
   }
 }
