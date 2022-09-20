@@ -60,9 +60,12 @@ export class MeetingsController {
   @ApiOkResponse({
     description: '약속 수락',
   })
-  @Patch('/accept/:meetingNo')
-  async acceptMeeting(@Param('meetingNo') meetingNo: number): Promise<object> {
-    await this.meetingsService.acceptMeeting(meetingNo);
+  @Patch('/accept/:meetingNo/:userNo') //후에 토큰에서 userNo 받아오도록 수정
+  async acceptMeeting(
+    @Param('meetingNo') meetingNo: number,
+    @Param('userNo') userNo: number,
+  ): Promise<object> {
+    await this.meetingsService.acceptMeeting(meetingNo, userNo);
 
     return { success: true, msg: `약속이 수락되었습니다` };
   }

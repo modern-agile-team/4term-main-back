@@ -53,6 +53,7 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
         'meeting_info',
       )
         .select([
+          'meeting_info.meetingNo',
           'meeting_info.host',
           'meeting_info.guest',
           'meeting_info.guestHeadcount AS guestHeadcount',

@@ -158,17 +158,24 @@ export class MeetingsService {
     }
   }
 
+  private async checkModifiable(meetingNo: number): Promise<MeetingInfo> {
+    try {
+      const meeting: Meetings = await this.findMeetingById(meetingNo);
+      if (meeting.isAccepted) {
+        throw new BadRequestException(`이미 수락된 약속입니다.`);
+      }
+      return await this.meetingInfoRepository.getMeetingInfoById(meetingNo);
+    } catch (err) {
+      throw err;
+    }
+  }
+
   private async checkUpdateAvailable(
     meetingNo: number,
     userNo: number,
   ): Promise<void> {
     try {
-      const meeting: Meetings = await this.findMeetingById(meetingNo);
-      if (meeting.isAccepted) {
-        throw new BadRequestException(`수락된 약속은 수정할 수 없습니다.`);
-      }
-      const { host }: MeetingInfo =
-        await this.meetingInfoRepository.getMeetingInfoById(meetingNo);
+      const { host }: MeetingInfo = await this.checkModifiable(meetingNo);
       if (userNo !== host) {
         throw new BadRequestException(`약속 수정 권한이 없는 유저입니다.`);
       }
@@ -197,11 +204,28 @@ export class MeetingsService {
     }
   }
 
-  async acceptMeeting(meetingNo: number): Promise<void> {
+  private async checkAcceptAvailable(meetingNo: number, userNo: number) {
     try {
-      const meeting: Meetings = await this.findMeetingById(meetingNo);
+      const { guest }: MeetingInfo = await this.checkModifiable(meetingNo);
+
+      if (!guest) {
+        throw new BadRequestException(
+          `아직 게스트가 참여하지 않은 약속입니다.`,
+        );
+      }
+      if (userNo !== guest) {
+        throw new BadRequestException(`약속 수락 권한이 없는 유저입니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async acceptMeeting(meetingNo: number, userNo: number): Promise<void> {
+    try {
+      await this.checkAcceptAvailable(meetingNo, userNo);
       const affected: number = await this.meetingRepository.acceptMeeting(
-        meeting.no,
+        meetingNo,
       );
       if (!affected) {
         throw new InternalServerErrorException(`약속 수락 관련 오류입니다.`);
