@@ -8,7 +8,7 @@ import { UpdateMeetingDto } from '../dto/updateMeeting.dto';
 import { Meetings } from '../entity/meeting.entity';
 import { InternalServerErrorException } from '@nestjs/common';
 import {
-  InviteAvailability,
+  ParticipatingMembers,
   MeetingDetail,
   MeetingResponse,
 } from '../interface/meeting.interface';
@@ -80,7 +80,9 @@ export class MeetingRepository extends Repository<Meetings> {
     }
   }
 
-  async getInviteAvailability(meetingNo: number): Promise<InviteAvailability> {
+  async getParticipatingMembers(
+    meetingNo: number,
+  ): Promise<ParticipatingMembers> {
     try {
       const result = await this.createQueryBuilder('meetings')
         .leftJoin(
@@ -91,6 +93,10 @@ export class MeetingRepository extends Repository<Meetings> {
         .leftJoin('meetings.guestMembers', 'guestMembers')
         .leftJoin('meetings.hostMembers', 'hostMembers')
         .select([
+          'meetingInfo.host AS adminHost',
+          'meetingInfo.guest AS adminGuest',
+          'meetingInfo.guestHeadcount AS guestHeadcount',
+          'meetingInfo.hostHeadcount AS hostHeadcount',
           'GROUP_CONCAT(DISTINCT guestMembers.userNo) AS guests',
           'GROUP_CONCAT(DISTINCT hostMembers.userNo) AS hosts',
           '(meetingInfo.guestHeadcount - COUNT(DISTINCT guestMembers.userNo)) AS addGuestAvailable',

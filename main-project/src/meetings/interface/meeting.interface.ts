@@ -18,8 +18,9 @@ export interface MeetingMemberDetail {
   guestHeadcount: number;
 }
 
-export interface InviteAvailability {
-  meetingNo: number;
+export interface ParticipatingMembers {
+  adminHost: number;
+  adminGuest: number;
   guestHeadcount: number;
   hostHeadcount: number;
   guests: string;

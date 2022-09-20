@@ -1,7 +1,6 @@
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { GuestMembers } from '../entity/guest-members.entity';
 import { InternalServerErrorException } from '@nestjs/common';
-import { UserNo } from '../interface/member.interface';
 
 @EntityRepository(GuestMembers)
 export class GuestMembersRepository extends Repository<GuestMembers> {
@@ -21,15 +20,5 @@ export class GuestMembersRepository extends Repository<GuestMembers> {
         `${error} saveHostMembers: 알 수 없는 서버 에러입니다.`,
       );
     }
-  }
-
-  async getGuestsByMeetingNo(meetingNo: number): Promise<UserNo[]> {
-    const guestMembers: UserNo[] = await this.createQueryBuilder(
-      'guest_members',
-    )
-      .where('guest_members.meetingNo = :meetingNo', { meetingNo })
-      .getMany();
-
-    return guestMembers;
   }
 }

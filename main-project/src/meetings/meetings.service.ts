@@ -15,11 +15,9 @@ import { DeleteGeustDto } from 'src/members/dto/deleteGuest.dto';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { Notices } from 'src/notices/entity/notices.entity';
-import { MeetingInfo } from './entity/meeting-info.entity';
 import { Meetings } from './entity/meeting.entity';
-import { UserNo } from 'src/members/interface/member.interface';
 import {
-  InviteAvailability,
+  ParticipatingMembers,
   MeetingDetail,
   MeetingMemberDetail,
   MeetingResponse,
@@ -80,7 +78,13 @@ export class MeetingsService {
   private async setAdminGuest(meetingNo: number, guest: number): Promise<void> {
     try {
       const meeting: Meetings = await this.findMeetingById(meetingNo);
-      await this.checkMeetingApplyAvailable(meetingNo);
+      const { adminGuest } =
+        await this.meetingRepository.getParticipatingMembers(meetingNo);
+      if (adminGuest) {
+        throw new BadRequestException(
+          `마감된 약속에는 게스트를 추가할 수 없습니다.`,
+        );
+      }
 
       const affected: number =
         await this.meetingInfoRepository.saveMeetingGuest(guest, meeting);
@@ -138,13 +142,19 @@ export class MeetingsService {
     }
   }
 
-  async getMeetingMembers(meetingNo: number): Promise<UserNo[]> {
+  async castMembersAsNumber(guests: string, hosts: string): Promise<number[]> {
+    const members: number[] = guests
+      ? hosts.split(',').concat(guests.split(',')).map(Number)
+      : hosts.split(',').map(Number);
+
+    return members;
+  }
+
+  async getMeetingMembers(meetingNo): Promise<number[]> {
     try {
-      const host: UserNo[] =
-        await this.hostMembersRepository.getHostsByMeetingNo(meetingNo);
-      const guest: UserNo[] =
-        await this.guestMembersRepository.getGuestsByMeetingNo(meetingNo);
-      const members: UserNo[] = host.concat(guest);
+      const { hosts, guests }: ParticipatingMembers =
+        await this.meetingRepository.getParticipatingMembers(meetingNo);
+      const members: number[] = await this.castMembersAsNumber(guests, hosts);
 
       return members;
     } catch (err) {
@@ -152,58 +162,50 @@ export class MeetingsService {
     }
   }
 
-  private async checkUserInMembers(
+  private async checkUsersInMembers(
     users: number[],
-    meetingNo: number,
-  ): Promise<void> {
+    guests: string,
+    hosts: string,
+  ) {
     try {
-      const members: UserNo[] = await this.getMeetingMembers(meetingNo);
-      //후에 Set으로 변환
-      members.forEach((member) => {
-        if (users.includes(member.no)) {
-          throw new BadRequestException(`이미 약속에 참여 중인 유저입니다.`);
-        }
-      });
+      const members: number[] = await this.castMembersAsNumber(guests, hosts);
+      const isOverlaped =
+        members.length + users.length - new Set([...members, ...users]).size;
+
+      if (isOverlaped) {
+        throw new BadRequestException(`이미 약속에 참여 중인 유저입니다`);
+      }
     } catch (err) {
       throw err;
     }
   }
 
-  private async checkMeetingApplyAvailable(
-    meetingNo: number,
-  ): Promise<MeetingInfo> {
+  async applyForMeeting({
+    meetingNo,
+    guest,
+  }: SetGuestMembersDto): Promise<void> {
     try {
-      const meetingInfo: MeetingInfo =
-        await this.meetingInfoRepository.getMeetingInfoById(meetingNo);
-
-      if (meetingInfo.guest) {
+      await this.findMeetingById(meetingNo);
+      const { adminHost, guestHeadcount, hosts, guests }: ParticipatingMembers =
+        await this.meetingRepository.getParticipatingMembers(meetingNo);
+      if (guests != null) {
         throw new BadRequestException(
           `마감된 약속에는 게스트를 추가할 수 없습니다.`,
         );
       }
-
-      return meetingInfo;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  private async checkGuestConflict(
-    guest: number[],
-    meetingNo: number,
-  ): Promise<MeetingInfo> {
-    try {
-      const meetingInfo: MeetingInfo = await this.checkMeetingApplyAvailable(
-        meetingNo,
-      );
-      if (guest.length != meetingInfo.guestHeadcount) {
+      if (guestHeadcount != guest.length) {
         throw new BadRequestException(
-          `게스트가 ${meetingInfo.guestHeadcount}명 필요합니다.`,
+          `게스트가 ${guestHeadcount}명 필요합니다`,
         );
       }
-      await this.checkUserInMembers(guest, meetingNo);
+      await this.checkUsersInMembers(guest, guests, hosts);
 
-      return meetingInfo;
+      await this.setNotice(
+        adminHost,
+        guest[0],
+        NOTICE_TYPE.meeting.apply,
+        JSON.stringify({ guest, meetingNo }),
+      );
     } catch (error) {
       throw error;
     }
@@ -286,32 +288,18 @@ export class MeetingsService {
   }
 
   async findMeetingById(meetingNo: number): Promise<Meetings> {
-    const meeting: Meetings = await this.meetingRepository.findMeetingById(
-      meetingNo,
-    );
-    if (!meeting) {
-      throw new NotFoundException(
-        `meetingNo가 ${meetingNo}인 약속을 찾지 못했습니다.`,
-      );
-    }
-    return meeting;
-  }
-
-  async applyForMeeting({
-    meetingNo,
-    guest,
-  }: SetGuestMembersDto): Promise<void> {
     try {
-      await this.findMeetingById(meetingNo);
-      const { host }: MeetingInfo = await this.checkGuestConflict(
-        guest,
+      const meeting: Meetings = await this.meetingRepository.findMeetingById(
         meetingNo,
       );
-
-      const value = JSON.stringify({ guest, meetingNo });
-      await this.setNotice(host, guest[0], NOTICE_TYPE.meeting.apply, value);
-    } catch (error) {
-      throw error;
+      if (!meeting) {
+        throw new NotFoundException(
+          `meetingNo가 ${meetingNo}인 약속을 찾지 못했습니다.`,
+        );
+      }
+      return meeting;
+    } catch (err) {
+      throw err;
     }
   }
 
@@ -329,13 +317,6 @@ export class MeetingsService {
     }
   }
 
-  private checkInMembers(userNo: number, guests: string, hosts: string) {
-    const members = hosts.split(',').concat(guests.split(',')).map(Number);
-    if (members.includes(userNo)) {
-      throw new BadRequestException(`이미 약속에 참여 중인 유저입니다`);
-    }
-  }
-
   async inviteGuest(
     meetingNo: number,
     guestUserNo: number,
@@ -343,12 +324,12 @@ export class MeetingsService {
   ): Promise<void> {
     try {
       await this.findMeetingById(meetingNo);
-      const { addGuestAvailable, guests, hosts }: InviteAvailability =
-        await this.meetingRepository.getInviteAvailability(meetingNo);
+      const { addGuestAvailable, guests, hosts }: ParticipatingMembers =
+        await this.meetingRepository.getParticipatingMembers(meetingNo);
       if (!parseInt(addGuestAvailable)) {
         throw new BadRequestException(`게스트 최대 인원을 초과했습니다.`);
       }
-      this.checkInMembers(guestUserNo, guests, hosts);
+      await this.checkUsersInMembers([guestUserNo], guests, hosts);
 
       this.setNotice(
         guestUserNo,
