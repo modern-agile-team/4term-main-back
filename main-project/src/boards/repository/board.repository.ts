@@ -31,7 +31,7 @@ export class BoardRepository extends Repository<Boards> {
       return board;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createBoard: 알 수 없는 서버 에러입니다.`,
+        `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -56,7 +56,7 @@ export class BoardRepository extends Repository<Boards> {
       return save;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} updateBoard: 알 수 없는 서버 에러입니다.`,
+        `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
