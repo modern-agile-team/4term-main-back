@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
@@ -22,9 +18,7 @@ export class BoardsService {
 
       return found;
     } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} getAllBoards-service: 알 수 없는 서버 에러입니다.`,
-      );
+      throw error;
     }
   }
 
@@ -40,9 +34,7 @@ export class BoardsService {
 
       return found;
     } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} getBoardByNo-service: 알 수 없는 서버 에러입니다.`,
-      );
+      throw error;
     }
   }
 
@@ -52,9 +44,7 @@ export class BoardsService {
 
       return board;
     } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} createBoard-service: 알 수 없는 서버 에러입니다.`,
-      );
+      throw error;
     }
   }
 
@@ -71,9 +61,7 @@ export class BoardsService {
 
       return reqData;
     } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} updateBoard-service: 알 수 없는 서버 에러입니다.`,
-      );
+      throw error;
     }
   }
 
@@ -89,9 +77,7 @@ export class BoardsService {
 
       return true;
     } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} deleteBoardByNo-service: 알 수 없는 서버 에러입니다.`,
-      );
+      throw error;
     }
   }
 }
