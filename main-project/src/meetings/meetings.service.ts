@@ -46,16 +46,15 @@ export class MeetingsService {
 
   private async setMeetingDetail(
     meetingDetail: MeetingDetail,
-  ): Promise<Meetings> {
+  ): Promise<number> {
     try {
       const { affectedRows, insertId }: MeetingResponse =
         await this.meetingRepository.createMeeting(meetingDetail);
-      if (!affectedRows) {
+      if (!(affectedRows && insertId)) {
         throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
       }
-      const meeting: Meetings = await this.findMeetingById(insertId);
 
-      return meeting;
+      return insertId;
     } catch (error) {
       throw error;
     }
@@ -67,6 +66,7 @@ export class MeetingsService {
     try {
       const setMeetingInfoResult: number =
         await this.meetingInfoRepository.createMeetingInfo(meetingInfo);
+
       if (!setMeetingInfoResult) {
         throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
       }
@@ -117,6 +117,27 @@ export class MeetingsService {
       }
     } catch (error) {
       throw error;
+    }
+  }
+
+  async createMeeting(createMeetingDto: CreateMeetingDto): Promise<number> {
+    try {
+      const { location, time, host, guestHeadcount }: CreateMeetingDto =
+        createMeetingDto;
+      const meetingNo: number = await this.setMeetingDetail({ location, time });
+
+      const meetingInfo: MeetingMemberDetail = {
+        host: host[0], //후에 토큰 유저넘버로 변경
+        meetingNo,
+        guestHeadcount,
+        hostHeadcount: host.length,
+      };
+      await this.setMeetingInfo(meetingInfo);
+      await this.setHostMembers(host, meetingNo);
+
+      return meetingNo;
+    } catch (err) {
+      throw err;
     }
   }
 
@@ -227,27 +248,6 @@ export class MeetingsService {
 
     if (!affectedRows) {
       throw new InternalServerErrorException(`약속 알람 생성 에러입니다.`);
-    }
-  }
-
-  async createMeeting(createMeetingDto: CreateMeetingDto): Promise<Meetings> {
-    try {
-      const { location, time, host, guestHeadcount }: CreateMeetingDto =
-        createMeetingDto;
-      const meeting: Meetings = await this.setMeetingDetail({ location, time });
-
-      const meetingInfo: MeetingMemberDetail = {
-        host: host[0],
-        meeting,
-        guestHeadcount,
-        hostHeadcount: host.length,
-      };
-      await this.setMeetingInfo(meetingInfo);
-      await this.setHostMembers(host, meeting.no);
-
-      return meeting;
-    } catch (err) {
-      throw err;
     }
   }
 

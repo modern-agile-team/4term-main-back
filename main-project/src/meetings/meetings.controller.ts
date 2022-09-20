@@ -18,15 +18,6 @@ import { DeleteGeustDto } from 'src/members/dto/deleteGuest.dto';
 export class MeetingsController {
   constructor(private readonly meetingsService: MeetingsService) {}
 
-  @Patch('guest/invite/:meetingNo/:userNo')
-  async inviteGuest(
-    @Body('guestNo') guest: number,
-    @Param('meetingNo') meetingNo: number,
-    @Param('userNo') userNo: number, //후에 토큰에서 받도록 수정
-  ) {
-    await this.meetingsService.inviteGuest(meetingNo, guest, userNo);
-  }
-
   @HttpCode(HttpStatus.CREATED)
   @ApiCreatedResponse({
     description: '새로운 약속 생성',
@@ -35,12 +26,24 @@ export class MeetingsController {
   async createMeeting(
     @Body() createMeetingDto: CreateMeetingDto,
   ): Promise<object> {
-    const meeting = await this.meetingsService.createMeeting(createMeetingDto);
+    const meetingNo: number = await this.meetingsService.createMeeting(
+      createMeetingDto,
+    );
 
     return {
       success: true,
-      meeting,
+      msg: '약속이 생성되었습니다.',
+      meetingNo,
     };
+  }
+
+  @Patch('guest/invite/:meetingNo/:userNo')
+  async inviteGuest(
+    @Body('guestNo') guest: number,
+    @Param('meetingNo') meetingNo: number,
+    @Param('userNo') userNo: number, //후에 토큰에서 받도록 수정
+  ) {
+    await this.meetingsService.inviteGuest(meetingNo, guest, userNo);
   }
 
   @HttpCode(HttpStatus.OK)

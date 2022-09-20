@@ -13,7 +13,7 @@ export interface MeetingDetail {
 
 export interface MeetingMemberDetail {
   host: Users | number;
-  meeting: Meetings;
+  meetingNo: Meetings | number;
   hostHeadcount: number;
   guestHeadcount: number;
 }
