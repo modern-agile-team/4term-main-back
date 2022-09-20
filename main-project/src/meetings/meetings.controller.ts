@@ -70,16 +70,7 @@ export class MeetingsController {
     return { success: true, msg: `약속이 수락되었습니다` };
   }
 
-  @Patch('guest/invite/:meetingNo/:userNo')
-  async inviteGuest(
-    @Body('guestNo') guest: number,
-    @Param('meetingNo') meetingNo: number,
-    @Param('userNo') userNo: number, //후에 토큰에서 받도록 수정
-  ) {
-    await this.meetingsService.inviteGuest(meetingNo, guest, userNo);
-  }
-
-  @Post('/guest/apply/:meetingNo')
+  @Post('/apply/:meetingNo')
   async setGuestMembers(
     @Param('meetingNo') meetingNo: number,
     @Body('guest') guest: number[],
@@ -87,6 +78,15 @@ export class MeetingsController {
     await this.meetingsService.applyForMeeting({ meetingNo, guest });
 
     return { success: true, msg: `약속 신청이 완료되었습니다.` };
+  }
+
+  @Patch('guest/invite/:meetingNo/:userNo')
+  async inviteGuest(
+    @Body('guestNo') guest: number,
+    @Param('meetingNo') meetingNo: number,
+    @Param('userNo') userNo: number, //후에 토큰에서 받도록 수정
+  ) {
+    await this.meetingsService.inviteGuest(meetingNo, guest, userNo);
   }
 
   @Delete('/guest/:meetingNo/:userNo') //후에 토큰에서 userNo 받아오도록 수정

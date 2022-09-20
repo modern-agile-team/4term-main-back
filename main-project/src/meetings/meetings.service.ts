@@ -235,6 +235,83 @@ export class MeetingsService {
     }
   }
 
+  private async castMembersAsNumber(
+    guests: string,
+    hosts: string,
+  ): Promise<number[]> {
+    const members: number[] = guests
+      ? hosts.split(',').concat(guests.split(',')).map(Number)
+      : hosts.split(',').map(Number);
+
+    return members;
+  }
+
+  private async checkUsersInMembers(
+    users: number[],
+    guests: string,
+    hosts: string,
+  ) {
+    try {
+      const members: number[] = await this.castMembersAsNumber(guests, hosts);
+      const isOverlaped =
+        members.length + users.length - new Set([...members, ...users]).size;
+
+      if (isOverlaped) {
+        throw new BadRequestException(`이미 약속에 참여 중인 유저입니다`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async checkApplyAvailable(
+    meetingNo: number,
+    guest: number[],
+  ): Promise<ParticipatingMembers> {
+    try {
+      await this.findMeetingById(meetingNo);
+      const memberDetail: ParticipatingMembers =
+        await this.meetingRepository.getParticipatingMembers(meetingNo);
+
+      const { hosts, guests }: ParticipatingMembers = memberDetail;
+      await this.checkUsersInMembers(guest, guests, hosts);
+      if (guests != null) {
+        throw new BadRequestException(
+          `마감된 약속에는 신청을 보낼 수 없습니다.`,
+        );
+      }
+
+      return memberDetail;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async applyForMeeting({
+    meetingNo,
+    guest,
+  }: SetGuestMembersDto): Promise<void> {
+    try {
+      const { guestHeadcount, adminHost }: ParticipatingMembers =
+        await this.checkApplyAvailable(meetingNo, guest);
+
+      if (guestHeadcount != guest.length) {
+        throw new BadRequestException(
+          `게스트가 ${guestHeadcount}명 필요합니다`,
+        );
+      }
+
+      await this.setNotice(
+        adminHost,
+        guest[0],
+        NOTICE_TYPE.meeting.apply,
+        JSON.stringify({ guest, meetingNo }),
+      );
+    } catch (err) {
+      throw err;
+    }
+  }
+
   private async setGuestMembers(
     guest: number[],
     meetingNo: number,
@@ -257,17 +334,6 @@ export class MeetingsService {
     }
   }
 
-  private async castMembersAsNumber(
-    guests: string,
-    hosts: string,
-  ): Promise<number[]> {
-    const members: number[] = guests
-      ? hosts.split(',').concat(guests.split(',')).map(Number)
-      : hosts.split(',').map(Number);
-
-    return members;
-  }
-
   async getMeetingMembers(meetingNo): Promise<number[]> {
     try {
       const { hosts, guests }: ParticipatingMembers =
@@ -277,55 +343,6 @@ export class MeetingsService {
       return members;
     } catch (err) {
       throw err;
-    }
-  }
-
-  private async checkUsersInMembers(
-    users: number[],
-    guests: string,
-    hosts: string,
-  ) {
-    try {
-      const members: number[] = await this.castMembersAsNumber(guests, hosts);
-      const isOverlaped =
-        members.length + users.length - new Set([...members, ...users]).size;
-
-      if (isOverlaped) {
-        throw new BadRequestException(`이미 약속에 참여 중인 유저입니다`);
-      }
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  async applyForMeeting({
-    meetingNo,
-    guest,
-  }: SetGuestMembersDto): Promise<void> {
-    try {
-      await this.findMeetingById(meetingNo);
-      const { adminHost, guestHeadcount, hosts, guests }: ParticipatingMembers =
-        await this.meetingRepository.getParticipatingMembers(meetingNo);
-      if (guests != null) {
-        throw new BadRequestException(
-          `마감된 약속에는 게스트를 추가할 수 없습니다.`,
-        );
-      }
-      if (guestHeadcount != guest.length) {
-        throw new BadRequestException(
-          `게스트가 ${guestHeadcount}명 필요합니다`,
-        );
-      }
-      await this.checkUsersInMembers(guest, guests, hosts);
-
-      await this.setNotice(
-        adminHost,
-        guest[0],
-        NOTICE_TYPE.meeting.apply,
-        JSON.stringify({ guest, meetingNo }),
-      );
-    } catch (error) {
-      throw error;
     }
   }
 
