@@ -1,3 +1,4 @@
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsDate,
@@ -23,6 +24,7 @@ export class UpdateBoardDto {
   location: string;
 
   @IsDate()
+  @Transform(({ value }) => new Date(value))
   meetingTime: Date;
 
   @IsNotEmpty()
