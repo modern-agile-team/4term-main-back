@@ -12,8 +12,6 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { BoardBookmark } from './board-bookmark.entity';
-import { BoardMemberInfo } from './board-member-info.entity';
 
 @Entity('boards')
 export class Boards extends BaseEntity {
@@ -40,6 +38,12 @@ export class Boards extends BaseEntity {
 
   @Column({ type: 'date', nullable: true })
   meetingTime: Date;
+
+  @CreateDateColumn({ name: 'created_date' })
+  createdDate: Date;
+
+  @UpdateDateColumn({ default: null, nullable: false, name: 'updated_date' })
+  updatedDate: Date;
 
   @DeleteDateColumn({ nullable: true, name: 'deleted_date' })
   deletedDate: Date;
