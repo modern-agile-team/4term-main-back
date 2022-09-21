@@ -1,5 +1,6 @@
-import { IsOptional, IsString, IsDate } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class UpdateMeetingDto {
   @IsOptional()
@@ -11,6 +12,7 @@ export class UpdateMeetingDto {
   location: string;
 
   @IsOptional()
+  @Type(() => Date)
   @ApiProperty({
     example: '2022-06-27 15:22:31',
     description: '약속 시간',

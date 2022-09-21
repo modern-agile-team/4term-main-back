@@ -9,7 +9,7 @@ export class CreateMeetingDto {
     description: '약속 주최자 측 정보, 배열 0번지가 게시물 작성자',
     required: true,
   })
-  host: Users[];
+  host: number[];
 
   @IsNotEmpty()
   @IsString()
