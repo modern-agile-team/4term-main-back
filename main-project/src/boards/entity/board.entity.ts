@@ -58,6 +58,6 @@ export class Boards extends BaseEntity {
   boardBookmark: BoardBookmarks;
 
   @OneToOne((type) => Meetings, (meeting) => meeting.board)
-  @JoinColumn({ name: 'board_no' })
+  @JoinColumn({ name: 'meeting_no' })
   meetingNo: Meetings;
 }
