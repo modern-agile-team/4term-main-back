@@ -36,7 +36,7 @@ export class Boards extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   location: string;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'datetime', name: 'meeting_time' })
   meetingTime: Date;
 
   @CreateDateColumn({ name: 'created_date' })
