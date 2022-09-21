@@ -48,7 +48,7 @@ export class BoardsController {
     @Body()
     createBoarddto: CreateBoardDto,
   ): Promise<object> {
-    const board: object = await this.boardService.createBoard(createBoarddto);
+    const board: number = await this.boardService.createBoard(createBoarddto);
     const response = { success: true, board };
 
     return response;

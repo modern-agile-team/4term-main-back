@@ -8,10 +8,12 @@ import {
   DeleteDateColumn,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Users } from 'src/users/entity/user.entity';
 
 @Entity('boards')
 export class Boards extends BaseEntity {
@@ -25,15 +27,14 @@ export class Boards extends BaseEntity {
     type: 'tinyint',
     width: 1,
     default: false,
-    comment: '인원 모집 여부',
-    nullable: false,
+    nullable: true,
   })
   isDone: boolean;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255 })
   description: string;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', length: 255 })
   location: string;
 
   @Column({ type: 'datetime', name: 'meeting_time' })
@@ -42,10 +43,10 @@ export class Boards extends BaseEntity {
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
 
-  @UpdateDateColumn({ default: null, nullable: false, name: 'updated_date' })
+  @UpdateDateColumn({ default: null, name: 'updated_date' })
   updatedDate: Date;
 
-  @DeleteDateColumn({ nullable: true, name: 'deleted_date' })
+  @DeleteDateColumn({ name: 'deleted_date' })
   deletedDate: Date;
 
   @OneToOne(
@@ -60,4 +61,8 @@ export class Boards extends BaseEntity {
   @OneToOne((type) => Meetings, (meeting) => meeting.board)
   @JoinColumn({ name: 'meeting_no' })
   meetingNo: Meetings;
+
+  @ManyToOne((type) => Users, (user) => user.board)
+  @JoinColumn({ name: 'user_no' })
+  userNo: Users;
 }

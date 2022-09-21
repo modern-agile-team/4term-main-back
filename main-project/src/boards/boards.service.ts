@@ -1,16 +1,36 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { Boards } from './entity/board.entity';
+import { BoardDetail, BoardResponse } from './interface/boards.interface';
 import { BoardRepository } from './repository/board.repository';
 
 @Injectable()
 export class BoardsService {
   constructor(
     @InjectRepository(BoardRepository)
-    private boardRepository: BoardRepository,
+    private readonly boardRepository: BoardRepository,
   ) {}
+
+  async setBoard(createBoardDto: CreateBoardDto): Promise<number> {
+    try {
+      const { affectedRows, insertId }: BoardResponse =
+        await this.boardRepository.createBoard(createBoardDto);
+
+      if (!(affectedRows && insertId)) {
+        throw new InternalServerErrorException(`board 생성 오류입니다.`);
+      }
+
+      return insertId;
+    } catch (error) {
+      throw error;
+    }
+  }
 
   async getAllBoards(): Promise<Boards[]> {
     try {
@@ -38,11 +58,22 @@ export class BoardsService {
     }
   }
 
-  async createBoard(createBoardDto: CreateBoardDto): Promise<Boards> {
+  async createBoard(createBoardDto: CreateBoardDto): Promise<number> {
     try {
-      const board = await this.boardRepository.createBoard(createBoardDto);
+      // const {
+      //   userNo,
+      //   meetingNo,
+      //   title,
+      //   location,
+      //   description,
+      //   meetingTime,
+      // }: CreateBoardDto = createBoardDto;
 
-      return board;
+      // const userConfirm = await this.userReoisitory.findOne(userNo);
+
+      const boardNo: number = await this.setBoard(createBoardDto);
+
+      return boardNo;
     } catch (error) {
       throw error;
     }

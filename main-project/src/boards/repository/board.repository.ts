@@ -1,34 +1,50 @@
-import { InternalServerErrorException, Logger } from '@nestjs/common';
-import { EntityRepository, Repository } from 'typeorm';
+import { InternalServerErrorException } from '@nestjs/common';
+import { Meetings } from 'src/meetings/entity/meeting.entity';
+import { Users } from 'src/users/entity/user.entity';
+import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { CreateBoardDto } from '../dto/create-board.dto';
 import { UpdateBoardDto } from '../dto/update-board.dto';
 import { Boards } from '../entity/board.entity';
+import { BoardDetail, BoardResponse } from '../interface/boards.interface';
 
-//db관련 CRUD 작업 하는 파일
 @EntityRepository(Boards)
 export class BoardRepository extends Repository<Boards> {
-  private logger = new Logger('BoardsRepository');
+  // async getBoardByNo(boardNo: number): Promise<Boards> {
+  //   try {
+  //     const board = await this.createQueryBuilder('boards').
+  //     ;
 
-  /**게시글 생성 */
-  async createBoard(createBoardDto: CreateBoardDto): Promise<Boards> {
+  //     return board;
+  //   } catch (error) {
+  //     throw new InternalServerErrorException(
+  //       `${error} getBoardByNo-repository: 알 수 없는 서버 에러입니다.`,
+  //     );
+  //   }
+  // }
+
+  async createBoard(
+    user: Users,
+    meeting: Meetings,
+    createBoardDto: CreateBoardDto,
+  ): Promise<BoardResponse> {
     try {
-      const { title, description, isDone, location, meetingTime } =
+      const { title, location, description, meetingTime }: CreateBoardDto =
         createBoardDto;
 
-      const board = this.create({
-        title,
-        description,
-        isDone,
-        location,
-        meetingTime,
-      });
+      const { raw }: InsertResult = await this.createQueryBuilder('boards')
+        .insert()
+        .into(Boards)
+        .values([
+          {
+            title,
+            location,
+            description,
+            meetingTime,
+          },
+        ])
+        .execute();
 
-      await this.save(board);
-
-      this.logger.debug(`creating new board success :)
-    title : ${title}`);
-
-      return board;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
@@ -52,7 +68,6 @@ export class BoardRepository extends Repository<Boards> {
 
       const save = await this.save(dbData);
 
-      this.logger.debug(`updating board success :)`);
       return save;
     } catch (error) {
       throw new InternalServerErrorException(
