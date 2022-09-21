@@ -17,7 +17,7 @@ export class HostMembersRepository extends Repository<HostMembers> {
       return raw.affectedRows;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} addHostMembers: 알 수 없는 서버 에러입니다.`,
+        `${error} saveHostMembers: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
