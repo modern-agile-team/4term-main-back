@@ -1,5 +1,11 @@
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsDate, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsDate,
+  IsNotEmpty,
+  IsNumber,
+  IsString,
+} from 'class-validator';
 export class CreateBoardDto {
   @IsNotEmpty()
   @IsString()
@@ -19,4 +25,12 @@ export class CreateBoardDto {
   @IsDate()
   @Transform(({ value }) => new Date(value))
   meetingTime: Date;
+
+  @IsNumber()
+  @IsNotEmpty()
+  male: number;
+
+  @IsNumber()
+  @IsNotEmpty()
+  female: number;
 }
