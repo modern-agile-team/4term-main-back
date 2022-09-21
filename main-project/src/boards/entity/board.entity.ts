@@ -1,20 +1,24 @@
+import { Meetings } from 'src/meetings/entity/meeting.entity';
+import { BoardBookmarks } from './board-bookmark.entity';
+import { BoardMemberInfos } from './board-member-info.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
-// fk없음, entity취합 후 생성예정
-@Entity()
-export class Board extends BaseEntity {
+@Entity('boards')
+export class Boards extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: false })
   title: string;
 
   @Column({
@@ -22,24 +26,38 @@ export class Board extends BaseEntity {
     width: 1,
     default: false,
     comment: '인원 모집 여부',
+    nullable: false,
   })
-  done: boolean;
+  isDone: boolean;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   location: string;
 
-  @Column({ type: 'date' })
-  time: Date;
+  @Column({ type: 'datetime', name: 'meeting_time' })
+  meetingTime: Date;
 
-  @CreateDateColumn()
-  created_date: Date;
+  @CreateDateColumn({ name: 'created_date' })
+  createdDate: Date;
 
-  @UpdateDateColumn({ nullable: true })
-  updated_date: Date;
+  @UpdateDateColumn({ default: null, nullable: false, name: 'updated_date' })
+  updatedDate: Date;
 
-  @DeleteDateColumn({ nullable: true })
-  deleted_date: Date;
+  @DeleteDateColumn({ nullable: true, name: 'deleted_date' })
+  deletedDate: Date;
+
+  @OneToOne(
+    (type) => BoardMemberInfos,
+    (boardMemberInfo) => boardMemberInfo.boardNo,
+  )
+  boardMemberInfo: BoardMemberInfos;
+
+  @OneToOne((type) => BoardBookmarks, (boardBookmark) => boardBookmark.boardNo)
+  boardBookmark: BoardBookmarks;
+
+  @OneToOne((type) => Meetings, (meeting) => meeting.board)
+  @JoinColumn({ name: 'board_no' })
+  meetingNo: Meetings;
 }

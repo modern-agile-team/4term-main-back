@@ -4,10 +4,19 @@ import { MeetingsController } from './meetings.controller';
 import { MeetingRepository } from './repository/meeting.repository';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MeetingInfoRepository } from './repository/meeting-info.repository';
+import { HostMembersRepository } from 'src/members/repository/host-members.repository';
+import { GuestMembersRepository } from 'src/members/repository/guest-members.repository';
+import { NoticesRepository } from 'src/notices/repository/notices.repository';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([MeetingRepository, MeetingInfoRepository]),
+    TypeOrmModule.forFeature([
+      MeetingRepository,
+      MeetingInfoRepository,
+      HostMembersRepository,
+      GuestMembersRepository,
+      NoticesRepository,
+    ]),
   ],
   providers: [MeetingsService],
   controllers: [MeetingsController],
