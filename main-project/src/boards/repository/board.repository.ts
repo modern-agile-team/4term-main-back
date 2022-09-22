@@ -39,6 +39,29 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
+  async getAllBoards(): Promise<BoardReadResponse[]> {
+    try {
+      const boards = this.createQueryBuilder('boards')
+        .select([
+          'boards.no AS no',
+          'boards.userNo AS user_no',
+          'boards.meetingNo AS meeting_no',
+          'boards.title AS title',
+          'boards.description AS description',
+          'boards.location AS location',
+          'boards.meetingTime AS meeting_time',
+          'boards.isDone AS isDone',
+        ])
+        .getRawMany();
+
+      return boards;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getAllBoards-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   //게시글 생성 관련
   async createBoard(
     createBoardDto: CreateBoardDto,

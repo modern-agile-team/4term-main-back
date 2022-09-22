@@ -94,11 +94,15 @@ export class BoardsService {
   }
 
   // 게시글 조회 관련
-  async getAllBoards(): Promise<Boards[]> {
+  async getAllBoards(): Promise<BoardReadResponse[]> {
     try {
-      const found = await this.boardRepository.find();
+      const boards = await this.boardRepository.getAllBoards();
 
-      return found;
+      if (!boards) {
+        throw new NotFoundException(`전체 게시글의 조회를 실패 했습니다.`);
+      }
+
+      return boards;
     } catch (error) {
       throw error;
     }
@@ -106,7 +110,6 @@ export class BoardsService {
 
   async getBoardByNo(boardNo: number): Promise<BoardReadResponse> {
     try {
-      // const board = await this.boardRepository.findOne(boardNo);
       const board: BoardReadResponse = await this.boardRepository.getBoardByNo(
         boardNo,
       );
