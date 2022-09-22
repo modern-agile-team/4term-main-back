@@ -8,3 +8,8 @@ export interface BoardMemberDetail {
   male: number;
   female: number;
 }
+
+export interface BookmarkDetail {
+  boardNo: number;
+  userNo: number;
+}

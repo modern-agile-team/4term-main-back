@@ -2,11 +2,13 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { CreateBoardDto } from '../dto/create-board.dto';
 import { UpdateBoardDto } from '../dto/update-board.dto';
+import { BoardBookmarks } from '../entity/board-bookmark.entity';
 import { BoardMemberInfos } from '../entity/board-member-info.entity';
 import { Boards } from '../entity/board.entity';
 import {
   BoardMemberDetail,
   BoardResponse,
+  BookmarkDetail,
 } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
@@ -44,6 +46,24 @@ export class BoardRepository extends Repository<Boards> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async createBookmark(bookmarkDetail: BookmarkDetail): Promise<BoardResponse> {
+    try {
+      const { raw }: InsertResult = await this.createQueryBuilder(
+        'board_bookmarks',
+      )
+        .insert()
+        .into(BoardBookmarks)
+        .values(bookmarkDetail)
+        .execute();
+
+      return raw;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} createBookmark-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

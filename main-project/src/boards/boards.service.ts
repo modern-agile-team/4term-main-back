@@ -5,9 +5,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBoardDto } from './dto/create-board.dto';
+import { CreateBookmarkDto } from './dto/create-bookmark.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { Boards } from './entity/board.entity';
-import { BoardMemberDetail, BoardResponse } from './interface/boards.interface';
+import {
+  BoardMemberDetail,
+  BoardResponse,
+  BookmarkDetail,
+} from './interface/boards.interface';
 import { BoardRepository } from './repository/board.repository';
 
 @Injectable()
@@ -60,6 +65,28 @@ export class BoardsService {
       await this.setBoardMember(boardMemberDetail);
 
       return boardNo;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async createBookmark(
+    boardNo: number,
+    createBookmarkDto: CreateBookmarkDto,
+  ): Promise<number> {
+    try {
+      const bookmarkDetail: BookmarkDetail = {
+        ...createBookmarkDto,
+        boardNo,
+      };
+      const { affectedRows, insertId }: BoardResponse =
+        await this.boardRepository.createBookmark(bookmarkDetail);
+
+      if (!(affectedRows && insertId)) {
+        throw new InternalServerErrorException(`bookmark 생성 오류입니다.`);
+      }
+
+      return insertId;
     } catch (error) {
       throw error;
     }
