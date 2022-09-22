@@ -69,7 +69,7 @@ export class BoardsController {
 
   // Patch Methods
   @Patch('/:boardNo')
-  async updateBoardStatus(
+  async updateBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body() updateBoardDto: UpdateBoardDto,
   ) {

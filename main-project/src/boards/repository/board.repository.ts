@@ -44,6 +44,26 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
+  async getBoardMemberByNo(boardNo: number) {
+    try {
+      const boardMember = this.createQueryBuilder('boards')
+        .leftJoin('boards.boardMemberInfo', 'boardMemberInfo')
+        .select([
+          'boardMemberInfo.boardNo AS boardNo',
+          'boardMemberInfo.male AS male',
+          'boardMemberInfo.female AS female',
+        ])
+        .where('boards.no=:boardNo', { boardNo })
+        .getRawOne();
+
+      return boardMember;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getBoardMemberByNo-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async getAllBoards(): Promise<BoardReadResponse[]> {
     try {
       const boards = this.createQueryBuilder('boards')
