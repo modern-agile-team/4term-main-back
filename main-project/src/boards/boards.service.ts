@@ -143,17 +143,18 @@ export class BoardsService {
   }
 
   //게시글 삭제 관련
-  async deleteBoardByNo(boardNo: number): Promise<boolean> {
+  async deleteBoardByNo(boardNo: number): Promise<string> {
     try {
-      const result = await this.boardRepository.delete(boardNo);
+      const board = await this.getBoardByNo(boardNo);
 
-      if (result.affected === 0) {
-        throw new NotFoundException(
-          `Can't find Boards with boardNo ${boardNo}`,
-        );
+      if (!board) {
+        throw new NotFoundException(`${boardNo}번 게시글을 찾을 수 없습니다.`);
       }
 
-      return true;
+      await this.boardRepository.deleteBoardMember(boardNo);
+      await this.boardRepository.deleteBoard(boardNo);
+
+      return `${boardNo}번 게시글 삭제 성공 :)`;
     } catch (error) {
       throw error;
     }

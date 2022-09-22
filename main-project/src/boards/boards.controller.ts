@@ -31,7 +31,6 @@ export class BoardsController {
     return response;
   }
 
-  // @HttpCode(HttpStatus.OK)
   @Get('/:boardNo')
   async getBoardByNo(@Param('boardNo') boardNo: number): Promise<object> {
     const board: BoardReadResponse = await this.boardService.getBoardByNo(
@@ -87,9 +86,9 @@ export class BoardsController {
   @Delete('/:boardNo')
   async deleteBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
-  ): Promise<object> {
-    await this.boardService.deleteBoardByNo(boardNo);
+  ): Promise<string> {
+    const board = await this.boardService.deleteBoardByNo(boardNo);
 
-    return { success: true };
+    return board;
   }
 }

@@ -1,5 +1,10 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { EntityRepository, InsertResult, Repository } from 'typeorm';
+import {
+  DeleteResult,
+  EntityRepository,
+  InsertResult,
+  Repository,
+} from 'typeorm';
 import { CreateBoardDto } from '../dto/create-board.dto';
 import { UpdateBoardDto } from '../dto/update-board.dto';
 import { BoardBookmarks } from '../entity/board-bookmark.entity';
@@ -142,6 +147,41 @@ export class BoardRepository extends Repository<Boards> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  // 게시글 삭제 관련
+  async deleteBoardMember(boardNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder(
+        'board_member_infos',
+      )
+        .delete()
+        .from(BoardMemberInfos)
+        .where('boardNo = :boardNo', { boardNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteBoardMember-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async deleteBoard(boardNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder('boards')
+        .delete()
+        .from(Boards)
+        .where('no = :boardNo', { boardNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
