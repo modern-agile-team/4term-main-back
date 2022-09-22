@@ -21,5 +21,5 @@ export class BoardMemberInfos extends BaseEntity {
 
   @OneToOne((type) => Boards, (board) => board.boardMemberInfo)
   @JoinColumn({ name: 'board_no' })
-  boardNo: Boards;
+  boardNo: number;
 }

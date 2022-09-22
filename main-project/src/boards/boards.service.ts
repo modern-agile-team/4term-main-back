@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { Boards } from './entity/board.entity';
-import { BoardDetail, BoardResponse } from './interface/boards.interface';
+import { BoardMemberDetail, BoardResponse } from './interface/boards.interface';
 import { BoardRepository } from './repository/board.repository';
 
 @Injectable()
@@ -17,6 +17,7 @@ export class BoardsService {
     private readonly boardRepository: BoardRepository,
   ) {}
 
+  // 게시글 생성 관련
   async setBoard(createBoardDto: CreateBoardDto): Promise<number> {
     try {
       const { affectedRows, insertId }: BoardResponse =
@@ -32,6 +33,39 @@ export class BoardsService {
     }
   }
 
+  async setBoardMember(boardMemberDetail: BoardMemberDetail): Promise<void> {
+    try {
+      const { affectedRows, insertId }: BoardResponse =
+        await this.boardRepository.createBoardMember(boardMemberDetail);
+
+      if (!(affectedRows && insertId)) {
+        throw new InternalServerErrorException(`board-member 생성 오류입니다.`);
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async createBoard(createBoardDto: CreateBoardDto): Promise<number> {
+    try {
+      const boardNo: number = await this.setBoard(createBoardDto);
+
+      const { male, female }: CreateBoardDto = createBoardDto;
+      const boardMemberDetail: BoardMemberDetail = {
+        boardNo,
+        male,
+        female,
+      };
+
+      await this.setBoardMember(boardMemberDetail);
+
+      return boardNo;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // 게시글 조회 관련
   async getAllBoards(): Promise<Boards[]> {
     try {
       const found = await this.boardRepository.find();
@@ -58,27 +92,7 @@ export class BoardsService {
     }
   }
 
-  async createBoard(createBoardDto: CreateBoardDto): Promise<number> {
-    try {
-      // const {
-      //   userNo,
-      //   meetingNo,
-      //   title,
-      //   location,
-      //   description,
-      //   meetingTime,
-      // }: CreateBoardDto = createBoardDto;
-
-      // const userConfirm = await this.userReoisitory.findOne(userNo);
-
-      const boardNo: number = await this.setBoard(createBoardDto);
-
-      return boardNo;
-    } catch (error) {
-      throw error;
-    }
-  }
-
+  //게시글 수정 관련
   async updateBoard(
     boardNo: number,
     updateBoardDto: UpdateBoardDto,
@@ -96,6 +110,7 @@ export class BoardsService {
     }
   }
 
+  //게시글 삭제 관련
   async deleteBoardByNo(boardNo: number): Promise<boolean> {
     try {
       const result = await this.boardRepository.delete(boardNo);

@@ -3,22 +3,17 @@ import {
   Controller,
   Delete,
   Get,
-  Logger,
   Param,
   ParseIntPipe,
   Post,
   Patch,
 } from '@nestjs/common';
-import { create } from 'domain';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 
 @Controller('boards')
 export class BoardsController {
-  private logger = new Logger('BoardsController');
-  // logger는 middle ware로 분리 필요
-
   constructor(private boardService: BoardsService) {}
 
   @Get()
@@ -44,10 +39,7 @@ export class BoardsController {
   }
 
   @Post()
-  async createBoard(
-    @Body()
-    createBoarddto: CreateBoardDto,
-  ): Promise<object> {
+  async createBoard(@Body() createBoarddto: CreateBoardDto): Promise<object> {
     const board: number = await this.boardService.createBoard(createBoarddto);
     const response = { success: true, board };
 

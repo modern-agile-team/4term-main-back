@@ -52,7 +52,7 @@ export class Users extends BaseEntity {
   boardBookmark: BoardBookmarks;
 
   @OneToMany((type) => Boards, (board) => board.userNo)
-  board: Boards;
+  board: Boards[];
 
   @OneToMany((type) => Notices, (notices) => notices.userNo)
   noticeUser: Notices[];
