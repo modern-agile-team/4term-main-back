@@ -7,11 +7,15 @@ import {
 import { UpdateMeetingDto } from '../dto/updateMeeting.dto';
 import { Meetings } from '../entity/meeting.entity';
 import { InternalServerErrorException } from '@nestjs/common';
-import { MeetingResponse } from '../interface/meeting.interface';
+import {
+  ParticipatingMembers,
+  MeetingDetail,
+  MeetingResponse,
+} from '../interface/meeting.interface';
 
 @EntityRepository(Meetings)
 export class MeetingRepository extends Repository<Meetings> {
-  async createMeeting(meetingInfo: object): Promise<MeetingResponse> {
+  async createMeeting(meetingInfo: MeetingDetail): Promise<MeetingResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('meetings')
         .insert()
@@ -42,14 +46,14 @@ export class MeetingRepository extends Repository<Meetings> {
   }
 
   async updateMeeting(
-    meeting: Meetings,
+    meetingNo: number,
     updatedMeetingInfo: UpdateMeetingDto,
   ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Meetings)
         .set(updatedMeetingInfo)
-        .where('no = :no', { no: meeting.no })
+        .where('no = :meetingNo', { meetingNo })
         .execute();
 
       return affected;
@@ -60,18 +64,52 @@ export class MeetingRepository extends Repository<Meetings> {
     }
   }
 
-  async acceptMeeting(meeting: Meetings): Promise<number> {
+  async acceptMeeting(meetingNo: number): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Meetings)
         .set({ isAccepted: true })
-        .where('no = :no', { no: meeting.no })
+        .where('no = :no', { no: meetingNo })
         .execute();
 
       return affected;
     } catch (err) {
       throw new InternalServerErrorException(
         `${err} 약속 수락 에러(acceptMeeting): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getParticipatingMembers(
+    meetingNo: number,
+  ): Promise<ParticipatingMembers> {
+    try {
+      const result = await this.createQueryBuilder('meetings')
+        .leftJoin(
+          'meetings.meetingInfo',
+          'meetingInfo',
+          'meetings.no = meetingInfo.meetingNo',
+        )
+        .leftJoin('meetings.guestMembers', 'guestMembers')
+        .leftJoin('meetings.hostMembers', 'hostMembers')
+        .select([
+          'meetingInfo.host AS adminHost',
+          'meetingInfo.guest AS adminGuest',
+          'meetingInfo.guestHeadcount AS guestHeadcount',
+          'meetingInfo.hostHeadcount AS hostHeadcount',
+          'GROUP_CONCAT(DISTINCT guestMembers.userNo) AS guests',
+          'GROUP_CONCAT(DISTINCT hostMembers.userNo) AS hosts',
+          '(meetingInfo.guestHeadcount - COUNT(DISTINCT guestMembers.userNo)) AS addGuestAvailable',
+          '(meetingInfo.hostHeadcount - COUNT(DISTINCT hostMembers.userNo)) AS addHostAvailable',
+        ])
+        .where('meetings.no = :meetingNo', { meetingNo })
+        .groupBy('meetings.no')
+        .getRawOne();
+
+      return result;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 참여 중인 유저 조회(getParticipatingMembers): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
