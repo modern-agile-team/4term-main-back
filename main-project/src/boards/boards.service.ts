@@ -10,8 +10,9 @@ import { UpdateBoardDto } from './dto/update-board.dto';
 import { Boards } from './entity/board.entity';
 import {
   BoardMemberDetail,
-  BoardResponse,
+  BoardCreateResponse,
   BookmarkDetail,
+  BoardReadResponse,
 } from './interface/boards.interface';
 import { BoardRepository } from './repository/board.repository';
 
@@ -25,7 +26,7 @@ export class BoardsService {
   // 게시글 생성 관련
   async setBoard(createBoardDto: CreateBoardDto): Promise<number> {
     try {
-      const { affectedRows, insertId }: BoardResponse =
+      const { affectedRows, insertId }: BoardCreateResponse =
         await this.boardRepository.createBoard(createBoardDto);
 
       if (!(affectedRows && insertId)) {
@@ -40,7 +41,7 @@ export class BoardsService {
 
   async setBoardMember(boardMemberDetail: BoardMemberDetail): Promise<void> {
     try {
-      const { affectedRows, insertId }: BoardResponse =
+      const { affectedRows, insertId }: BoardCreateResponse =
         await this.boardRepository.createBoardMember(boardMemberDetail);
 
       if (!(affectedRows && insertId)) {
@@ -79,7 +80,7 @@ export class BoardsService {
         ...createBookmarkDto,
         boardNo,
       };
-      const { affectedRows, insertId }: BoardResponse =
+      const { affectedRows, insertId }: BoardCreateResponse =
         await this.boardRepository.createBookmark(bookmarkDetail);
 
       if (!(affectedRows && insertId)) {
@@ -103,17 +104,18 @@ export class BoardsService {
     }
   }
 
-  async getBoardByNo(boardNo: number): Promise<Boards> {
+  async getBoardByNo(boardNo: number): Promise<BoardReadResponse> {
     try {
-      const found = await this.boardRepository.findOne(boardNo);
+      // const board = await this.boardRepository.findOne(boardNo);
+      const board: BoardReadResponse = await this.boardRepository.getBoardByNo(
+        boardNo,
+      );
 
-      if (!found) {
-        throw new NotFoundException(
-          `Can't find Boards with boardNo ${boardNo}`,
-        );
+      if (!board) {
+        throw new NotFoundException(`${boardNo}번 게시글을 찾을 수 없습니다.`);
       }
 
-      return found;
+      return board;
     } catch (error) {
       throw error;
     }
@@ -125,13 +127,13 @@ export class BoardsService {
     updateBoardDto: UpdateBoardDto,
   ): Promise<object> {
     try {
-      const dbData = await this.getBoardByNo(boardNo);
-      const reqData = await this.boardRepository.updateBoard(
-        dbData,
+      const board: BoardReadResponse = await this.getBoardByNo(boardNo);
+      const updateBoard = await this.boardRepository.updateBoard(
+        board,
         updateBoardDto,
       );
 
-      return reqData;
+      return updateBoard;
     } catch (error) {
       throw error;
     }

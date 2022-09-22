@@ -7,14 +7,42 @@ import { BoardMemberInfos } from '../entity/board-member-info.entity';
 import { Boards } from '../entity/board.entity';
 import {
   BoardMemberDetail,
-  BoardResponse,
+  BoardCreateResponse,
   BookmarkDetail,
+  BoardReadResponse,
 } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
 export class BoardRepository extends Repository<Boards> {
+  // 게시글 조회 관련
+  async getBoardByNo(boardNo: number): Promise<BoardReadResponse> {
+    try {
+      const board = this.createQueryBuilder('boards')
+        .select([
+          'boards.no AS no',
+          'boards.userNo AS user_no',
+          'boards.meetingNo AS meeting_no',
+          'boards.title AS title',
+          'boards.description AS description',
+          'boards.location AS location',
+          'boards.meetingTime AS meeting_time',
+          'boards.isDone AS isDone',
+        ])
+        .where('boards.no=:boardNo', { boardNo })
+        .getRawOne();
+
+      return board;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getBoardByNo-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   //게시글 생성 관련
-  async createBoard(createBoardDto: CreateBoardDto): Promise<BoardResponse> {
+  async createBoard(
+    createBoardDto: CreateBoardDto,
+  ): Promise<BoardCreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('boards')
         .insert()
@@ -32,7 +60,7 @@ export class BoardRepository extends Repository<Boards> {
 
   async createBoardMember(
     boardMemberDetail: BoardMemberDetail,
-  ): Promise<BoardResponse> {
+  ): Promise<BoardCreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
         'board_member_infos',
@@ -50,7 +78,9 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async createBookmark(bookmarkDetail: BookmarkDetail): Promise<BoardResponse> {
+  async createBookmark(
+    bookmarkDetail: BookmarkDetail,
+  ): Promise<BoardCreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
         'board_bookmarks',
@@ -70,7 +100,7 @@ export class BoardRepository extends Repository<Boards> {
 
   //게시글 수정 관련
   async updateBoard(
-    dbData: Boards,
+    dbData: BoardReadResponse,
     updateBoardDto: UpdateBoardDto,
   ): Promise<object> {
     try {

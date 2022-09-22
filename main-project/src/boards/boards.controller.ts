@@ -7,11 +7,14 @@ import {
   ParseIntPipe,
   Post,
   Patch,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { CreateBookmarkDto } from './dto/create-bookmark.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
+import { BoardReadResponse } from './interface/boards.interface';
 
 @Controller('boards')
 export class BoardsController {
@@ -28,9 +31,12 @@ export class BoardsController {
     return response;
   }
 
+  // @HttpCode(HttpStatus.OK)
   @Get('/:boardNo')
   async getBoardByNo(@Param('boardNo') boardNo: number): Promise<object> {
-    const board: object = await this.boardService.getBoardByNo(boardNo);
+    const board: BoardReadResponse = await this.boardService.getBoardByNo(
+      boardNo,
+    );
     const response = {
       success: true,
       board,

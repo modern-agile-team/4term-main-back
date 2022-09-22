@@ -20,10 +20,10 @@ export class CreateBoardDto {
   title: string;
 
   @IsString()
-  description: string;
+  description?: string;
 
   @IsString()
-  location: string;
+  location?: string;
 
   @IsBoolean()
   isDone: boolean;

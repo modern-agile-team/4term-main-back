@@ -31,13 +31,13 @@ export class Boards extends BaseEntity {
   })
   isDone: boolean;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   location: string;
 
-  @Column({ type: 'datetime', name: 'meeting_time' })
+  @Column({ type: 'datetime', name: 'meeting_time', nullable: true })
   meetingTime: Date;
 
   @CreateDateColumn({ name: 'created_date' })
