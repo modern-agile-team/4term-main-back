@@ -8,6 +8,7 @@ export interface BoardReadResponse {
   isDone: boolean;
   description: string;
   location: string;
+  nickname: string;
   meetingTime: Date;
   meetingNo: number;
   userNo: number;

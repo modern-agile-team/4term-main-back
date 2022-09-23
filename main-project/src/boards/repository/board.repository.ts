@@ -25,10 +25,12 @@ export class BoardRepository extends Repository<Boards> {
     try {
       const board = this.createQueryBuilder('boards')
         .leftJoin('boards.boardMemberInfo', 'boardMemberInfo')
+        .leftJoin('boards.userNo', 'userNo')
         .select([
           'boards.no AS no',
           'boards.userNo AS user_no',
           'boards.meetingNo AS meeting_no',
+          'userNo.nickname AS nickname',
           'boards.title AS title',
           'boards.description AS description',
           'boards.location AS location',
@@ -115,7 +117,7 @@ export class BoardRepository extends Repository<Boards> {
   ): Promise<BoardCreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
-        'board_bookmarks',
+        'boardBookmark',
       )
         .insert()
         .into(BoardBookmarks)
@@ -194,6 +196,42 @@ export class BoardRepository extends Repository<Boards> {
         .delete()
         .from(Boards)
         .where('no = :boardNo', { boardNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async cancelBookmark(boardNo: number, userNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder(
+        'boardBookmark',
+      )
+        .delete()
+        .from(BoardBookmarks)
+        .where('boardNo = :boardNo', { boardNo })
+        .andWhere('userNo = :userNo', { userNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+  async deleteBookmark(boardNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder(
+        'boardBookmark',
+      )
+        .delete()
+        .from(BoardBookmarks)
+        .where('boardNo = :boardNo', { boardNo })
         .execute();
 
       return affected;

@@ -161,9 +161,27 @@ export class BoardsService {
       }
 
       await this.boardRepository.deleteBoardMember(boardNo);
+      await this.boardRepository.deleteBookmark(boardNo);
       await this.boardRepository.deleteBoard(boardNo);
 
       return `${boardNo}번 게시글 삭제 성공 :)`;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async cancelBookmark(boardNo: number, userNo: number): Promise<string> {
+    try {
+      const board: BoardReadResponse = await this.getBoardByNo(boardNo);
+      console.log(board);
+
+      if (!board) {
+        throw new NotFoundException(`${boardNo}번 게시글을 찾을 수 없습니다.`);
+      }
+
+      await this.boardRepository.cancelBookmark(boardNo, userNo);
+
+      return `${boardNo}번 게시글 ${board.nickname}  북마크 삭제 성공 :)`;
     } catch (error) {
       throw error;
     }

@@ -10,6 +10,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { Users } from 'src/users/entity/user.entity';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { CreateBookmarkDto } from './dto/create-bookmark.dto';
@@ -88,6 +89,16 @@ export class BoardsController {
     @Param('boardNo', ParseIntPipe) boardNo: number,
   ): Promise<string> {
     const board = await this.boardService.deleteBoardByNo(boardNo);
+
+    return board;
+  }
+
+  @Delete('/:boardNo/:userNo')
+  async cancelBookmark(
+    @Param() params: { [key: string]: number },
+  ): Promise<string> {
+    const { boardNo, userNo } = params;
+    const board = await this.boardService.cancelBookmark(boardNo, userNo);
 
     return board;
   }
