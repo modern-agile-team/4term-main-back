@@ -4,6 +4,7 @@ import {
   EntityRepository,
   InsertResult,
   Repository,
+  UpdateResult,
 } from 'typeorm';
 import { CreateBoardDto } from '../dto/create-board.dto';
 import { UpdateBoardDto } from '../dto/update-board.dto';
@@ -23,6 +24,7 @@ export class BoardRepository extends Repository<Boards> {
   async getBoardByNo(boardNo: number): Promise<BoardReadResponse> {
     try {
       const board = this.createQueryBuilder('boards')
+        .leftJoin('boards.boardMemberInfo', 'boardMemberInfo')
         .select([
           'boards.no AS no',
           'boards.userNo AS user_no',
@@ -32,6 +34,8 @@ export class BoardRepository extends Repository<Boards> {
           'boards.location AS location',
           'boards.meetingTime AS meeting_time',
           'boards.isDone AS isDone',
+          'boardMemberInfo.male AS male',
+          'boardMemberInfo.female AS female',
         ])
         .where('boards.no=:boardNo', { boardNo })
         .getRawOne();
@@ -40,26 +44,6 @@ export class BoardRepository extends Repository<Boards> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getBoardByNo-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async getBoardMemberByNo(boardNo: number) {
-    try {
-      const boardMember = this.createQueryBuilder('boards')
-        .leftJoin('boards.boardMemberInfo', 'boardMemberInfo')
-        .select([
-          'boardMemberInfo.boardNo AS boardNo',
-          'boardMemberInfo.male AS male',
-          'boardMemberInfo.female AS female',
-        ])
-        .where('boards.no=:boardNo', { boardNo })
-        .getRawOne();
-
-      return boardMember;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} getBoardMemberByNo-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -148,25 +132,39 @@ export class BoardRepository extends Repository<Boards> {
 
   //게시글 수정 관련
   async updateBoard(
-    dbData: BoardReadResponse,
+    boardNo: number,
     updateBoardDto: UpdateBoardDto,
-  ): Promise<object> {
+  ): Promise<number> {
     try {
-      const { title, description, isDone, location, meetingTime } =
-        updateBoardDto;
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(Boards)
+        .set(updateBoardDto)
+        .where('no = :boardNo', { boardNo })
+        .execute();
 
-      dbData.title = title;
-      dbData.description = description;
-      dbData.isDone = isDone;
-      dbData.location = location;
-      dbData.meetingTime = meetingTime;
-
-      const save = await this.save(dbData);
-
-      return save;
+      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async updateBoardMember(
+    boardNo: number,
+    boardMember: BoardMemberDetail,
+  ): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(BoardMemberInfos)
+        .set(boardMember)
+        .where('no = :boardNo', { boardNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} updateBoardMember-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

@@ -14,7 +14,7 @@ export interface BoardReadResponse {
 }
 
 export interface BoardMemberDetail {
-  boardNo: number;
+  boardNo?: number;
   male: number;
   female: number;
 }

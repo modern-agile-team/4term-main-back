@@ -73,11 +73,11 @@ export class BoardsController {
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body() updateBoardDto: UpdateBoardDto,
   ) {
-    const board: object = await this.boardService.updateBoard(
+    const board: void = await this.boardService.updateBoard(
       boardNo,
       updateBoardDto,
     );
-    const response = { success: true, board };
+    const response = { success: true };
 
     return response;
   }

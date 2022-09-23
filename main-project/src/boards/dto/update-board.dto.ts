@@ -9,14 +9,6 @@ import {
 
 export class UpdateBoardDto {
   @IsNotEmpty()
-  @IsNumber()
-  userNo: number;
-
-  @IsNotEmpty()
-  @IsNumber()
-  meetingNo: number;
-
-  @IsNotEmpty()
   @IsString()
   title: string;
 

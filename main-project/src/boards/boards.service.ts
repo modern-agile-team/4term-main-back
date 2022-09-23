@@ -129,36 +129,23 @@ export class BoardsService {
   async updateBoard(
     boardNo: number,
     updateBoardDto: UpdateBoardDto,
-  ): Promise<object> {
+  ): Promise<void> {
     try {
       const board: BoardReadResponse = await this.getBoardByNo(boardNo);
-      const boardMember: BoardMemberDetail =
-        await this.boardRepository.getBoardMemberByNo(boardNo);
-
-      // console.log('boardMember', boardMember);
-
-      // console.log(updateBoardDto);
-      console.log(board);
-
-      const updateDate = new Object();
 
       if (!board) {
         throw new NotFoundException(`${boardNo}번 게시글을 찾을 수 없습니다.`);
       }
+      const boardMember = {
+        male: updateBoardDto.male,
+        female: updateBoardDto.female,
+      };
 
-      // for (const el in board) {
-      //   if (board[el] === updateBoardDto[el]) {
-      //     console.log(el);
-      //   }
-      // }
+      delete updateBoardDto.male;
+      delete updateBoardDto.female;
 
-      // const updateBoard = await this.boardRepository.updateBoard(
-      //   board,
-      //   updateBoardDto,
-      // );
-
-      // return updateBoard;
-      return boardMember;
+      await this.boardRepository.updateBoard(boardNo, updateBoardDto);
+      await this.boardRepository.updateBoardMember(boardNo, boardMember);
     } catch (error) {
       throw error;
     }
