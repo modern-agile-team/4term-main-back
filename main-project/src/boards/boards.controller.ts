@@ -7,10 +7,8 @@ import {
   ParseIntPipe,
   Post,
   Patch,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
-import { Users } from 'src/users/entity/user.entity';
+import { ApiCreatedResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { CreateBookmarkDto } from './dto/create-bookmark.dto';
@@ -18,14 +16,20 @@ import { UpdateBoardDto } from './dto/update-board.dto';
 import { BoardReadResponse } from './interface/boards.interface';
 
 @Controller('boards')
+@ApiTags('게시글 API')
 export class BoardsController {
   constructor(private boardService: BoardsService) {}
   //Get Methods
   @Get()
+  @ApiOperation({
+    summary: '게시글 전체 조회 API',
+    description: '게시글 전부를 내림차순으로 조회한다.',
+  })
   async getAllBoards(): Promise<object> {
     const boards: object = await this.boardService.getAllBoards();
     const response = {
       success: true,
+
       boards,
     };
 
@@ -33,6 +37,10 @@ export class BoardsController {
   }
 
   @Get('/:boardNo')
+  @ApiOperation({
+    summary: '게시글 상세조회 API',
+    description: '게시글 번호를 사용해 상세조회한다.',
+  })
   async getBoardByNo(@Param('boardNo') boardNo: number): Promise<object> {
     const board: BoardReadResponse = await this.boardService.getBoardByNo(
       boardNo,
@@ -47,6 +55,10 @@ export class BoardsController {
 
   // Post Methods
   @Post()
+  @ApiOperation({
+    summary: '게시글 생성 API',
+    description: '입력한 정보로 게시글, 멤버 정보을 생성한다.',
+  })
   async createBoard(@Body() createBoarddto: CreateBoardDto): Promise<object> {
     const board: number = await this.boardService.createBoard(createBoarddto);
     const response = { success: true, board };
@@ -55,6 +67,10 @@ export class BoardsController {
   }
 
   @Post('/:boardNo')
+  @ApiOperation({
+    summary: '북마크 생성 API',
+    description: '게시글 번호를 통해 해당 User의 북마크를 생성한다..',
+  })
   async createBookmark(
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body() createBookmarkDto: CreateBookmarkDto,
@@ -70,6 +86,10 @@ export class BoardsController {
 
   // Patch Methods
   @Patch('/:boardNo')
+  @ApiOperation({
+    summary: '게시글 수정 API',
+    description: '입력한 정보로 게시글, 멤버 정보을 수정한다.',
+  })
   async updateBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body() updateBoardDto: UpdateBoardDto,
@@ -78,6 +98,7 @@ export class BoardsController {
       boardNo,
       updateBoardDto,
     );
+
     const response = { success: true };
 
     return response;
@@ -85,6 +106,10 @@ export class BoardsController {
 
   // Delete Methods
   @Delete('/:boardNo')
+  @ApiOperation({
+    summary: '게시글 삭제 API',
+    description: '게시글 번호를 사용해 게시글, 게시글 멤버 정보을 삭제한다.',
+  })
   async deleteBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
   ): Promise<string> {
@@ -93,7 +118,11 @@ export class BoardsController {
     return board;
   }
 
-  @Delete('/:boardNo/:userNo')
+  @Delete('/:boardNo/:userNo') // 후에 jwt에서 userNo 빼올 예정
+  @ApiOperation({
+    summary: '북마크 취소 API',
+    description: '게시글 번호를 사용해 해당 User의 북마크를 취소한다.',
+  })
   async cancelBookmark(
     @Param() params: { [key: string]: number },
   ): Promise<string> {
