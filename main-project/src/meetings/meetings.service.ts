@@ -21,6 +21,7 @@ import {
   MeetingDetail,
   MeetingMemberDetail,
   MeetingResponse,
+  InviteNoticeResult,
 } from './interface/meeting.interface';
 import { Users } from 'src/users/entity/user.entity';
 import { NOTICE_TYPE } from 'src/common/configs/notice-type.config';
@@ -387,7 +388,7 @@ export class MeetingsService {
   }
 
   private async setNotice(
-    userNo: number | Users,
+    userNo: number,
     targetUserNo: number,
     type: number,
     value: string,
@@ -409,7 +410,7 @@ export class MeetingsService {
     meetingNo: number,
     userNo: number,
     side: string,
-  ) {
+  ): Promise<void> {
     try {
       const {
         addGuestAvailable,
@@ -443,7 +444,7 @@ export class MeetingsService {
         guestUserNo,
         userNo,
         NOTICE_TYPE.member.inviteGuest,
-        JSON.stringify({ meetingNo, invitedAs: 'guest' }),
+        JSON.stringify({ meetingNo }),
       );
     } catch (err) {
       throw err;
@@ -462,8 +463,44 @@ export class MeetingsService {
         hostUserNo,
         userNo,
         NOTICE_TYPE.member.inviteHost,
-        JSON.stringify({ meetingNo, invitedAs: 'host' }),
+        JSON.stringify({ meetingNo }),
       );
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async checkIsGuestOrHost(
+    noticeNo: number,
+  ): Promise<InviteNoticeResult> {
+    try {
+      const { value, type }: Notices =
+        await this.noticesRepository.getNoticeById(noticeNo);
+      const { meetingNo } = JSON.parse(value);
+
+      if (type === NOTICE_TYPE.member.inviteHost) {
+        return { side: 'host', meetingNo };
+      } else if (type === NOTICE_TYPE.member.inviteGuest) {
+        return { side: 'guest', meetingNo };
+      } else {
+        throw new BadRequestException(`알람 type에 맞지 않는 요청 경로입니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async acceptInvitation(noticeNo: number, userNo: number): Promise<void> {
+    try {
+      const { meetingNo, side }: InviteNoticeResult =
+        await this.checkIsGuestOrHost(noticeNo);
+      await this.checkInviteAvailable(meetingNo, userNo, side);
+
+      if (side === 'guest') {
+        await this.setGuestMembers([userNo], meetingNo);
+      } else {
+        await this.setHostMembers([userNo], meetingNo);
+      }
     } catch (err) {
       throw err;
     }

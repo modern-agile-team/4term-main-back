@@ -16,7 +16,7 @@ export class Notices extends BaseEntity {
 
   @ManyToOne((type) => Users, (user) => user.noticeUser)
   @JoinColumn({ name: 'user_no' })
-  userNo: Users | number;
+  userNo: number;
 
   @ManyToOne((type) => Users, (user) => user.noticeTargetUser, {
     nullable: true,

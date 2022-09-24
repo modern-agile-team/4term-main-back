@@ -60,6 +60,27 @@ export class MeetingsController {
 
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
+    description: '게스트로 약속에 참여',
+  })
+  @Patch('/accept/invitation/:noticeNo/:userNo') // 후에 토큰에서 받도록 수정
+  async acceptInvitation(
+    @Param('noticeNo') noticeNo: number,
+    @Param('userNo') userNo: number,
+  ) {
+    try {
+      await this.meetingsService.acceptInvitation(noticeNo, userNo);
+
+      return {
+        succes: true,
+        msg: `초대 요청이 수락되었습니다.`,
+      };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({
     description: '약속 장소/시간 수정',
   })
   @Patch('/:meetingNo/:userNo') //후에 토큰에서 userNo 받아오도록 수정

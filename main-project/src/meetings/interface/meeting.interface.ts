@@ -19,12 +19,17 @@ export interface MeetingMemberDetail {
 }
 
 export interface ParticipatingMembers {
-  adminHost: number;
-  adminGuest: number;
-  guestHeadcount: number;
-  hostHeadcount: number;
-  guests: string;
-  hosts: string;
-  addGuestAvailable: string;
-  addHostAvailable: string;
+  adminHost?: number;
+  adminGuest?: number;
+  guestHeadcount?: number;
+  hostHeadcount?: number;
+  guests?: string;
+  hosts?: string;
+  addGuestAvailable?: string;
+  addHostAvailable?: string;
+}
+
+export interface InviteNoticeResult {
+  meetingNo: number;
+  side: string;
 }
