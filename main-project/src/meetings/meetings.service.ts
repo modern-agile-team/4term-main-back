@@ -11,7 +11,7 @@ import { HostMembersRepository } from 'src/members/repository/host-members.repos
 import { MeetingInfoRepository } from './repository/meeting-info.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { SetGuestMembersDto } from 'src/members/dto/setGuestMembers.dto';
-import { DeleteGeustDto } from 'src/members/dto/deleteGuest.dto';
+import { DeleteGuestDto } from 'src/members/dto/deleteGuest.dto';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { Notices } from 'src/notices/entity/notices.entity';
@@ -405,30 +405,69 @@ export class MeetingsService {
     }
   }
 
+  private async checkInviteAvailable(
+    meetingNo: number,
+    userNo: number,
+    side: string,
+  ) {
+    try {
+      const {
+        addGuestAvailable,
+        addHostAvailable,
+        guests,
+        hosts,
+      }: ParticipatingMembers = await this.meetingRepository.getParticipatingMembers(
+        meetingNo,
+      );
+      await this.checkUsersInMembers([userNo], guests, hosts);
+
+      if (side == 'guest' && !parseInt(addGuestAvailable)) {
+        throw new BadRequestException(`게스트 최대 인원을 초과했습니다.`);
+      } else if (side == 'host' && !parseInt(addHostAvailable)) {
+        throw new BadRequestException(`호스트 최대 인원을 초과했습니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async inviteGuest(
     meetingNo: number,
     guestUserNo: number,
     userNo: number,
   ): Promise<void> {
     try {
-      const { addGuestAvailable, guests, hosts }: ParticipatingMembers =
-        await this.meetingRepository.getParticipatingMembers(meetingNo);
-      await this.checkUsersInMembers([guestUserNo], guests, hosts);
-
-      if (!parseInt(addGuestAvailable)) {
-        throw new BadRequestException(`게스트 최대 인원을 초과했습니다.`);
-      }
+      await this.checkInviteAvailable(meetingNo, guestUserNo, 'guest');
 
       this.setNotice(
         guestUserNo,
         userNo,
         NOTICE_TYPE.member.inviteGuest,
-        JSON.stringify({ meetingNo }),
+        JSON.stringify({ meetingNo, invitedAs: 'guest' }),
       );
     } catch (err) {
       throw err;
     }
   }
 
-  async deleteGuest(deleteGuestDto: DeleteGeustDto) {}
+  async inviteHost(
+    meetingNo: number,
+    hostUserNo: number,
+    userNo: number,
+  ): Promise<void> {
+    try {
+      await this.checkInviteAvailable(meetingNo, hostUserNo, 'host');
+
+      this.setNotice(
+        hostUserNo,
+        userNo,
+        NOTICE_TYPE.member.inviteHost,
+        JSON.stringify({ meetingNo, invitedAs: 'host' }),
+      );
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async deleteGuest(deleteGuestDto: DeleteGuestDto) {}
 }

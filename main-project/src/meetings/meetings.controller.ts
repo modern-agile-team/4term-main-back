@@ -12,7 +12,7 @@ import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { MeetingsService } from './meetings.service';
 import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
-import { DeleteGeustDto } from 'src/members/dto/deleteGuest.dto';
+import { DeleteGuestDto } from 'src/members/dto/deleteGuest.dto';
 
 @Controller('meetings')
 export class MeetingsController {
@@ -45,7 +45,7 @@ export class MeetingsController {
   @ApiOkResponse({
     description: '호스트가 게스트의 약속 참여 요청 수락',
   })
-  @Patch('/accept/guest/:noticeNo')
+  @Patch('/accept/application/:noticeNo')
   async acceptGuestApplication(
     @Param('noticeNo') noticeNo: number,
   ): Promise<object> {
@@ -121,7 +121,7 @@ export class MeetingsController {
   @ApiOkResponse({
     description: '참여 중인 약속에 새로운 게스트 초대',
   })
-  @Post('guest/invite/:meetingNo/:userNo')
+  @Post('/guest/invite/:meetingNo/:userNo')
   async inviteGuest(
     @Body('guestNo') guest: number,
     @Param('meetingNo') meetingNo: number,
@@ -139,13 +139,35 @@ export class MeetingsController {
     }
   }
 
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({
+    description: '참여 중인 약속에 새로운 호스트 초대',
+  })
+  @Post('/host/invite/:meetingNo/:userNo')
+  async inviteHost(
+    @Body('hostNo') host: number,
+    @Param('meetingNo') meetingNo: number,
+    @Param('userNo') userNo: number, //후에 토큰에서 받도록 수정
+  ) {
+    try {
+      await this.meetingsService.inviteHost(meetingNo, host, userNo);
+
+      return {
+        succes: true,
+        msg: `호스트 초대 알람이 전송되었습니다.`,
+      };
+    } catch (err) {
+      throw err;
+    }
+  }
+
   @Delete('/guest/:meetingNo/:userNo') //후에 토큰에서 userNo 받아오도록 수정
   async deleteGuest(
     @Param('meetingNo') meetingNo: number,
     @Param('userNo') userNo: number,
     @Body('adminGuest') adminGuest: number,
   ) {
-    const deleteGuestDto: DeleteGeustDto = { meetingNo, userNo, adminGuest };
+    const deleteGuestDto: DeleteGuestDto = { meetingNo, userNo, adminGuest };
     await this.meetingsService.deleteGuest(deleteGuestDto);
   }
 }

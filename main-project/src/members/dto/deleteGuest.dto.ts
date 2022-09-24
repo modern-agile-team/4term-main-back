@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class DeleteGeustDto {
+export class DeleteGuestDto {
   @IsNotEmpty()
   @IsNumber()
   meetingNo: number;
