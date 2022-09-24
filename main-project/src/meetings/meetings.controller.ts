@@ -129,6 +129,11 @@ export class MeetingsController {
   ) {
     try {
       await this.meetingsService.inviteGuest(meetingNo, guest, userNo);
+
+      return {
+        succes: true,
+        msg: `게스트 초대 알람이 전송되었습니다.`,
+      };
     } catch (err) {
       throw err;
     }

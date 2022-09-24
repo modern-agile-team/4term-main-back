@@ -413,10 +413,11 @@ export class MeetingsService {
     try {
       const { addGuestAvailable, guests, hosts }: ParticipatingMembers =
         await this.meetingRepository.getParticipatingMembers(meetingNo);
+      await this.checkUsersInMembers([guestUserNo], guests, hosts);
+
       if (!parseInt(addGuestAvailable)) {
         throw new BadRequestException(`게스트 최대 인원을 초과했습니다.`);
       }
-      await this.checkUsersInMembers([guestUserNo], guests, hosts);
 
       this.setNotice(
         guestUserNo,
