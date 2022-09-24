@@ -26,15 +26,36 @@ export class MeetingsController {
   async createMeeting(
     @Body() createMeetingDto: CreateMeetingDto,
   ): Promise<object> {
-    const meetingNo: number = await this.meetingsService.createMeeting(
-      createMeetingDto,
-    );
+    try {
+      const meetingNo: number = await this.meetingsService.createMeeting(
+        createMeetingDto,
+      );
 
-    return {
-      success: true,
-      msg: '약속이 생성되었습니다.',
-      meetingNo,
-    };
+      return {
+        success: true,
+        msg: '약속이 생성되었습니다.',
+        meetingNo,
+      };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOkResponse({
+    description: '호스트가 게스트의 약속 참여 요청 수락',
+  })
+  @Patch('/accept/guest/:noticeNo')
+  async acceptGuestApplication(
+    @Param('noticeNo') noticeNo: number,
+  ): Promise<object> {
+    try {
+      await this.meetingsService.acceptGuestApplication(noticeNo);
+
+      return { success: true, msg: `게스트의 참여 요청이 수락되었습니다.` };
+    } catch (err) {
+      throw err;
+    }
   }
 
   @HttpCode(HttpStatus.OK)
@@ -47,13 +68,17 @@ export class MeetingsController {
     @Param('userNo') userNo: number,
     @Body() updateMeetingDto: UpdateMeetingDto,
   ): Promise<object> {
-    await this.meetingsService.updateMeeting(
-      meetingNo,
-      userNo,
-      updateMeetingDto,
-    );
+    try {
+      await this.meetingsService.updateMeeting(
+        meetingNo,
+        userNo,
+        updateMeetingDto,
+      );
 
-    return { success: true, msg: `약속이 수정되었습니다` };
+      return { success: true, msg: `약속이 수정되었습니다` };
+    } catch (err) {
+      throw err;
+    }
   }
 
   @HttpCode(HttpStatus.ACCEPTED)
@@ -65,28 +90,48 @@ export class MeetingsController {
     @Param('meetingNo') meetingNo: number,
     @Param('userNo') userNo: number,
   ): Promise<object> {
-    await this.meetingsService.acceptMeeting(meetingNo, userNo);
+    try {
+      await this.meetingsService.acceptMeeting(meetingNo, userNo);
 
-    return { success: true, msg: `약속이 수락되었습니다` };
+      return { success: true, msg: `약속이 수락되었습니다` };
+    } catch (err) {
+      throw err;
+    }
   }
 
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOkResponse({
+    description: '약속에 게스트로 참여 신청',
+  })
   @Post('/apply/:meetingNo')
   async setGuestMembers(
     @Param('meetingNo') meetingNo: number,
     @Body('guest') guest: number[],
   ): Promise<object> {
-    await this.meetingsService.applyForMeeting({ meetingNo, guest });
+    try {
+      await this.meetingsService.applyForMeeting({ meetingNo, guest });
 
-    return { success: true, msg: `약속 신청이 완료되었습니다.` };
+      return { success: true, msg: `약속 신청이 완료되었습니다.` };
+    } catch (err) {
+      throw err;
+    }
   }
 
-  @Patch('guest/invite/:meetingNo/:userNo')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({
+    description: '참여 중인 약속에 새로운 게스트 초대',
+  })
+  @Post('guest/invite/:meetingNo/:userNo')
   async inviteGuest(
     @Body('guestNo') guest: number,
     @Param('meetingNo') meetingNo: number,
     @Param('userNo') userNo: number, //후에 토큰에서 받도록 수정
   ) {
-    await this.meetingsService.inviteGuest(meetingNo, guest, userNo);
+    try {
+      await this.meetingsService.inviteGuest(meetingNo, guest, userNo);
+    } catch (err) {
+      throw err;
+    }
   }
 
   @Delete('/guest/:meetingNo/:userNo') //후에 토큰에서 userNo 받아오도록 수정

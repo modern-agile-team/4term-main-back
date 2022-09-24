@@ -84,7 +84,9 @@ export class MeetingRepository extends Repository<Meetings> {
     meetingNo: number,
   ): Promise<ParticipatingMembers> {
     try {
-      const result = await this.createQueryBuilder('meetings')
+      const result: ParticipatingMembers = await this.createQueryBuilder(
+        'meetings',
+      )
         .leftJoin(
           'meetings.meetingInfo',
           'meetingInfo',
