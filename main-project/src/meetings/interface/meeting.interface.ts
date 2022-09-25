@@ -38,3 +38,10 @@ export interface MeetingVacancy {
   addGuestAvailable?: string;
   addHostAvailable?: string;
 }
+
+export interface ChangeAdminGuest {
+  userNo: number;
+  adminGuest: number;
+  meetingNo: number;
+  newAdminGuest: number;
+}

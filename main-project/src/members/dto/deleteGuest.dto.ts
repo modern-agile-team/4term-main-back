@@ -12,5 +12,5 @@ export class DeleteGuestDto {
 
   @IsNotEmpty()
   @IsNumber()
-  newGuestAdmin: number;
+  newAdminGuest: number;
 }
