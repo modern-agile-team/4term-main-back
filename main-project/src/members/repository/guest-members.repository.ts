@@ -6,6 +6,7 @@ import {
 } from 'typeorm';
 import { GuestMembers } from '../entity/guest-members.entity';
 import { InternalServerErrorException } from '@nestjs/common';
+import { DeleteMember } from '../interface/member.interface';
 
 @EntityRepository(GuestMembers)
 export class GuestMembersRepository extends Repository<GuestMembers> {
@@ -27,7 +28,7 @@ export class GuestMembersRepository extends Repository<GuestMembers> {
     }
   }
 
-  async deleteGuest(meetingNo: number, userNo: number): Promise<number> {
+  async deleteGuest({ meetingNo, userNo }: DeleteMember): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()

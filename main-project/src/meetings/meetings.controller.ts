@@ -8,12 +8,13 @@ import {
   Patch,
   Delete,
 } from '@nestjs/common';
+import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
+import { BodyAndParam } from 'src/common/decorator/body-and-param.decorator';
+import { MeetingsService } from './meetings.service';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
-import { MeetingsService } from './meetings.service';
-import { ApiCreatedResponse, ApiOkResponse } from '@nestjs/swagger';
-import { DeleteGuestDto } from 'src/members/dto/deleteGuest.dto';
-import { BodyAndParam } from 'src/common/decorator/body-and-param.decorator';
+import { DeleteGuestDto } from 'src/meetings/dto/deleteGuest.dto';
+import { DeleteHostDto } from './dto/deleteHost.dto';
 
 @Controller('meetings')
 export class MeetingsController {
@@ -163,7 +164,7 @@ export class MeetingsController {
 
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
-    description: '참여 중인 약속에 새로운 호스트 초대',
+    description: '게스트 삭제',
   })
   @Delete('/guest/:meetingNo/:userNo') //후에 토큰에서 userNo 받아오도록 수정
   async deleteGuest(@BodyAndParam() deleteGuestDto: DeleteGuestDto) {
@@ -173,6 +174,24 @@ export class MeetingsController {
       return {
         success: true,
         msg: `게스트가 삭제되었습니다.`,
+      };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({
+    description: '호스트 삭제',
+  })
+  @Delete('/host/:meetingNo/:userNo') //후에 토큰에서 userNo 받아오도록 수정
+  async deleteHost(@BodyAndParam() deleteHostDto: DeleteHostDto) {
+    try {
+      const msg: string = await this.meetingsService.deleteHost(deleteHostDto);
+
+      return {
+        success: true,
+        msg,
       };
     } catch (err) {
       throw err;

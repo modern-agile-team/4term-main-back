@@ -1,4 +1,5 @@
 import {
+  DeleteResult,
   EntityRepository,
   InsertResult,
   Repository,
@@ -112,6 +113,22 @@ export class MeetingRepository extends Repository<Meetings> {
     } catch (err) {
       throw new InternalServerErrorException(
         `${err} 참여 중인 유저 조회(getParticipatingMembers): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async deleteMeeting(meetingNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder()
+        .delete()
+        .from(Meetings)
+        .where('no = :meetingNo', { meetingNo })
+        .execute();
+
+      return affected;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 삭제 에러(deleteMeeting): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

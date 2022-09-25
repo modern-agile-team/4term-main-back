@@ -11,8 +11,9 @@ import { HostMembersRepository } from 'src/members/repository/host-members.repos
 import { MeetingInfoRepository } from './repository/meeting-info.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { SetGuestMembersDto } from 'src/members/dto/setGuestMembers.dto';
-import { DeleteGuestDto } from 'src/members/dto/deleteGuest.dto';
+import { DeleteGuestDto } from 'src/meetings/dto/deleteGuest.dto';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
+import { DeleteHostDto } from './dto/deleteHost.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { Notices } from 'src/notices/entity/notices.entity';
 import { Meetings } from './entity/meeting.entity';
@@ -26,6 +27,7 @@ import {
   ChangeAdminGuest,
 } from './interface/meeting.interface';
 import { NoticeType } from 'src/common/configs/notice-type.config';
+import { DeleteMember } from 'src/members/interface/member.interface';
 
 @Injectable()
 export class MeetingsService {
@@ -512,15 +514,14 @@ export class MeetingsService {
   }
 
   private detectNotInMembers(
-    guests: string,
+    sameSideMembers: string,
     userNo: number,
-    newAdminGuest: number,
+    newAdmin: number,
   ): void {
     try {
-      const guestMembers: number[] = guests.split(',').map(Number);
+      const members: number[] = sameSideMembers.split(',').map(Number);
       const notInMembers: number =
-        new Set([...guestMembers, userNo, newAdminGuest]).size -
-        guestMembers.length;
+        new Set([...members, userNo, newAdmin]).size - members.length;
 
       if (notInMembers) {
         throw new BadRequestException(`약속에 참여 중인 유저가 아닙니다.`);
@@ -555,12 +556,15 @@ export class MeetingsService {
     }
   }
 
-  private async deleteMember(meetingNo: number, userNo: number): Promise<void> {
+  private async deleteMember(
+    deleteMember: DeleteMember,
+    side: string,
+  ): Promise<void> {
     try {
-      const affected: number = await this.guestMembersRepository.deleteGuest(
-        meetingNo,
-        userNo,
-      );
+      const affected: number =
+        side === 'guest'
+          ? await this.guestMembersRepository.deleteGuest(deleteMember)
+          : await this.hostMembersRepository.deleteHost(deleteMember);
 
       if (!affected) {
         throw new InternalServerErrorException(`멤버 삭제 에러입니다.`);
@@ -580,7 +584,7 @@ export class MeetingsService {
 
       const { adminGuest, guests }: ParticipatingMembers =
         await this.meetingRepository.getParticipatingMembers(meetingNo);
-      if (userNo == newAdminGuest) {
+      if (userNo === newAdminGuest) {
         throw new BadRequestException(`새로운 호스트 대표를 설정해 주세요.`);
       }
 
@@ -592,7 +596,32 @@ export class MeetingsService {
         newAdminGuest,
       });
 
-      await this.deleteMember(meetingNo, userNo);
+      await this.deleteMember({ meetingNo, userNo }, 'guest');
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async deleteHost({ userNo, meetingNo }: DeleteHostDto): Promise<string> {
+    try {
+      await this.findMeetingById(meetingNo);
+
+      const { adminHost, hosts }: ParticipatingMembers =
+        await this.meetingRepository.getParticipatingMembers(meetingNo);
+      if (userNo === adminHost) {
+        const affected: number = await this.meetingRepository.deleteMeeting(
+          meetingNo,
+        );
+        if (!affected) {
+          throw new InternalServerErrorException(`호스트 삭제 에러입니다.`);
+        }
+        return `${meetingNo}번 약속이 성공적으로 삭제되었습니다.`;
+      }
+
+      this.detectNotInMembers(hosts, userNo, adminHost);
+      await this.deleteMember({ meetingNo, userNo }, 'host');
+
+      return '호스트 측 멤버가 약속에서 삭제되었습니다.';
     } catch (err) {
       throw err;
     }
