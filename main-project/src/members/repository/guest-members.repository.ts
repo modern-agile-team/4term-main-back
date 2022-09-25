@@ -1,4 +1,9 @@
-import { EntityRepository, InsertResult, Repository } from 'typeorm';
+import {
+  DeleteResult,
+  EntityRepository,
+  InsertResult,
+  Repository,
+} from 'typeorm';
 import { GuestMembers } from '../entity/guest-members.entity';
 import { InternalServerErrorException } from '@nestjs/common';
 
@@ -15,9 +20,26 @@ export class GuestMembersRepository extends Repository<GuestMembers> {
         .execute();
 
       return raw.affectedRows;
-    } catch (error) {
+    } catch (err) {
       throw new InternalServerErrorException(
-        `${error} saveHostMembers: 알 수 없는 서버 에러입니다.`,
+        `${err} saveHostMembers: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async deleteGuest(meetingNo: number, userNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder()
+        .delete()
+        .from(GuestMembers)
+        .where('meetingNo = :meetingNo', { meetingNo })
+        .andWhere('userNo = :userNo', { userNo })
+        .execute();
+
+      return affected;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} deleteGuest: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

@@ -5,5 +5,7 @@ export const NOTICE_TYPE = {
   member: {
     inviteHost: 2,
     inviteGuest: 3,
+    beAdminGuest: 4,
+    beAdminHost: 5,
   },
 };

@@ -16,6 +16,7 @@ import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { Notices } from 'src/notices/entity/notices.entity';
 import { Meetings } from './entity/meeting.entity';
+import { MeetingInfo } from './entity/meeting-info.entity';
 import {
   ParticipatingMembers,
   MeetingDetail,
@@ -23,9 +24,7 @@ import {
   MeetingResponse,
   InviteNoticeResult,
 } from './interface/meeting.interface';
-import { Users } from 'src/users/entity/user.entity';
 import { NOTICE_TYPE } from 'src/common/configs/notice-type.config';
-import { MeetingInfo } from './entity/meeting-info.entity';
 
 @Injectable()
 export class MeetingsService {
@@ -270,7 +269,7 @@ export class MeetingsService {
         meetingNo,
         guest,
       );
-      if (memberDetail.guests != null) {
+      if (memberDetail.adminGuest != null) {
         throw new BadRequestException(
           `마감된 약속에는 신청을 보낼 수 없습니다.`,
         );
@@ -331,17 +330,8 @@ export class MeetingsService {
 
   private async setAdminGuest(meetingNo: number, guest: number): Promise<void> {
     try {
-      const meeting: Meetings = await this.findMeetingById(meetingNo);
-      const { adminGuest } =
-        await this.meetingRepository.getParticipatingMembers(meetingNo);
-      if (adminGuest) {
-        throw new BadRequestException(
-          `마감된 약속에는 게스트를 추가할 수 없습니다.`,
-        );
-      }
-
       const affected: number =
-        await this.meetingInfoRepository.saveMeetingGuest(guest, meeting);
+        await this.meetingInfoRepository.saveMeetingGuest(guest, meetingNo);
       if (!affected) {
         throw new InternalServerErrorException(
           `약속 adimGuest 추가 오류입니다`,
@@ -506,5 +496,51 @@ export class MeetingsService {
     }
   }
 
-  async deleteGuest(deleteGuestDto: DeleteGuestDto) {}
+  async deleteGuest(deleteGuestDto: DeleteGuestDto): Promise<void> {
+    try {
+      const { meetingNo, newGuestAdmin, userNo }: DeleteGuestDto =
+        deleteGuestDto;
+      await this.findMeetingById(meetingNo);
+
+      const { adminGuest, guests }: ParticipatingMembers =
+        await this.meetingRepository.getParticipatingMembers(meetingNo);
+      const guestMembers: number[] = guests.split(',').map(Number);
+      if (userNo == newGuestAdmin) {
+        throw new BadRequestException(`새로운 호스트 대표를 설정해 주세요.`);
+      }
+
+      const notInMembers: number =
+        new Set([...guestMembers, userNo, newGuestAdmin]).size -
+        guestMembers.length;
+
+      if (notInMembers) {
+        throw new BadRequestException(`약속에 참여 중인 유저가 아닙니다.`);
+      }
+
+      if (userNo === adminGuest) {
+        await this.setAdminGuest(meetingNo, newGuestAdmin);
+        this.setNotice(
+          userNo,
+          newGuestAdmin,
+          NOTICE_TYPE.member.beAdminGuest,
+          JSON.stringify({ meetingNo }),
+        );
+      } else if (adminGuest !== newGuestAdmin) {
+        throw new BadRequestException(
+          `호스트 대표가 계속 약속에 참여할 경우 새로운 대표를 설정할 수 없습니다.`,
+        );
+      }
+
+      const affected: number = await this.guestMembersRepository.deleteGuest(
+        meetingNo,
+        userNo,
+      );
+
+      if (!affected) {
+        throw new InternalServerErrorException(`게스트 삭제 에러입니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
 }

@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
 export class DeleteGuestDto {
@@ -11,5 +12,5 @@ export class DeleteGuestDto {
 
   @IsNotEmpty()
   @IsNumber()
-  adminGuest: number;
+  newGuestAdmin: number;
 }
