@@ -19,6 +19,7 @@ export interface MeetingMemberDetail {
 }
 
 export interface ParticipatingMembers {
+  isDone?: boolean;
   adminHost?: number;
   adminGuest?: number;
   guestHeadcount?: number;
