@@ -141,42 +141,20 @@ export class MeetingsController {
 
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
-    description: '참여 중인 약속에 새로운 게스트 초대',
+    description: '참여 중인 약속에 새로운 멤버 초대',
   })
-  @Post('/guest/invite/:meetingNo/:userNo')
+  @Post('/invite/:meetingNo/:userNo')
   async inviteGuest(
-    @Body('guestNo') guest: number,
+    @Body('invitedUserNo') invitedUserNo: number,
     @Param('meetingNo') meetingNo: number,
     @Param('userNo') userNo: number, //후에 토큰에서 받도록 수정
   ) {
     try {
-      await this.meetingsService.inviteGuest(meetingNo, guest, userNo);
+      await this.meetingsService.inviteMember(meetingNo, invitedUserNo, userNo);
 
       return {
         succes: true,
-        msg: `게스트 초대 알람이 전송되었습니다.`,
-      };
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  @HttpCode(HttpStatus.OK)
-  @ApiOkResponse({
-    description: '참여 중인 약속에 새로운 호스트 초대',
-  })
-  @Post('/host/invite/:meetingNo/:userNo')
-  async inviteHost(
-    @Body('hostNo') host: number,
-    @Param('meetingNo') meetingNo: number,
-    @Param('userNo') userNo: number, //후에 토큰에서 받도록 수정
-  ) {
-    try {
-      await this.meetingsService.inviteHost(meetingNo, host, userNo);
-
-      return {
-        succes: true,
-        msg: `호스트 초대 알람이 전송되었습니다.`,
+        msg: `약속 초대 알람이 전송되었습니다.`,
       };
     } catch (err) {
       throw err;

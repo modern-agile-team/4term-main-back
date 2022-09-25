@@ -22,7 +22,7 @@ import {
   MeetingDetail,
   MeetingMemberDetail,
   MeetingResponse,
-  InviteNoticeResult,
+  MeetingVacancy,
 } from './interface/meeting.interface';
 import { NOTICE_TYPE } from 'src/common/configs/notice-type.config';
 
@@ -365,7 +365,7 @@ export class MeetingsService {
     }
   }
 
-  async getMeetingMembers(meetingNo): Promise<number[]> {
+  async getMeetingMembers(meetingNo: number): Promise<number[]> {
     try {
       const { hosts, guests }: ParticipatingMembers =
         await this.meetingRepository.getParticipatingMembers(meetingNo);
@@ -396,11 +396,25 @@ export class MeetingsService {
     }
   }
 
+  private checkMeetingVacancy(meetingVacancy: MeetingVacancy): void {
+    try {
+      const { addGuestAvailable, addHostAvailable } = meetingVacancy;
+      if (addGuestAvailable && !parseInt(addGuestAvailable)) {
+        throw new BadRequestException(`게스트 최대 인원을 초과했습니다.`);
+      }
+      if (addHostAvailable && !parseInt(addHostAvailable)) {
+        throw new BadRequestException(`호스트 최대 인원을 초과했습니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
   private async checkInviteAvailable(
-    meetingNo: number,
     userNo: number,
-    side: string,
-  ): Promise<void> {
+    meetingNo: number,
+    invitedUserNo: number,
+  ): Promise<number> {
     try {
       const {
         addGuestAvailable,
@@ -410,30 +424,43 @@ export class MeetingsService {
       }: ParticipatingMembers = await this.meetingRepository.getParticipatingMembers(
         meetingNo,
       );
-      await this.checkUsersInMembers([userNo], guests, hosts);
+      await this.checkUsersInMembers([invitedUserNo], guests, hosts);
 
-      if (side == 'guest' && !parseInt(addGuestAvailable)) {
-        throw new BadRequestException(`게스트 최대 인원을 초과했습니다.`);
-      } else if (side == 'host' && !parseInt(addHostAvailable)) {
-        throw new BadRequestException(`호스트 최대 인원을 초과했습니다.`);
+      if (hosts.split(',').map(Number).includes(userNo)) {
+        this.checkMeetingVacancy({ addHostAvailable });
+
+        return NOTICE_TYPE.member.inviteHost;
+      } else if (guests && guests.split(',').map(Number).includes(userNo)) {
+        this.checkMeetingVacancy({ addGuestAvailable });
+
+        return NOTICE_TYPE.member.inviteGuest;
+      } else {
+        throw new BadRequestException(
+          `약속에 참여 중이지 않은 유저는 초대 요청을 보낼 수 없습니다.`,
+        );
       }
     } catch (err) {
       throw err;
     }
   }
 
-  async inviteGuest(
+  async inviteMember(
     meetingNo: number,
-    guestUserNo: number,
+    invitedUserNo: number,
     userNo: number,
   ): Promise<void> {
     try {
-      await this.checkInviteAvailable(meetingNo, guestUserNo, 'guest');
+      await this.findMeetingById(meetingNo);
+      const noticeType: number = await this.checkInviteAvailable(
+        userNo,
+        meetingNo,
+        invitedUserNo,
+      );
 
       this.setNotice(
-        guestUserNo,
+        invitedUserNo,
         userNo,
-        NOTICE_TYPE.member.inviteGuest,
+        noticeType,
         JSON.stringify({ meetingNo }),
       );
     } catch (err) {
@@ -441,39 +468,28 @@ export class MeetingsService {
     }
   }
 
-  async inviteHost(
-    meetingNo: number,
-    hostUserNo: number,
+  private async saveInvitedMember(
     userNo: number,
+    noticeType: number,
+    meetingNo: number,
   ): Promise<void> {
     try {
-      await this.checkInviteAvailable(meetingNo, hostUserNo, 'host');
-
-      this.setNotice(
-        hostUserNo,
-        userNo,
-        NOTICE_TYPE.member.inviteHost,
-        JSON.stringify({ meetingNo }),
-      );
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  private async checkIsGuestOrHost(
-    noticeNo: number,
-  ): Promise<InviteNoticeResult> {
-    try {
-      const { value, type }: Notices =
-        await this.noticesRepository.getNoticeById(noticeNo);
-      const { meetingNo } = JSON.parse(value);
-
-      if (type === NOTICE_TYPE.member.inviteHost) {
-        return { side: 'host', meetingNo };
-      } else if (type === NOTICE_TYPE.member.inviteGuest) {
-        return { side: 'guest', meetingNo };
-      } else {
+      if (
+        noticeType !== NOTICE_TYPE.member.inviteHost &&
+        noticeType !== NOTICE_TYPE.member.inviteGuest
+      ) {
         throw new BadRequestException(`알람 type에 맞지 않는 요청 경로입니다.`);
+      }
+
+      const { addGuestAvailable, addHostAvailable } =
+        await this.meetingRepository.getParticipatingMembers(meetingNo);
+
+      if (noticeType === NOTICE_TYPE.member.inviteGuest) {
+        this.checkMeetingVacancy({ addGuestAvailable });
+        await this.setGuestMembers([userNo], meetingNo);
+      } else {
+        this.checkMeetingVacancy({ addHostAvailable });
+        await this.setHostMembers([userNo], meetingNo);
       }
     } catch (err) {
       throw err;
@@ -482,15 +498,12 @@ export class MeetingsService {
 
   async acceptInvitation(noticeNo: number, userNo: number): Promise<void> {
     try {
-      const { meetingNo, side }: InviteNoticeResult =
-        await this.checkIsGuestOrHost(noticeNo);
-      await this.checkInviteAvailable(meetingNo, userNo, side);
+      const { value, type }: Notices =
+        await this.noticesRepository.getNoticeById(noticeNo);
+      const { meetingNo } = JSON.parse(value);
 
-      if (side === 'guest') {
-        await this.setGuestMembers([userNo], meetingNo);
-      } else {
-        await this.setHostMembers([userNo], meetingNo);
-      }
+      await this.findMeetingById(meetingNo);
+      await this.saveInvitedMember(userNo, type, meetingNo);
     } catch (err) {
       throw err;
     }

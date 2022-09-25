@@ -33,3 +33,8 @@ export interface InviteNoticeResult {
   meetingNo: number;
   side: string;
 }
+
+export interface MeetingVacancy {
+  addGuestAvailable?: string;
+  addHostAvailable?: string;
+}

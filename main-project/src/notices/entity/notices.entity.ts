@@ -22,7 +22,7 @@ export class Notices extends BaseEntity {
     nullable: true,
   })
   @JoinColumn({ name: 'target_user_no' })
-  targetUserNo: Users | number;
+  targetUserNo: number;
 
   @Column()
   type: number;
