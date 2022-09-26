@@ -9,8 +9,10 @@ import {
   CreateDateColumn,
   Entity,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { UserManners } from './user-manners.entity';
 
 @Entity('users')
 export class Users extends BaseEntity {
@@ -55,4 +57,7 @@ export class Users extends BaseEntity {
 
   @OneToMany((type) => Notices, (notices) => notices.targetUserNo)
   noticeTargetUser: Notices[];
+
+  @OneToOne((type) => UserManners, (userManners) => userManners.userNo)
+  mannerUserNo: UserManners;
 }
