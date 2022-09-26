@@ -16,15 +16,18 @@ export class ReportRepository extends Repository<Reports> {
   async getAllReports(): Promise<ReportReadResponse[]> {
     try {
       const reports = this.createQueryBuilder('reports')
+        .leftJoin('reports.reportedBoard', 'reportedBoard')
+        .leftJoin('reports.reportedUser', 'reportedUser')
         .select([
           'reports.no AS no',
-          'reports.userNo AS user_no',
+          'reports.userNo AS userNo',
           'reports.title AS title',
           'reports.description AS description',
-        ])
-        .getRawMany();
+          'reportedBoard.targetBoardNo as tagetBoardNo',
+          'reportedUser.targetUserNo as tagetUserNo',
+        ]);
 
-      return reports;
+      return reports.getRawMany();
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getAllreports-repository: 알 수 없는 서버 에러입니다.`,
