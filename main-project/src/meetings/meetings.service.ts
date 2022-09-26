@@ -47,6 +47,8 @@ export class MeetingsService {
     private readonly noticesRepository: NoticesRepository,
   ) {}
 
+  private readonly member = { GUEST: 'guest', HOST: 'host' };
+
   private async getParticipatingMembers(
     meetingNo: number,
   ): Promise<ParticipatingMembers> {
@@ -137,7 +139,7 @@ export class MeetingsService {
         hostHeadcount: host.length,
       };
       await this.setMeetingInfo(meetingInfo);
-      await this.setMeetingMembers(host, meetingNo, 'host');
+      await this.setMeetingMembers(host, meetingNo, this.member.HOST);
 
       return meetingNo;
     } catch (err) {
@@ -351,7 +353,7 @@ export class MeetingsService {
       }
 
       await this.setAdminGuest(meetingNo, guest[0]);
-      await this.setMeetingMembers(guest, meetingNo, 'guest');
+      await this.setMeetingMembers(guest, meetingNo, this.member.GUEST);
     } catch (err) {
       throw err;
     }
@@ -477,10 +479,10 @@ export class MeetingsService {
 
       if (noticeType === NoticeType.INVITE_GUEST) {
         this.checkMeetingVacancy({ addGuestAvailable });
-        await this.setMeetingMembers([userNo], meetingNo, 'guest');
+        await this.setMeetingMembers([userNo], meetingNo, this.member.GUEST);
       } else {
         this.checkMeetingVacancy({ addHostAvailable });
-        await this.setMeetingMembers([userNo], meetingNo, 'host');
+        await this.setMeetingMembers([userNo], meetingNo, this.member.HOST);
       }
     } catch (err) {
       throw err;
@@ -549,7 +551,7 @@ export class MeetingsService {
   ): Promise<void> {
     try {
       const affected: number =
-        side === 'guest'
+        side === this.member.GUEST
           ? await this.guestMembersRepository.deleteGuest(deleteMember)
           : await this.hostMembersRepository.deleteHost(deleteMember);
 
@@ -586,7 +588,7 @@ export class MeetingsService {
         newAdminGuest,
       });
 
-      await this.deleteMember({ meetingNo, userNo }, 'guest');
+      await this.deleteMember({ meetingNo, userNo }, this.member.GUEST);
     } catch (err) {
       throw err;
     }
@@ -609,7 +611,7 @@ export class MeetingsService {
       }
 
       this.detectNotInMembers(hosts, userNo, adminHost);
-      await this.deleteMember({ meetingNo, userNo }, 'host');
+      await this.deleteMember({ meetingNo, userNo }, this.member.HOST);
 
       return '호스트 측 멤버가 약속에서 삭제되었습니다.';
     } catch (err) {
