@@ -93,9 +93,19 @@ export class MeetingRepository extends Repository<Meetings> {
           'meetingInfo',
           'meetings.no = meetingInfo.meetingNo',
         )
-        .leftJoin('meetings.guestMembers', 'guestMembers')
-        .leftJoin('meetings.hostMembers', 'hostMembers')
+        .leftJoin(
+          'meetings.guestMembers',
+          'guestMembers',
+          'meetings.no = guestMembers.meetingNo',
+        )
+        .leftJoin(
+          'meetings.hostMembers',
+          'hostMembers',
+          'meetings.no = hostMembers.meetingNo',
+        )
+        .leftJoin('meetings.board', 'board', 'meetings.no = board.meetingNo')
         .select([
+          'board.isDone AS isDone',
           'meetingInfo.host AS adminHost',
           'meetingInfo.guest AS adminGuest',
           'meetingInfo.guestHeadcount AS guestHeadcount',
