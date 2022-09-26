@@ -9,7 +9,7 @@ import { BoardsModule } from './boards/boards.module';
 import { MembersModule } from './members/members.module';
 import { NoticesModule } from './notices/notices.module';
 import { UsersModule } from './users/users.module';
-import { FriendsModule } from './friends/friends.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -20,7 +20,7 @@ import { FriendsModule } from './friends/friends.module';
     MembersModule,
     NoticesModule,
     UsersModule,
-    FriendsModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
