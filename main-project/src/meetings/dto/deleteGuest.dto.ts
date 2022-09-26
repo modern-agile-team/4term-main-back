@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class DeleteGeustDto {
+export class DeleteGuestDto {
   @IsNotEmpty()
   @IsNumber()
   meetingNo: number;
@@ -11,5 +11,5 @@ export class DeleteGeustDto {
 
   @IsNotEmpty()
   @IsNumber()
-  adminGuest: number;
+  newAdminGuest: number;
 }

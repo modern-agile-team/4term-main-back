@@ -9,6 +9,7 @@ import { BoardsModule } from './boards/boards.module';
 import { MembersModule } from './members/members.module';
 import { NoticesModule } from './notices/notices.module';
 import { UsersModule } from './users/users.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UsersModule } from './users/users.module';
     MembersModule,
     NoticesModule,
     UsersModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

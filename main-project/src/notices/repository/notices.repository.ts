@@ -24,8 +24,17 @@ export class NoticesRepository extends Repository<Notices> {
   async getNoticeById(noticeNo: number): Promise<Notices> {
     try {
       const notice: Notices = await this.createQueryBuilder('notices')
+        .leftJoin('notices.userNo', 'users', 'users.no = notices.userNo')
+        .select([
+          'notices.no AS noticeNo',
+          'users.no AS userNo',
+          'notices.targetUserNo AS targetUserNo',
+          'notices.createdDate AS createdDate',
+          'notices.type AS type',
+          'notices.value AS value',
+        ])
         .where('notices.no = :noticeNo', { noticeNo })
-        .getOne();
+        .getRawOne();
 
       return notice;
     } catch (error) {

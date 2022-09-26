@@ -19,12 +19,30 @@ export interface MeetingMemberDetail {
 }
 
 export interface ParticipatingMembers {
-  adminHost: number;
+  isDone?: boolean;
+  adminHost?: number;
+  adminGuest?: number;
+  guestHeadcount?: number;
+  hostHeadcount?: number;
+  guests?: string;
+  hosts?: string;
+  addGuestAvailable?: string;
+  addHostAvailable?: string;
+}
+
+export interface InviteNoticeResult {
+  meetingNo: number;
+  side: string;
+}
+
+export interface MeetingVacancy {
+  addGuestAvailable?: string;
+  addHostAvailable?: string;
+}
+
+export interface ChangeAdminGuest {
+  userNo: number;
   adminGuest: number;
-  guestHeadcount: number;
-  hostHeadcount: number;
-  guests: string;
-  hosts: string;
-  addGuestAvailable: string;
-  addHostAvailable: string;
+  meetingNo: number;
+  newAdminGuest: number;
 }
