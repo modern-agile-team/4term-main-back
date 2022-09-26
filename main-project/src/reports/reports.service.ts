@@ -1,10 +1,15 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BoardsService } from 'src/boards/boards.service';
 import { CreateReportDto } from './dto/create-reports.dto';
 import {
   BoardReportDetail,
   ReportCreateResponse,
+  ReportReadResponse,
 } from './interface/reports.interface';
 import { ReportRepository } from './repository/reports.repository';
 
@@ -16,7 +21,23 @@ export class ReportsService {
     private readonly reportRepository: ReportRepository,
     private readonly boardsService: BoardsService,
   ) {}
+  // 신고글 조회 관련
+  async getAllReports(): Promise<ReportReadResponse[]> {
+    try {
+      const boards: ReportReadResponse[] =
+        await this.reportRepository.getAllReports();
 
+      if (!boards) {
+        throw new NotFoundException(`전체 신고글의 조회를 실패 했습니다.`);
+      }
+
+      return boards;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // 신고글 작성 관련
   async setReport(createReportDto: CreateReportDto): Promise<number> {
     const { affectedRows, insertId }: ReportCreateResponse =
       await this.reportRepository.createReport(createReportDto);
