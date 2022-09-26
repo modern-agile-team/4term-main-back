@@ -6,7 +6,6 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { MeetingInfo } from '../entity/meeting-info.entity';
-import { Meetings } from '../entity/meeting.entity';
 import { MeetingMemberDetail } from '../interface/meeting.interface';
 
 @EntityRepository(MeetingInfo)
@@ -29,14 +28,14 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
     }
   }
 
-  async saveMeetingGuest(guest: number, meeting: Meetings): Promise<number> {
+  async saveMeetingGuest(guest: number, meetingNo: number): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder(
         'meeting_info',
       )
         .update()
         .set({ guest })
-        .where('meetingNo = :no', { no: meeting.no })
+        .where('meetingNo = :meetingNo', { meetingNo })
         .execute();
 
       return affected;
@@ -53,7 +52,7 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
         'meeting_info',
       )
         .select([
-          'meeting_info.meetingNo',
+          'meeting_info.meetingNo AS meetingNo',
           'meeting_info.host',
           'meeting_info.guest',
           'meeting_info.guestHeadcount AS guestHeadcount',
