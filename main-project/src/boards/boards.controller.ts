@@ -29,7 +29,6 @@ export class BoardsController {
     const boards: object = await this.boardService.getAllBoards();
     const response = {
       success: true,
-
       boards,
     };
 
@@ -99,7 +98,7 @@ export class BoardsController {
       updateBoardDto,
     );
 
-    const response = { success: true };
+    const response = { success: true, board };
 
     return response;
   }

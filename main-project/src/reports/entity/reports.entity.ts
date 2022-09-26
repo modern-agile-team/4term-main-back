@@ -34,11 +34,9 @@ export class Reports extends BaseEntity {
     (type) => Reportedboards,
     (reportedboards) => reportedboards.reportNo,
   )
-  @JoinColumn({ name: 'reported_board_FK' })
   reportedBoard: number;
 
   @OneToOne((type) => ReportedUsers, (reportedUsers) => reportedUsers.reportNo)
-  @JoinColumn({ name: 'reported_user_FK' })
   reportedUser: number;
 
   @ManyToOne((type) => Users, (user) => user.report)
