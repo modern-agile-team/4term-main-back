@@ -160,7 +160,7 @@ export class BoardRepository extends Repository<Boards> {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(BoardMemberInfos)
         .set(boardMember)
-        .where('no = :boardNo', { boardNo })
+        .where('boardNo = :boardNo', { boardNo })
         .execute();
 
       return affected;

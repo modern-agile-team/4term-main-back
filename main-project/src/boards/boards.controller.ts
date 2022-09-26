@@ -66,18 +66,18 @@ export class BoardsController {
     return response;
   }
 
-  @Post('/:boardNo')
+  @Post('/:boardNo/:userNo')
   @ApiOperation({
     summary: '북마크 생성 API',
     description: '게시글 번호를 통해 해당 User의 북마크를 생성한다..',
   })
   async createBookmark(
-    @Param('boardNo', ParseIntPipe) boardNo: number,
-    @Body() createBookmarkDto: CreateBookmarkDto,
+    @Param() params: { [key: string]: number },
   ): Promise<object> {
+    const { boardNo, userNo } = params;
     const bookmark: number = await this.boardService.createBookmark(
       boardNo,
-      createBookmarkDto,
+      userNo,
     );
     const response = { success: true, bookmark };
 

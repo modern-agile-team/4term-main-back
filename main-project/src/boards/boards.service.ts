@@ -71,15 +71,10 @@ export class BoardsService {
     }
   }
 
-  async createBookmark(
-    boardNo: number,
-    createBookmarkDto: CreateBookmarkDto,
-  ): Promise<number> {
+  async createBookmark(boardNo: number, userNo: number): Promise<number> {
+    // async createBookmark(bookmarkDetail: BookmarkDetail): Promise<number> {
     try {
-      const bookmarkDetail: BookmarkDetail = {
-        ...createBookmarkDto,
-        boardNo,
-      };
+      const bookmarkDetail: BookmarkDetail = { userNo, boardNo };
       const { affectedRows, insertId }: BoardCreateResponse =
         await this.boardRepository.createBookmark(bookmarkDetail);
 
@@ -173,7 +168,6 @@ export class BoardsService {
   async cancelBookmark(boardNo: number, userNo: number): Promise<string> {
     try {
       const board: BoardReadResponse = await this.getBoardByNo(boardNo);
-      console.log(board);
 
       if (!board) {
         throw new NotFoundException(`${boardNo}번 게시글을 찾을 수 없습니다.`);
