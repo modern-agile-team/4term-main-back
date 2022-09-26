@@ -1,8 +1,11 @@
 import { BoardBookmarks } from 'src/boards/entity/board-bookmark.entity';
+import { Boards } from 'src/boards/entity/board.entity';
 import { MeetingInfo } from 'src/meetings/entity/meeting-info.entity';
 import { GuestMembers } from 'src/members/entity/guest-members.entity';
 import { HostMembers } from 'src/members/entity/host-members.entity';
 import { Notices } from 'src/notices/entity/notices.entity';
+import { ReportedUsers } from 'src/reports/entity/reported-user.entity';
+import { Reports } from 'src/reports/entity/reports.entity';
 import {
   BaseEntity,
   Column,
@@ -49,6 +52,18 @@ export class Users extends BaseEntity {
 
   @OneToMany((type) => BoardBookmarks, (boardBookmark) => boardBookmark.userNo)
   boardBookmark: BoardBookmarks;
+
+  @OneToMany((type) => Boards, (board) => board.userNo)
+  board: Boards[];
+
+  @OneToMany((type) => Reports, (report) => report.userNo)
+  report: Reports[];
+
+  @OneToMany(
+    (type) => ReportedUsers,
+    (reportedUsers) => reportedUsers.targetUserNo,
+  )
+  reportedUser: ReportedUsers[];
 
   @OneToMany((type) => Notices, (notices) => notices.userNo)
   noticeUser: Notices[];
