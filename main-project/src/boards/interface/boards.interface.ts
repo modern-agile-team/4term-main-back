@@ -8,13 +8,14 @@ export interface BoardReadResponse {
   isDone: boolean;
   description: string;
   location: string;
+  nickname: string;
   meetingTime: Date;
   meetingNo: number;
   userNo: number;
 }
 
 export interface BoardMemberDetail {
-  boardNo: number;
+  boardNo?: number;
   male: number;
   female: number;
 }

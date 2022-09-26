@@ -9,11 +9,13 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Users } from 'src/users/entity/user.entity';
+import { Reportedboards } from 'src/reports/entity/reported-board.entity';
 
 @Entity('boards')
 export class Boards extends BaseEntity {
@@ -65,4 +67,10 @@ export class Boards extends BaseEntity {
   @ManyToOne((type) => Users, (user) => user.board)
   @JoinColumn({ name: 'user_no' })
   userNo: number;
+
+  @OneToMany(
+    (type) => Reportedboards,
+    (reportedboards) => reportedboards.targetBoardNo,
+  )
+  reportedBoard: Reportedboards[];
 }
