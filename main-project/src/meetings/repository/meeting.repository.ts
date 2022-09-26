@@ -1,39 +1,70 @@
-import { EntityRepository, Repository, UpdateResult } from 'typeorm';
-import { CreateMeetingDto } from '../dto/createMeeting.dto';
+import {
+  EntityRepository,
+  InsertResult,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
+import { UpdateMeetingDto } from '../dto/updateMeeting.dto';
 import { Meetings } from '../entity/meeting.entity';
+import { InternalServerErrorException } from '@nestjs/common';
+import {
+  ParticipatingMembers,
+  MeetingDetail,
+  MeetingResponse,
+} from '../interface/meeting.interface';
 
 @EntityRepository(Meetings)
 export class MeetingRepository extends Repository<Meetings> {
-  async createMeeting(createMeetingDto: CreateMeetingDto): Promise<Meetings> {
+  async createMeeting(meetingInfo: MeetingDetail): Promise<MeetingResponse> {
     try {
-      const { location, time } = createMeetingDto;
-      const meeting = this.create({
-        location,
-        time,
-      });
-      await this.save(meeting);
+      const { raw }: InsertResult = await this.createQueryBuilder('meetings')
+        .insert()
+        .into(Meetings)
+        .values(meetingInfo)
+        .execute();
 
-      return meeting;
+      return raw;
     } catch (err) {
-      throw err;
+      throw new InternalServerErrorException(
+        `${err} 약속 생성 에러(createMeeting): 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 
-  async updateMeeting(meetingNo, updatedMeetingInfo): Promise<number> {
+  async findMeetingById(meetingNo: number): Promise<Meetings> {
+    try {
+      const meeting: Meetings = await this.createQueryBuilder('meetings')
+        .where('meetings.no = :meetingNo', { meetingNo })
+        .getOne();
+
+      return meeting;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 조회 에러(findMeetingById): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async updateMeeting(
+    meetingNo: number,
+    updatedMeetingInfo: UpdateMeetingDto,
+  ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Meetings)
         .set(updatedMeetingInfo)
-        .where('no = :no', { no: meetingNo })
+        .where('no = :meetingNo', { meetingNo })
         .execute();
 
       return affected;
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 수정 에러(updateMeeting): 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 
-  async acceptMeeting(meetingNo): Promise<number> {
+  async acceptMeeting(meetingNo: number): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Meetings)
@@ -42,8 +73,44 @@ export class MeetingRepository extends Repository<Meetings> {
         .execute();
 
       return affected;
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 수락 에러(acceptMeeting): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getParticipatingMembers(
+    meetingNo: number,
+  ): Promise<ParticipatingMembers> {
+    try {
+      const result = await this.createQueryBuilder('meetings')
+        .leftJoin(
+          'meetings.meetingInfo',
+          'meetingInfo',
+          'meetings.no = meetingInfo.meetingNo',
+        )
+        .leftJoin('meetings.guestMembers', 'guestMembers')
+        .leftJoin('meetings.hostMembers', 'hostMembers')
+        .select([
+          'meetingInfo.host AS adminHost',
+          'meetingInfo.guest AS adminGuest',
+          'meetingInfo.guestHeadcount AS guestHeadcount',
+          'meetingInfo.hostHeadcount AS hostHeadcount',
+          'GROUP_CONCAT(DISTINCT guestMembers.userNo) AS guests',
+          'GROUP_CONCAT(DISTINCT hostMembers.userNo) AS hosts',
+          '(meetingInfo.guestHeadcount - COUNT(DISTINCT guestMembers.userNo)) AS addGuestAvailable',
+          '(meetingInfo.hostHeadcount - COUNT(DISTINCT hostMembers.userNo)) AS addHostAvailable',
+        ])
+        .where('meetings.no = :meetingNo', { meetingNo })
+        .groupBy('meetings.no')
+        .getRawOne();
+
+      return result;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 참여 중인 유저 조회(getParticipatingMembers): 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 }
