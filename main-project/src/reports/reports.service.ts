@@ -1,34 +1,80 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BoardRepository } from 'src/boards/repository/board.repository';
+import { BoardsService } from 'src/boards/boards.service';
 import { CreateReportDto } from './dto/create-reports.dto';
+import {
+  BoardReportDetail,
+  ReportCreateResponse,
+  ReportReadResponse,
+} from './interface/reports.interface';
 import { ReportRepository } from './repository/reports.repository';
 
 @Injectable()
 export class ReportsService {
   constructor(
-    @InjectRepository(BoardRepository)
     @InjectRepository(ReportRepository)
+    @InjectRepository(BoardsService)
     private readonly reportRepository: ReportRepository,
-    private readonly boardRepository: BoardRepository,
+    private readonly boardsService: BoardsService,
   ) {}
+  // 신고글 조회 관련
+  async getAllReports(): Promise<ReportReadResponse[]> {
+    try {
+      const boards: ReportReadResponse[] =
+        await this.reportRepository.getAllReports();
+
+      if (!boards) {
+        throw new NotFoundException(`전체 신고글의 조회를 실패 했습니다.`);
+      }
+
+      return boards;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // 신고글 작성 관련
+  async setReport(createReportDto: CreateReportDto): Promise<number> {
+    const { affectedRows, insertId }: ReportCreateResponse =
+      await this.reportRepository.createReport(createReportDto);
+
+    if (!(affectedRows && insertId)) {
+      throw new InternalServerErrorException(`report 생성 오류입니다.`);
+    }
+    return insertId;
+  }
+
+  async setBoardReport(boardReportDetail: BoardReportDetail): Promise<number> {
+    const { affectedRows, insertId }: ReportCreateResponse =
+      await this.reportRepository.createBoardReport(boardReportDetail);
+
+    if (!(affectedRows && insertId)) {
+      throw new InternalServerErrorException(`board-report 생성 오류입니다.`);
+    }
+    return insertId;
+  }
 
   async createBoardReport(
     createReportDto: CreateReportDto,
     boardNo: number,
   ): Promise<number> {
     try {
-      console.log(12);
+      await this.boardsService.getBoardByNo(boardNo);
 
-      //   const { affectedRows, insertId }: BoardCreateResponse =
-      //     await this.boardRepository.createBoard(createBoardDto);
+      const reportNo: number = await this.setReport(createReportDto);
 
-      //   if (!(affectedRows && insertId)) {
-      //     throw new InternalServerErrorException(`board 생성 오류입니다.`);
-      //   }
+      const boardReportDetail: BoardReportDetail = {
+        reportNo,
+        targetBoardNo: boardNo,
+      };
 
-      //   return insertId;
-      return 1;
+      await this.setBoardReport(boardReportDetail);
+
+      return reportNo;
     } catch (error) {
       throw error;
     }
