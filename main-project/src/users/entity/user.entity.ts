@@ -14,8 +14,10 @@ import {
   CreateDateColumn,
   Entity,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { UserManners } from './user-manners.entity';
 
 @Entity('users')
 export class Users extends BaseEntity {
@@ -25,14 +27,14 @@ export class Users extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   email: string;
 
-  @Column({ type: 'tinyint', nullable: true })
-  gender: number;
+  @Column()
+  gender: boolean;
 
   @Column({ type: 'varchar', length: 45 })
   nickname: string;
 
-  @Column({ type: 'tinyint' })
-  admin: number;
+  @Column()
+  admin: boolean;
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
@@ -72,6 +74,9 @@ export class Users extends BaseEntity {
 
   @OneToMany((type) => Notices, (notices) => notices.targetUserNo)
   noticeTargetUser: Notices[];
+
+  @OneToOne((type) => UserManners, (userManners) => userManners.userNo)
+  mannerUserNo: UserManners;
 
   @OneToMany((type) => Friends, (friends) => friends.userNo)
   friendMyNo: Friends[];
