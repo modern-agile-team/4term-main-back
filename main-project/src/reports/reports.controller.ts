@@ -5,10 +5,12 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateReportDto } from './dto/create-reports.dto';
+import { UpdateReportDto } from './dto/update-reports.dto';
 import { ReportsService } from './reports.service';
 
 @Controller('reports')
@@ -67,6 +69,26 @@ export class ReportsController {
     return response;
   }
 
+  // Patch Methods
+  @Patch('/:reportNo')
+  @ApiOperation({
+    summary: '신고내용 수정 API',
+    description: '입력한 정보로 신고내용을 수정한다.',
+  })
+  async updateBoard(
+    @Param('reportNo', ParseIntPipe) reportNo: number,
+    @Body() updateReportDto: UpdateReportDto,
+  ) {
+    const report: void = await this.reportsService.updateReport(
+      reportNo,
+      updateReportDto,
+    );
+
+    const response = { success: true, report };
+
+    return response;
+  }
+
   // Delete Methods
   @Delete('/:reportNo')
   @ApiOperation({
@@ -76,8 +98,8 @@ export class ReportsController {
   async deleteReportByNo(
     @Param('reportNo', ParseIntPipe) reportNo: number,
   ): Promise<string> {
-    const board = await this.reportsService.deleteReportByNo(reportNo);
+    const report = await this.reportsService.deleteReportByNo(reportNo);
 
-    return board;
+    return report;
   }
 }

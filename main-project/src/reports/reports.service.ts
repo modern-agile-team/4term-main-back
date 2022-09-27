@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { BoardsService } from 'src/boards/boards.service';
 import { CreateReportDto } from './dto/create-reports.dto';
+import { UpdateReportDto } from './dto/update-reports.dto';
 import {
   BoardReportDetail,
   ReportCreateResponse,
@@ -126,6 +127,20 @@ export class ReportsService {
       await this.setBoardReport(boardReportDetail);
 
       return reportNo;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //게시글 수정 관련
+  async updateReport(
+    reportNo: number,
+    updateReportDto: UpdateReportDto,
+  ): Promise<void> {
+    try {
+      await this.getReportByNo(reportNo);
+
+      await this.reportRepository.updateReport(reportNo, updateReportDto);
     } catch (error) {
       throw error;
     }

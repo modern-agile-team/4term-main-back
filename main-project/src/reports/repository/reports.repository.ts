@@ -4,8 +4,10 @@ import {
   EntityRepository,
   InsertResult,
   Repository,
+  UpdateResult,
 } from 'typeorm';
 import { CreateReportDto } from '../dto/create-reports.dto';
+import { UpdateReportDto } from '../dto/update-reports.dto';
 import { Reportedboards } from '../entity/reported-board.entity';
 import { ReportedUsers } from '../entity/reported-user.entity';
 import { Reports } from '../entity/reports.entity';
@@ -59,7 +61,7 @@ export class ReportRepository extends Repository<Reports> {
       return reportedBoards;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getAllReportedBoard-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getAllReportedBoards-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -123,7 +125,7 @@ export class ReportRepository extends Repository<Reports> {
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createBoardReport-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -141,6 +143,26 @@ export class ReportRepository extends Repository<Reports> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  //게시글 수정 관련
+  async updateReport(
+    reportNo: number,
+    updateReportDto: UpdateReportDto,
+  ): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(Reports)
+        .set(updateReportDto)
+        .where('no = :reportNo', { reportNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} updateReport-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
