@@ -51,6 +51,7 @@ export class ReportsService {
       throw error;
     }
   }
+
   async getAllReportedusers(): Promise<ReportReadResponse[]> {
     try {
       const reportedUsers: ReportReadResponse[] =
@@ -66,14 +67,20 @@ export class ReportsService {
     }
   }
 
-  async getReportByNo(reportNo:number): Promise<ReportReadResponse> {
+  async getReportByNo(reportNo: number): Promise<ReportReadResponse> {
     try {
       const report: ReportReadResponse =
         await this.reportRepository.getReportByNo(reportNo);
 
       if (!report) {
-        throw new NotFoundException(`${reportNo}번 신고 내역의 조회를 실패 했습니다.`);
+        throw new NotFoundException(
+          `${reportNo}번 신고 내역의 조회를 실패 했습니다.`,
+        );
       }
+
+      !report.targetBoardNo
+        ? delete report.targetBoardNo
+        : delete report.targetUserNo;
 
       return report;
     } catch (error) {
@@ -128,7 +135,11 @@ export class ReportsService {
   async deleteReportByNo(reportNo: number): Promise<string> {
     try {
       const report: ReportReadResponse = await this.getReportByNo(reportNo);
-      (!report.targetBoardNo)?await this.reportRepository.deleteUserReport(reportNo):await this.reportRepository.deleteBoardReport(reportNo)
+      !report.targetBoardNo
+        ? await this.reportRepository.deleteUserReport(reportNo)
+        : await this.reportRepository.deleteBoardReport(reportNo);
+
+      await this.reportRepository.deleteReport(reportNo);
 
       return `${reportNo}번 신고내역 삭제 성공 :)`;
     } catch (error) {

@@ -224,6 +224,7 @@ export class BoardRepository extends Repository<Boards> {
       );
     }
   }
+
   async deleteBookmark(boardNo: number): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder(

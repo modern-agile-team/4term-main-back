@@ -1,5 +1,10 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { DeleteResult, EntityRepository, InsertResult, Repository } from 'typeorm';
+import {
+  DeleteResult,
+  EntityRepository,
+  InsertResult,
+  Repository,
+} from 'typeorm';
 import { CreateReportDto } from '../dto/create-reports.dto';
 import { Reportedboards } from '../entity/reported-board.entity';
 import { ReportedUsers } from '../entity/reported-user.entity';
@@ -15,7 +20,6 @@ export class ReportRepository extends Repository<Reports> {
   //신고글 조회 관련
 
   async getAllReports(): Promise<ReportReadResponse[]> {
-    
     try {
       const reports = this.createQueryBuilder('reports')
         .leftJoin('reports.reportedBoard', 'reportedBoard')
@@ -27,9 +31,10 @@ export class ReportRepository extends Repository<Reports> {
           'reports.description AS description',
           'reportedBoard.targetBoardNo as tagetBoardNo',
           'reportedUser.targetUserNo as tagetUserNo',
-        ]).getRawMany();
+        ])
+        .getRawMany();
 
-      return reports
+      return reports;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getAllreports-repository: 알 수 없는 서버 에러입니다.`,
@@ -47,11 +52,11 @@ export class ReportRepository extends Repository<Reports> {
           'reports.title AS title',
           'reports.description AS description',
           'reportedBoard.targetBoardNo as targetBoardNo',
-          
-        ]).where('reportedBoard.reportNo > 0')
+        ])
+        .where('reportedBoard.reportNo > 0')
         .getRawMany();
 
-      return reportedBoards
+      return reportedBoards;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getAllReportedBoard-repository: 알 수 없는 서버 에러입니다.`,
@@ -69,10 +74,11 @@ export class ReportRepository extends Repository<Reports> {
           'reports.title AS title',
           'reports.description AS description',
           'reportedUser.targetUserNo as targetUserNo',
-        ]).where('reportedUser.reportNo > 0')
+        ])
+        .where('reportedUser.reportNo > 0')
         .getRawMany();
 
-      return reportedusers
+      return reportedusers;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getAllReportedusers-repository: 알 수 없는 서버 에러입니다.`,
@@ -80,7 +86,7 @@ export class ReportRepository extends Repository<Reports> {
     }
   }
 
-  async getReportByNo(reportNo:number): Promise<ReportReadResponse> {
+  async getReportByNo(reportNo: number): Promise<ReportReadResponse> {
     try {
       const report = this.createQueryBuilder('reports')
         .leftJoin('reports.reportedBoard', 'reportedBoard')
@@ -90,13 +96,13 @@ export class ReportRepository extends Repository<Reports> {
           'reports.userNo AS userNo',
           'reports.title AS title',
           'reports.description AS description',
-          'reportedBoard.targetBoardNo as tagetBoardNo',
-          'reportedUser.targetUserNo as tagetUserNo',
+          'reportedBoard.targetBoardNo as targetBoardNo',
+          'reportedUser.targetUserNo as targetUserNo',
         ])
         .where('reports.no=:reportNo', { reportNo })
         .getRawOne();
 
-      return report
+      return report;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getReportByNo-repository: 알 수 없는 서버 에러입니다.`,
@@ -142,7 +148,6 @@ export class ReportRepository extends Repository<Reports> {
   // 신고 삭제 관련
   async deleteUserReport(reportNo: number): Promise<number> {
     try {
-      
       const { affected }: DeleteResult = await this.createQueryBuilder(
         'reportedUsers',
       )
@@ -161,7 +166,6 @@ export class ReportRepository extends Repository<Reports> {
 
   async deleteBoardReport(reportNo: number): Promise<number> {
     try {
-
       const { affected }: DeleteResult = await this.createQueryBuilder(
         'reportedBoards',
       )
@@ -174,6 +178,24 @@ export class ReportRepository extends Repository<Reports> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteBoardReport-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async deleteReport(reportNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder(
+        'reports',
+      )
+        .delete()
+        .from(Reports)
+        .where('no = :reportNo', { reportNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteReport-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
