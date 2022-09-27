@@ -16,7 +16,9 @@ export class ProfileImages extends BaseEntity {
   @Column({ name: 'image_url', type: 'varchar', length: 255, nullable: true })
   imageUrl: string;
 
-  @OneToOne((type) => UserProfile, (userProfile) => userProfile.no)
+  @OneToOne((type) => UserProfile, (userProfile) => userProfile.userNo, {
+    nullable: false,
+  })
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 }

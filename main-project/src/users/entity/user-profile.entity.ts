@@ -18,24 +18,27 @@ export class UserProfile extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @OneToOne((type) => Users, (users) => users.no)
+  @OneToOne((type) => Users, (users) => users.userProfileNo, {
+    nullable: false,
+  })
   @JoinColumn({ name: 'user_no' })
-  nullable: false;
   userNo: number;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
   @OneToOne((type) => UserManners, (userManners) => userManners.userProfileNo)
-  userManners: UserProfile;
+  mannerNo: UserManners;
 
-  @ManyToOne((type) => University, (university) => university.no)
+  @ManyToOne((type) => University, (university) => university.usersUniversity, {
+    nullable: false,
+  })
   @JoinColumn({ name: 'university_no' })
-  universityNo: string;
+  universityNo: number;
 
-  @ManyToOne((type) => Major, (major) => major.no)
+  @ManyToOne((type) => Major, (major) => major.userProfile, { nullable: false })
   @JoinColumn({ name: 'major_no' })
-  majorNo: string;
+  majorNo: number;
 
   @OneToOne((type) => ProfileImages, (profileImages) => profileImages.userNo)
   profileImages: ProfileImages;

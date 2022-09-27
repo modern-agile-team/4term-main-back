@@ -16,5 +16,5 @@ export class University extends BaseEntity {
   major: string;
 
   @OneToMany((type) => UserProfile, (userProfile) => userProfile.universityNo)
-  userProfile: UserProfile[];
+  usersUniversity: UserProfile[];
 }

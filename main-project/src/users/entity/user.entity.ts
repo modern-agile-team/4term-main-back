@@ -18,7 +18,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserProfile } from './user-profile.entity';
-import { UserManners } from './user-manners.entity';
 
 @Entity('users')
 export class Users extends BaseEntity {
@@ -76,9 +75,6 @@ export class Users extends BaseEntity {
   @OneToMany((type) => Notices, (notices) => notices.targetUserNo)
   noticeTargetUser: Notices[];
 
-  @OneToOne((type) => UserManners, (userManners) => userManners.no)
-  mannerUserNo: UserManners;
-
   @OneToMany((type) => Friends, (friends) => friends.userNo)
   friendMyNo: Friends[];
 
@@ -96,6 +92,7 @@ export class Users extends BaseEntity {
     (friendReqList) => friendReqList.acceptUserNo,
   )
   friendAcceptUser: FriendReqList[];
+
   @OneToOne((type) => UserProfile, (userProfile) => userProfile.userNo)
-  userProfile: UserProfile;
+  userProfileNo: UserProfile;
 }

@@ -13,9 +13,10 @@ export class UserManners extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @OneToOne((type) => UserProfile, (userProfile) => userProfile.no)
+  @OneToOne((type) => UserProfile, (userProfile) => userProfile.mannerNo, {
+    nullable: false,
+  })
   @JoinColumn({ name: 'user_profile_no' })
-  nullable: false;
   userProfileNo: number;
 
   @Column('decimal', { precision: 6, scale: 1, default: 36.5 })
