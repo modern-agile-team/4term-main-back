@@ -36,7 +36,7 @@ export class UserProfile extends BaseEntity {
   @JoinColumn({ name: 'university_no' })
   universityNo: number;
 
-  @ManyToOne((type) => Majors, (major) => major.userProfile, {
+  @ManyToOne((type) => Majors, (majors) => majors.userProfile, {
     nullable: false,
   })
   @JoinColumn({ name: 'major_no' })
