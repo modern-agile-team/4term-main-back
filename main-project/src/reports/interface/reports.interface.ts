@@ -13,4 +13,6 @@ export interface ReportReadResponse {
   title: string;
   description: string;
   userNo: number;
+  targetBoardNo?: number;
+  targetUserNo?: number;
 }
