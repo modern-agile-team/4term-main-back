@@ -17,7 +17,7 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { UserProfile } from './user-images.entity';
+import { UserProfile } from './user-profile.entity';
 import { UserManners } from './user-manners.entity';
 
 @Entity('users')
@@ -76,7 +76,7 @@ export class Users extends BaseEntity {
   @OneToMany((type) => Notices, (notices) => notices.targetUserNo)
   noticeTargetUser: Notices[];
 
-  @OneToOne((type) => UserManners, (userManners) => userManners.userNo)
+  @OneToOne((type) => UserManners, (userManners) => userManners.no)
   mannerUserNo: UserManners;
 
   @OneToMany((type) => Friends, (friends) => friends.userNo)

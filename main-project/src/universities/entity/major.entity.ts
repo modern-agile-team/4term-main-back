@@ -1,4 +1,11 @@
-import { BaseEntity, Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { UserProfile } from 'src/users/entity/user-profile.entity';
+import {
+  BaseEntity,
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('major')
 export class Major extends BaseEntity {
@@ -7,4 +14,7 @@ export class Major extends BaseEntity {
 
   @Column({ type: 'varchar', length: '50' })
   university: string;
+
+  @OneToMany((type) => UserProfile, (userProfile) => userProfile.majorNo)
+  userProfile: UserProfile[];
 }
