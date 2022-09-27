@@ -7,8 +7,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
-@Entity('major')
-export class Major extends BaseEntity {
+@Entity('majors')
+export class Majors extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
