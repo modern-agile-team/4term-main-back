@@ -10,6 +10,7 @@ import { MembersModule } from './members/members.module';
 import { NoticesModule } from './notices/notices.module';
 import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
+import { FriendsModule } from './friends/friends.module';
 import { UniversitiesModule } from './universities/universities.module';
 import { AuthModule } from './auth/auth.module';
 
@@ -23,6 +24,7 @@ import { AuthModule } from './auth/auth.module';
     NoticesModule,
     UsersModule,
     ReportsModule,
+    FriendsModule,
     UniversitiesModule,
     AuthModule,
   ],
