@@ -123,4 +123,16 @@ export class ReportsService {
       throw error;
     }
   }
+
+  // 신고 삭제 관련
+  async deleteReportByNo(reportNo: number): Promise<string> {
+    try {
+      const report: ReportReadResponse = await this.getReportByNo(reportNo);
+      (!report.targetBoardNo)?await this.reportRepository.deleteUserReport(reportNo):await this.reportRepository.deleteBoardReport(reportNo)
+
+      return `${reportNo}번 신고내역 삭제 성공 :)`;
+    } catch (error) {
+      throw error;
+    }
+  }
 }

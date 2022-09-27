@@ -1,7 +1,8 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { EntityRepository, InsertResult, Repository } from 'typeorm';
+import { DeleteResult, EntityRepository, InsertResult, Repository } from 'typeorm';
 import { CreateReportDto } from '../dto/create-reports.dto';
 import { Reportedboards } from '../entity/reported-board.entity';
+import { ReportedUsers } from '../entity/reported-user.entity';
 import { Reports } from '../entity/reports.entity';
 import {
   BoardReportDetail,
@@ -134,6 +135,45 @@ export class ReportRepository extends Repository<Reports> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  // 신고 삭제 관련
+  async deleteUserReport(reportNo: number): Promise<number> {
+    try {
+      
+      const { affected }: DeleteResult = await this.createQueryBuilder(
+        'reportedUsers',
+      )
+        .delete()
+        .from(ReportedUsers)
+        .where('reportNo = :reportNo', { reportNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteUserReport-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async deleteBoardReport(reportNo: number): Promise<number> {
+    try {
+
+      const { affected }: DeleteResult = await this.createQueryBuilder(
+        'reportedBoards',
+      )
+        .delete()
+        .from(Reportedboards)
+        .where('reportNo = :reportNo', { reportNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteBoardReport-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

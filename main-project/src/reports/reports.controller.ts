@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -64,5 +65,19 @@ export class ReportsController {
     const response = { success: true, report };
 
     return response;
+  }
+
+  // Delete Methods
+  @Delete('/:reportNo')
+  @ApiOperation({
+    summary: '특정 신고내역 삭제 API',
+    description: '신고 번호를 사용하여 해당 신고내역을 삭제한다.',
+  })
+  async deleteReportByNo(
+    @Param('reportNo', ParseIntPipe) reportNo: number,
+  ): Promise<string> {
+    const board = await this.reportsService.deleteReportByNo(reportNo);
+
+    return board;
   }
 }
