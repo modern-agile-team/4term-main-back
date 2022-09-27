@@ -10,6 +10,24 @@ import { FriendDetail, FriendRequest } from '../interface/friend.interface';
 
 @EntityRepository(FriendReqList)
 export class FriendReqListRepository extends Repository<FriendReqList> {
+  async getAllFriendReq(userNo: number): Promise<FriendReqList[]> {
+    try {
+      const result = await this.createQueryBuilder('friend_req_list')
+        .select([
+          'friend_req_list.no AS no',
+          'friend_req_list.request_user_no AS requestUserNo',
+          'friend_req_list.accept_user_no AS acceptUserNo',
+        ])
+        .where('accept_user_no = :userNo', { userNo })
+        .getRawMany();
+      return result;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 친구 신청 조회(getAllFriendReq): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async getFriendRequest(friendDetail: FriendDetail): Promise<FriendRequest> {
     try {
       const result: FriendRequest = await this.createQueryBuilder(
@@ -31,7 +49,7 @@ export class FriendReqListRepository extends Repository<FriendReqList> {
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 친구 요청 목록 조회(getFriendRequest): 알 수 없는 서버 에러입니다.`,
+        `${err}: 특정 친구 요청 목록 조회(getFriendRequest): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

@@ -5,16 +5,29 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateFriendDto } from './dto/create-friend.dto';
+import { FriendReqList } from './entity/friend-req-list.entity';
 import { FriendDetail, FriendRequest } from './interface/friend.interface';
 import { FriendReqListRepository } from './repository/friend-req-list.repository';
-import { FriendsRepository } from './repository/friend.repository';
 
 @Injectable()
 export class FriendsService {
   constructor(
     @InjectRepository(FriendReqListRepository)
-    private readonly friendsRepository: FriendReqListRepository,
+    private readonly friendsReqRepository: FriendReqListRepository,
   ) {}
+
+  async getFriendRequest(userNo: number) {
+    try {
+      const requestList = await this.findAllFriendReqByNo(userNo);
+
+      if (!requestList[0]) {
+        throw new BadRequestException(`친구신청한 유저가 없습니다.`);
+      }
+      return requestList;
+    } catch (err) {
+      throw err;
+    }
+  }
 
   async createFriendRequest(createFriendDto: CreateFriendDto): Promise<object> {
     try {
@@ -26,7 +39,7 @@ export class FriendsService {
         throw new BadRequestException(`이미 친구신청이 완료되었습니다.`);
       }
 
-      const raw = await this.friendsRepository.createFriendRequest(
+      const raw = await this.friendsReqRepository.createFriendRequest(
         createFriendDto,
       );
 
@@ -46,7 +59,7 @@ export class FriendsService {
     friendDetail: FriendDetail,
   ): Promise<FriendRequest> {
     try {
-      const friendRequest = await this.friendsRepository.getFriendRequest(
+      const friendRequest = await this.friendsReqRepository.getFriendRequest(
         friendDetail,
       );
 
@@ -54,6 +67,19 @@ export class FriendsService {
     } catch (err) {
       throw new InternalServerErrorException(
         `${err}: 친구 요청 확인(findFriendReqByNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  private async findAllFriendReqByNo(userNo: number): Promise<FriendReqList[]> {
+    try {
+      const requestList: FriendReqList[] =
+        await this.friendsReqRepository.getAllFriendReq(userNo);
+
+      return requestList;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 전체 친구 요청 확인(findAllFriendReqByNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
