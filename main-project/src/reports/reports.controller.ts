@@ -29,6 +29,24 @@ export class ReportsController {
 
     return response;
   }
+
+  @Get('/:reportNo')
+  @ApiOperation({
+    summary: '게시글 신고 전체 조회 API',
+    description: '게시글 신고글들을 전부 조회한다.',
+  })
+  async getReportByNo(
+    @Param('reportNo', ParseIntPipe) reportNo: number,
+  ): Promise<object> {
+    const report: object = await this.reportsService.getReportByNo(reportNo);
+    const response = {
+      success: true,
+      report,
+    };
+
+    return response;
+  }
+
   // Post
   @Post('/:boardNo')
   @ApiOperation({

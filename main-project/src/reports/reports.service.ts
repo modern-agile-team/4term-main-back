@@ -28,10 +28,54 @@ export class ReportsService {
         await this.reportRepository.getAllReports();
 
       if (!boards) {
-        throw new NotFoundException(`전체 신고글의 조회를 실패 했습니다.`);
+        throw new NotFoundException(`전체 Reports의 조회를 실패 했습니다.`);
       }
 
       return boards;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getAllReportedBoards(): Promise<ReportReadResponse[]> {
+    try {
+      const reportedBoards: ReportReadResponse[] =
+        await this.reportRepository.getAllReportedBoards();
+
+      if (!reportedBoards) {
+        throw new NotFoundException(`전체 Boards 신고의 조회를 실패 했습니다.`);
+      }
+
+      return reportedBoards;
+    } catch (error) {
+      throw error;
+    }
+  }
+  async getAllReportedusers(): Promise<ReportReadResponse[]> {
+    try {
+      const reportedUsers: ReportReadResponse[] =
+        await this.reportRepository.getAllReportedusers();
+
+      if (!reportedUsers) {
+        throw new NotFoundException(`전체 Users 신고의 조회를 실패 했습니다.`);
+      }
+
+      return reportedUsers;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getReportByNo(reportNo:number): Promise<ReportReadResponse> {
+    try {
+      const report: ReportReadResponse =
+        await this.reportRepository.getReportByNo(reportNo);
+
+      if (!report) {
+        throw new NotFoundException(`${reportNo}번 신고 내역의 조회를 실패 했습니다.`);
+      }
+
+      return report;
     } catch (error) {
       throw error;
     }

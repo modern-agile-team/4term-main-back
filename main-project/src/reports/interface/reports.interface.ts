@@ -13,4 +13,17 @@ export interface ReportReadResponse {
   title: string;
   description: string;
   userNo: number;
+  targetBoardNo?:number;
+  targetuserNo?:number;
 }
+// export interface ReportedBoardResponse{
+//   no:number;
+//   reportNo:number;
+//   targetBoardNo:number;
+// }
+
+// export interface ReportedUserResponse{
+//   no:number;
+//   reportNo:number;
+//   targetuserNo:number;
+// }

@@ -14,6 +14,7 @@ export class ReportRepository extends Repository<Reports> {
   //신고글 조회 관련
 
   async getAllReports(): Promise<ReportReadResponse[]> {
+    
     try {
       const reports = this.createQueryBuilder('reports')
         .leftJoin('reports.reportedBoard', 'reportedBoard')
@@ -25,12 +26,79 @@ export class ReportRepository extends Repository<Reports> {
           'reports.description AS description',
           'reportedBoard.targetBoardNo as tagetBoardNo',
           'reportedUser.targetUserNo as tagetUserNo',
-        ]);
+        ]).getRawMany();
 
-      return reports.getRawMany();
+      return reports
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getAllreports-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getAllReportedBoards(): Promise<ReportReadResponse[]> {
+    try {
+      const reportedBoards = this.createQueryBuilder('reports')
+        .leftJoin('reports.reportedBoard', 'reportedBoard')
+        .select([
+          'reports.no AS no',
+          'reports.userNo AS userNo',
+          'reports.title AS title',
+          'reports.description AS description',
+          'reportedBoard.targetBoardNo as targetBoardNo',
+          
+        ]).where('reportedBoard.reportNo > 0')
+        .getRawMany();
+
+      return reportedBoards
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getAllReportedBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getAllReportedusers(): Promise<ReportReadResponse[]> {
+    try {
+      const reportedusers = this.createQueryBuilder('reports')
+        .leftJoin('reports.reportedUser', 'reportedUser')
+        .select([
+          'reports.no AS no',
+          'reports.userNo AS userNo',
+          'reports.title AS title',
+          'reports.description AS description',
+          'reportedUser.targetUserNo as targetUserNo',
+        ]).where('reportedUser.reportNo > 0')
+        .getRawMany();
+
+      return reportedusers
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getAllReportedusers-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getReportByNo(reportNo:number): Promise<ReportReadResponse> {
+    try {
+      const report = this.createQueryBuilder('reports')
+        .leftJoin('reports.reportedBoard', 'reportedBoard')
+        .leftJoin('reports.reportedUser', 'reportedUser')
+        .select([
+          'reports.no AS no',
+          'reports.userNo AS userNo',
+          'reports.title AS title',
+          'reports.description AS description',
+          'reportedBoard.targetBoardNo as tagetBoardNo',
+          'reportedUser.targetUserNo as tagetUserNo',
+        ])
+        .where('reports.no=:reportNo', { reportNo })
+        .getRawOne();
+
+      return report
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getReportByNo-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
