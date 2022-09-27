@@ -2,8 +2,8 @@ import { IsNotEmpty } from 'class-validator';
 
 export class CreateFriendDto {
   @IsNotEmpty()
-  userNo: number;
+  requestUserNo: number;
 
   @IsNotEmpty()
-  friendNo: number;
+  acceptUserNo: number;
 }
