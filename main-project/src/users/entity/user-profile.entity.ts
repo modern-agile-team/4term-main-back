@@ -1,4 +1,4 @@
-import { Major } from 'src/universities/entity/major.entity';
+import { Majors } from 'src/universities/entity/majors.entity';
 import { University } from 'src/universities/entity/university.entity';
 import {
   BaseEntity,
@@ -36,7 +36,9 @@ export class UserProfile extends BaseEntity {
   @JoinColumn({ name: 'university_no' })
   universityNo: number;
 
-  @ManyToOne((type) => Major, (major) => major.userProfile, { nullable: false })
+  @ManyToOne((type) => Majors, (major) => major.userProfile, {
+    nullable: false,
+  })
   @JoinColumn({ name: 'major_no' })
   majorNo: number;
 
