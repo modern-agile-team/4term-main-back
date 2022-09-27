@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { FriendDetail, FriendRequest } from './interface/friend.interface';
@@ -11,35 +15,46 @@ export class FriendsService {
     @InjectRepository(FriendReqListRepository)
     private readonly friendsRepository: FriendReqListRepository,
   ) {}
-  /**
-   *
-   * @param createFriendDto 친구 요청
-   * 1. 요청이 넘어오면 친구 userID의 friendNo 가 존재하는 지 확인
-   * 2. 존재하면 return 이미 친구
-   * 3. 없으면 friendRequest 생성
-   */
+
   async createFriendRequest(createFriendDto: CreateFriendDto): Promise<object> {
     try {
-      const { userNo, friendNo }: CreateFriendDto = createFriendDto;
+      const check: FriendRequest = await this.findFriendReqByNo(
+        createFriendDto,
+      );
 
-      const check: FriendRequest = await this.findFriendById({
-        userNo,
-        friendNo,
-      });
-      console.log(check.no);
+      if (!check.isAccept) {
+        throw new BadRequestException(`이미 친구신청이 완료되었습니다.`);
+      }
+
+      const raw = await this.friendsRepository.createFriendRequest(
+        createFriendDto,
+      );
+
+      if (!raw.affectedRows) {
+        throw new InternalServerErrorException(
+          `friend request 생성 오류입니다.`,
+        );
+      }
 
       return check;
-    } catch {}
+    } catch (err) {
+      throw err;
+    }
   }
 
-  private async findFriendById(
+  private async findFriendReqByNo(
     friendDetail: FriendDetail,
   ): Promise<FriendRequest> {
     try {
       const friendRequest = await this.friendsRepository.getFriendRequest(
         friendDetail,
       );
+
       return friendRequest;
-    } catch {}
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 친구 요청 확인(findFriendReqByNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
   }
 }

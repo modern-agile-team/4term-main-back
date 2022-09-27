@@ -11,6 +11,7 @@ import { NoticesModule } from './notices/notices.module';
 import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
 import { FriendsModule } from './friends/friends.module';
+import { UniversitiesModule } from './universities/universities.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { FriendsModule } from './friends/friends.module';
     UsersModule,
     ReportsModule,
     FriendsModule,
+    UniversitiesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
