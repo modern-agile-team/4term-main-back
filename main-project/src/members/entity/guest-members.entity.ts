@@ -17,7 +17,9 @@ export class GuestMembers extends BaseEntity {
   @JoinColumn({ name: 'user_no' })
   userNo: Users;
 
-  @ManyToOne((type) => Meetings, (meeting) => meeting.guestMembers)
+  @ManyToOne((type) => Meetings, (meeting) => meeting.guestMembers, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'meeting_no' })
   meetingNo: Meetings;
 }
