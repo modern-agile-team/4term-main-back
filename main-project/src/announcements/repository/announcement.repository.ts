@@ -1,5 +1,10 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { EntityRepository, InsertResult, Repository } from 'typeorm';
+import {
+  DeleteResult,
+  EntityRepository,
+  InsertResult,
+  Repository,
+} from 'typeorm';
 import { CreateAnnouncementDto } from '../dto/create-announcement.dto';
 import { Announcements } from '../entity/announcement.entity';
 import {
@@ -65,6 +70,23 @@ export class AnnouncementsRepository extends Repository<Announcements> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createAnnouncement-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  // 공지사항 삭제 관련
+  async deleteAnnouncement(announcementNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder('boards')
+        .delete()
+        .from(Announcements)
+        .where('no = :announcementNo', { announcementNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteAnnouncement-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
