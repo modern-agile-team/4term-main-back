@@ -4,7 +4,9 @@ import {
   EntityRepository,
   InsertResult,
   Repository,
+  UpdateResult,
 } from 'typeorm';
+import { EnquiryDto } from '../dto/enquiry.dto';
 import { Enquiries } from '../entity/enquiry.entity';
 import {
   EnquiryCreateResponse,
@@ -70,6 +72,26 @@ export class EnquiryRepository extends Repository<Enquiries> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createEnquiry-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  //문의사항 수정 관련
+  async updateEnquiry(
+    enquiryNo: number,
+    enquiryDto: EnquiryDto,
+  ): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(Enquiries)
+        .set(enquiryDto)
+        .where('no = :enquiryNo', { enquiryNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} updateEnquiry-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

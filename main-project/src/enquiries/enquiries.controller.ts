@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
 } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
@@ -64,6 +65,26 @@ export class EnquiriesController {
       userNo,
     );
     const response = { success: true, enquiry };
+
+    return response;
+  }
+
+  // Patch Methods
+  @Patch('/:enquiryNo')
+  @ApiOperation({
+    summary: '문의사항 수정 API',
+    description: '입력한 정보로 문의 내용을 수정한다.',
+  })
+  async updateBoard(
+    @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
+    @Body() enquiryDto: EnquiryDto,
+  ): Promise<object> {
+    await this.enquiriesService.updateEnquiry(enquiryNo, enquiryDto);
+
+    const response = {
+      success: true,
+      msg: `${enquiryNo}번 문의사항이 수정되었습니다.`,
+    };
 
     return response;
   }

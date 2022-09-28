@@ -73,6 +73,19 @@ export class EnquiriesService {
     }
   }
 
+  //게시글 수정 관련
+  async updateEnquiry(
+    enquiryNo: number,
+    enquiryDto: EnquiryDto,
+  ): Promise<void> {
+    try {
+      await this.getEnquiriesByNo(enquiryNo);
+      await this.enquiryRepository.updateEnquiry(enquiryNo, enquiryDto);
+    } catch (error) {
+      throw error;
+    }
+  }
+
   //문의사항 삭제 관련
   async deleteEnquiryByNo(enquiryNo: number): Promise<string> {
     try {
