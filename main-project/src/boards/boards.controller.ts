@@ -11,7 +11,6 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { CreateBookmarkDto } from './dto/create-bookmark.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { BoardReadResponse } from './interface/boards.interface';
 

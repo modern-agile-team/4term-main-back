@@ -5,9 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { CreateBookmarkDto } from './dto/create-bookmark.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
-import { Boards } from './entity/board.entity';
 import {
   BoardMemberDetail,
   BoardCreateResponse,
@@ -72,7 +70,6 @@ export class BoardsService {
   }
 
   async createBookmark(boardNo: number, userNo: number): Promise<number> {
-    // async createBookmark(bookmarkDetail: BookmarkDetail): Promise<number> {
     try {
       const bookmarkDetail: BookmarkDetail = { userNo, boardNo };
       const { affectedRows, insertId }: BoardCreateResponse =
