@@ -164,15 +164,10 @@ export class BoardsService {
 
   async cancelBookmark(boardNo: number, userNo: number): Promise<string> {
     try {
-      const board: BoardReadResponse = await this.getBoardByNo(boardNo);
-
-      if (!board) {
-        throw new NotFoundException(`${boardNo}번 게시글을 찾을 수 없습니다.`);
-      }
-
+      await this.getBoardByNo(boardNo);
       await this.boardRepository.cancelBookmark(boardNo, userNo);
 
-      return `${boardNo}번 게시글 ${board.nickname}  북마크 삭제 성공 :)`;
+      return `${boardNo}번 게시글 ${userNo}번 user 북마크 삭제 성공 :)`;
     } catch (error) {
       throw error;
     }
