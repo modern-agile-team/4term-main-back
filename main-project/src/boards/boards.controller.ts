@@ -92,10 +92,7 @@ export class BoardsController {
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body() updateBoardDto: UpdateBoardDto,
   ): Promise<object> {
-    const board: void = await this.boardService.updateBoard(
-      boardNo,
-      updateBoardDto,
-    );
+    await this.boardService.updateBoard(boardNo, updateBoardDto);
 
     const response = {
       success: true,

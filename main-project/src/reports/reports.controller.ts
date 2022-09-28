@@ -79,10 +79,7 @@ export class ReportsController {
     @Param('reportNo', ParseIntPipe) reportNo: number,
     @Body() updateReportDto: UpdateReportDto,
   ): Promise<object> {
-    const report: void = await this.reportsService.updateReport(
-      reportNo,
-      updateReportDto,
-    );
+    await this.reportsService.updateReport(reportNo, updateReportDto);
 
     const response = {
       success: true,

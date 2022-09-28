@@ -78,11 +78,10 @@ export class AnnouncementsController {
     @Param('announcementNo', ParseIntPipe) announcementNo: number,
     @Body() updateAnnouncementDto: UpdateAnnouncementDto,
   ): Promise<object> {
-    const announcement: void =
-      await this.announcementsService.updateAnnouncement(
-        announcementNo,
-        updateAnnouncementDto,
-      );
+    await this.announcementsService.updateAnnouncement(
+      announcementNo,
+      updateAnnouncementDto,
+    );
 
     const response = {
       success: true,
