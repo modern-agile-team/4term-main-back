@@ -71,4 +71,23 @@ export class AnnouncementsService {
       throw error;
     }
   }
+
+  // 공지사항삭제 관련
+  async deleteAnnouncement(announcementNo: number): Promise<string> {
+    try {
+      const announcement: BoardReadResponse = await this.getBoardByNo(boardNo);
+
+      if (!announcement) {
+        throw new NotFoundException(`${boardNo}번 게시글을 찾을 수 없습니다.`);
+      }
+
+      await this.boardRepository.deleteBoardMember(boardNo);
+      await this.boardRepository.deleteBookmark(boardNo);
+      await this.boardRepository.deleteBoard(boardNo);
+
+      return `${boardNo}번 게시글 삭제 성공 :)`;
+    } catch (error) {
+      throw error;
+    }
+  }
 }

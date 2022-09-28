@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AnnouncementsService } from './announcements.service';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
@@ -30,7 +38,7 @@ export class AnnouncementsController {
     description: '공지사항 전부를 내림차순으로 조회한다.',
   })
   async getAnnouncementByNo(
-    @Param('announcementNo') announcementNo: number,
+    @Param('announcementNo', ParseIntPipe) announcementNo: number,
   ): Promise<object> {
     const announcement: object =
       await this.announcementsService.getAnnouncementByNo(announcementNo);
@@ -56,5 +64,21 @@ export class AnnouncementsController {
     const response = { success: true, announcement };
 
     return response;
+  }
+
+  // Delete Methods
+  @Delete('/:announcementNo')
+  @ApiOperation({
+    summary: '공지사항 삭제 API',
+    description: '공지사항 번호를 사용해 해당 공지사항을 삭제한다.',
+  })
+  async deleteAnnouncement(
+    @Param('announcementNo', ParseIntPipe) announcementNo: number,
+  ): Promise<string> {
+    const announcement = await this.announcementsService.deleteAnnouncement(
+      announcementNo,
+    );
+
+    return announcement;
   }
 }
