@@ -63,6 +63,7 @@ export class BoardRepository extends Repository<Boards> {
           'boards.meetingTime AS meeting_time',
           'boards.isDone AS isDone',
         ])
+        .orderBy('boards.no', 'DESC')
         .getRawMany();
 
       return boards;

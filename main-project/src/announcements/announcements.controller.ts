@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AnnouncementsService } from './announcements.service';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
@@ -7,6 +7,22 @@ import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 @ApiTags('공지사항 API')
 export class AnnouncementsController {
   constructor(private announcementsService: AnnouncementsService) {}
+  //Get Methods
+  @Get()
+  @ApiOperation({
+    summary: '공지사항 전체 조회 API',
+    description: '공지사항 전부를 내림차순으로 조회한다.',
+  })
+  async getAllAnnouncements(): Promise<object> {
+    const announcements: object =
+      await this.announcementsService.getAllAnnouncements();
+    const response = {
+      success: true,
+      announcements,
+    };
+
+    return response;
+  }
 
   // Post Methods
   @Post()

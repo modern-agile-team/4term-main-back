@@ -2,11 +2,34 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { CreateAnnouncementDto } from '../dto/create-announcement.dto';
 import { Announcements } from '../entity/announcement.entity';
-import { AnnouncementCreateResponse } from '../interface/announcement.interface';
+import {
+  AnnouncementCreateResponse,
+  AnnouncementReadResponse,
+} from '../interface/announcement.interface';
 
 @EntityRepository(Announcements)
 export class AnnouncementsRepository extends Repository<Announcements> {
-  //게시글 생성 관련
+  // 공지사항 조회 관련
+  async getAllAnnouncements(): Promise<AnnouncementReadResponse[]> {
+    try {
+      const announcements = this.createQueryBuilder('announcements')
+        .select([
+          'announcements.no AS no',
+          'announcements.title AS title',
+          'announcements.description AS description',
+        ])
+        .orderBy('no', 'DESC')
+        .getRawMany();
+
+      return announcements;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getAllAnnouncements-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  // 공지사항 생성 관련
   async createAnnouncement(
     createAnnouncementDto: CreateAnnouncementDto,
   ): Promise<AnnouncementCreateResponse> {
