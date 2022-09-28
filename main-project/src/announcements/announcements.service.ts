@@ -4,8 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateAnnouncementDto } from './dto/create-announcement.dto';
-import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
+import { AnnouncementDto } from './dto/announcement.dto';
 import {
   AnnouncementCreateResponse,
   AnnouncementReadResponse,
@@ -55,7 +54,7 @@ export class AnnouncementsService {
 
   // 공지사항 생성 관련
   async createAnnouncement(
-    createAnnouncementDto: CreateAnnouncementDto,
+    createAnnouncementDto: AnnouncementDto,
   ): Promise<number> {
     try {
       const { affectedRows, insertId }: AnnouncementCreateResponse =
@@ -76,13 +75,13 @@ export class AnnouncementsService {
   // 공지사항 수정 관련
   async updateAnnouncement(
     announcementNo: number,
-    updateAnnouncementDto: UpdateAnnouncementDto,
+    announcementDto: AnnouncementDto,
   ): Promise<void> {
     try {
       await this.getAnnouncementByNo(announcementNo);
       await this.announcementsRepository.updateAnnouncement(
         announcementNo,
-        updateAnnouncementDto,
+        announcementDto,
       );
     } catch (error) {
       throw error;

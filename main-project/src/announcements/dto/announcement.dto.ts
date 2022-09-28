@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-export class UpdateAnnouncementDto {
+import { IsNotEmpty, IsString } from 'class-validator';
+export class AnnouncementDto {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({

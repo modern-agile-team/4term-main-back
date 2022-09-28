@@ -10,8 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AnnouncementsService } from './announcements.service';
-import { CreateAnnouncementDto } from './dto/create-announcement.dto';
-import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
+import { AnnouncementDto } from './dto/announcement.dto';
 
 @Controller('announcements')
 @ApiTags('공지사항 API')
@@ -58,11 +57,9 @@ export class AnnouncementsController {
     summary: '공지사항 생성 API',
     description: '입력한 정보로 공지사항을 생성한다.',
   })
-  async createBoard(
-    @Body() createAnnouncementDto: CreateAnnouncementDto,
-  ): Promise<object> {
+  async createBoard(@Body() announcementDto: AnnouncementDto): Promise<object> {
     const announcement: number =
-      await this.announcementsService.createAnnouncement(createAnnouncementDto);
+      await this.announcementsService.createAnnouncement(announcementDto);
     const response = { success: true, announcement };
 
     return response;
@@ -76,11 +73,11 @@ export class AnnouncementsController {
   })
   async updateAnnouncement(
     @Param('announcementNo', ParseIntPipe) announcementNo: number,
-    @Body() updateAnnouncementDto: UpdateAnnouncementDto,
+    @Body() announcementDto: AnnouncementDto,
   ): Promise<object> {
     await this.announcementsService.updateAnnouncement(
       announcementNo,
-      updateAnnouncementDto,
+      announcementDto,
     );
 
     const response = {
