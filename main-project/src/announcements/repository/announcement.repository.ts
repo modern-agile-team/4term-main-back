@@ -29,6 +29,27 @@ export class AnnouncementsRepository extends Repository<Announcements> {
     }
   }
 
+  async getAnnouncementByNo(
+    announcementNo: number,
+  ): Promise<AnnouncementReadResponse> {
+    try {
+      const announcements = this.createQueryBuilder('announcements')
+        .select([
+          'announcements.no AS no',
+          'announcements.title AS title',
+          'announcements.description AS description',
+        ])
+        .where('no=:announcementNo', { announcementNo })
+        .getRawOne();
+
+      return announcements;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getAllAnnouncements-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   // 공지사항 생성 관련
   async createAnnouncement(
     createAnnouncementDto: CreateAnnouncementDto,

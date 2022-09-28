@@ -33,6 +33,25 @@ export class AnnouncementsService {
     }
   }
 
+  async getAnnouncementByNo(
+    announcementNo: number,
+  ): Promise<AnnouncementReadResponse> {
+    try {
+      const announcement: AnnouncementReadResponse =
+        await this.announcementsRepository.getAnnouncementByNo(announcementNo);
+
+      if (!announcement) {
+        throw new NotFoundException(
+          `${announcementNo}번 공지사항의 조회를 실패 했습니다.`,
+        );
+      }
+
+      return announcement;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // 공지사항 생성 관련
   async createAnnouncement(
     createAnnouncementDto: CreateAnnouncementDto,
