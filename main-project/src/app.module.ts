@@ -11,6 +11,9 @@ import { NoticesModule } from './notices/notices.module';
 import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
+import { FriendsModule } from './friends/friends.module';
+import { UniversitiesModule } from './universities/universities.module';
+import { EnquiriesModule } from './enquiries/enquiries.module';
 
 @Module({
   imports: [
@@ -23,6 +26,9 @@ import { AnnouncementsModule } from './announcements/announcements.module';
     UsersModule,
     ReportsModule,
     AnnouncementsModule,
+    FriendsModule,
+    UniversitiesModule,
+    EnquiriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
