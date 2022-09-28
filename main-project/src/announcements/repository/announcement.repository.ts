@@ -4,8 +4,10 @@ import {
   EntityRepository,
   InsertResult,
   Repository,
+  UpdateResult,
 } from 'typeorm';
 import { CreateAnnouncementDto } from '../dto/create-announcement.dto';
+import { UpdateAnnouncementDto } from '../dto/update-announcement.dto';
 import { Announcements } from '../entity/announcement.entity';
 import {
   AnnouncementCreateResponse,
@@ -70,6 +72,26 @@ export class AnnouncementsRepository extends Repository<Announcements> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createAnnouncement-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  // 공지사항 수정 관련
+  async updateAnnouncement(
+    announcementNo: number,
+    updateAnnouncementDto: UpdateAnnouncementDto,
+  ): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(Announcements)
+        .set(updateAnnouncementDto)
+        .where('no = :announcementNo', { announcementNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} updateAnnouncement-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

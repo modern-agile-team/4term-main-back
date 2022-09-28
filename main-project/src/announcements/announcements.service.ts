@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
+import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
 import {
   AnnouncementCreateResponse,
   AnnouncementReadResponse,
@@ -67,6 +68,22 @@ export class AnnouncementsService {
       }
 
       return insertId;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // 공지사항 수정 관련
+  async updateAnnouncement(
+    announcementNo: number,
+    updateAnnouncementDto: UpdateAnnouncementDto,
+  ): Promise<void> {
+    try {
+      await this.getAnnouncementByNo(announcementNo);
+      await this.announcementsRepository.updateAnnouncement(
+        announcementNo,
+        updateAnnouncementDto,
+      );
     } catch (error) {
       throw error;
     }

@@ -5,11 +5,13 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AnnouncementsService } from './announcements.service';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
+import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
 
 @Controller('announcements')
 @ApiTags('공지사항 API')
@@ -62,6 +64,30 @@ export class AnnouncementsController {
     const announcement: number =
       await this.announcementsService.createAnnouncement(createAnnouncementDto);
     const response = { success: true, announcement };
+
+    return response;
+  }
+
+  // Patch Methods
+  @Patch('/:announcementNo')
+  @ApiOperation({
+    summary: '공지사항 수정 API',
+    description: '입력한 정보로 공지사항을 수정한다.',
+  })
+  async updateAnnouncement(
+    @Param('announcementNo', ParseIntPipe) announcementNo: number,
+    @Body() updateAnnouncementDto: UpdateAnnouncementDto,
+  ): Promise<object> {
+    const announcement: void =
+      await this.announcementsService.updateAnnouncement(
+        announcementNo,
+        updateAnnouncementDto,
+      );
+
+    const response = {
+      success: true,
+      msg: `${announcementNo}번 공지사항이 수정되었습니다.`,
+    };
 
     return response;
   }

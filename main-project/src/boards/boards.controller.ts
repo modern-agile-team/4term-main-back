@@ -91,13 +91,16 @@ export class BoardsController {
   async updateBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body() updateBoardDto: UpdateBoardDto,
-  ) {
+  ): Promise<object> {
     const board: void = await this.boardService.updateBoard(
       boardNo,
       updateBoardDto,
     );
 
-    const response = { success: true, board };
+    const response = {
+      success: true,
+      msg: `${boardNo}번 게시글이 수정되었습니다.`,
+    };
 
     return response;
   }
