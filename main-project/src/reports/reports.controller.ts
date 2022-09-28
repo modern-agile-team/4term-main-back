@@ -78,13 +78,13 @@ export class ReportsController {
   async updateBoard(
     @Param('reportNo', ParseIntPipe) reportNo: number,
     @Body() updateReportDto: UpdateReportDto,
-  ) {
-    const report: void = await this.reportsService.updateReport(
-      reportNo,
-      updateReportDto,
-    );
+  ): Promise<object> {
+    await this.reportsService.updateReport(reportNo, updateReportDto);
 
-    const response = { success: true, report };
+    const response = {
+      success: true,
+      msg: `${reportNo}번 신고내역이 수정되었습니다.`,
+    };
 
     return response;
   }

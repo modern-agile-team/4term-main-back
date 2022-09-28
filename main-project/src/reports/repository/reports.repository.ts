@@ -34,6 +34,7 @@ export class ReportRepository extends Repository<Reports> {
           'reportedBoard.targetBoardNo as tagetBoardNo',
           'reportedUser.targetUserNo as tagetUserNo',
         ])
+        .orderBy('reports.no', 'DESC')
         .getRawMany();
 
       return reports;
