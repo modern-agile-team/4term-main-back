@@ -10,7 +10,12 @@ import { MembersModule } from './members/members.module';
 import { NoticesModule } from './notices/notices.module';
 import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
+<<<<<<< HEAD
 import { AnnouncementsModule } from './announcements/announcements.module';
+=======
+import { FriendsModule } from './friends/friends.module';
+import { UniversitiesModule } from './universities/universities.module';
+>>>>>>> 0e3dd7be5ca4f272af741654a516abbac6029316
 
 @Module({
   imports: [
@@ -22,7 +27,12 @@ import { AnnouncementsModule } from './announcements/announcements.module';
     NoticesModule,
     UsersModule,
     ReportsModule,
+<<<<<<< HEAD
     AnnouncementsModule,
+=======
+    FriendsModule,
+    UniversitiesModule,
+>>>>>>> 0e3dd7be5ca4f272af741654a516abbac6029316
   ],
   controllers: [AppController],
   providers: [AppService],

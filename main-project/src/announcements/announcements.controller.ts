@@ -36,8 +36,8 @@ export class AnnouncementsController {
 
   @Get('/:announcementNo')
   @ApiOperation({
-    summary: '공지사항 전체 조회 API',
-    description: '공지사항 전부를 내림차순으로 조회한다.',
+    summary: '특정 공지사항 조회 API',
+    description: '번호를 통해 해당 공지사항을 조회한다.',
   })
   async getAnnouncementByNo(
     @Param('announcementNo', ParseIntPipe) announcementNo: number,
