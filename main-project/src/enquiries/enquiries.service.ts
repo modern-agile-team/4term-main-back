@@ -1,10 +1,15 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { EnquiryDto } from './dto/enquiry.dto';
 import {
   EnquiryCreateResponse,
   EnquiryDetail,
+  EnquiryReadResponse,
 } from './interface/enquiry.interface';
 import { EnquiryRepository } from './repository/enquiry.repository';
 
@@ -14,7 +19,40 @@ export class EnquiriesService {
     @InjectRepository(EnquiryRepository)
     private readonly enquiryRepository: EnquiryRepository,
   ) {}
+  // 문의사항 조회 관련
+  async getAllEnquiries(): Promise<EnquiryReadResponse[]> {
+    try {
+      const enquiries: EnquiryReadResponse[] =
+        await this.enquiryRepository.getAllEnquiries();
 
+      if (!enquiries) {
+        throw new NotFoundException(`전체 문의사항의 조회를 실패 했습니다.`);
+      }
+
+      return enquiries;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getEnquiriesByNo(enquiryNo: number): Promise<EnquiryReadResponse> {
+    try {
+      const enquiry: EnquiryReadResponse =
+        await this.enquiryRepository.getEnquiriesByNo(enquiryNo);
+
+      if (!enquiry) {
+        throw new NotFoundException(
+          `${enquiryNo}번 문의사항을 찾을 수 없습니다.`,
+        );
+      }
+
+      return enquiry;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // 문의사항 생성 관련
   async createEnquiry(enquiryDto: EnquiryDto, userNo: number): Promise<number> {
     try {
       const enquiryDetail: EnquiryDetail = {

@@ -8,3 +8,9 @@ export interface EnquiryDetail {
   title: string;
   description: string;
 }
+export interface EnquiryReadResponse {
+  no: number;
+  userNo: number;
+  title: string;
+  description: string;
+}
