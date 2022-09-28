@@ -72,4 +72,16 @@ export class EnquiriesService {
       throw error;
     }
   }
+
+  //문의사항 삭제 관련
+  async deleteEnquiryByNo(enquiryNo: number): Promise<string> {
+    try {
+      await this.getEnquiriesByNo(enquiryNo);
+      await this.enquiryRepository.deleteEnquiryByNo(enquiryNo);
+
+      return `${enquiryNo}번 게시글 삭제 성공 :)`;
+    } catch (error) {
+      throw error;
+    }
+  }
 }

@@ -1,5 +1,10 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { EntityRepository, InsertResult, Repository } from 'typeorm';
+import {
+  DeleteResult,
+  EntityRepository,
+  InsertResult,
+  Repository,
+} from 'typeorm';
 import { Enquiries } from '../entity/enquiry.entity';
 import {
   EnquiryCreateResponse,
@@ -65,6 +70,25 @@ export class EnquiryRepository extends Repository<Enquiries> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createEnquiry-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  // 문의사항 삭제 관련
+  async deleteEnquiryByNo(enquiryNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder(
+        'enquiries',
+      )
+        .delete()
+        .from(Enquiries)
+        .where('no = :enquiryNo', { enquiryNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteEnquiryByNo-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

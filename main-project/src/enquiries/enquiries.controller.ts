@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+} from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { EnquiryDto } from './dto/enquiry.dto';
 import { EnquiriesService } from './enquiries.service';
@@ -58,5 +66,19 @@ export class EnquiriesController {
     const response = { success: true, enquiry };
 
     return response;
+  }
+
+  // Delete Methods
+  @Delete('/:enquiryNo')
+  @ApiOperation({
+    summary: '문의사항 삭제 API',
+    description: '문의번호를 사용해 해당 문의사항을 삭제한다.',
+  })
+  async deleteBoard(
+    @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
+  ): Promise<string> {
+    const enquiry = await this.enquiriesService.deleteEnquiryByNo(enquiryNo);
+
+    return enquiry;
   }
 }
