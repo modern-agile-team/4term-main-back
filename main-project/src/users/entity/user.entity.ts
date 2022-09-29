@@ -27,13 +27,13 @@ export class Users extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   email: string;
 
-  @Column()
+  @Column({ default: false })
   gender: boolean;
 
   @Column({ type: 'varchar', length: 45 })
   nickname: string;
 
-  @Column()
+  @Column({ default: false })
   admin: boolean;
 
   @CreateDateColumn({ name: 'created_date' })
