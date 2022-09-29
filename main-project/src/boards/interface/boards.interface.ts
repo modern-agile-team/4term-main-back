@@ -2,6 +2,7 @@ export interface BoardCreateResponse {
   affectedRows: number;
   insertId?: number;
 }
+
 export interface BoardReadResponse {
   no: number;
   title: string;

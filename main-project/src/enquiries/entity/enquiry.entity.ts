@@ -7,14 +7,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
-import { Reportedboards } from './reported-board.entity';
-import { ReportedUsers } from './reported-user.entity';
 
-@Entity('reports')
-export class Reports extends BaseEntity {
+@Entity('enquiries')
+export class Enquiries extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
@@ -27,19 +25,13 @@ export class Reports extends BaseEntity {
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
 
+  @UpdateDateColumn({ default: null, name: 'updated_date' })
+  updatedDate: Date;
+
   @DeleteDateColumn({ name: 'deleted_date' })
   deletedDate: Date;
 
-  @OneToOne(
-    (type) => Reportedboards,
-    (reportedboards) => reportedboards.reportNo,
-  )
-  reportedBoard: number;
-
-  @OneToOne((type) => ReportedUsers, (reportedUsers) => reportedUsers.reportNo)
-  reportedUser: number;
-
-  @ManyToOne((type) => Users, (user) => user.report)
+  @ManyToOne((type) => Users, (user) => user.enquiry)
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 }
