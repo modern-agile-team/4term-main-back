@@ -1,5 +1,6 @@
 import { BoardBookmarks } from 'src/boards/entity/board-bookmark.entity';
 import { Boards } from 'src/boards/entity/board.entity';
+import { Enquiries } from 'src/enquiries/entity/enquiry.entity';
 import { FriendReqList } from 'src/friends/entity/friend-req-list.entity';
 import { Friends } from 'src/friends/entity/friend.entity';
 import { MeetingInfo } from 'src/meetings/entity/meeting-info.entity';
@@ -80,6 +81,9 @@ export class Users extends BaseEntity {
 
   @OneToMany((type) => Friends, (friends) => friends.friendNo)
   friendNo: Friends[];
+
+  @OneToMany((type) => Enquiries, (enquiries) => enquiries.userNo)
+  enquiry: Enquiries[];
 
   @OneToMany(
     (type) => FriendReqList,
