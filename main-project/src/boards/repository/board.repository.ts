@@ -63,6 +63,7 @@ export class BoardRepository extends Repository<Boards> {
           'boards.meetingTime AS meeting_time',
           'boards.isDone AS isDone',
         ])
+        .orderBy('boards.no', 'DESC')
         .getRawMany();
 
       return boards;
@@ -160,7 +161,7 @@ export class BoardRepository extends Repository<Boards> {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(BoardMemberInfos)
         .set(boardMember)
-        .where('no = :boardNo', { boardNo })
+        .where('boardNo = :boardNo', { boardNo })
         .execute();
 
       return affected;
@@ -224,6 +225,7 @@ export class BoardRepository extends Repository<Boards> {
       );
     }
   }
+
   async deleteBookmark(boardNo: number): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder(
