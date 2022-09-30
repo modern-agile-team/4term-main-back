@@ -5,8 +5,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateFriendDto } from './dto/create-friend.dto';
+import { DeleteFriendDto } from './dto/delete-friend.dto';
 import { Friends } from './entity/friend.entity';
-import { FriendDetail, FriendRequest } from './interface/friend.interface';
+import {
+  Friend,
+  FriendDetail,
+  FriendRequest,
+} from './interface/friend.interface';
 import { FriendsRepository } from './repository/friends.repository';
 
 @Injectable()
@@ -15,6 +20,7 @@ export class FriendsService {
     @InjectRepository(FriendsRepository)
     private readonly friendsRepository: FriendsRepository,
   ) {}
+
   async acceptFriendRequest(receiverNo: number, senderNo: number) {
     try {
       const acceptFriend = await this.friendsRepository.acceptFriend(
@@ -87,7 +93,36 @@ export class FriendsService {
       throw err;
     }
   }
+  async getFriendList(userNo: Friend): Promise<any> {
+    try {
+      const friendList = await this.findAllFriendByNo(userNo);
+      if (!friendList) {
+        throw new BadRequestException('친구 목록이 없습니다.');
+      }
+      return {
+        success: true,
+        friendList,
+      };
+    } catch (err) {
+      throw err;
+    }
+  }
+  //삭제 로직
+  //1.친구인지 확인
+  // async deleteFriend({userNo, friendNo}: DeleteFriendDto): Promise<any> {
 
+  // }
+  private async findAllFriendByNo(userNo: Friend) {
+    try {
+      const friendList = await this.friendsRepository.getAllFriendList(userNo);
+
+      return friendList;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 친구 목록 조회(findAllFriendByNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
   private async findFriendReqByNo(
     friendDetail: FriendDetail,
   ): Promise<FriendRequest> {
@@ -112,7 +147,7 @@ export class FriendsService {
       return requestList;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 전체 친구 신청 확인(findAllFriendReqByNo): 알 수 없는 서버 에러입니다.`,
+        `${err}: 받은 전체 친구 신청 확인(findAllFriendReqByNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -126,7 +161,7 @@ export class FriendsService {
       return requestList;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 전체 친구 신청 확인(findAllFriendReqByNo): 알 수 없는 서버 에러입니다.`,
+        `${err}: 보낸 전체 친구 신청 확인(findAllFriendReqByNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

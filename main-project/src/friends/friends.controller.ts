@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -10,11 +11,41 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { FriendsService } from './friends.service';
+import { Friend } from './interface/friend.interface';
 
 @Controller('friends')
 @ApiTags('친구 API')
 export class FriendsController {
   constructor(private readonly friendsService: FriendsService) {}
+
+  @Get('/:userNo')
+  @ApiOperation({
+    summary: '친구 목록 APi',
+    description: '친구 목록 조회',
+  })
+  async getFriendList(@Param('userNo') userNo: Friend): Promise<Friend> {
+    const friendList = await this.friendsService.getFriendList(userNo);
+    return friendList;
+  }
+
+  @Post('/request')
+  @ApiOperation({
+    summary: '친구 신청 API',
+    description: '친구 신청 API',
+  })
+  async createFriendRequest(
+    @Body() createFriendDto: CreateFriendDto,
+  ): Promise<object> {
+    try {
+      const sendRequest = await this.friendsService.createFriendRequest(
+        createFriendDto,
+      );
+
+      return sendRequest;
+    } catch (err) {
+      throw err;
+    }
+  }
 
   @Patch('/accept/:userNo')
   @ApiOperation({
@@ -72,22 +103,17 @@ export class FriendsController {
     }
   }
 
-  @Post('/request')
-  @ApiOperation({
-    summary: '친구 신청 API',
-    description: '친구 신청 API',
-  })
-  async createFriendRequest(
-    @Body() createFriendDto: CreateFriendDto,
-  ): Promise<object> {
-    try {
-      const sendRequest = await this.friendsService.createFriendRequest(
-        createFriendDto,
-      );
-
-      return sendRequest;
-    } catch (err) {
-      throw err;
-    }
-  }
+  // // 추후 토큰의 유저no와 friendNo 확인 후 삭제
+  // @Delete('/delete')
+  // @ApiOperation({
+  //   summary: '친구 삭제 API',
+  //   description: '친구 삭제 API',
+  // })
+  // async deleteFriend(@Body() deleteFriendDto: DeleteFriendDto): Promise<void> {
+  //   try {
+  //     const deleteFriend = await this.friendsService.deleteFriend(deleteFriendDto)
+  //   } catch (err) {
+  //     throw err
+  //   }
+  // }
 }

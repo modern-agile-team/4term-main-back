@@ -1,10 +1,37 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { EntityRepository, Repository, UpdateResult } from 'typeorm';
+import {
+  EntityRepository,
+  QueryResult,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
 import { Friends } from '../entity/friend.entity';
-import { FriendDetail } from '../interface/friend.interface';
+import { Friend, FriendDetail } from '../interface/friend.interface';
 
 @EntityRepository(Friends)
 export class FriendsRepository extends Repository<Friends> {
+  async getAllFriendList(userNo: Friend): Promise<Friends[]> {
+    try {
+      console.log(userNo);
+
+      const result = await this.createQueryBuilder('friends')
+        .select([
+          'friends.no AS no',
+          'friends.receiver_no AS receiverNo',
+          'friends.sender_no AS senderNo',
+        ])
+        .where('receiver_no = :userNo AND is_accept = 1', { userNo })
+        .orWhere('sender_no = :userNo AND is_accept = 1', { userNo })
+        .getRawMany();
+
+      return result;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 친구 목록 조회(getAllFriendList): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async getAllFriendReq(receiverNo: number): Promise<Friends[]> {
     try {
       const result = await this.createQueryBuilder('friends')

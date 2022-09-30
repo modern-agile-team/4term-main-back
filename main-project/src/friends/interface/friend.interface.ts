@@ -6,3 +6,8 @@ export interface FriendRequest {
   no: number;
   isAccept: number;
 }
+export interface Friend {
+  no?: number;
+  userNo?: number;
+  friendNo?: number;
+}
