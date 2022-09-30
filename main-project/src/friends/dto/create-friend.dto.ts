@@ -6,11 +6,11 @@ export class CreateFriendDto {
   @ApiProperty({
     example: 1,
   })
-  userNo: number;
+  receiverNo: number;
 
   @IsNotEmpty()
   @ApiProperty({
     example: 2,
   })
-  friendNo: number;
+  senderNo: number;
 }

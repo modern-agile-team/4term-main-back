@@ -16,11 +16,11 @@ export class Friends extends BaseEntity {
   @Column('tinyint', { name: 'is_accept', default: 0 })
   isAccept: number;
 
-  @ManyToOne((type) => Users, (user) => user.friendMyNo)
-  @JoinColumn({ name: 'user_no' })
-  userNo: number;
+  @ManyToOne((type) => Users, (user) => user.friendReceiverNo)
+  @JoinColumn({ name: 'receiver_no' })
+  receiverNo: number;
 
-  @ManyToOne((type) => Users, (user) => user.friendNo)
-  @JoinColumn({ name: 'friend_no' })
-  friendNo: number;
+  @ManyToOne((type) => Users, (user) => user.friendSenderNo)
+  @JoinColumn({ name: 'sender_no' })
+  senderNo: number;
 }

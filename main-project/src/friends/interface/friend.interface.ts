@@ -1,6 +1,6 @@
 export interface FriendDetail {
-  userNo: number;
-  friendNo: number;
+  receiverNo: number;
+  senderNo: number;
 }
 export interface FriendRequest {
   no: number;

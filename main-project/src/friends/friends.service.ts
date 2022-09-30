@@ -15,25 +15,41 @@ export class FriendsService {
     @InjectRepository(FriendsRepository)
     private readonly friendsRepository: FriendsRepository,
   ) {}
-  async acceptFriendRequest(userNo: number, friendNo: number) {
+  async acceptFriendRequest(receiverNo: number, senderNo: number) {
     try {
       const acceptFriend = await this.friendsRepository.acceptFriend(
-        userNo,
-        friendNo,
+        receiverNo,
+        senderNo,
       );
       if (!acceptFriend) {
-        throw new BadRequestException(`잘못된 요청 정보입니다.`);
+        throw new BadRequestException(`이미 친구이거나 잘못된 요청 입니다.`);
       }
+      return {
+        succese: true,
+        msg: '친구 신청을 수락했습니다.',
+      };
     } catch (err) {
       throw err;
     }
   }
-  async getFriendRequest(userNo: number) {
+  async getFriendRequest(receiverNo: number) {
     try {
-      const requestList = await this.findAllFriendReqByNo(userNo);
+      const requestList = await this.findAllFriendReqByNo(receiverNo);
 
       if (!requestList[0]) {
-        throw new BadRequestException(`친구신청한 유저가 없습니다.`);
+        throw new BadRequestException(`받은 친구 신청이 없습니다.`);
+      }
+      return requestList;
+    } catch (err) {
+      throw err;
+    }
+  }
+  async getSendedFriendRequest(senderNo: number) {
+    try {
+      const requestList = await this.findAllSendedFriendReqByNo(senderNo);
+
+      if (!requestList[0]) {
+        throw new BadRequestException(`보낸 친구 신청이 없습니다.`);
       }
       return requestList;
     } catch (err) {
@@ -57,10 +73,15 @@ export class FriendsService {
             `friend request 생성 오류입니다.`,
           );
         }
-        return check;
+        return {
+          success: true,
+          msg: '친구 신청이 완료되었습니다.',
+        };
       }
       if (!check.isAccept) {
-        throw new BadRequestException(`이미 친구신청이 완료되었습니다.`);
+        throw new BadRequestException(`이미 신청중이거나, 받은 상태입니다.`);
+      } else {
+        throw new BadRequestException(`이미 친구입니다.`);
       }
     } catch (err) {
       throw err;
@@ -78,20 +99,34 @@ export class FriendsService {
       return friendRequest;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 친구 요청 확인(findFriendReqByNo): 알 수 없는 서버 에러입니다.`,
+        `${err}: 친구 신청 확인(findFriendReqByNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
-  private async findAllFriendReqByNo(userNo: number): Promise<Friends[]> {
+  private async findAllFriendReqByNo(receiverNo: number): Promise<Friends[]> {
     try {
       const requestList: Friends[] =
-        await this.friendsRepository.getAllFriendReq(userNo);
+        await this.friendsRepository.getAllFriendReq(receiverNo);
 
       return requestList;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 전체 친구 요청 확인(findAllFriendReqByNo): 알 수 없는 서버 에러입니다.`,
+        `${err}: 전체 친구 신청 확인(findAllFriendReqByNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+  private async findAllSendedFriendReqByNo(
+    senderNo: number,
+  ): Promise<Friends[]> {
+    try {
+      const requestList: Friends[] =
+        await this.friendsRepository.getAllSendedFriendReq(senderNo);
+
+      return requestList;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 전체 친구 신청 확인(findAllFriendReqByNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
