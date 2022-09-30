@@ -7,9 +7,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { EnquiryImages } from './enquiry-images.entity';
 
 @Entity('enquiries')
 export class Enquiries extends BaseEntity {
@@ -34,4 +36,8 @@ export class Enquiries extends BaseEntity {
   @ManyToOne((type) => Users, (user) => user.enquiry)
   @JoinColumn({ name: 'user_no' })
   userNo: number;
+
+  @OneToOne((type) => EnquiryImages, (enquiryImages) => enquiryImages.enquiryNo)
+  @JoinColumn({ name: 'enquiry_images' })
+  enquiryImages: EnquiryImages;
 }
