@@ -4,9 +4,10 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { FriendsService } from './friends.service';
 
@@ -14,6 +15,22 @@ import { FriendsService } from './friends.service';
 @ApiTags('친구 API')
 export class FriendsController {
   constructor(private readonly friendsService: FriendsService) {}
+
+  @Patch('/accept/:userNo')
+  @ApiOperation({
+    summary: '친구요청 수락 API',
+    description: '토큰의 userNo와 body로 받은 requestUserNo',
+  })
+  async acceptFriend(
+    @Param('userNo', ParseIntPipe) userNo: number,
+    @Body('requestUserNo', ParseIntPipe) friendNo: number,
+  ): Promise<void> {
+    try {
+      await this.friendsService.acceptFriendRequest(userNo, friendNo);
+    } catch (err) {
+      throw err;
+    }
+  }
 
   @Get('/request/:userNo')
   @ApiOperation({

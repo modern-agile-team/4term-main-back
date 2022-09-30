@@ -5,17 +5,29 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateFriendDto } from './dto/create-friend.dto';
-import { FriendReqList } from './entity/friend-req-list.entity';
+import { Friends } from './entity/friend.entity';
 import { FriendDetail, FriendRequest } from './interface/friend.interface';
-import { FriendReqListRepository } from './repository/friend-req-list.repository';
+import { FriendsRepository } from './repository/friends.repository';
 
 @Injectable()
 export class FriendsService {
   constructor(
-    @InjectRepository(FriendReqListRepository)
-    private readonly friendsReqRepository: FriendReqListRepository,
+    @InjectRepository(FriendsRepository)
+    private readonly friendsRepository: FriendsRepository,
   ) {}
-
+  async acceptFriendRequest(userNo: number, friendNo: number) {
+    try {
+      const acceptFriend = await this.friendsRepository.acceptFriend(
+        userNo,
+        friendNo,
+      );
+      if (!acceptFriend) {
+        throw new BadRequestException(`잘못된 요청 정보입니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
   async getFriendRequest(userNo: number) {
     try {
       const requestList = await this.findAllFriendReqByNo(userNo);
@@ -35,21 +47,21 @@ export class FriendsService {
         createFriendDto,
       );
 
+      if (!check) {
+        const raw = await this.friendsRepository.createFriendRequest(
+          createFriendDto,
+        );
+
+        if (!raw.affectedRows) {
+          throw new InternalServerErrorException(
+            `friend request 생성 오류입니다.`,
+          );
+        }
+        return check;
+      }
       if (!check.isAccept) {
         throw new BadRequestException(`이미 친구신청이 완료되었습니다.`);
       }
-
-      const raw = await this.friendsReqRepository.createFriendRequest(
-        createFriendDto,
-      );
-
-      if (!raw.affectedRows) {
-        throw new InternalServerErrorException(
-          `friend request 생성 오류입니다.`,
-        );
-      }
-
-      return check;
     } catch (err) {
       throw err;
     }
@@ -59,7 +71,7 @@ export class FriendsService {
     friendDetail: FriendDetail,
   ): Promise<FriendRequest> {
     try {
-      const friendRequest = await this.friendsReqRepository.getFriendRequest(
+      const friendRequest = await this.friendsRepository.getFriendRequest(
         friendDetail,
       );
 
@@ -71,10 +83,10 @@ export class FriendsService {
     }
   }
 
-  private async findAllFriendReqByNo(userNo: number): Promise<FriendReqList[]> {
+  private async findAllFriendReqByNo(userNo: number): Promise<Friends[]> {
     try {
-      const requestList: FriendReqList[] =
-        await this.friendsReqRepository.getAllFriendReq(userNo);
+      const requestList: Friends[] =
+        await this.friendsRepository.getAllFriendReq(userNo);
 
       return requestList;
     } catch (err) {
