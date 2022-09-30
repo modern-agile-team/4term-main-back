@@ -4,9 +4,10 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { FriendsService } from './friends.service';
 
@@ -15,22 +16,57 @@ import { FriendsService } from './friends.service';
 export class FriendsController {
   constructor(private readonly friendsService: FriendsService) {}
 
-  @Get('/request/:userNo')
+  @Patch('/accept/:userNo')
   @ApiOperation({
-    summary: '친구 신청 목록 조회 API',
-    description: '유저가 받은 친구 신청 전체조회',
+    summary: '친구  요청 수락 API',
+    description: '토큰의 userNo와 body로 받은 senderNo',
   })
-  async getFriendRequest(
-    @Param('userNo', ParseIntPipe) userNo: number,
+  async acceptFriend(
+    @Param('userNo', ParseIntPipe) receiverNo: number,
+    @Body('senderNo', ParseIntPipe) senderNo: number,
+  ): Promise<object> {
+    try {
+      const friendAccept = await this.friendsService.acceptFriendRequest(
+        receiverNo,
+        senderNo,
+      );
+      return friendAccept;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  @Get('/request/receive/:userNo')
+  @ApiOperation({
+    summary: '받은 친구 신청 목록 조회 API',
+    description: '유저가 받은 친구 신청 전체 조회',
+  })
+  async getReceiveFriendRequest(
+    @Param('userNo', ParseIntPipe) receiverNo: number,
   ): Promise<object> {
     try {
       const friendRequestList = await this.friendsService.getFriendRequest(
-        userNo,
+        receiverNo,
       );
 
-      return {
-        friendRequestList,
-      };
+      return friendRequestList;
+    } catch (err) {
+      throw err;
+    }
+  }
+  @Get('/request/send/:userNo')
+  @ApiOperation({
+    summary: '보낸 친구 신청 목록 조회 API',
+    description: '유저가 보낸 친구 신청 전체조회',
+  })
+  async getSendedFriendRequest(
+    @Param('userNo', ParseIntPipe) senderNo: number,
+  ): Promise<object> {
+    try {
+      const friendRequestList =
+        await this.friendsService.getSendedFriendRequest(senderNo);
+
+      return friendRequestList;
     } catch (err) {
       throw err;
     }
@@ -45,12 +81,11 @@ export class FriendsController {
     @Body() createFriendDto: CreateFriendDto,
   ): Promise<object> {
     try {
-      await this.friendsService.createFriendRequest(createFriendDto);
+      const sendRequest = await this.friendsService.createFriendRequest(
+        createFriendDto,
+      );
 
-      return {
-        success: true,
-        msg: '친구신청이 완료 되었습니다.',
-      };
+      return sendRequest;
     } catch (err) {
       throw err;
     }
