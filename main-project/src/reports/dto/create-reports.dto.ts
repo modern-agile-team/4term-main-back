@@ -3,8 +3,8 @@ import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 export class CreateReportDto {
   @IsNotEmpty()
   @IsNumber()
-  @ApiProperty({ example: 21, description: 'User 번호' })
-  userNo: number;
+  @ApiProperty({ example: 21, description: '신고주체 사용자 번호(원고)' })
+  reportingUserNo: number;
 
   @IsNotEmpty()
   @IsString()

@@ -12,7 +12,7 @@ import { Reportedboards } from '../entity/reported-board.entity';
 import { ReportedUsers } from '../entity/reported-user.entity';
 import { Reports } from '../entity/reports.entity';
 import {
-  BoardReportDetail,
+  ReportDetail,
   ReportCreateResponse,
   ReportReadResponse,
 } from '../interface/reports.interface';
@@ -115,18 +115,35 @@ export class ReportRepository extends Repository<Reports> {
 
   // 신고글 작성 관련
   async createBoardReport(
-    boardReportDetail: BoardReportDetail,
+    reportDetail: ReportDetail,
   ): Promise<ReportCreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
         .into(Reportedboards)
-        .values(boardReportDetail)
+        .values(reportDetail)
         .execute();
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createBoardReport-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async createUserReport(
+    reportDetail: ReportDetail,
+  ): Promise<ReportCreateResponse> {
+    try {
+      const { raw }: InsertResult = await this.createQueryBuilder()
+        .insert()
+        .into(ReportedUsers)
+        .values(reportDetail)
+        .execute();
+      return raw;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} createUserReport-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
