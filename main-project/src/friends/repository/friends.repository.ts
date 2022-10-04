@@ -6,19 +6,26 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { Friends } from '../entity/friend.entity';
-import { Friend, FriendDetail } from '../interface/friend.interface';
+import {
+  Friend,
+  FriendDetail,
+  FriendList,
+} from '../interface/friend.interface';
 
 @EntityRepository(Friends)
 export class FriendsRepository extends Repository<Friends> {
-  async getAllFriendList(userNo: Friend): Promise<Friends[]> {
+  async getAllFriendList(userNo: Friend): Promise<FriendList[]> {
     try {
-      console.log(userNo);
-
       const result = await this.createQueryBuilder('friends')
+        .leftJoin('friends.receiverNo', 'receiverNo')
+        .leftJoin('friends.senderNo', 'senderNo')
         .select([
-          'friends.no AS no',
-          'friends.receiver_no AS receiverNo',
-          'friends.sender_no AS senderNo',
+          // 'receiverNo.nickname AS r_nickname',
+          // 'senderNo.nickname AS s_nickname',
+          // 'friends.receiver_no AS receiverNo',
+          // 'friends.sender_no AS senderNo ',
+          `IF(friends.receiver_no = ${userNo} , friends.sender_no, friends.receiver_no) AS friendNo`,
+          `IF(friends.receiver_no = ${userNo} , senderNo.nickname, receiverNo.nickname) AS friendNickname`,
         ])
         .where('receiver_no = :userNo AND is_accept = 1', { userNo })
         .orWhere('sender_no = :userNo AND is_accept = 1', { userNo })
@@ -35,7 +42,7 @@ export class FriendsRepository extends Repository<Friends> {
   async getAllFriendReq(receiverNo: number): Promise<Friends[]> {
     try {
       const result = await this.createQueryBuilder('friends')
-        .select(['friends.no AS no', 'friends.sender_no AS senderNo'])
+        .select(['friends.sender_no AS senderNo'])
         .where('receiver_no = :receiverNo', { receiverNo })
         .getRawMany();
       return result;
@@ -48,7 +55,7 @@ export class FriendsRepository extends Repository<Friends> {
   async getAllSendedFriendReq(senderNo: number): Promise<Friends[]> {
     try {
       const result = await this.createQueryBuilder('friends')
-        .select(['friends.no AS no', 'friends.receiver_no AS receiverNo'])
+        .select(['friends.receiver_no AS receiverNo'])
         .where('sender_no = :senderNo', { senderNo })
         .getRawMany();
       return result;
@@ -62,7 +69,7 @@ export class FriendsRepository extends Repository<Friends> {
   async getFriendRequest(friendDetail: FriendDetail) {
     try {
       const result = await this.createQueryBuilder('friends')
-        .select(['friends.no AS no', 'friends.is_accept AS isAccept'])
+        .select(['friends.is_accept AS isAccept'])
         .where(
           'receiver_no = :receiverNo AND sender_no = :senderNo',
           friendDetail,
