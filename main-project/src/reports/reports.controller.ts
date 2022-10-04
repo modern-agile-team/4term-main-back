@@ -56,13 +56,31 @@ export class ReportsController {
     summary: '게시글 신고 생성 API',
     description: '입력된 정보로 게시글 신고 생성.',
   })
-  async createBoard(
+  async createBoardReport(
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body() createReportDto: CreateReportDto,
   ): Promise<object> {
     const report: number = await this.reportsService.createBoardReport(
       createReportDto,
       boardNo,
+    );
+    const response = { success: true, report };
+
+    return response;
+  }
+
+  @Post('/:userNo')
+  @ApiOperation({
+    summary: '사용자 신고 생성 API',
+    description: '입력된 정보로 사용자 신고 생성.',
+  })
+  async createUserReport(
+    @Param('userNo', ParseIntPipe) userNo: number,
+    @Body() createReportDto: CreateReportDto,
+  ): Promise<object> {
+    const report: number = await this.reportsService.createUserReport(
+      createReportDto,
+      userNo,
     );
     const response = { success: true, report };
 
