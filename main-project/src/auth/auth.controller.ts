@@ -1,9 +1,8 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { response } from 'express';
 import { AuthService } from './auth.service';
 import { SignUpDto } from '../users/dto/sign-up.dto';
-import { UserProfileDto } from 'src/users/dto/user-profile.dto';
+import { AuthDto } from './dto/auth.dto';
 
 @Controller('auth')
 @ApiTags('회원가입 기능')
@@ -13,32 +12,36 @@ export class AuthController {
   @Post('/signup')
   @ApiOperation({ summary: '회원가입' })
   async singUp(@Body() signUpDto: SignUpDto): Promise<object> {
-    try {
-      const response = await this.authService.singUp(signUpDto);
-
-      return {
-        msg: `성공적으로 회원가입 되었습니다.`,
-        response,
-      };
-    } catch (err) {
-      throw err;
-    }
+    const signup = await this.authService.signUp(signUpDto);
+    const response = {
+      success: true,
+      msg: '성공적으로 회원가입이 되셨습니다.',
+      signup,
+    };
+    return response;
   }
-  // @Post('/createprofile')
-  // @ApiOperation({
-  //   summary: '유저 정보입력 api',
-  //   description: '회원가입후 정보를 입력한다',
-  // })
-  // async createProfile(@Body() userProfileDto: UserProfileDto): Promise<object> {
-  //   try {
-  //     const response = await this.authService.createProfile(userProfileDto);
 
-  //     return {
-  //       msg: `회원정보가 입력되었습니다.`,
-  //       response,
-  //     };
-  //   } catch (err) {
-  //     throw err;
-  //   }
-  // }
+  @Post('/check/email')
+  @ApiOperation({ summary: '이메일 중복 체크' })
+  async checkEmail(@Body() authDto: AuthDto): Promise<object> {
+    const checkEmail = await this.authService.checkEmail(authDto);
+    const response = {
+      success: true,
+      msg: '사용가능한 이메일입니다.',
+      checkEmail,
+    };
+    return response;
+  }
+
+  @Post('/check/nickname')
+  @ApiOperation({ summary: '닉네임 중복 체크' })
+  async checkNickname(@Body() authDto: AuthDto): Promise<object> {
+    const checkNickname = await this.authService.checkNickname(authDto);
+    const response = {
+      success: true,
+      msg: '사용가능한 닉네임입니다.',
+      checkNickname,
+    };
+    return response;
+  }
 }

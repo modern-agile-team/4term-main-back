@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserProfileDto } from 'src/users/dto/user-profile.dto';
-import { UserProfileDetail } from 'src/users/interface/user-profile.interface';
 import { SignUpDto } from '../users/dto/sign-up.dto';
 import { UsersRepository } from '../users/repository/users.repository';
-import { UsersDetail } from './interface/auth.interface';
+import { AuthDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -12,14 +14,47 @@ export class AuthService {
     @InjectRepository(UsersRepository)
     private usersRepository: UsersRepository,
   ) {}
+  //유저 생성
+  async signUp(signUpDto: SignUpDto): Promise<number> {
+    try {
+      const { affectedRows, insertId } = await this.usersRepository.createUser(
+        signUpDto,
+      );
 
-  async singUp(signUpDto: SignUpDto): Promise<UsersDetail> {
-    return this.usersRepository.createUser(signUpDto);
+      if (!(affectedRows && insertId)) {
+        throw new InternalServerErrorException(`유저 생성 오류입니다.`);
+      }
+
+      return insertId;
+    } catch (error) {
+      throw error;
+    }
   }
+  //유저 닉네임 중복체크
+  async checkNickname(authDto: AuthDto): Promise<object> {
+    try {
+      const user = await this.usersRepository.checkNickname(authDto.nickname);
 
-  // async createProfile(
-  //   userProfileDto: UserProfileDto,
-  // ): Promise<UserProfileDetail> {
-  //   return this.usersRepository.createProfile(userProfileDto);
-  // }
+      if (user) {
+        throw new ConflictException(`이미 사용중인 닉네임입니다.`);
+      }
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
+  //유저 이메일 중복체크
+  async checkEmail(authDto: AuthDto): Promise<object> {
+    try {
+      const user = await this.usersRepository.checkEmail(authDto.email);
+
+      if (user) {
+        throw new ConflictException(`이미 사용중인 이메일입니다.`);
+      }
+
+      return user;
+    } catch (error) {
+      throw error;
+    }
+  }
 }

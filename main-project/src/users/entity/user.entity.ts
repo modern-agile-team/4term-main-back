@@ -12,6 +12,7 @@ import {
   BaseEntity,
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   OneToMany,
   OneToOne,
@@ -39,7 +40,7 @@ export class Users extends BaseEntity {
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
 
-  @CreateDateColumn({ name: 'deleted_date', nullable: true })
+  @DeleteDateColumn({ name: 'deleted_date', nullable: true })
   deletedDate: Date;
 
   @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.userNo)

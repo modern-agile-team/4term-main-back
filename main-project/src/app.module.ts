@@ -13,12 +13,9 @@ import { ReportsModule } from './reports/reports.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { FriendsModule } from './friends/friends.module';
 import { UniversitiesModule } from './universities/universities.module';
-<<<<<<< HEAD
 import { AuthModule } from './auth/auth.module';
 import { ProfileModule } from './profile/profile.module';
-=======
 import { EnquiriesModule } from './enquiries/enquiries.module';
->>>>>>> d2696e59d37f37ce4d67441bc70a0db7637cf97f
 
 @Module({
   imports: [
@@ -33,12 +30,9 @@ import { EnquiriesModule } from './enquiries/enquiries.module';
     AnnouncementsModule,
     FriendsModule,
     UniversitiesModule,
-<<<<<<< HEAD
     AuthModule,
     ProfileModule,
-=======
     EnquiriesModule,
->>>>>>> d2696e59d37f37ce4d67441bc70a0db7637cf97f
   ],
   controllers: [AppController],
   providers: [AppService],

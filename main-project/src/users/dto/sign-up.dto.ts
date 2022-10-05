@@ -6,9 +6,9 @@ export class SignUpDto {
   nickname: string;
 
   @IsEmail()
-  email?: string;
+  email: string;
 
   @Type(() => Boolean)
   @IsBoolean()
-  gender?: boolean;
+  gender: boolean;
 }
