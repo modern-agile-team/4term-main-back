@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { rename } from 'fs';
+import { InsertResult } from 'typeorm';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { DeleteFriendDto } from './dto/delete-friend.dto';
 import { Friends } from './entity/friend.entity';
@@ -13,6 +14,7 @@ import {
   FriendDetail,
   FriendList,
   FriendRequest,
+  FriendRequestResponse,
 } from './interface/friend.interface';
 import { FriendsRepository } from './repository/friends.repository';
 
@@ -23,7 +25,10 @@ export class FriendsService {
     private readonly friendsRepository: FriendsRepository,
   ) {}
 
-  async acceptFriendRequest(receiverNo: number, senderNo: number) {
+  async acceptFriendRequest(
+    receiverNo: number,
+    senderNo: number,
+  ): Promise<object> {
     try {
       const acceptFriend = await this.friendsRepository.acceptFriend(
         receiverNo,
@@ -32,6 +37,7 @@ export class FriendsService {
       if (!acceptFriend) {
         throw new BadRequestException(`이미 친구이거나 잘못된 요청 입니다.`);
       }
+
       return {
         success: true,
         msg: '친구 신청을 수락했습니다.',
@@ -41,26 +47,26 @@ export class FriendsService {
     }
   }
 
-  async getFriendRequest(receiverNo: number) {
+  async getAllReceiveFriendRequest(receiverNo: number): Promise<object> {
     try {
-      const requestList = await this.findAllFriendReqByNo(receiverNo);
-
+      const requestList = await this.findAllReceiveFriendReqByNo(receiverNo);
       if (!requestList[0]) {
         throw new BadRequestException(`받은 친구 신청이 없습니다.`);
       }
+
       return requestList;
     } catch (err) {
       throw err;
     }
   }
 
-  async getSendedFriendRequest(senderNo: number) {
+  async getSendFriendRequest(senderNo: number): Promise<object> {
     try {
-      const requestList = await this.findAllSendedFriendReqByNo(senderNo);
-
+      const requestList = await this.findAllSendFriendReqByNo(senderNo);
       if (!requestList[0]) {
         throw new BadRequestException(`보낸 친구 신청이 없습니다.`);
       }
+
       return requestList;
     } catch (err) {
       throw err;
@@ -69,20 +75,24 @@ export class FriendsService {
 
   async createFriendRequest(createFriendDto: CreateFriendDto): Promise<object> {
     try {
+      const { receiverNo, senderNo }: CreateFriendDto = createFriendDto;
+      if (receiverNo === senderNo) {
+        throw new BadRequestException('동일한 유저 번호입니다.');
+      }
       const check: FriendRequest = await this.findFriendReqByNo(
         createFriendDto,
       );
 
       if (!check) {
-        const raw = await this.friendsRepository.createFriendRequest(
-          createFriendDto,
-        );
+        const raw: FriendRequestResponse =
+          await this.friendsRepository.createFriendRequest(createFriendDto);
 
         if (!raw.affectedRows) {
           throw new InternalServerErrorException(
             `friend request 생성 오류입니다.`,
           );
         }
+
         return {
           success: true,
           msg: '친구 신청이 완료되었습니다.',
@@ -115,12 +125,8 @@ export class FriendsService {
       throw err;
     }
   }
-  //삭제 로직
-  //1.친구인지 확인
-  // async deleteFriend({userNo, friendNo}: DeleteFriendDto): Promise<any> {
 
-  // }
-  private async findAllFriendByNo(userNo: Friend) {
+  private async findAllFriendByNo(userNo: Friend): Promise<object> {
     try {
       const friendList: FriendList[] =
         await this.friendsRepository.getAllFriendList(userNo);
@@ -137,9 +143,8 @@ export class FriendsService {
     friendDetail: FriendDetail,
   ): Promise<FriendRequest> {
     try {
-      const friendRequest = await this.friendsRepository.getFriendRequest(
-        friendDetail,
-      );
+      const friendRequest: FriendRequest =
+        await this.friendsRepository.checkFriendRequest(friendDetail);
 
       return friendRequest;
     } catch (err) {
@@ -149,10 +154,12 @@ export class FriendsService {
     }
   }
 
-  private async findAllFriendReqByNo(receiverNo: number): Promise<Friends[]> {
+  private async findAllReceiveFriendReqByNo(
+    receiverNo: number,
+  ): Promise<Friends[]> {
     try {
       const requestList: Friends[] =
-        await this.friendsRepository.getAllFriendReq(receiverNo);
+        await this.friendsRepository.getAllReceiveFriendReq(receiverNo);
 
       return requestList;
     } catch (err) {
@@ -162,12 +169,10 @@ export class FriendsService {
     }
   }
 
-  private async findAllSendedFriendReqByNo(
-    senderNo: number,
-  ): Promise<Friends[]> {
+  private async findAllSendFriendReqByNo(senderNo: number): Promise<Friends[]> {
     try {
       const requestList: Friends[] =
-        await this.friendsRepository.getAllSendedFriendReq(senderNo);
+        await this.friendsRepository.getAllSendFriendReq(senderNo);
 
       return requestList;
     } catch (err) {

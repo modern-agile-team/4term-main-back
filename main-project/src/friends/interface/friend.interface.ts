@@ -3,8 +3,7 @@ export interface FriendDetail {
   senderNo: number;
 }
 export interface FriendRequest {
-  no: number;
-  isAccept: number;
+  isAccept?: number;
 }
 export interface Friend {
   no?: number;
@@ -17,4 +16,9 @@ export interface FriendList {
   friendNo?: number;
   receiverNo?: number;
   senderNo?: number;
+}
+
+export interface FriendRequestResponse {
+  affectedRows: number;
+  insertId?: number;
 }

@@ -61,6 +61,7 @@ export class FriendsController {
         receiverNo,
         senderNo,
       );
+
       return friendAccept;
     } catch (err) {
       throw err;
@@ -76,15 +77,15 @@ export class FriendsController {
     @Param('userNo', ParseIntPipe) receiverNo: number,
   ): Promise<object> {
     try {
-      const friendRequestList = await this.friendsService.getFriendRequest(
-        receiverNo,
-      );
+      const friendRequestList =
+        await this.friendsService.getAllReceiveFriendRequest(receiverNo);
 
       return friendRequestList;
     } catch (err) {
       throw err;
     }
   }
+
   @Get('/request/send/:userNo')
   @ApiOperation({
     summary: '보낸 친구 신청 목록 조회 API',
@@ -94,26 +95,13 @@ export class FriendsController {
     @Param('userNo', ParseIntPipe) senderNo: number,
   ): Promise<object> {
     try {
-      const friendRequestList =
-        await this.friendsService.getSendedFriendRequest(senderNo);
+      const friendRequestList = await this.friendsService.getSendFriendRequest(
+        senderNo,
+      );
 
       return friendRequestList;
     } catch (err) {
       throw err;
     }
   }
-
-  // // 추후 토큰의 유저no와 friendNo 확인 후 삭제
-  // @Delete('/delete')
-  // @ApiOperation({
-  //   summary: '친구 삭제 API',
-  //   description: '친구 삭제 API',
-  // })
-  // async deleteFriend(@Body() deleteFriendDto: DeleteFriendDto): Promise<void> {
-  //   try {
-  //     const deleteFriend = await this.friendsService.deleteFriend(deleteFriendDto)
-  //   } catch (err) {
-  //     throw err
-  //   }
-  // }
 }

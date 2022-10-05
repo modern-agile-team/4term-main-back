@@ -1,6 +1,7 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import {
   EntityRepository,
+  InsertResult,
   QueryResult,
   Repository,
   UpdateResult,
@@ -10,6 +11,8 @@ import {
   Friend,
   FriendDetail,
   FriendList,
+  FriendRequest,
+  FriendRequestResponse,
 } from '../interface/friend.interface';
 
 @EntityRepository(Friends)
@@ -39,12 +42,13 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async getAllFriendReq(receiverNo: number): Promise<Friends[]> {
+  async getAllReceiveFriendReq(receiverNo: number): Promise<Friends[]> {
     try {
       const result = await this.createQueryBuilder('friends')
         .select(['friends.sender_no AS senderNo'])
         .where('receiver_no = :receiverNo', { receiverNo })
         .getRawMany();
+
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
@@ -52,7 +56,8 @@ export class FriendsRepository extends Repository<Friends> {
       );
     }
   }
-  async getAllSendedFriendReq(senderNo: number): Promise<Friends[]> {
+
+  async getAllSendFriendReq(senderNo: number): Promise<Friends[]> {
     try {
       const result = await this.createQueryBuilder('friends')
         .select(['friends.receiver_no AS receiverNo'])
@@ -66,9 +71,9 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async getFriendRequest(friendDetail: FriendDetail) {
+  async checkFriendRequest(friendDetail: FriendDetail): Promise<FriendRequest> {
     try {
-      const result = await this.createQueryBuilder('friends')
+      const result: FriendRequest = await this.createQueryBuilder('friends')
         .select(['friends.is_accept AS isAccept'])
         .where(
           'receiver_no = :receiverNo AND sender_no = :senderNo',
@@ -88,9 +93,11 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async createFriendRequest(friendDetail: FriendDetail) {
+  async createFriendRequest(
+    friendDetail: FriendDetail,
+  ): Promise<FriendRequestResponse> {
     try {
-      const { raw }: UpdateResult = await this.createQueryBuilder()
+      const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
         .into(Friends)
         .values(friendDetail)
@@ -103,6 +110,7 @@ export class FriendsRepository extends Repository<Friends> {
       );
     }
   }
+
   async acceptFriend(receiverNo: number, senderNo: number): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
