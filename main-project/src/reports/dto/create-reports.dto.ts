@@ -5,6 +5,7 @@ export class CreateReportDto {
   @IsNumber()
   @ApiProperty({ example: 21, description: '신고주체 사용자 번호(원고)' })
   reportingUserNo: number;
+  // jwt 구현되면 useGaroud로 대체 예정
 
   @IsNotEmpty()
   @IsString()

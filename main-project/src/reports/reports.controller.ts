@@ -20,8 +20,8 @@ export class ReportsController {
   // Get
   @Get()
   @ApiOperation({
-    summary: '게시글 신고 전체 조회 API',
-    description: '게시글 신고글들을 전부 조회한다.',
+    summary: '신고 전체 조회 API',
+    description: '신고내역을 전부 조회한다.',
   })
   async getAllReports(): Promise<object> {
     const reports: object = await this.reportsService.getAllReports();
@@ -35,8 +35,8 @@ export class ReportsController {
 
   @Get('/:reportNo')
   @ApiOperation({
-    summary: '게시글 신고 전체 조회 API',
-    description: '게시글 신고글들을 전부 조회한다.',
+    summary: '신고 상세 조회 API',
+    description: '신고 번호를 통해 해당 신고내역을 조회한다.',
   })
   async getReportByNo(
     @Param('reportNo', ParseIntPipe) reportNo: number,
@@ -51,7 +51,7 @@ export class ReportsController {
   }
 
   // Post
-  @Post('/:boardNo')
+  @Post('/boards/:boardNo')
   @ApiOperation({
     summary: '게시글 신고 생성 API',
     description: '입력된 정보로 게시글 신고 생성.',
@@ -69,7 +69,7 @@ export class ReportsController {
     return response;
   }
 
-  @Post('/:userNo')
+  @Post('/users/:userNo')
   @ApiOperation({
     summary: '사용자 신고 생성 API',
     description: '입력된 정보로 사용자 신고 생성.',

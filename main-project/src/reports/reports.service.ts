@@ -147,7 +147,7 @@ export class ReportsService {
     userNo: number,
   ): Promise<number> {
     try {
-      // await this.boardsService.getBoardByNo(boardNo);
+      // await this.usersService.getUserByNo(userNo);
       // User 확인 Method 사용 부분
 
       const reportNo: number = await this.setReport(createReportDto);
