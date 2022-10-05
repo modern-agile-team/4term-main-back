@@ -1,10 +1,8 @@
-import { Users } from 'src/users/entity/user.entity';
-
 export interface FriendDetail {
-  userNo: number;
-  friendNo: number;
+  receiverNo: number;
+  senderNo: number;
 }
-export interface FriendRequestDetail {
-  requestUserNo: number;
-  acceptUserNo: number;
+export interface FriendRequest {
+  no: number;
+  isAccept: number;
 }

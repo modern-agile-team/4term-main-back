@@ -11,7 +11,6 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { CreateBookmarkDto } from './dto/create-bookmark.dto';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { BoardReadResponse } from './interface/boards.interface';
 
@@ -29,7 +28,6 @@ export class BoardsController {
     const boards: object = await this.boardService.getAllBoards();
     const response = {
       success: true,
-
       boards,
     };
 
@@ -66,18 +64,18 @@ export class BoardsController {
     return response;
   }
 
-  @Post('/:boardNo')
+  @Post('/:boardNo/:userNo')
   @ApiOperation({
     summary: '북마크 생성 API',
     description: '게시글 번호를 통해 해당 User의 북마크를 생성한다..',
   })
   async createBookmark(
-    @Param('boardNo', ParseIntPipe) boardNo: number,
-    @Body() createBookmarkDto: CreateBookmarkDto,
+    @Param() params: { [key: string]: number },
   ): Promise<object> {
+    const { boardNo, userNo } = params;
     const bookmark: number = await this.boardService.createBookmark(
       boardNo,
-      createBookmarkDto,
+      userNo,
     );
     const response = { success: true, bookmark };
 
@@ -93,13 +91,13 @@ export class BoardsController {
   async updateBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body() updateBoardDto: UpdateBoardDto,
-  ) {
-    const board: void = await this.boardService.updateBoard(
-      boardNo,
-      updateBoardDto,
-    );
+  ): Promise<object> {
+    await this.boardService.updateBoard(boardNo, updateBoardDto);
 
-    const response = { success: true };
+    const response = {
+      success: true,
+      msg: `${boardNo}번 게시글이 수정되었습니다.`,
+    };
 
     return response;
   }

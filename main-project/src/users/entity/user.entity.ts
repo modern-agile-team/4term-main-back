@@ -1,6 +1,6 @@
 import { BoardBookmarks } from 'src/boards/entity/board-bookmark.entity';
 import { Boards } from 'src/boards/entity/board.entity';
-import { FriendReqList } from 'src/friends/entity/friend-req-list.entity';
+import { Enquiries } from 'src/enquiries/entity/enquiry.entity';
 import { Friends } from 'src/friends/entity/friend.entity';
 import { MeetingInfo } from 'src/meetings/entity/meeting-info.entity';
 import { GuestMembers } from 'src/members/entity/guest-members.entity';
@@ -12,6 +12,7 @@ import {
   BaseEntity,
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   OneToMany,
   OneToOne,
@@ -27,19 +28,19 @@ export class Users extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   email: string;
 
-  @Column()
+  @Column({ default: false })
   gender: boolean;
 
   @Column({ type: 'varchar', length: 45 })
   nickname: string;
 
-  @Column()
+  @Column({ default: false })
   admin: boolean;
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
 
-  @CreateDateColumn({ name: 'deleted_date', nullable: true })
+  @DeleteDateColumn({ name: 'deleted_date', nullable: true })
   deletedDate: Date;
 
   @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.userNo)
@@ -75,23 +76,14 @@ export class Users extends BaseEntity {
   @OneToMany((type) => Notices, (notices) => notices.targetUserNo)
   noticeTargetUser: Notices[];
 
-  @OneToMany((type) => Friends, (friends) => friends.userNo)
-  friendMyNo: Friends[];
+  @OneToMany((type) => Friends, (friends) => friends.receiverNo)
+  friendReceiverNo: Friends[];
 
-  @OneToMany((type) => Friends, (friends) => friends.friendNo)
-  friendNo: Friends[];
+  @OneToMany((type) => Friends, (friends) => friends.senderNo)
+  friendSenderNo: Friends[];
 
-  @OneToMany(
-    (type) => FriendReqList,
-    (friendReqList) => friendReqList.requestUserNo,
-  )
-  friendRequestUser: FriendReqList[];
-
-  @OneToMany(
-    (type) => FriendReqList,
-    (friendReqList) => friendReqList.acceptUserNo,
-  )
-  friendAcceptUser: FriendReqList[];
+  @OneToMany((type) => Enquiries, (enquiries) => enquiries.userNo)
+  enquiry: Enquiries[];
 
   @OneToOne((type) => UserProfile, (userProfile) => userProfile.userNo)
   userProfileNo: UserProfile;
