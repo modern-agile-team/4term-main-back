@@ -8,7 +8,7 @@ import { BoardsService } from 'src/boards/boards.service';
 import { CreateReportDto } from './dto/create-reports.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
 import {
-  BoardReportDetail,
+  ReportDetail,
   ReportCreateResponse,
   ReportReadResponse,
 } from './interface/reports.interface';
@@ -100,12 +100,22 @@ export class ReportsService {
     return insertId;
   }
 
-  async setBoardReport(boardReportDetail: BoardReportDetail): Promise<number> {
+  async setBoardReport(reportDetail: ReportDetail): Promise<number> {
     const { affectedRows, insertId }: ReportCreateResponse =
-      await this.reportRepository.createBoardReport(boardReportDetail);
+      await this.reportRepository.createBoardReport(reportDetail);
 
     if (!(affectedRows && insertId)) {
       throw new InternalServerErrorException(`board-report 생성 오류입니다.`);
+    }
+    return insertId;
+  }
+
+  async setUserReport(reportDetail: ReportDetail): Promise<number> {
+    const { affectedRows, insertId }: ReportCreateResponse =
+      await this.reportRepository.createUserReport(reportDetail);
+
+    if (!(affectedRows && insertId)) {
+      throw new InternalServerErrorException(`user-report 생성 오류입니다.`);
     }
     return insertId;
   }
@@ -119,12 +129,35 @@ export class ReportsService {
 
       const reportNo: number = await this.setReport(createReportDto);
 
-      const boardReportDetail: BoardReportDetail = {
+      const reportDetail: ReportDetail = {
         reportNo,
         targetBoardNo: boardNo,
       };
 
-      await this.setBoardReport(boardReportDetail);
+      await this.setBoardReport(reportDetail);
+
+      return reportNo;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async createUserReport(
+    createReportDto: CreateReportDto,
+    userNo: number,
+  ): Promise<number> {
+    try {
+      // await this.usersService.getUserByNo(userNo);
+      // User 확인 Method 사용 부분
+
+      const reportNo: number = await this.setReport(createReportDto);
+
+      const reportDetail: ReportDetail = {
+        reportNo,
+        targetUserNo: userNo,
+      };
+
+      await this.setUserReport(reportDetail);
 
       return reportNo;
     } catch (error) {
