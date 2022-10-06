@@ -1,7 +1,12 @@
-import { EntityRepository, InsertResult, Repository } from 'typeorm';
+import {
+  DeleteResult,
+  EntityRepository,
+  InsertResult,
+  Repository,
+} from 'typeorm';
 import { HostMembers } from '../entity/host-members.entity';
 import { InternalServerErrorException } from '@nestjs/common';
-import { UserNo } from '../interface/member.interface';
+import { DeleteMember } from '../interface/member.interface';
 
 @EntityRepository(HostMembers)
 export class HostMembersRepository extends Repository<HostMembers> {
@@ -23,11 +28,20 @@ export class HostMembersRepository extends Repository<HostMembers> {
     }
   }
 
-  async getHostByMeetingNo(meetingNo: number): Promise<UserNo[]> {
-    const hostMembers: UserNo[] = await this.createQueryBuilder('host_members')
-      .where('host_members.meetingNo = :meetingNo', { meetingNo })
-      .getMany();
+  async deleteHost({ meetingNo, userNo }: DeleteMember): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder()
+        .delete()
+        .from(HostMembers)
+        .where('meetingNo = :meetingNo', { meetingNo })
+        .andWhere('userNo = :userNo', { userNo })
+        .execute();
 
-    return hostMembers;
+      return affected;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} deleteHost: 알 수 없는 서버 에러입니다.`,
+      );
+    }
   }
 }

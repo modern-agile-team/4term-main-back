@@ -5,26 +5,28 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DeleteGeustDto } from 'src/members/dto/deleteGuest.dto';
-import { SetGuestMembersDto } from 'src/members/dto/setGuestMembers.dto';
-import { UserNo } from 'src/members/interface/member.interface';
+import { MeetingRepository } from './repository/meeting.repository';
 import { GuestMembersRepository } from 'src/members/repository/guest-members.repository';
 import { HostMembersRepository } from 'src/members/repository/host-members.repository';
-import { Notices } from 'src/notices/entity/notices.entity';
-import { NoticeDetail } from 'src/notices/interface/notice.interface';
+import { MeetingInfoRepository } from './repository/meeting-info.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
-import { Users } from 'src/users/entity/user.entity';
+import { SetGuestMembersDto } from 'src/members/dto/setGuestMembers.dto';
+import { DeleteGuestDto } from 'src/meetings/dto/deleteGuest.dto';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
+import { DeleteHostDto } from './dto/deleteHost.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
-import { MeetingInfo } from './entity/meeting-info.entity';
+import { Notices } from 'src/notices/entity/notices.entity';
 import { Meetings } from './entity/meeting.entity';
 import {
+  ParticipatingMembers,
   MeetingDetail,
   MeetingMemberDetail,
   MeetingResponse,
+  MeetingVacancy,
+  ChangeAdminGuest,
 } from './interface/meeting.interface';
-import { MeetingInfoRepository } from './repository/meeting-info.repository';
-import { MeetingRepository } from './repository/meeting.repository';
+import { NoticeType } from 'src/common/configs/notice-type.config';
+import { DeleteMember } from 'src/members/interface/member.interface';
 
 @Injectable()
 export class MeetingsService {
@@ -45,20 +47,44 @@ export class MeetingsService {
     private readonly noticesRepository: NoticesRepository,
   ) {}
 
+  private readonly member = { GUEST: 'guest', HOST: 'host' };
+
+  private async getParticipatingMembers(
+    meetingNo: number,
+  ): Promise<ParticipatingMembers> {
+    try {
+      const participatingMembers: ParticipatingMembers =
+        await this.meetingRepository.getParticipatingMembers(meetingNo);
+
+      if (!participatingMembers.adminHost) {
+        const affected: number = await this.meetingRepository.deleteMeeting(
+          meetingNo,
+        );
+        if (!affected) {
+          throw new InternalServerErrorException(`약속 삭제 오류입니다.`);
+        }
+        throw new BadRequestException(`삭제된 약속입니다.`);
+      }
+
+      return participatingMembers;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   private async setMeetingDetail(
     meetingDetail: MeetingDetail,
-  ): Promise<Meetings> {
+  ): Promise<number> {
     try {
       const { affectedRows, insertId }: MeetingResponse =
         await this.meetingRepository.createMeeting(meetingDetail);
-      if (!affectedRows) {
-        throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
+      if (!(affectedRows && insertId)) {
+        throw new InternalServerErrorException(`약속 detail 생성 오류입니다.`);
       }
-      const meeting: Meetings = await this.findMeetingById(insertId);
 
-      return meeting;
-    } catch (error) {
-      throw error;
+      return insertId;
+    } catch (err) {
+      throw err;
     }
   }
 
@@ -66,111 +92,107 @@ export class MeetingsService {
     meetingInfo: MeetingMemberDetail,
   ): Promise<void> {
     try {
-      const setMeetingInfoResult: number =
+      const affectedRows: number =
         await this.meetingInfoRepository.createMeetingInfo(meetingInfo);
-      if (!setMeetingInfoResult) {
+
+      if (!affectedRows) {
         throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
       }
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   }
 
-  private async setHostMembers(
-    host: Users[],
+  private async setMeetingMembers(
+    members: number[],
     meetingNo: number,
-  ): Promise<void> {
+    side: string,
+  ) {
     try {
-      const hostsInfo: object[] = host.reduce((values, userNo) => {
+      const memberInfo: object[] = members.reduce((values, userNo) => {
         values.push({ meetingNo, userNo });
         return values;
       }, []);
 
-      const saveHostsResult: number =
-        await this.hostMembersRepository.saveHostMembers(hostsInfo);
-      if (saveHostsResult !== host.length) {
-        throw new InternalServerErrorException(
-          `약속 host 데이터 추가 오류입니다`,
-        );
+      const affectedRows: number =
+        side === this.member.GUEST
+          ? await this.guestMembersRepository.saveGuestMembers(memberInfo)
+          : await this.hostMembersRepository.saveHostMembers(memberInfo);
+      if (affectedRows !== members.length) {
+        throw new InternalServerErrorException(`약속 멤버 추가 오류입니다`);
       }
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   }
 
-  private async checkGuestMember(
-    guest: number[],
-    meetingNo: number,
-  ): Promise<void> {
+  async createMeeting({
+    location,
+    time,
+    host,
+    guestHeadcount,
+  }: CreateMeetingDto): Promise<number> {
     try {
-      const host: UserNo[] =
-        await this.hostMembersRepository.getHostByMeetingNo(meetingNo);
-      host.forEach((host) => {
-        if (guest.includes(host.no)) {
-          throw new BadRequestException(`이미 약속에 참여 중인 유저입니다.`);
-        }
-      });
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  private async checkMeetingApplyAvailable(
-    meetingNo: number,
-  ): Promise<MeetingInfo> {
-    try {
-      const meetingInfo: MeetingInfo =
-        await this.meetingInfoRepository.getMeetingInfoById(meetingNo);
-
-      if (meetingInfo.guest) {
-        throw new BadRequestException(
-          `마감된 약속에는 게스트를 추가할 수 없습니다.`,
-        );
-      }
-
-      return meetingInfo;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  private async checkGuestConflict(
-    guest: number[],
-    meetingNo: number,
-  ): Promise<MeetingInfo> {
-    try {
-      const meetingInfo: MeetingInfo = await this.checkMeetingApplyAvailable(
-        meetingNo,
-      );
-      if (guest.length != meetingInfo.guestHeadcount) {
-        throw new BadRequestException(
-          `게스트가 ${meetingInfo.guestHeadcount}명 필요합니다.`,
-        );
-      }
-      await this.checkGuestMember(guest, meetingNo);
-
-      return meetingInfo;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async createMeeting(createMeetingDto: CreateMeetingDto): Promise<Meetings> {
-    try {
-      const { location, time, host, guestHeadcount }: CreateMeetingDto =
-        createMeetingDto;
-      const meeting: Meetings = await this.setMeetingDetail({ location, time });
+      const meetingNo: number = await this.setMeetingDetail({ location, time });
 
       const meetingInfo: MeetingMemberDetail = {
-        host: host[0],
-        meeting,
+        host: host[0], //후에 토큰 유저넘버로 변경
+        meetingNo,
         guestHeadcount,
         hostHeadcount: host.length,
       };
       await this.setMeetingInfo(meetingInfo);
-      await this.setHostMembers(host, meeting.no);
+      await this.setMeetingMembers(host, meetingNo, this.member.HOST);
 
+      return meetingNo;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async findMeetingById(meetingNo: number): Promise<Meetings> {
+    try {
+      const meeting: Meetings = await this.meetingRepository.findMeetingById(
+        meetingNo,
+      );
+      if (!meeting) {
+        throw new NotFoundException(
+          `meetingNo가 ${meetingNo}인 약속을 찾지 못했습니다.`,
+        );
+      }
       return meeting;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async checkIsAccepted(meetingNo: number): Promise<void> {
+    try {
+      const { isAccepted }: Meetings = await this.findMeetingById(meetingNo);
+      if (isAccepted) {
+        throw new BadRequestException(`이미 수락된 약속입니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async checkUpdateAvailable(
+    meetingNo: number,
+    userNo: number,
+  ): Promise<void> {
+    try {
+      await this.checkIsAccepted(meetingNo);
+      const { adminHost, isDone }: ParticipatingMembers =
+        await this.meetingRepository.getParticipatingMembers(meetingNo);
+
+      if (!isDone) {
+        throw new BadRequestException(`아직 게스트가 참여하지 않은 약속입니다`);
+      }
+
+      if (userNo !== adminHost) {
+        throw new BadRequestException(`약속 수정 권한이 없는 유저입니다.`);
+      }
     } catch (err) {
       throw err;
     }
@@ -178,50 +200,103 @@ export class MeetingsService {
 
   async updateMeeting(
     meetingNo: number,
+    userNo: number,
     updateMeetingDto: UpdateMeetingDto,
   ): Promise<void> {
     try {
-      const meeting: Meetings = await this.findMeetingById(meetingNo);
-      if (meeting.isAccepted) {
-        throw new BadRequestException(`이미 수락된 약속은 수정할 수 없습니다`);
-      }
+      await this.checkUpdateAvailable(meetingNo, userNo);
 
       const affected: number = await this.meetingRepository.updateMeeting(
-        meeting,
+        meetingNo,
         updateMeetingDto,
       );
       if (!affected) {
         throw new InternalServerErrorException(`약속 수정 관련 오류입니다.`);
       }
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   }
 
-  async acceptMeeting(meetingNo: number): Promise<void> {
+  private async checkAcceptAvailable(meetingNo: number, userNo: number) {
     try {
-      const meeting: Meetings = await this.findMeetingById(meetingNo);
+      await this.checkIsAccepted(meetingNo);
+      const { adminGuest, isDone }: ParticipatingMembers =
+        await this.getParticipatingMembers(meetingNo);
+
+      if (!isDone) {
+        throw new BadRequestException(
+          `게스트 참여 신청이 마감되지 않은 약속입니다`,
+        );
+      }
+      if (userNo !== adminGuest) {
+        throw new BadRequestException(`약속 수락 권한이 없는 유저입니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async acceptMeeting(meetingNo: number, userNo: number): Promise<void> {
+    try {
+      await this.checkAcceptAvailable(meetingNo, userNo);
+
       const affected: number = await this.meetingRepository.acceptMeeting(
-        meeting,
+        meetingNo,
       );
       if (!affected) {
         throw new InternalServerErrorException(`약속 수락 관련 오류입니다.`);
       }
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   }
 
-  async findMeetingById(meetingNo: number): Promise<Meetings> {
-    const meeting: Meetings = await this.meetingRepository.findMeetingById(
-      meetingNo,
-    );
-    if (!meeting) {
-      throw new NotFoundException(
-        `meetingNo가 ${meetingNo}인 약속을 찾지 못했습니다.`,
-      );
+  private castMembersAsNumber(guests: string, hosts: string): number[] {
+    try {
+      const members: number[] = guests
+        ? hosts.split(',').concat(guests.split(',')).map(Number)
+        : hosts.split(',').map(Number);
+
+      return members;
+    } catch (err) {
+      throw err;
     }
-    return meeting;
+  }
+
+  private checkUsersInMembers(users: number[], guests: string, hosts: string) {
+    try {
+      const members: number[] = this.castMembersAsNumber(guests, hosts);
+      const isOverlaped: number =
+        members.length + users.length - new Set([...members, ...users]).size;
+
+      if (isOverlaped) {
+        throw new BadRequestException(`이미 약속에 참여 중인 유저입니다`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async checkApplyAvailable(
+    meetingNo: number,
+    guest: number[],
+  ): Promise<ParticipatingMembers> {
+    try {
+      await this.findMeetingById(meetingNo);
+      const memberDetail: ParticipatingMembers =
+        await this.getParticipatingMembers(meetingNo);
+
+      const { isDone, guests, hosts }: ParticipatingMembers = memberDetail;
+      if (isDone || guests) {
+        throw new BadRequestException(`게스트 신청이 마감된 약속입니다.`);
+      }
+      this.checkUsersInMembers(guest, guests, hosts);
+
+      return memberDetail;
+    } catch (err) {
+      throw err;
+    }
   }
 
   async applyForMeeting({
@@ -229,54 +304,324 @@ export class MeetingsService {
     guest,
   }: SetGuestMembersDto): Promise<void> {
     try {
-      await this.findMeetingById(meetingNo);
-      const meetingInfo: MeetingInfo = await this.checkGuestConflict(
-        guest,
-        meetingNo,
-      );
+      const { guestHeadcount, adminHost }: ParticipatingMembers =
+        await this.checkApplyAvailable(meetingNo, guest);
 
-      const noticeDetail: NoticeDetail = {
-        userNo: meetingInfo.host,
-        targetUserNo: guest[0],
-        type: 1,
-        value: JSON.stringify({ guest, meetingNo }),
-      };
-      await this.noticesRepository.saveNotice(noticeDetail);
-    } catch (error) {
-      throw error;
+      if (guestHeadcount != guest.length) {
+        throw new BadRequestException(
+          `게스트가 ${guestHeadcount}명이어야 합니다.`,
+        );
+      }
+
+      await this.setNotice(
+        adminHost,
+        guest[0],
+        NoticeType.APPLY_FOR_MEETING,
+        JSON.stringify({ guest, meetingNo }),
+      );
+    } catch (err) {
+      throw err;
     }
   }
 
-  async acceptMeetingGuest(noticeNo) {
+  private async setAdminGuest(meetingNo: number, guest: number): Promise<void> {
     try {
-      const notice: Notices = await this.noticesRepository.getNoticeById(
-        noticeNo,
-      );
-      const { guest, meetingNo } = JSON.parse(notice.value);
-
-      const meeting: Meetings = await this.findMeetingById(meetingNo);
       const affected: number =
-        await this.meetingInfoRepository.saveMeetingGuest(guest[0], meeting);
+        await this.meetingInfoRepository.saveMeetingGuest(guest, meetingNo);
       if (!affected) {
         throw new InternalServerErrorException(
-          `약속 guest 데이터 추가 오류입니다`,
+          `약속 adimGuest 추가 오류입니다`,
         );
       }
-      const guestsInfo: object[] = guest.reduce((values, userNo) => {
-        values.push({ meetingNo, userNo });
-        return values;
-      }, []);
-      const setGuestResult: number =
-        await this.guestMembersRepository.saveGuestMembers(guestsInfo);
-      if (setGuestResult !== guest.length) {
-        throw new InternalServerErrorException(
-          `약속 guest 데이터 추가 오류입니다`,
-        );
-      }
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   }
 
-  async deleteGuest(deleteGuestDto: DeleteGeustDto) {}
+  async acceptGuestApplication(noticeNo: number): Promise<void> {
+    try {
+      const { value, userNo, type }: Notices =
+        await this.noticesRepository.getNoticeById(noticeNo);
+
+      if (type !== NoticeType.APPLY_FOR_MEETING) {
+        throw new BadRequestException(`알람 type에 맞지 않는 요청 경로입니다.`);
+      }
+
+      const { guest, meetingNo } = JSON.parse(value);
+
+      const { adminHost }: ParticipatingMembers =
+        await this.checkApplyAvailable(meetingNo, guest);
+
+      if (userNo !== adminHost) {
+        throw new BadRequestException(
+          `게스트 참여 요청 수락 권한이 없는 유저입니다`,
+        );
+      }
+
+      await this.setAdminGuest(meetingNo, guest[0]);
+      await this.setMeetingMembers(guest, meetingNo, this.member.GUEST);
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async getMeetingMembers(meetingNo: number): Promise<number[]> {
+    try {
+      const { hosts, guests }: ParticipatingMembers =
+        await this.getParticipatingMembers(meetingNo);
+      const members: number[] = this.castMembersAsNumber(guests, hosts);
+
+      return members;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async setNotice(
+    userNo: number,
+    targetUserNo: number,
+    type: number,
+    value: string,
+  ): Promise<void> {
+    const { affectedRows }: MeetingResponse =
+      await this.noticesRepository.saveNotice({
+        userNo,
+        targetUserNo,
+        type,
+        value,
+      });
+
+    if (!affectedRows) {
+      throw new InternalServerErrorException(`약속 알람 생성 에러입니다.`);
+    }
+  }
+
+  private checkMeetingVacancy(meetingVacancy: MeetingVacancy): void {
+    try {
+      const { addGuestAvailable, addHostAvailable } = meetingVacancy;
+
+      if (addGuestAvailable && !parseInt(addGuestAvailable)) {
+        throw new BadRequestException(`게스트 최대 인원을 초과했습니다.`);
+      }
+      if (addHostAvailable && !parseInt(addHostAvailable)) {
+        throw new BadRequestException(`호스트 최대 인원을 초과했습니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async checkInviteAvailable(
+    userNo: number,
+    meetingNo: number,
+    invitedUserNo: number,
+  ): Promise<number> {
+    try {
+      const {
+        addGuestAvailable,
+        addHostAvailable,
+        guests,
+        hosts,
+      }: ParticipatingMembers = await this.getParticipatingMembers(meetingNo);
+      await this.checkUsersInMembers([invitedUserNo], guests, hosts);
+
+      if (hosts.split(',').map(Number).includes(userNo)) {
+        this.checkMeetingVacancy({ addHostAvailable });
+
+        return NoticeType.INVITE_HOST;
+      } else if (guests && guests.split(',').map(Number).includes(userNo)) {
+        this.checkMeetingVacancy({ addGuestAvailable });
+
+        return NoticeType.INVITE_GUEST;
+      } else {
+        throw new BadRequestException(
+          `약속에 참여 중이지 않은 유저는 초대 요청을 보낼 수 없습니다.`,
+        );
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async inviteMember(
+    meetingNo: number,
+    invitedUserNo: number,
+    userNo: number,
+  ): Promise<void> {
+    try {
+      await this.findMeetingById(meetingNo);
+      const noticeType: number = await this.checkInviteAvailable(
+        userNo,
+        meetingNo,
+        invitedUserNo,
+      );
+
+      this.setNotice(
+        invitedUserNo,
+        userNo,
+        noticeType,
+        JSON.stringify({ meetingNo }),
+      );
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async saveInvitedMember(
+    userNo: number,
+    noticeType: number,
+    meetingNo: number,
+  ): Promise<void> {
+    try {
+      if (
+        noticeType !== NoticeType.INVITE_HOST &&
+        noticeType !== NoticeType.INVITE_GUEST
+      ) {
+        throw new BadRequestException(`알람 type에 맞지 않는 요청 경로입니다.`);
+      }
+
+      const { addGuestAvailable, addHostAvailable } =
+        await this.getParticipatingMembers(meetingNo);
+
+      if (noticeType === NoticeType.INVITE_GUEST) {
+        this.checkMeetingVacancy({ addGuestAvailable });
+        await this.setMeetingMembers([userNo], meetingNo, this.member.GUEST);
+      } else {
+        this.checkMeetingVacancy({ addHostAvailable });
+        await this.setMeetingMembers([userNo], meetingNo, this.member.HOST);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async acceptInvitation(noticeNo: number, userNo: number): Promise<void> {
+    try {
+      const { value, type }: Notices =
+        await this.noticesRepository.getNoticeById(noticeNo);
+      const { meetingNo } = JSON.parse(value);
+
+      await this.findMeetingById(meetingNo);
+      await this.saveInvitedMember(userNo, type, meetingNo);
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private detectNotInMembers(
+    sameSideMembers: string,
+    userNo: number,
+    newAdmin: number,
+  ): void {
+    try {
+      const members: number[] = sameSideMembers.split(',').map(Number);
+      const notInMembers: number =
+        new Set([...members, userNo, newAdmin]).size - members.length;
+
+      if (notInMembers) {
+        throw new BadRequestException(`약속에 참여 중인 유저가 아닙니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async detectAdminGuestChange(
+    changeAdminGuest: ChangeAdminGuest,
+  ): Promise<void> {
+    try {
+      const { userNo, adminGuest, newAdminGuest, meetingNo } = changeAdminGuest;
+
+      if (userNo === adminGuest) {
+        await this.setAdminGuest(meetingNo, newAdminGuest);
+
+        this.setNotice(
+          userNo,
+          newAdminGuest,
+          NoticeType.BE_ADMIN_GUEST,
+          JSON.stringify({ meetingNo }),
+        );
+      } else if (adminGuest !== newAdminGuest) {
+        throw new BadRequestException(
+          `호스트 대표가 계속 약속에 참여할 경우 새로운 대표를 설정할 수 없습니다.`,
+        );
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async deleteMember(
+    deleteMember: DeleteMember,
+    side: string,
+  ): Promise<void> {
+    try {
+      const affected: number =
+        side === this.member.GUEST
+          ? await this.guestMembersRepository.deleteGuest(deleteMember)
+          : await this.hostMembersRepository.deleteHost(deleteMember);
+
+      if (!affected) {
+        throw new InternalServerErrorException(`멤버 삭제 에러입니다.`);
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async deleteGuest({
+    userNo,
+    newAdminGuest,
+    meetingNo,
+  }: DeleteGuestDto): Promise<void> {
+    try {
+      await this.findMeetingById(meetingNo);
+
+      const { adminGuest, guests }: ParticipatingMembers =
+        await this.getParticipatingMembers(meetingNo);
+      if (!adminGuest) {
+        throw new BadRequestException(`참여 중인 게스트가 없는 약속입니다`);
+      }
+      if (userNo === newAdminGuest) {
+        throw new BadRequestException(`새로운 호스트 대표를 설정해 주세요.`);
+      }
+
+      this.detectNotInMembers(guests, userNo, newAdminGuest);
+      await this.detectAdminGuestChange({
+        meetingNo,
+        userNo,
+        adminGuest,
+        newAdminGuest,
+      });
+
+      await this.deleteMember({ meetingNo, userNo }, this.member.GUEST);
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async deleteHost({ userNo, meetingNo }: DeleteHostDto): Promise<string> {
+    try {
+      await this.findMeetingById(meetingNo);
+
+      const { adminHost, hosts }: ParticipatingMembers =
+        await this.getParticipatingMembers(meetingNo);
+      if (userNo === adminHost) {
+        const affected: number = await this.meetingRepository.deleteMeeting(
+          meetingNo,
+        );
+        if (!affected) {
+          throw new InternalServerErrorException(`호스트 삭제 에러입니다.`);
+        }
+        return `${meetingNo}번 약속이 성공적으로 삭제되었습니다.`;
+      }
+
+      this.detectNotInMembers(hosts, userNo, adminHost);
+      await this.deleteMember({ meetingNo, userNo }, this.member.HOST);
+
+      return '호스트 측 멤버가 약속에서 삭제되었습니다.';
+    } catch (err) {
+      throw err;
+    }
+  }
 }

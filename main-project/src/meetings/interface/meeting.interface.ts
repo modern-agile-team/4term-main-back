@@ -12,8 +12,37 @@ export interface MeetingDetail {
 }
 
 export interface MeetingMemberDetail {
-  host: Users;
-  meeting: Meetings;
+  host: Users | number;
+  meetingNo: Meetings | number;
   hostHeadcount: number;
   guestHeadcount: number;
+}
+
+export interface ParticipatingMembers {
+  isDone?: boolean;
+  adminHost?: number;
+  adminGuest?: number;
+  guestHeadcount?: number;
+  hostHeadcount?: number;
+  guests?: string;
+  hosts?: string;
+  addGuestAvailable?: string;
+  addHostAvailable?: string;
+}
+
+export interface InviteNoticeResult {
+  meetingNo: number;
+  side: string;
+}
+
+export interface MeetingVacancy {
+  addGuestAvailable?: string;
+  addHostAvailable?: string;
+}
+
+export interface ChangeAdminGuest {
+  userNo: number;
+  adminGuest: number;
+  meetingNo: number;
+  newAdminGuest: number;
 }

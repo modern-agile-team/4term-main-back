@@ -31,7 +31,8 @@ export class MeetingInfo extends BaseEntity {
 
   @OneToOne((type) => Meetings, (meeting) => meeting.meetingInfo, {
     nullable: false,
+    onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'meeting_no' })
-  meetingNo: Meetings;
+  meetingNo: Meetings | number;
 }

@@ -1,3 +1,4 @@
-export interface UserNo {
-  no: number;
+export interface DeleteMember {
+  meetingNo: number;
+  userNo: number;
 }
