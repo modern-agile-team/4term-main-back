@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateFriendDto } from './dto/create-friend.dto';
+import { DeleteFriendDto } from './dto/delete-friend.dto';
 import { FriendsService } from './friends.service';
 import { Friend } from './interface/friend.interface';
 
@@ -23,7 +24,9 @@ export class FriendsController {
     summary: '친구 목록 APi',
     description: '친구 목록 조회',
   })
-  async getFriendList(@Param('userNo') userNo: Friend): Promise<Friend> {
+  async getFriendList(
+    @Param('userNo', ParseIntPipe) userNo: number,
+  ): Promise<Friend> {
     const friendList = await this.friendsService.getFriendList(userNo);
     return friendList;
   }
@@ -73,7 +76,7 @@ export class FriendsController {
     summary: '받은 친구 신청 목록 조회 API',
     description: '유저가 받은 친구 신청 전체 조회',
   })
-  async getReceiveFriendRequest(
+  async getAllReceiveFriendRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
   ): Promise<object> {
     try {
@@ -91,15 +94,35 @@ export class FriendsController {
     summary: '보낸 친구 신청 목록 조회 API',
     description: '유저가 보낸 친구 신청 전체조회',
   })
-  async getSendedFriendRequest(
+  async getallSendFriendRequest(
     @Param('userNo', ParseIntPipe) senderNo: number,
   ): Promise<object> {
     try {
-      const friendRequestList = await this.friendsService.getSendFriendRequest(
-        senderNo,
-      );
+      const friendRequestList =
+        await this.friendsService.getAllSendFriendRequest(senderNo);
 
       return friendRequestList;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  // 추후 토큰의 유저no와 friendNo 확인 후 삭제
+  @Delete('/delete')
+  @ApiOperation({
+    summary: '친구 삭제 API',
+    description: '친구 삭제 API',
+  })
+  async deleteFriend(
+    @Body() deleteFriendDto: DeleteFriendDto,
+  ): Promise<object> {
+    try {
+      await this.friendsService.deleteFriend(deleteFriendDto);
+
+      return {
+        success: true,
+        msg: '친구삭제가 완료되었습니다.',
+      };
     } catch (err) {
       throw err;
     }
