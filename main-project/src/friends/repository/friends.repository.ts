@@ -53,7 +53,7 @@ export class FriendsRepository extends Repository<Friends> {
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 친구 신청 조회(getAllFriendReq): 알 수 없는 서버 에러입니다.`,
+        `${err}: 친구 신청 조회(getAllReceiveFriendReq): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -67,7 +67,7 @@ export class FriendsRepository extends Repository<Friends> {
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 보낸 친구 신청 조회(getAllSendedFriendReq): 알 수 없는 서버 에러입니다.`,
+        `${err}: 보낸 친구 신청 조회(getAllSendFriendReq): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -107,7 +107,7 @@ export class FriendsRepository extends Repository<Friends> {
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 특정 친구 요청 목록 조회(checkRequest): 알 수 없는 서버 에러입니다.`,
+        `${err}: 특정 친구 신청 목록 조회(checkRequest): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -125,7 +125,7 @@ export class FriendsRepository extends Repository<Friends> {
       return raw;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 친구 요청 생성(createFriendRequest): 알 수 없는 서버 에러입니다.`,
+        `${err}: 친구 신청 생성(createFriendRequest): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
