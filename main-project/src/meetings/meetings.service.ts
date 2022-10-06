@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { NoticeType } from 'src/common/configs/notice-type.config';
 import { MeetingRepository } from './repository/meeting.repository';
 import { GuestMembersRepository } from 'src/members/repository/guest-members.repository';
 import { HostMembersRepository } from 'src/members/repository/host-members.repository';
@@ -15,7 +16,6 @@ import { DeleteGuestDto } from 'src/meetings/dto/deleteGuest.dto';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { DeleteHostDto } from './dto/deleteHost.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
-import { Notices } from 'src/notices/entity/notices.entity';
 import { Meetings } from './entity/meeting.entity';
 import {
   ParticipatingMembers,
@@ -25,8 +25,8 @@ import {
   MeetingVacancy,
   ChangeAdminGuest,
 } from './interface/meeting.interface';
-import { NoticeType } from 'src/common/configs/notice-type.config';
 import { DeleteMember } from 'src/members/interface/member.interface';
+import { Notice } from 'src/notices/interface/notice.interface';
 
 @Injectable()
 export class MeetingsService {
@@ -340,7 +340,7 @@ export class MeetingsService {
 
   async acceptGuestApplication(noticeNo: number): Promise<void> {
     try {
-      const { value, userNo, type }: Notices =
+      const { value, userNo, type }: Notice =
         await this.noticesRepository.getNoticeById(noticeNo);
 
       if (type !== NoticeType.APPLY_FOR_MEETING) {
@@ -497,7 +497,7 @@ export class MeetingsService {
 
   async acceptInvitation(noticeNo: number, userNo: number): Promise<void> {
     try {
-      const { value, type }: Notices =
+      const { value, type }: Notice =
         await this.noticesRepository.getNoticeById(noticeNo);
       const { meetingNo } = JSON.parse(value);
 
