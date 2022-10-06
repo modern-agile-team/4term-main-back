@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateFriendDto } from './dto/create-friend.dto';
+import { DeleteFriendDto } from './dto/delete-friend.dto';
 import { FriendsService } from './friends.service';
 import { Friend } from './interface/friend.interface';
 
@@ -100,6 +101,25 @@ export class FriendsController {
       );
 
       return friendRequestList;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  // 추후 토큰의 유저no와 friendNo 확인 후 삭제
+  @Delete('/delete')
+  @ApiOperation({
+    summary: '친구 삭제 API',
+    description: '친구 삭제 API',
+  })
+  async deleteFriend(
+    @Body() deleteFriendDto: DeleteFriendDto,
+  ): Promise<object> {
+    try {
+      const deleteFriend = await this.friendsService.deleteFriend(
+        deleteFriendDto,
+      );
+      return deleteFriend;
     } catch (err) {
       throw err;
     }

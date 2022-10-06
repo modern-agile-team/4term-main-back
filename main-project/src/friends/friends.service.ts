@@ -79,9 +79,7 @@ export class FriendsService {
       if (receiverNo === senderNo) {
         throw new BadRequestException('동일한 유저 번호입니다.');
       }
-      const check: FriendRequest = await this.findFriendReqByNo(
-        createFriendDto,
-      );
+      const check: FriendRequest = await this.findFriendByNo(createFriendDto);
 
       if (!check) {
         const raw: FriendRequestResponse =
@@ -126,6 +124,19 @@ export class FriendsService {
     }
   }
 
+  async deleteFriend(deleteFriendDto: DeleteFriendDto) {
+    try {
+      const { userNo, friendNo }: FriendDetail = deleteFriendDto;
+      if (userNo === friendNo) {
+        throw new BadRequestException('유저 번호가 중복됩니다.');
+      }
+      const a = await this.findFriendByNo({ userNo, friendNo });
+      return a;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   private async findAllFriendByNo(userNo: Friend): Promise<object> {
     try {
       const friendList: FriendList[] =
@@ -139,17 +150,17 @@ export class FriendsService {
     }
   }
 
-  private async findFriendReqByNo(
+  private async findFriendByNo(
     friendDetail: FriendDetail,
   ): Promise<FriendRequest> {
     try {
       const friendRequest: FriendRequest =
-        await this.friendsRepository.checkFriendRequest(friendDetail);
+        await this.friendsRepository.checkFriend(friendDetail);
 
       return friendRequest;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 친구 신청 확인(findFriendReqByNo): 알 수 없는 서버 에러입니다.`,
+        `${err}: 친구 신청 확인(findFriendByNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

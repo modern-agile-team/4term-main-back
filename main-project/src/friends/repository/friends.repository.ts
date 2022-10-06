@@ -71,7 +71,7 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async checkFriendRequest(friendDetail: FriendDetail): Promise<FriendRequest> {
+  async checkFriend(friendDetail: FriendDetail): Promise<FriendRequest> {
     try {
       const result: FriendRequest = await this.createQueryBuilder('friends')
         .select(['friends.is_accept AS isAccept'])
@@ -83,7 +83,16 @@ export class FriendsRepository extends Repository<Friends> {
           'receiver_no = :senderNo AND sender_no = :receiverNo',
           friendDetail,
         )
+        .orWhere(
+          'receiver_no = :userNo AND sender_no = :friendNo',
+          friendDetail,
+        )
+        .orWhere(
+          'receiver_no = :friendNo AND sender_no = :userNo',
+          friendDetail,
+        )
         .getRawOne();
+      console.log(result);
 
       return result;
     } catch (err) {
