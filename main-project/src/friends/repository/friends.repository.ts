@@ -1,5 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import {
+  DeleteResult,
   EntityRepository,
   InsertResult,
   QueryResult,
@@ -17,7 +18,7 @@ import {
 
 @EntityRepository(Friends)
 export class FriendsRepository extends Repository<Friends> {
-  async getAllFriendList(userNo: Friend): Promise<FriendList[]> {
+  async getAllFriendList(userNo: number): Promise<FriendList[]> {
     try {
       const result = await this.createQueryBuilder('friends')
         .leftJoin('friends.receiverNo', 'receiverNo')
@@ -83,16 +84,7 @@ export class FriendsRepository extends Repository<Friends> {
           'receiver_no = :senderNo AND sender_no = :receiverNo',
           friendDetail,
         )
-        .orWhere(
-          'receiver_no = :userNo AND sender_no = :friendNo',
-          friendDetail,
-        )
-        .orWhere(
-          'receiver_no = :friendNo AND sender_no = :userNo',
-          friendDetail,
-        )
         .getRawOne();
-      console.log(result);
 
       return result;
     } catch (err) {
@@ -137,5 +129,20 @@ export class FriendsRepository extends Repository<Friends> {
         `${err}: 친구 수락(acceptFriend): 알 수 없는 서버 에러입니다. `,
       );
     }
+  }
+
+  async deletFriend(deleteFriend) {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder()
+        .delete()
+        .from(Friends)
+        .where('receiver_no = :userNo AND sender_no = :friendNo', deleteFriend)
+        .orWhere(
+          'receiver_no = :friendNo AND sender_no = :userNo',
+          deleteFriend,
+        )
+        .execute();
+      return affected;
+    } catch (err) {}
   }
 }

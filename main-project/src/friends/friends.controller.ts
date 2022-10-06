@@ -24,7 +24,9 @@ export class FriendsController {
     summary: '친구 목록 APi',
     description: '친구 목록 조회',
   })
-  async getFriendList(@Param('userNo') userNo: Friend): Promise<Friend> {
+  async getFriendList(
+    @Param('userNo', ParseIntPipe) userNo: number,
+  ): Promise<Friend> {
     const friendList = await this.friendsService.getFriendList(userNo);
     return friendList;
   }
@@ -74,7 +76,7 @@ export class FriendsController {
     summary: '받은 친구 신청 목록 조회 API',
     description: '유저가 받은 친구 신청 전체 조회',
   })
-  async getReceiveFriendRequest(
+  async getAllReceiveFriendRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
   ): Promise<object> {
     try {
@@ -92,13 +94,12 @@ export class FriendsController {
     summary: '보낸 친구 신청 목록 조회 API',
     description: '유저가 보낸 친구 신청 전체조회',
   })
-  async getSendedFriendRequest(
+  async getallSendFriendRequest(
     @Param('userNo', ParseIntPipe) senderNo: number,
   ): Promise<object> {
     try {
-      const friendRequestList = await this.friendsService.getSendFriendRequest(
-        senderNo,
-      );
+      const friendRequestList =
+        await this.friendsService.getAllSendFriendRequest(senderNo);
 
       return friendRequestList;
     } catch (err) {
@@ -116,10 +117,12 @@ export class FriendsController {
     @Body() deleteFriendDto: DeleteFriendDto,
   ): Promise<object> {
     try {
-      const deleteFriend = await this.friendsService.deleteFriend(
-        deleteFriendDto,
-      );
-      return deleteFriend;
+      await this.friendsService.deleteFriend(deleteFriendDto);
+
+      return {
+        success: true,
+        msg: '친구삭제가 완료되었습니다.',
+      };
     } catch (err) {
       throw err;
     }
