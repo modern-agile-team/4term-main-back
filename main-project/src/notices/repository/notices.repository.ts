@@ -14,9 +14,9 @@ export class NoticesRepository extends Repository<Notices> {
         .execute();
 
       return raw;
-    } catch (error) {
+    } catch (err) {
       throw new InternalServerErrorException(
-        `${error} 알람 생성 에러(saveNotice): 알 수 없는 서버 오류입니다.`,
+        `${err} 알람 생성 에러(saveNotice): 알 수 없는 서버 오류입니다.`,
       );
     }
   }

@@ -79,7 +79,7 @@ export class MeetingsService {
       const { affectedRows, insertId }: MeetingResponse =
         await this.meetingRepository.createMeeting(meetingDetail);
       if (!(affectedRows && insertId)) {
-        throw new InternalServerErrorException(`meeting 생성 오류입니다.`);
+        throw new InternalServerErrorException(`약속 detail 생성 오류입니다.`);
       }
 
       return insertId;
@@ -115,7 +115,7 @@ export class MeetingsService {
       }, []);
 
       const affectedRows: number =
-        side === 'guset'
+        side === this.member.GUEST
           ? await this.guestMembersRepository.saveGuestMembers(memberInfo)
           : await this.hostMembersRepository.saveHostMembers(memberInfo);
       if (affectedRows !== members.length) {
@@ -126,10 +126,13 @@ export class MeetingsService {
     }
   }
 
-  async createMeeting(createMeetingDto: CreateMeetingDto): Promise<number> {
+  async createMeeting({
+    location,
+    time,
+    host,
+    guestHeadcount,
+  }: CreateMeetingDto): Promise<number> {
     try {
-      const { location, time, host, guestHeadcount }: CreateMeetingDto =
-        createMeetingDto;
       const meetingNo: number = await this.setMeetingDetail({ location, time });
 
       const meetingInfo: MeetingMemberDetail = {
@@ -164,7 +167,6 @@ export class MeetingsService {
   }
 
   private async checkIsAccepted(meetingNo: number): Promise<void> {
-    //meeting이 있는지 동시에 확인
     try {
       const { isAccepted }: Meetings = await this.findMeetingById(meetingNo);
       if (isAccepted) {
@@ -286,10 +288,10 @@ export class MeetingsService {
         await this.getParticipatingMembers(meetingNo);
 
       const { isDone, guests, hosts }: ParticipatingMembers = memberDetail;
-      this.checkUsersInMembers(guest, guests, hosts);
-      if (isDone) {
-        throw new BadRequestException(`게스트 신청이 마감된 약속입니다`);
+      if (isDone || guests) {
+        throw new BadRequestException(`게스트 신청이 마감된 약속입니다.`);
       }
+      this.checkUsersInMembers(guest, guests, hosts);
 
       return memberDetail;
     } catch (err) {
@@ -338,15 +340,19 @@ export class MeetingsService {
 
   async acceptGuestApplication(noticeNo: number): Promise<void> {
     try {
-      const notice: Notices = await this.noticesRepository.getNoticeById(
-        noticeNo,
-      );
-      const { guest, meetingNo } = JSON.parse(notice.value);
+      const { value, userNo, type }: Notices =
+        await this.noticesRepository.getNoticeById(noticeNo);
+
+      if (type !== NoticeType.APPLY_FOR_MEETING) {
+        throw new BadRequestException(`알람 type에 맞지 않는 요청 경로입니다.`);
+      }
+
+      const { guest, meetingNo } = JSON.parse(value);
 
       const { adminHost }: ParticipatingMembers =
         await this.checkApplyAvailable(meetingNo, guest);
 
-      if (notice.userNo !== adminHost) {
+      if (userNo !== adminHost) {
         throw new BadRequestException(
           `게스트 참여 요청 수락 권한이 없는 유저입니다`,
         );
