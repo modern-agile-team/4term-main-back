@@ -94,7 +94,7 @@ export class FriendsController {
     summary: '보낸 친구 신청 목록 조회 API',
     description: '유저가 보낸 친구 신청 전체조회',
   })
-  async getallSendFriendRequest(
+  async getAllSendFriendRequest(
     @Param('userNo', ParseIntPipe) senderNo: number,
   ): Promise<object> {
     try {
@@ -109,8 +109,8 @@ export class FriendsController {
 
   @Delete('/request/refuse/:userNo')
   @ApiOperation({
-    summary: '친구 삭제 API',
-    description: '친구 삭제 API',
+    summary: '친구 신청 거절 API',
+    description: '친구 신청 거절 API',
   })
   async refuseRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
