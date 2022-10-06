@@ -89,7 +89,25 @@ export class FriendsRepository extends Repository<Friends> {
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 특정 친구 요청 목록 조회(getFriendRequest): 알 수 없는 서버 에러입니다.`,
+        `${err}: 친구 목록 조회(checkFriend): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async checkRequest(friendDetail: FriendDetail): Promise<FriendRequest> {
+    try {
+      const result: FriendRequest = await this.createQueryBuilder('friends')
+        .select(['friends.is_accept AS isAccept'])
+        .where(
+          'receiver_no = :receiverNo AND sender_no = :senderNo',
+          friendDetail,
+        )
+        .getRawOne();
+
+      return result;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 특정 친구 요청 목록 조회(checkRequest): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -123,6 +141,7 @@ export class FriendsRepository extends Repository<Friends> {
         })
         .andWhere('is_accept = 0')
         .execute();
+
       return affected;
     } catch (err) {
       throw new InternalServerErrorException(
@@ -131,7 +150,7 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async deletFriend(deleteFriend) {
+  async deletFriend(deleteFriend): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()
@@ -142,7 +161,31 @@ export class FriendsRepository extends Repository<Friends> {
           deleteFriend,
         )
         .execute();
+
       return affected;
-    } catch (err) {}
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 친구 삭제(deletFriend): 알 수 없는 서버 에러입니다. `,
+      );
+    }
+  }
+
+  async refuseRequestByNo(refuseFriendNo: FriendDetail): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder()
+        .delete()
+        .from(Friends)
+        .where(
+          'receiver_no = :receiverNo AND sender_no = :senderNo',
+          refuseFriendNo,
+        )
+        .execute();
+
+      return affected;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 친구 거절(refuseRequestByNo): 알 수 없는 서버 에러입니다. `,
+      );
+    }
   }
 }

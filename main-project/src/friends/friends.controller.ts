@@ -107,6 +107,27 @@ export class FriendsController {
     }
   }
 
+  @Delete('/request/refuse/:userNo')
+  @ApiOperation({
+    summary: '친구 삭제 API',
+    description: '친구 삭제 API',
+  })
+  async refuseRequest(
+    @Param('userNo', ParseIntPipe) receiverNo: number,
+    @Body('friendNo', ParseIntPipe) senderNo: number,
+  ) {
+    try {
+      await this.friendsService.refuseRequest({ receiverNo, senderNo });
+
+      return {
+        success: true,
+        msg: '친구 요청을 거절했습니다.',
+      };
+    } catch (err) {
+      throw err;
+    }
+  }
+
   // 추후 토큰의 유저no와 friendNo 확인 후 삭제
   @Delete('/delete')
   @ApiOperation({
