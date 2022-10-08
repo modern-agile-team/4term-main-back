@@ -1,5 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import {
+  DeleteResult,
   EntityRepository,
   InsertResult,
   QueryResult,
@@ -17,7 +18,7 @@ import {
 
 @EntityRepository(Friends)
 export class FriendsRepository extends Repository<Friends> {
-  async getAllFriendList(userNo: Friend): Promise<FriendList[]> {
+  async getAllFriendList(userNo: number): Promise<FriendList[]> {
     try {
       const result = await this.createQueryBuilder('friends')
         .leftJoin('friends.receiverNo', 'receiverNo')
@@ -52,7 +53,7 @@ export class FriendsRepository extends Repository<Friends> {
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 친구 신청 조회(getAllFriendReq): 알 수 없는 서버 에러입니다.`,
+        `${err}: 친구 신청 조회(getAllReceiveFriendReq): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -66,12 +67,12 @@ export class FriendsRepository extends Repository<Friends> {
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 보낸 친구 신청 조회(getAllSendedFriendReq): 알 수 없는 서버 에러입니다.`,
+        `${err}: 보낸 친구 신청 조회(getAllSendFriendReq): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
-  async checkFriendRequest(friendDetail: FriendDetail): Promise<FriendRequest> {
+  async checkFriend(friendDetail: FriendDetail): Promise<FriendRequest> {
     try {
       const result: FriendRequest = await this.createQueryBuilder('friends')
         .select(['friends.is_accept AS isAccept'])
@@ -88,7 +89,25 @@ export class FriendsRepository extends Repository<Friends> {
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 특정 친구 요청 목록 조회(getFriendRequest): 알 수 없는 서버 에러입니다.`,
+        `${err}: 친구 목록 조회(checkFriend): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async checkRequest(friendDetail: FriendDetail): Promise<FriendRequest> {
+    try {
+      const result: FriendRequest = await this.createQueryBuilder('friends')
+        .select(['friends.is_accept AS isAccept'])
+        .where(
+          'receiver_no = :receiverNo AND sender_no = :senderNo',
+          friendDetail,
+        )
+        .getRawOne();
+
+      return result;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 특정 친구 신청 목록 조회(checkRequest): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -106,7 +125,7 @@ export class FriendsRepository extends Repository<Friends> {
       return raw;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 친구 요청 생성(createFriendRequest): 알 수 없는 서버 에러입니다.`,
+        `${err}: 친구 신청 생성(createFriendRequest): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -122,10 +141,50 @@ export class FriendsRepository extends Repository<Friends> {
         })
         .andWhere('is_accept = 0')
         .execute();
+
       return affected;
     } catch (err) {
       throw new InternalServerErrorException(
         `${err}: 친구 수락(acceptFriend): 알 수 없는 서버 에러입니다. `,
+      );
+    }
+  }
+
+  async deletFriend(deleteFriend): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder()
+        .delete()
+        .from(Friends)
+        .where('receiver_no = :userNo AND sender_no = :friendNo', deleteFriend)
+        .orWhere(
+          'receiver_no = :friendNo AND sender_no = :userNo',
+          deleteFriend,
+        )
+        .execute();
+
+      return affected;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 친구 삭제(deletFriend): 알 수 없는 서버 에러입니다. `,
+      );
+    }
+  }
+
+  async refuseRequestByNo(refuseFriendNo: FriendDetail): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder()
+        .delete()
+        .from(Friends)
+        .where(
+          'receiver_no = :receiverNo AND sender_no = :senderNo',
+          refuseFriendNo,
+        )
+        .execute();
+
+      return affected;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 친구 거절(refuseRequestByNo): 알 수 없는 서버 에러입니다. `,
       );
     }
   }
