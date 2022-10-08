@@ -5,7 +5,6 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { UpdateMeetingDto } from '../dto/updateMeeting.dto';
 import { Meetings } from '../entity/meeting.entity';
 import { InternalServerErrorException } from '@nestjs/common';
 import {
@@ -46,15 +45,12 @@ export class MeetingRepository extends Repository<Meetings> {
     }
   }
 
-  async updateMeeting(
-    meetingNo: number,
-    updatedMeetingInfo: UpdateMeetingDto,
-  ): Promise<number> {
+  async updateMeeting(no: number, updatedMeetingInfo: object): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Meetings)
         .set(updatedMeetingInfo)
-        .where('no = :meetingNo', { meetingNo })
+        .where({ no })
         .execute();
 
       return affected;

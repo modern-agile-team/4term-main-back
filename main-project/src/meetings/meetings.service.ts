@@ -11,10 +11,13 @@ import { GuestMembersRepository } from 'src/members/repository/guest-members.rep
 import { HostMembersRepository } from 'src/members/repository/host-members.repository';
 import { MeetingInfoRepository } from './repository/meeting-info.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
-import { SetGuestMembersDto } from 'src/members/dto/setGuestMembers.dto';
-import { DeleteGuestDto } from 'src/meetings/dto/deleteGuest.dto';
+import { ApplyForMeetingDto } from './dto/applyForMeeting.dto';
+import { AcceptInvitaionDto } from './dto/acceptInvitation.dto';
+import { AcceptMeetingDto } from './dto/acceptMeeting.dto';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
+import { DeleteGuestDto } from 'src/meetings/dto/deleteGuest.dto';
 import { DeleteHostDto } from './dto/deleteHost.dto';
+import { InviteGuestDto } from './dto/inviteGuest.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { Meetings } from './entity/meeting.entity';
 import {
@@ -198,17 +201,18 @@ export class MeetingsService {
     }
   }
 
-  async updateMeeting(
-    meetingNo: number,
-    userNo: number,
-    updateMeetingDto: UpdateMeetingDto,
-  ): Promise<void> {
+  async updateMeeting({
+    meetingNo,
+    userNo,
+    location,
+    time,
+  }: UpdateMeetingDto): Promise<void> {
     try {
       await this.checkUpdateAvailable(meetingNo, userNo);
 
       const affected: number = await this.meetingRepository.updateMeeting(
         meetingNo,
-        updateMeetingDto,
+        { location, time },
       );
       if (!affected) {
         throw new InternalServerErrorException(`약속 수정 관련 오류입니다.`);
@@ -237,7 +241,7 @@ export class MeetingsService {
     }
   }
 
-  async acceptMeeting(meetingNo: number, userNo: number): Promise<void> {
+  async acceptMeeting({ meetingNo, userNo }: AcceptMeetingDto): Promise<void> {
     try {
       await this.checkAcceptAvailable(meetingNo, userNo);
 
@@ -302,8 +306,15 @@ export class MeetingsService {
   async applyForMeeting({
     meetingNo,
     guest,
-  }: SetGuestMembersDto): Promise<void> {
+    userNo,
+  }: ApplyForMeetingDto): Promise<void> {
     try {
+      if (userNo != guest[0]) {
+        throw new BadRequestException(
+          `guest[0]은 요청을 보낸 유저와 동일해야 합니다.`,
+        );
+      }
+
       const { guestHeadcount, adminHost }: ParticipatingMembers =
         await this.checkApplyAvailable(meetingNo, guest);
 
@@ -315,7 +326,7 @@ export class MeetingsService {
 
       await this.setNotice(
         adminHost,
-        guest[0],
+        userNo,
         NoticeType.APPLY_FOR_MEETING,
         JSON.stringify({ guest, meetingNo }),
       );
@@ -443,11 +454,11 @@ export class MeetingsService {
     }
   }
 
-  async inviteMember(
-    meetingNo: number,
-    invitedUserNo: number,
-    userNo: number,
-  ): Promise<void> {
+  async inviteMember({
+    meetingNo,
+    invitedUserNo,
+    userNo,
+  }: InviteGuestDto): Promise<void> {
     try {
       await this.findMeetingById(meetingNo);
       const noticeType: number = await this.checkInviteAvailable(
@@ -495,7 +506,10 @@ export class MeetingsService {
     }
   }
 
-  async acceptInvitation(noticeNo: number, userNo: number): Promise<void> {
+  async acceptInvitation({
+    noticeNo,
+    userNo,
+  }: AcceptInvitaionDto): Promise<void> {
     try {
       const { value, type }: Notice =
         await this.noticesRepository.getNoticeById(noticeNo);
@@ -600,7 +614,7 @@ export class MeetingsService {
     }
   }
 
-  async deleteHost({ userNo, meetingNo }: DeleteHostDto): Promise<string> {
+  async deleteHost({ userNo, meetingNo }: DeleteHostDto): Promise<void> {
     try {
       await this.findMeetingById(meetingNo);
 
@@ -613,13 +627,12 @@ export class MeetingsService {
         if (!affected) {
           throw new InternalServerErrorException(`호스트 삭제 에러입니다.`);
         }
-        return `${meetingNo}번 약속이 성공적으로 삭제되었습니다.`;
+
+        return;
       }
 
       this.detectNotInMembers(hosts, userNo, adminHost);
       await this.deleteMember({ meetingNo, userNo }, this.member.HOST);
-
-      return '호스트 측 멤버가 약속에서 삭제되었습니다.';
     } catch (err) {
       throw err;
     }

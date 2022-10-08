@@ -15,6 +15,10 @@ import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { DeleteGuestDto } from 'src/meetings/dto/deleteGuest.dto';
 import { DeleteHostDto } from './dto/deleteHost.dto';
+import { InviteGuestDto } from './dto/inviteGuest.dto';
+import { ApplyForMeetingDto } from './dto/applyForMeeting.dto';
+import { AcceptInvitaionDto } from './dto/acceptInvitation.dto';
+import { AcceptMeetingDto } from './dto/acceptMeeting.dto';
 
 @Controller('meetings')
 export class MeetingsController {
@@ -64,13 +68,12 @@ export class MeetingsController {
   @ApiOkResponse({
     description: '새로운 멤버로 약속에 참여',
   })
-  @Patch('/accept/invitation/:noticeNo/:userNo') // 후에 토큰에서 받도록 수정
+  @Patch('/accept/invitation/:noticeNo')
   async acceptInvitation(
-    @Param('noticeNo') noticeNo: number,
-    @Param('userNo') userNo: number,
+    @BodyAndParam() acceptInvitaionDto: AcceptInvitaionDto,
   ) {
     try {
-      await this.meetingsService.acceptInvitation(noticeNo, userNo);
+      await this.meetingsService.acceptInvitation(acceptInvitaionDto);
 
       return {
         succes: true,
@@ -85,18 +88,12 @@ export class MeetingsController {
   @ApiOkResponse({
     description: '약속 장소/시간 수정',
   })
-  @Patch('/:meetingNo/:userNo') //후에 토큰에서 userNo 받아오도록 수정
+  @Patch('/:meetingNo')
   async updateMeeting(
-    @Param('meetingNo') meetingNo: number,
-    @Param('userNo') userNo: number,
-    @Body() updateMeetingDto: UpdateMeetingDto,
+    @BodyAndParam() updateMeetingDto: UpdateMeetingDto,
   ): Promise<object> {
     try {
-      await this.meetingsService.updateMeeting(
-        meetingNo,
-        userNo,
-        updateMeetingDto,
-      );
+      await this.meetingsService.updateMeeting(updateMeetingDto);
 
       return { success: true, msg: `약속이 수정되었습니다` };
     } catch (err) {
@@ -108,13 +105,12 @@ export class MeetingsController {
   @ApiOkResponse({
     description: '약속 수락',
   })
-  @Patch('/accept/:meetingNo/:userNo') //후에 토큰에서 userNo 받아오도록 수정
+  @Patch('/:meetingNo/accept')
   async acceptMeeting(
-    @Param('meetingNo') meetingNo: number,
-    @Param('userNo') userNo: number,
+    @BodyAndParam() acceptMeetingDto: AcceptMeetingDto,
   ): Promise<object> {
     try {
-      await this.meetingsService.acceptMeeting(meetingNo, userNo);
+      await this.meetingsService.acceptMeeting(acceptMeetingDto);
 
       return { success: true, msg: `약속이 수락되었습니다` };
     } catch (err) {
@@ -126,13 +122,12 @@ export class MeetingsController {
   @ApiOkResponse({
     description: '약속에 게스트로 참여 신청',
   })
-  @Post('/apply/:meetingNo')
-  async setGuestMembers(
-    @Param('meetingNo') meetingNo: number,
-    @Body('guest') guest: number[],
+  @Post('/:meetingNo/apply')
+  async applyForMeeting(
+    @BodyAndParam() applyForMeetingDto: ApplyForMeetingDto,
   ): Promise<object> {
     try {
-      await this.meetingsService.applyForMeeting({ meetingNo, guest });
+      await this.meetingsService.applyForMeeting(applyForMeetingDto);
 
       return { success: true, msg: `약속 신청이 완료되었습니다.` };
     } catch (err) {
@@ -144,18 +139,14 @@ export class MeetingsController {
   @ApiOkResponse({
     description: '참여 중인 약속에 새로운 멤버 초대',
   })
-  @Post('/invite/:meetingNo/:userNo')
-  async inviteGuest(
-    @Body('invitedUserNo') invitedUserNo: number,
-    @Param('meetingNo') meetingNo: number,
-    @Param('userNo') userNo: number, //후에 토큰에서 받도록 수정
-  ) {
+  @Post('/:meetingNo/invite')
+  async inviteGuest(@BodyAndParam() inviteGuestDto: InviteGuestDto) {
     try {
-      await this.meetingsService.inviteMember(meetingNo, invitedUserNo, userNo);
+      await this.meetingsService.inviteMember(inviteGuestDto);
 
       return {
         succes: true,
-        msg: `약속 초대 알람이 전송되었습니다.`,
+        msg: `약속 초대 알림이 전송되었습니다.`,
       };
     } catch (err) {
       throw err;
@@ -166,7 +157,7 @@ export class MeetingsController {
   @ApiOkResponse({
     description: '게스트 삭제',
   })
-  @Delete('/guest/:meetingNo/:userNo') //후에 토큰에서 userNo 받아오도록 수정
+  @Delete('/:meetingNo/guest')
   async deleteGuest(@BodyAndParam() deleteGuestDto: DeleteGuestDto) {
     try {
       await this.meetingsService.deleteGuest(deleteGuestDto);
@@ -184,14 +175,14 @@ export class MeetingsController {
   @ApiOkResponse({
     description: '호스트 삭제',
   })
-  @Delete('/host/:meetingNo/:userNo') //후에 토큰에서 userNo 받아오도록 수정
+  @Delete('/:meetingNo/host')
   async deleteHost(@BodyAndParam() deleteHostDto: DeleteHostDto) {
     try {
-      const msg: string = await this.meetingsService.deleteHost(deleteHostDto);
+      await this.meetingsService.deleteHost(deleteHostDto);
 
       return {
         success: true,
-        msg,
+        msg: '호스트가 삭제되었습니다.',
       };
     } catch (err) {
       throw err;
