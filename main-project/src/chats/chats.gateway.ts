@@ -16,8 +16,13 @@ const { getFirestore } = require('firebase-admin/firestore');
 initializeApp({
   credential: cert(serviceAccount),
 });
-
+let createdRooms: string[] = [];
 const db = getFirestore();
+
+interface MessagePayload {
+  roomName: string;
+  message: string;
+}
 
 @WebSocketGateway(4000, { namespace: 'chat' })
 export class ChatsGateway {
@@ -55,16 +60,29 @@ export class ChatsGateway {
   @SubscribeMessage('create-room')
   async handelCreateRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() roomName: string,
+    @MessageBody() { roomName, message }: MessagePayload,
   ) {
-    const chatRoomRef = db
-      .collection(`${Object.values(roomName)}`)
-      .doc('memberList');
-    const getCol = await chatRoomRef.get();
+    const exists = createdRooms.find((createdRoom) => createdRoom === roomName);
+    if (exists) {
+      this.logger.log(`${roomName} 방이 이미 존재합니다.`);
+      return { success: false, msg: `${roomName} 방이 이미 존재합니다.` };
+    }
+
+    socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
+    createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
+    this.nsp.emit('create-room', roomName); // 대기실 방 생성
+
+    return { success: true, payload: roomName };
+
+    // const chatRoomRef = db
+    //   .collection(`${Object.values(roomName)}`)
+    //   .doc('memberList');
+    // console.log(roomName);
+
+    // const getCol = await chatRoomRef.get();
     // await docRef.set({
     //   aaa: socket.id,
     // });
-    console.log(getCol.exists);
   }
 
   @SubscribeMessage('ClientToServer')
