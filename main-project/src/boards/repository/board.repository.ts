@@ -39,7 +39,7 @@ export class BoardRepository extends Repository<Boards> {
           'boardMemberInfo.male AS male',
           'boardMemberInfo.female AS female',
         ])
-        .where('boards.no=:boardNo', { boardNo })
+        .where('boards.no = :boardNo', { boardNo })
         .getRawOne();
 
       return board;
