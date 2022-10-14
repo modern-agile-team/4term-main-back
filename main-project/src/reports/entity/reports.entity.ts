@@ -45,6 +45,5 @@ export class Reports extends BaseEntity {
   userNo: number;
 
   @OneToOne((type) => ReportImages, (reportImages) => reportImages.reportNo)
-  @JoinColumn({ name: 'report_images' })
   reportImages: ReportImages;
 }
