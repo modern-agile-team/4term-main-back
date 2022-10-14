@@ -16,7 +16,9 @@ export class ReportImages extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: false, name: 'img_url' })
   imgUrl: string;
 
-  @OneToOne((type) => Reports, (reports) => reports.reportImages)
+  @OneToOne((type) => Reports, (reports) => reports.reportImages, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'report_no' })
   reportNo: number;
 }

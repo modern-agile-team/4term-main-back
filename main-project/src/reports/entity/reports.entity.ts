@@ -40,7 +40,7 @@ export class Reports extends BaseEntity {
   @OneToOne((type) => ReportedUsers, (reportedUsers) => reportedUsers.reportNo)
   reportedUser: number;
 
-  @ManyToOne((type) => Users, (user) => user.report)
+  @ManyToOne((type) => Users, (user) => user.report, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 
