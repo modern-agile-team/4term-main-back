@@ -16,7 +16,9 @@ export class EnquiryImages extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: false, name: 'img_url' })
   imgUrl: string;
 
-  @OneToOne((type) => Enquiries, (enquiries) => enquiries.enquiryImages)
+  @OneToOne((type) => Enquiries, (enquiries) => enquiries.enquiryImages, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'enquiry_no' })
   enquiryNo: number;
 }

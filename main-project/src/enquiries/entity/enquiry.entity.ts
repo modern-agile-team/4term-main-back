@@ -33,7 +33,7 @@ export class Enquiries extends BaseEntity {
   @DeleteDateColumn({ name: 'deleted_date' })
   deletedDate: Date;
 
-  @ManyToOne((type) => Users, (user) => user.enquiry)
+  @ManyToOne((type) => Users, (user) => user.enquiry, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 

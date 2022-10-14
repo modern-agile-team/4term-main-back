@@ -14,11 +14,15 @@ export class ReportedUsers extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @OneToOne((type) => Reports, (reports) => reports.reportedBoard)
+  @OneToOne((type) => Reports, (reports) => reports.reportedBoard, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'report_no' })
   reportNo: number;
 
-  @ManyToOne((type) => Users, (users) => users.reportedUser)
+  @ManyToOne((type) => Users, (users) => users.reportedUser, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'target_user_no' })
   targetUserNo: number;
 }

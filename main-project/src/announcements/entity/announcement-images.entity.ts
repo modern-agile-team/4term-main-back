@@ -19,6 +19,7 @@ export class AnnouncementImages extends BaseEntity {
   @OneToOne(
     (type) => Announcements,
     (announcements) => announcements.announcementImages,
+    { onDelete: 'CASCADE' },
   )
   @JoinColumn({ name: 'announcement_images' })
   announcementNo: number;

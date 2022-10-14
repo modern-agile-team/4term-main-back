@@ -60,11 +60,13 @@ export class Boards extends BaseEntity {
   @OneToOne((type) => BoardBookmarks, (boardBookmark) => boardBookmark.boardNo)
   boardBookmark: BoardBookmarks;
 
-  @OneToOne((type) => Meetings, (meeting) => meeting.board)
+  @OneToOne((type) => Meetings, (meeting) => meeting.board, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'meeting_no' })
   meetingNo: number;
 
-  @ManyToOne((type) => Users, (user) => user.board)
+  @ManyToOne((type) => Users, (user) => user.board, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 

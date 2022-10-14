@@ -11,6 +11,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateReportDto } from './dto/create-reports.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
+import { ReportReadResponse } from './interface/reports.interface';
 import { ReportsService } from './reports.service';
 
 @Controller('reports')
@@ -24,7 +25,8 @@ export class ReportsController {
     description: '신고내역을 전부 조회한다.',
   })
   async getAllReports(): Promise<object> {
-    const reports: object = await this.reportsService.getAllReports();
+    const reports: ReportReadResponse[] =
+      await this.reportsService.getAllReports();
     const response = {
       success: true,
       reports,
@@ -41,7 +43,9 @@ export class ReportsController {
   async getReportByNo(
     @Param('reportNo', ParseIntPipe) reportNo: number,
   ): Promise<object> {
-    const report: object = await this.reportsService.getReportByNo(reportNo);
+    const report: ReportReadResponse = await this.reportsService.getReportByNo(
+      reportNo,
+    );
     const response = {
       success: true,
       report,
@@ -97,11 +101,14 @@ export class ReportsController {
     @Param('reportNo', ParseIntPipe) reportNo: number,
     @Body() updateReportDto: UpdateReportDto,
   ): Promise<object> {
-    await this.reportsService.updateReport(reportNo, updateReportDto);
+    const report: string = await this.reportsService.updateReport(
+      reportNo,
+      updateReportDto,
+    );
 
     const response = {
       success: true,
-      msg: `${reportNo}번 신고내역이 수정되었습니다.`,
+      msg: report,
     };
 
     return response;
