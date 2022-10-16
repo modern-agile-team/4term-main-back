@@ -46,7 +46,7 @@ export class EnquiryRepository extends Repository<Enquiries> {
           'enquiries.title AS title',
           'enquiries.description AS description',
         ])
-        .where('no=:enquiryNo', { enquiryNo })
+        .where('no = :enquiryNo', { enquiryNo })
         .getRawOne();
 
       return enquiry;

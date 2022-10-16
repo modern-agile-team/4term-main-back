@@ -1,6 +1,7 @@
-export interface BoardReportDetail {
+export interface ReportDetail {
   reportNo: number;
-  targetBoardNo: number;
+  targetBoardNo?: number;
+  targetUserNo?: number;
 }
 
 export interface ReportCreateResponse {

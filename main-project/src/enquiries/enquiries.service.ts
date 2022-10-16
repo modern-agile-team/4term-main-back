@@ -26,7 +26,9 @@ export class EnquiriesService {
         await this.enquiryRepository.getAllEnquiries();
 
       if (!enquiries) {
-        throw new NotFoundException(`전체 문의사항의 조회를 실패 했습니다.`);
+        throw new NotFoundException(
+          `전체 문의사항 조회 오류 getAllEnquiries-service.`,
+        );
       }
 
       return enquiries;
@@ -42,7 +44,7 @@ export class EnquiriesService {
 
       if (!enquiry) {
         throw new NotFoundException(
-          `${enquiryNo}번 문의사항을 찾을 수 없습니다.`,
+          `${enquiryNo}번 문의사항 조회 오류 getEnquiriesByNo-service.`,
         );
       }
 
@@ -64,7 +66,9 @@ export class EnquiriesService {
         await this.enquiryRepository.createEnquiry(enquiryDetail);
 
       if (!(affectedRows && insertId)) {
-        throw new InternalServerErrorException(`enquiry 생성 오류입니다.`);
+        throw new InternalServerErrorException(
+          `문의사항 생성 오류 createEnquiry-service.`,
+        );
       }
 
       return insertId;
@@ -77,10 +81,21 @@ export class EnquiriesService {
   async updateEnquiry(
     enquiryNo: number,
     enquiryDto: EnquiryDto,
-  ): Promise<void> {
+  ): Promise<string> {
     try {
       await this.getEnquiriesByNo(enquiryNo);
-      await this.enquiryRepository.updateEnquiry(enquiryNo, enquiryDto);
+      const eqnuiry: number = await this.enquiryRepository.updateEnquiry(
+        enquiryNo,
+        enquiryDto,
+      );
+
+      if (!eqnuiry) {
+        throw new InternalServerErrorException(
+          `문의사항 수정 오류 updateEnquiry-service.`,
+        );
+      }
+
+      return `${enquiryNo}번 문의사항이 수정되었습니다.`;
     } catch (error) {
       throw error;
     }
