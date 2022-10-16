@@ -4,9 +4,12 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
+  JoinColumn,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { AnnouncementImages } from './announcement-images.entity';
 
 @Entity('announcements')
 export class Announcements extends BaseEntity {
@@ -27,4 +30,11 @@ export class Announcements extends BaseEntity {
 
   @DeleteDateColumn({ name: 'deleted_date' })
   deletedDate: Date;
+
+  @OneToOne(
+    (type) => AnnouncementImages,
+    (announcementImages) => announcementImages.announcementNo,
+  )
+  @JoinColumn({ name: 'announcement_images' })
+  announcementImages: AnnouncementImages;
 }

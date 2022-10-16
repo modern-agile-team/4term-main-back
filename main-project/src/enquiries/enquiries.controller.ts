@@ -11,6 +11,7 @@ import {
 import { ApiOperation } from '@nestjs/swagger';
 import { EnquiryDto } from './dto/enquiry.dto';
 import { EnquiriesService } from './enquiries.service';
+import { EnquiryReadResponse } from './interface/enquiry.interface';
 
 @Controller('enquiries')
 export class EnquiriesController {
@@ -22,7 +23,8 @@ export class EnquiriesController {
     description: '문의사항 전부를 내림차순으로 조회한다.',
   })
   async getAllEnquiries(): Promise<object> {
-    const enquiries: object = await this.enquiriesService.getAllEnquiries();
+    const enquiries: EnquiryReadResponse[] =
+      await this.enquiriesService.getAllEnquiries();
     const response = {
       success: true,
       enquiries,
@@ -39,9 +41,8 @@ export class EnquiriesController {
   async getEnquiriesByNo(
     @Param('enquiryNo') enquiryNo: number,
   ): Promise<object> {
-    const enquiry: object = await this.enquiriesService.getEnquiriesByNo(
-      enquiryNo,
-    );
+    const enquiry: EnquiryReadResponse =
+      await this.enquiriesService.getEnquiriesByNo(enquiryNo);
     const response = {
       success: true,
       enquiry,
@@ -79,11 +80,14 @@ export class EnquiriesController {
     @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
     @Body() enquiryDto: EnquiryDto,
   ): Promise<object> {
-    await this.enquiriesService.updateEnquiry(enquiryNo, enquiryDto);
+    const eqnuiry: string = await this.enquiriesService.updateEnquiry(
+      enquiryNo,
+      enquiryDto,
+    );
 
     const response = {
       success: true,
-      msg: `${enquiryNo}번 문의사항이 수정되었습니다.`,
+      msg: eqnuiry,
     };
 
     return response;

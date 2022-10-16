@@ -22,7 +22,7 @@ export class BoardsService {
   ) {}
 
   // 게시글 생성 관련
-  async setBoard(createBoardDto: CreateBoardDto): Promise<number> {
+  private async setBoard(createBoardDto: CreateBoardDto): Promise<number> {
     try {
       const { affectedRows, insertId }: BoardCreateResponse =
         await this.boardRepository.createBoard(createBoardDto);
@@ -37,7 +37,9 @@ export class BoardsService {
     }
   }
 
-  async setBoardMember(boardMemberDetail: BoardMemberDetail): Promise<void> {
+  private async setBoardMember(
+    boardMemberDetail: BoardMemberDetail,
+  ): Promise<void> {
     try {
       const { affectedRows, insertId }: BoardCreateResponse =
         await this.boardRepository.createBoardMember(boardMemberDetail);
@@ -118,17 +120,14 @@ export class BoardsService {
   }
 
   //게시글 수정 관련
-  async updateBoard(
+  async editBoard(
     boardNo: number,
     updateBoardDto: UpdateBoardDto,
-  ): Promise<void> {
+  ): Promise<string> {
     try {
-      const board: BoardReadResponse = await this.getBoardByNo(boardNo);
+      await this.getBoardByNo(boardNo);
 
-      if (!board) {
-        throw new NotFoundException(`${boardNo}번 게시글을 찾을 수 없습니다.`);
-      }
-      const boardMember = {
+      const boardMember: BoardMemberDetail = {
         male: updateBoardDto.male,
         female: updateBoardDto.female,
       };
@@ -136,8 +135,50 @@ export class BoardsService {
       delete updateBoardDto.male;
       delete updateBoardDto.female;
 
-      await this.boardRepository.updateBoard(boardNo, updateBoardDto);
-      await this.boardRepository.updateBoardMember(boardNo, boardMember);
+      await this.updateBoard(boardNo, updateBoardDto);
+      await this.updateBoardMember(boardNo, boardMember);
+
+      return `${boardNo}번 게시글이 수정되었습니다.`;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private async updateBoard(
+    boardNo: number,
+    updateBoardDto: UpdateBoardDto,
+  ): Promise<void> {
+    try {
+      const updateBoard = await this.boardRepository.updateBoard(
+        boardNo,
+        updateBoardDto,
+      );
+
+      if (!updateBoard) {
+        throw new NotFoundException(
+          `${boardNo}번 게시글 수정 에러 updateBoard-service`,
+        );
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private async updateBoardMember(
+    boardNo: number,
+    boardMember: BoardMemberDetail,
+  ): Promise<void> {
+    try {
+      const updateBoardMember = await this.boardRepository.updateBoardMember(
+        boardNo,
+        boardMember,
+      );
+
+      if (!updateBoardMember) {
+        throw new NotFoundException(
+          `${boardNo}번 게시글 수정 에러 updateBoardMember-service`,
+        );
+      }
     } catch (error) {
       throw error;
     }
@@ -146,16 +187,15 @@ export class BoardsService {
   //게시글 삭제 관련
   async deleteBoardByNo(boardNo: number): Promise<string> {
     try {
-      const board: BoardReadResponse = await this.getBoardByNo(boardNo);
+      await this.getBoardByNo(boardNo);
+
+      const board: number = await this.boardRepository.deleteBoard(boardNo);
 
       if (!board) {
-        throw new NotFoundException(`${boardNo}번 게시글을 찾을 수 없습니다.`);
+        throw new NotFoundException(
+          `${boardNo}번 게시글 삭제 에러 deleteBoardByNo-service`,
+        );
       }
-
-      await this.boardRepository.deleteBoardMember(boardNo);
-      await this.boardRepository.deleteBookmark(boardNo);
-      await this.boardRepository.deleteBoard(boardNo);
-
       return `${boardNo}번 게시글 삭제 성공 :)`;
     } catch (error) {
       throw error;

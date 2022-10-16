@@ -75,14 +75,15 @@ export class AnnouncementsController {
     @Param('announcementNo', ParseIntPipe) announcementNo: number,
     @Body() announcementDto: AnnouncementDto,
   ): Promise<object> {
-    await this.announcementsService.updateAnnouncement(
-      announcementNo,
-      announcementDto,
-    );
+    const announcement: string =
+      await this.announcementsService.updateAnnouncement(
+        announcementNo,
+        announcementDto,
+      );
 
     const response = {
       success: true,
-      msg: `${announcementNo}번 공지사항이 수정되었습니다.`,
+      msg: announcement,
     };
 
     return response;
