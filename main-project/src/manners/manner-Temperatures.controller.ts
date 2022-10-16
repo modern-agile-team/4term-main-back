@@ -9,7 +9,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MannerTemperaturesService } from './manner-Temperatures.service';
 
-@Controller('manners')
+@Controller('manner-temperatures')
 @ApiTags('매너온도 API')
 export class MannersTemperatureController {
   constructor(private mannersService: MannerTemperaturesService) {}
@@ -35,19 +35,20 @@ export class MannersTemperatureController {
       throw error;
     }
   }
+
   // Post Methods
-  @Post('/:userProfileNo')
+  @Post('/:userProfile')
   @ApiOperation({
     summary: '매너온도 생성 API',
     description:
       '유저 생성 시 작동되는 API 생성되는 유저의 매너온도를 기본 값으로 생성한다.',
   })
   async createMannerTemperature(
-    @Param('userProfileNo', ParseIntPipe) userProfileNo: number,
+    @Param('userProfile', ParseIntPipe) userProfile: number,
   ): Promise<object> {
     try {
       const mannerTemperature: number =
-        await this.mannersService.createMannerTemperature(userProfileNo);
+        await this.mannersService.createMannerTemperature(userProfile);
       const response = { success: true, manner: mannerTemperature };
 
       return response;

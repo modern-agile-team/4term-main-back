@@ -35,10 +35,10 @@ export class MannerTemperaturesService {
   }
 
   // 매너온도 생성
-  async createMannerTemperature(userProfileNo: number): Promise<number> {
+  async createMannerTemperature(userProfile: number): Promise<number> {
     try {
       const { affectedRows, insertId } =
-        await this.MannerRepository.createMannerTemperature(userProfileNo);
+        await this.MannerRepository.createMannerTemperature(userProfile);
 
       if (!(affectedRows && insertId)) {
         throw new InternalServerErrorException(`생성 오류입니다.`);
