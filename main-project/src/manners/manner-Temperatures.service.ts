@@ -4,7 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MannerTemperatureReadResponse } from './interface/manner-Temperatures.interface';
+import { UpdateMannerTemperatureDto } from './dto/update-manner-temperature.dto';
+import {
+  MannerTemperatureDetail,
+  MannerTemperatureReadResponse,
+} from './interface/manner-Temperatures.interface';
 import { MannerTemperatureRepository } from './repository/manner-Temperatures.repository';
 
 @Injectable()
@@ -45,6 +49,33 @@ export class MannerTemperaturesService {
       }
 
       return insertId;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // 매너온도 수정
+  async updateMannerTemperature(
+    userProfile: number,
+    updateMannerTemperatureDto: UpdateMannerTemperatureDto,
+  ): Promise<string> {
+    try {
+      const dataByDB = await this.getMannerTemperatureByNo(userProfile);
+      const { mannerTemperature, count } = dataByDB;
+
+      const updateMannerTemperature =
+        await this.MannerRepository.updateMannerTemperature(
+          userProfile,
+          updateMannerTemperatureDto,
+        );
+
+      if (!updateMannerTemperature) {
+        throw new NotFoundException(
+          `${userProfile}번 게시글 수정 에러 updateMannerTemperature-service`,
+        );
+      }
+
+      return `${2}번 게시글이 수정되었습니다.`;
     } catch (error) {
       throw error;
     }

@@ -15,11 +15,7 @@ import { FriendsModule } from './friends/friends.module';
 import { UniversitiesModule } from './universities/universities.module';
 import { EnquiriesModule } from './enquiries/enquiries.module';
 import { ChatsModule } from './chats/chats.module';
-<<<<<<< HEAD
 import { MannerTemperaturesModule } from './manners/manner-Temperatures.module';
-=======
-import { MannersModule } from './manners/manners.module';
->>>>>>> bf954ab93c9ee0d17c5b1dea2a4215ee9d0d2b0a
 
 @Module({
   imports: [
@@ -37,7 +33,6 @@ import { MannersModule } from './manners/manners.module';
     UniversitiesModule,
     EnquiriesModule,
     ChatsModule,
-    MannersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,5 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { EntityRepository, InsertResult, Repository } from 'typeorm';
+import {
+  EntityRepository,
+  InsertResult,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
+import { UpdateMannerTemperatureDto } from '../dto/update-manner-temperature.dto';
 import { MannersTemperature } from '../entity/manner-Temperatures.entity';
 import { MannerTemperatureReadResponse } from '../interface/manner-Temperatures.interface';
 
@@ -13,7 +19,7 @@ export class MannerTemperatureRepository extends Repository<MannersTemperature> 
       const manner = this.createQueryBuilder('manners')
         .leftJoin('manners.userProfile', 'mannerScore')
         .select([
-          'manners.no AS no',
+          // 'manners.no AS no',
           'manners.mannerTemperature AS manner_temperature',
           'manners.count AS count',
         ])
@@ -43,6 +49,26 @@ export class MannerTemperatureRepository extends Repository<MannersTemperature> 
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createMannerTemperature-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  // 매너온도 수정
+  async updateMannerTemperature(
+    userProfile: number,
+    updateMannerTemperatureDto: UpdateMannerTemperatureDto,
+  ): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(MannersTemperature)
+        .set(updateMannerTemperatureDto)
+        .where('no = :userProfile', { userProfile })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} updateMannerTemperature-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
