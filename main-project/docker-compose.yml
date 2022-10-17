@@ -1,25 +1,12 @@
 version: '3.8'
 
 services:
-  db:
-    image: mariadb
-    networks: 
-      - docker
-    ports:
-      - 3306:3306
-    env_file: .env
-    restart: always
-
-  app:
+  nest:
     build:
       context: .
       dockerfile: ./Dockerfile
-    environment:
-      - 
-    depends_on:
-      - db
+    env_file: .env
     ports:
-      - "3000:3000"
-    command:
-      - npm run start
+      - '3000:3000'
+    container_name: nest-prod
     restart: always
