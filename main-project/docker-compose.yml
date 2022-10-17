@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  db:
+    image: mariadb
+    networks: 
+      - docker
+    ports:
+      - 3306:3306
+    env_file: .env
+    restart: always
+
+  app:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      - 
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    command:
+      - npm run start
+    restart: always
