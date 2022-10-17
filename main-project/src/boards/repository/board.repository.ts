@@ -16,6 +16,7 @@ import {
   BoardCreateResponse,
   BookmarkDetail,
   BoardReadResponse,
+  BoardDetail,
 } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
@@ -136,12 +137,12 @@ export class BoardRepository extends Repository<Boards> {
   //게시글 수정 관련
   async updateBoard(
     boardNo: number,
-    updateBoardDto: UpdateBoardDto,
+    boardDetail: BoardDetail,
   ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Boards)
-        .set(updateBoardDto)
+        .set(boardDetail)
         .where('no = :boardNo', { boardNo })
         .execute();
 

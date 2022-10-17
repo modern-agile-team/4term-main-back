@@ -11,6 +11,7 @@ import {
   BoardCreateResponse,
   BookmarkDetail,
   BoardReadResponse,
+  BoardDetail,
 } from './interface/boards.interface';
 import { BoardRepository } from './repository/board.repository';
 
@@ -127,15 +128,13 @@ export class BoardsService {
     try {
       await this.getBoardByNo(boardNo);
 
+      const { male, female, ...boardDetail } = updateBoardDto;
       const boardMember: BoardMemberDetail = {
-        male: updateBoardDto.male,
-        female: updateBoardDto.female,
+        male,
+        female,
       };
 
-      delete updateBoardDto.male;
-      delete updateBoardDto.female;
-
-      await this.updateBoard(boardNo, updateBoardDto);
+      await this.updateBoard(boardNo, boardDetail);
       await this.updateBoardMember(boardNo, boardMember);
 
       return `${boardNo}번 게시글이 수정되었습니다.`;
@@ -146,12 +145,12 @@ export class BoardsService {
 
   private async updateBoard(
     boardNo: number,
-    updateBoardDto: UpdateBoardDto,
+    boardDetail: BoardDetail,
   ): Promise<void> {
     try {
       const updateBoard = await this.boardRepository.updateBoard(
         boardNo,
-        updateBoardDto,
+        boardDetail,
       );
 
       if (!updateBoard) {
