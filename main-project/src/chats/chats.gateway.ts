@@ -59,20 +59,20 @@ export class ChatsGateway {
   @SubscribeMessage('create-room')
   async handelCreateRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() { roomName, meetingNo, userNo }: MessagePayload,
+    @MessageBody() messagePayload: MessagePayload,
   ) {
+    await this.chatService.createRoom(socket, messagePayload);
+
+    return { success: true };
     // const exists = createdRooms.find((createdRoom) => createdRoom === roomName);
     // if (exists) {
     //   this.logger.log(`${roomName} 방이 이미 존재합니다.`);
     //   return { success: false, msg: `${roomName} 방이 이미 존재합니다.` };
     // }
-    await this.chatService.createRoom(socket, roomName, meetingNo, userNo);
     // socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
     // createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
 
-    this.nsp.emit('create-room', roomName); // 대기실 방 생성
-
-    return { success: true };
+    // this.nsp.emit('create-room', roomName); // 대기실 방 생성
 
     // const chatRoomRef = db
     //   .collection(`${Object.values(roomName)}`)

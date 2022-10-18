@@ -26,24 +26,31 @@ export class ChatListRepository extends Repository<ChatList> {
 
   async getUserNickname(meetingNo) {
     try {
-      // const nickname = await this.createQueryBuilder('');
-    } catch (err) {}
+      const nickname = await this.createQueryBuilder('chat_list')
+        .leftJoin('chat_list.meetingNo', 'meetingNo')
+        .leftJoin('meetingNo.hostMembers', 'hostMembers')
+        // .leftJoin('meetingNo.guestMembers', 'guestMembers')
+        .select([
+          'chat_list.room_name AS roomName',
+          'hostMembers.user_no AS userNo',
+          // 'guestMembers.user_no AS userNo',
+        ])
+        .where('chat_list.meeting_no = :meetingNo', { meetingNo })
+        .getRawMany();
+
+      return nickname;
+    } catch (err) {
+      throw err;
+    }
   }
 
   async createRoom(createChat: CreateChat) {
     try {
-      console.log(4);
-      console.log(createChat);
-
-      const raw = await this.createQueryBuilder('chat_list')
+      const { raw }: InsertResult = await this.createQueryBuilder('chat_list')
         .insert()
         .into(ChatList)
         .values(createChat)
         .execute();
-
-      console.log(7);
-
-      console.log(raw);
 
       return raw;
     } catch (err) {

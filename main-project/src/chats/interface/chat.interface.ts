@@ -6,7 +6,7 @@ export interface CreateChat {
 
 export interface MessagePayload {
   roomName: string;
-  message: string;
+  message?: string;
   meetingNo: number;
   userNo: number;
 }
