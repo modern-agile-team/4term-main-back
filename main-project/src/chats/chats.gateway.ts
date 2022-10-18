@@ -8,24 +8,23 @@ import {
 } from '@nestjs/websockets';
 import { timestamp } from 'rxjs';
 import { Namespace, Socket } from 'socket.io';
+import { ChatService } from './chats.service';
+import { MessagePayload } from './interface/chat.interface';
 import * as serviceAccount from './path/to/serviceAccountKey.json';
 
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 
-initializeApp({
-  credential: cert(serviceAccount),
-});
-let createdRooms: string[] = [];
-const db = getFirestore();
-
-interface MessagePayload {
-  roomName: string;
-  message: string;
-}
+// initializeApp({
+//   credential: cert(serviceAccount),
+// });
+// let createdRooms: string[] = [];
+// const db = getFirestore();
 
 @WebSocketGateway(4000, { namespace: 'chat' })
 export class ChatsGateway {
+  constructor(private readonly chatService: ChatService) {}
+
   private logger = new Logger('GateWay');
 
   @WebSocketServer() nsp: Namespace;
@@ -60,19 +59,20 @@ export class ChatsGateway {
   @SubscribeMessage('create-room')
   async handelCreateRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() { roomName, message }: MessagePayload,
+    @MessageBody() { roomName, meetingNo, userNo }: MessagePayload,
   ) {
-    const exists = createdRooms.find((createdRoom) => createdRoom === roomName);
-    if (exists) {
-      this.logger.log(`${roomName} 방이 이미 존재합니다.`);
-      return { success: false, msg: `${roomName} 방이 이미 존재합니다.` };
-    }
+    // const exists = createdRooms.find((createdRoom) => createdRoom === roomName);
+    // if (exists) {
+    //   this.logger.log(`${roomName} 방이 이미 존재합니다.`);
+    //   return { success: false, msg: `${roomName} 방이 이미 존재합니다.` };
+    // }
+    await this.chatService.createRoom(socket, roomName, meetingNo, userNo);
+    // socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
+    // createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
 
-    socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
-    createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
     this.nsp.emit('create-room', roomName); // 대기실 방 생성
 
-    return { success: true, payload: roomName };
+    return { success: true };
 
     // const chatRoomRef = db
     //   .collection(`${Object.values(roomName)}`)
