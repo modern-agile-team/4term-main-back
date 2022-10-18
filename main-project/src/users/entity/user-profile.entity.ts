@@ -10,7 +10,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ProfileImages } from './profile-images.entity';
-import { UserManners } from './user-manners.entity';
 import { Users } from './user.entity';
 
 @Entity('user_profiles')
@@ -26,9 +25,6 @@ export class UserProfile extends BaseEntity {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
-
-  @OneToOne((type) => UserManners, (userManners) => userManners.userProfileNo)
-  mannerNo: UserManners;
 
   @ManyToOne((type) => University, (university) => university.usersUniversity, {
     nullable: false,

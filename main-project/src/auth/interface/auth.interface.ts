@@ -1,10 +1,7 @@
-export interface UsersDetail {
-  gender: boolean;
+export interface UserProfileDetail {
+  no: number;
+  description?: string;
+  majorNo: number;
+  universityNo: number;
   nickname: string;
-  email: string;
-}
-
-export interface UserCreateResponse {
-  affectedRows: number;
-  insertId?: number;
 }
