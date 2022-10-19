@@ -34,6 +34,8 @@ export class MeetingRepository extends Repository<Meetings> {
 
   async findMeetingById(meetingNo: number): Promise<Meetings> {
     try {
+      console.log(meetingNo);
+
       const meeting: Meetings = await this.createQueryBuilder('meetings')
         .where('meetings.no = :meetingNo', { meetingNo })
         .getOne();

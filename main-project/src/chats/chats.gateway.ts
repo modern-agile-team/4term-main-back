@@ -6,11 +6,9 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { timestamp } from 'rxjs';
 import { Namespace, Socket } from 'socket.io';
 import { ChatService } from './chats.service';
 import { MessagePayload } from './interface/chat.interface';
-import * as serviceAccount from './path/to/serviceAccountKey.json';
 
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
@@ -62,27 +60,7 @@ export class ChatsGateway {
     @MessageBody() messagePayload: MessagePayload,
   ) {
     await this.chatService.createRoom(socket, messagePayload);
-
     return { success: true };
-    // const exists = createdRooms.find((createdRoom) => createdRoom === roomName);
-    // if (exists) {
-    //   this.logger.log(`${roomName} 방이 이미 존재합니다.`);
-    //   return { success: false, msg: `${roomName} 방이 이미 존재합니다.` };
-    // }
-    // socket.join(roomName); // 기존에 없던 room으로 join하면 room이 생성됨
-    // createdRooms.push(roomName); // 유저가 생성한 room 목록에 추가
-
-    // this.nsp.emit('create-room', roomName); // 대기실 방 생성
-
-    // const chatRoomRef = db
-    //   .collection(`${Object.values(roomName)}`)
-    //   .doc('memberList');
-    // console.log(roomName);
-
-    // const getCol = await chatRoomRef.get();
-    // await docRef.set({
-    //   aaa: socket.id,
-    // });
   }
 
   @SubscribeMessage('ClientToServer')

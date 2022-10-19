@@ -1,7 +1,7 @@
 export interface CreateChat {
-  roomName: string;
   userNo: number;
   meetingNo: number;
+  roomName: string;
 }
 
 export interface MessagePayload {
@@ -9,4 +9,10 @@ export interface MessagePayload {
   message?: string;
   meetingNo: number;
   userNo: number;
+}
+
+export interface ChatRoom {
+  guestUserNickname: string;
+  hostUserNickname: string;
+  roomName?: string;
 }

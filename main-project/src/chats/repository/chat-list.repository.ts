@@ -2,19 +2,16 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { async } from 'rxjs';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { ChatList } from '../entity/chat-list.entity';
-import { CreateChat } from '../interface/chat.interface';
+import { ChatRoom, CreateChat } from '../interface/chat.interface';
 
 @EntityRepository(ChatList)
 export class ChatListRepository extends Repository<ChatList> {
-  async checkRoomExist(roomName) {
+  async checkRoomExist(meetingNo) {
     try {
-      console.log(1);
-
       const result = await this.createQueryBuilder('chat_list')
-        .select(['chat_list.room_name AS room_name'])
-        .where(`room_name = :roomName`, { roomName })
+        .select(['chat_list.meeting_no AS meetingNo'])
+        .where(`meeting_no = :meetingNo`, { meetingNo })
         .getRawOne();
-      console.log(2);
 
       return result;
     } catch (err) {
@@ -24,16 +21,16 @@ export class ChatListRepository extends Repository<ChatList> {
     }
   }
 
-  async getUserNickname(meetingNo) {
+  async getHostUserNickname(meetingNo) {
     try {
       const nickname = await this.createQueryBuilder('chat_list')
         .leftJoin('chat_list.meetingNo', 'meetingNo')
         .leftJoin('meetingNo.hostMembers', 'hostMembers')
-        // .leftJoin('meetingNo.guestMembers', 'guestMembers')
+        .leftJoin('hostMembers.userNo', 'hostUserNo')
         .select([
           'chat_list.room_name AS roomName',
-          'hostMembers.user_no AS userNo',
-          // 'guestMembers.user_no AS userNo',
+          'hostUserNo.nickname AS hostUserNickname',
+          // 'guestUserNo.nickname AS guestUserNickname',
         ])
         .where('chat_list.meeting_no = :meetingNo', { meetingNo })
         .getRawMany();
