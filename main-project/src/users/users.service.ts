@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserProfileDetail } from 'src/auth/interface/auth.interface';
-import { UserProfileDto } from './dto/user-profile.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUsersDetail } from './interface/user-profile.interface';
 import { UsersRepository } from './repository/users.repository';
 
 @Injectable()
@@ -11,13 +12,14 @@ export class UsersService {
     private usersRepository: UsersRepository,
   ) {}
 
-  async readUser(nickname: string): Promise<object> {
+  //유저 불러오기
+  async readUserByNo(userNo: number): Promise<UserProfileDetail> {
     try {
-      const user = await this.usersRepository.readUser(nickname);
+      const user = await this.usersRepository.readUserByNo(userNo);
 
       if (!user) {
         throw new NotFoundException(
-          `${nickname}님 정보 불러오기를 실패 했습니다.`,
+          `${userNo} 님 정보 불러오기를 실패 했습니다.`,
         );
       }
       return user;
@@ -25,4 +27,18 @@ export class UsersService {
       throw error;
     }
   }
+
+  //유저 정보 수정하기
+  async updateUser(userNo: number, nickname: UpdateUserDto): Promise<void> {
+    try {
+      await this.readUserByNo(userNo);
+      await this.usersRepository.updateUser(userNo, nickname);
+
+      return;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //유저 삭제하기
 }

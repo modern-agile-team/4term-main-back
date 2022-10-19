@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { SignUpDto } from '../users/dto/sign-up.dto';
@@ -44,4 +44,11 @@ export class AuthController {
     };
     return response;
   }
+
+  // @Delete('/:userNo')
+  // @ApiOperation({ summary: '회원 탈퇴 기능' })
+  // async signDown(@Param('userNo') userNo: number): Promise<object> {
+  // const user = await this.authService.deleteUserByNo(userNo);
+  // return user;
+  // }
 }

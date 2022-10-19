@@ -14,10 +14,10 @@ export class AuthService {
     @InjectRepository(UsersRepository)
     private usersRepository: UsersRepository,
   ) {}
-  //유저 생성
+  //회원생성
   async signUp(signUpDto: SignUpDto): Promise<number> {
     try {
-      const { affectedRows, insertId } = await this.usersRepository.createUser(
+      const { affectedRows, insertId } = await this.usersRepository.signUp(
         signUpDto,
       );
 
@@ -57,4 +57,6 @@ export class AuthService {
       throw error;
     }
   }
+
+  //회원탈퇴
 }
