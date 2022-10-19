@@ -16,6 +16,7 @@ import {
   BoardCreateResponse,
   BookmarkDetail,
   BoardReadResponse,
+  BoardDetail,
 } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
@@ -39,7 +40,7 @@ export class BoardRepository extends Repository<Boards> {
           'boardMemberInfo.male AS male',
           'boardMemberInfo.female AS female',
         ])
-        .where('boards.no=:boardNo', { boardNo })
+        .where('boards.no = :boardNo', { boardNo })
         .getRawOne();
 
       return board;
@@ -63,6 +64,7 @@ export class BoardRepository extends Repository<Boards> {
           'boards.meetingTime AS meeting_time',
           'boards.isDone AS isDone',
         ])
+        .orderBy('boards.no', 'DESC')
         .getRawMany();
 
       return boards;
@@ -135,12 +137,12 @@ export class BoardRepository extends Repository<Boards> {
   //게시글 수정 관련
   async updateBoard(
     boardNo: number,
-    updateBoardDto: UpdateBoardDto,
+    boardDetail: BoardDetail,
   ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Boards)
-        .set(updateBoardDto)
+        .set(boardDetail)
         .where('no = :boardNo', { boardNo })
         .execute();
 
@@ -160,7 +162,7 @@ export class BoardRepository extends Repository<Boards> {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(BoardMemberInfos)
         .set(boardMember)
-        .where('no = :boardNo', { boardNo })
+        .where('boardNo = :boardNo', { boardNo })
         .execute();
 
       return affected;
@@ -224,6 +226,7 @@ export class BoardRepository extends Repository<Boards> {
       );
     }
   }
+
   async deleteBookmark(boardNo: number): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder(

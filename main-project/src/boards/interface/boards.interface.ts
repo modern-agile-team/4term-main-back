@@ -2,6 +2,7 @@ export interface BoardCreateResponse {
   affectedRows: number;
   insertId?: number;
 }
+
 export interface BoardReadResponse {
   no: number;
   title: string;
@@ -18,6 +19,14 @@ export interface BoardMemberDetail {
   boardNo?: number;
   male: number;
   female: number;
+}
+
+export interface BoardDetail {
+  title: string;
+  description: string;
+  isDone: boolean;
+  location: string;
+  meetingTime: Date;
 }
 
 export interface BookmarkDetail {
