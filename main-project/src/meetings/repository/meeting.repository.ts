@@ -108,8 +108,8 @@ export class MeetingRepository extends Repository<Meetings> {
           'meetingInfo.hostHeadcount AS hostHeadcount',
           'GROUP_CONCAT(DISTINCT guestMembers.userNo) AS guests',
           'GROUP_CONCAT(DISTINCT hostMembers.userNo) AS hosts',
-          '(meetingInfo.guestHeadcount - COUNT(DISTINCT guestMembers.userNo)) AS addGuestAvailable',
-          '(meetingInfo.hostHeadcount - COUNT(DISTINCT hostMembers.userNo)) AS addHostAvailable',
+          'IF(meetingInfo.guestHeadcount > COUNT(DISTINCT guestMembers.userNo),TRUE, FALSE) AS addGuestAvailable',
+          'IF(meetingInfo.hostHeadcount > COUNT(DISTINCT hostMembers.userNo), TRUE, FALSE) AS addHostAvailable',
         ])
         .where('meetings.no = :meetingNo', { meetingNo })
         .groupBy('meetings.no')
