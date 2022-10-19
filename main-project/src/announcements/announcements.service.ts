@@ -24,7 +24,9 @@ export class AnnouncementsService {
         await this.announcementsRepository.getAllAnnouncements();
 
       if (!announcements) {
-        throw new NotFoundException(`전체 공지사항의 조회를 실패 했습니다.`);
+        throw new NotFoundException(
+          `전체 공지사항 조회 오류 getAllAnnouncements-service.`,
+        );
       }
 
       return announcements;
@@ -42,7 +44,7 @@ export class AnnouncementsService {
 
       if (!announcement) {
         throw new NotFoundException(
-          `${announcementNo}번 공지사항의 조회를 실패 했습니다.`,
+          `${announcementNo}번 공지사항 조회 오류 getAnnouncementByNo-service.`,
         );
       }
 
@@ -63,7 +65,9 @@ export class AnnouncementsService {
         );
 
       if (!(affectedRows && insertId)) {
-        throw new InternalServerErrorException(`공지사항 생성 오류입니다.`);
+        throw new InternalServerErrorException(
+          `공지사항 생성 오류 createAnnouncement-service.`,
+        );
       }
 
       return insertId;
@@ -76,13 +80,22 @@ export class AnnouncementsService {
   async updateAnnouncement(
     announcementNo: number,
     announcementDto: AnnouncementDto,
-  ): Promise<void> {
+  ): Promise<string> {
     try {
       await this.getAnnouncementByNo(announcementNo);
-      await this.announcementsRepository.updateAnnouncement(
-        announcementNo,
-        announcementDto,
-      );
+      const announcement: number =
+        await this.announcementsRepository.updateAnnouncement(
+          announcementNo,
+          announcementDto,
+        );
+
+      if (!announcement) {
+        throw new InternalServerErrorException(
+          `공지사항 수정 오류 updateAnnouncement-service.`,
+        );
+      }
+
+      return `${announcementNo}번 공지사항이 수정되었습니다.`;
     } catch (error) {
       throw error;
     }
@@ -92,7 +105,14 @@ export class AnnouncementsService {
   async deleteAnnouncement(announcementNo: number): Promise<string> {
     try {
       await this.getAnnouncementByNo(announcementNo);
-      await this.announcementsRepository.deleteAnnouncement(announcementNo);
+      const announcement: number =
+        await this.announcementsRepository.deleteAnnouncement(announcementNo);
+
+      if (!announcement) {
+        throw new InternalServerErrorException(
+          `공지사항 삭제 오류 deleteAnnouncement-service.`,
+        );
+      }
 
       return `${announcementNo}번 공지사항 삭제 성공 :)`;
     } catch (error) {

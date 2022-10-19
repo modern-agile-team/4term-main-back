@@ -16,6 +16,8 @@ import { UniversitiesModule } from './universities/universities.module';
 import { AuthModule } from './auth/auth.module';
 import { ProfileModule } from './profile/profile.module';
 import { EnquiriesModule } from './enquiries/enquiries.module';
+import { ChatsModule } from './chats/chats.module';
+import { MannersModule } from './manners/manners.module';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { EnquiriesModule } from './enquiries/enquiries.module';
     AuthModule,
     ProfileModule,
     EnquiriesModule,
+    ChatsModule,
+    MannersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

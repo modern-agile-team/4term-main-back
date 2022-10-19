@@ -19,7 +19,9 @@ export class BoardMemberInfos extends BaseEntity {
   @Column({ type: 'int', nullable: false })
   female: number;
 
-  @OneToOne((type) => Boards, (board) => board.boardMemberInfo)
+  @OneToOne((type) => Boards, (board) => board.boardMemberInfo, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'board_no' })
   boardNo: number;
 }

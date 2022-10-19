@@ -26,8 +26,8 @@ export interface ParticipatingMembers {
   hostHeadcount?: number;
   guests?: string;
   hosts?: string;
-  addGuestAvailable?: string;
-  addHostAvailable?: string;
+  addGuestAvailable?: boolean;
+  addHostAvailable?: boolean;
 }
 
 export interface InviteNoticeResult {
