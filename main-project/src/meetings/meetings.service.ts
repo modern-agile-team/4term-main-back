@@ -234,12 +234,10 @@ export class MeetingsService {
     }
   }
 
-  async updateMeeting({
+  async updateMeeting(
     meetingNo,
-    userNo,
-    location,
-    time,
-  }: UpdateMeetingDto): Promise<void> {
+    { userNo, location, time }: UpdateMeetingDto,
+  ): Promise<void> {
     try {
       await this.checkUpdateAvailable(meetingNo, userNo);
 
@@ -274,7 +272,7 @@ export class MeetingsService {
     }
   }
 
-  async acceptMeeting({ meetingNo, userNo }: AcceptMeetingDto): Promise<void> {
+  async acceptMeeting(meetingNo: number, userNo: number): Promise<void> {
     try {
       await this.checkAcceptAvailable(meetingNo, userNo);
 
@@ -336,11 +334,10 @@ export class MeetingsService {
     }
   }
 
-  async applyForMeeting({
-    meetingNo,
-    guest,
-    userNo,
-  }: ApplyForMeetingDto): Promise<void> {
+  async applyForMeeting(
+    meetingNo: number,
+    { guest, userNo }: ApplyForMeetingDto,
+  ): Promise<void> {
     try {
       if (userNo != guest[0]) {
         throw new BadRequestException(
@@ -496,11 +493,10 @@ export class MeetingsService {
     }
   }
 
-  async inviteMember({
-    meetingNo,
-    invitedUserNo,
-    userNo,
-  }: InviteGuestDto): Promise<void> {
+  async inviteMember(
+    meetingNo: number,
+    { invitedUserNo, userNo }: InviteGuestDto,
+  ): Promise<void> {
     try {
       await this.findMeetingById(meetingNo);
       const noticeType: number = await this.checkInviteAvailable(
@@ -562,10 +558,7 @@ export class MeetingsService {
     }
   }
 
-  async acceptInvitation({
-    noticeNo,
-    userNo,
-  }: AcceptInvitaionDto): Promise<void> {
+  async acceptInvitation(noticeNo: number, userNo: number): Promise<void> {
     try {
       const { value, type }: Notice =
         await this.noticesRepository.getNoticeById(noticeNo);
@@ -649,11 +642,10 @@ export class MeetingsService {
     }
   }
 
-  async deleteGuest({
-    userNo,
-    newAdminGuest,
-    meetingNo,
-  }: DeleteGuestDto): Promise<void> {
+  async deleteGuest(
+    meetingNo: number,
+    { userNo, newAdminGuest }: DeleteGuestDto,
+  ): Promise<void> {
     try {
       await this.findMeetingById(meetingNo);
 
@@ -680,7 +672,7 @@ export class MeetingsService {
     }
   }
 
-  async deleteHost({ userNo, meetingNo }: DeleteHostDto): Promise<void> {
+  async deleteHost(meetingNo: number, userNo: number): Promise<void> {
     try {
       await this.findMeetingById(meetingNo);
 
