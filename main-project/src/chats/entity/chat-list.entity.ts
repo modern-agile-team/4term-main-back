@@ -26,5 +26,5 @@ export class ChatList extends BaseEntity {
   meetingNo: number;
 
   @OneToMany((type) => ChatUsers, (chatUsers) => chatUsers.chatRoomNo)
-  chatRoomNo: ChatUsers[];
+  chatUserNo: ChatUsers[];
 }

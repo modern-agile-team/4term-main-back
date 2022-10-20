@@ -14,7 +14,7 @@ export class ChatUsers extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @ManyToOne((type) => ChatList, (chatRoom) => chatRoom.chatRoomNo, {
+  @ManyToOne((type) => ChatList, (chatRoom) => chatRoom.chatUserNo, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'chat_room_no' })
