@@ -6,6 +6,7 @@ import { ChatsGateway } from './chats.gateway';
 import { ChatService } from './chats.service';
 import { ChatListRepository } from './repository/chat-list.repository';
 import { ChatUsersRepository } from './repository/chat-users.repository';
+import { ChatsController } from './chats.controller';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -16,5 +17,6 @@ import { ChatUsersRepository } from './repository/chat-users.repository';
     ]),
   ],
   providers: [ChatsGateway, ChatService],
+  controllers: [ChatsController],
 })
 export class ChatsModule {}

@@ -19,4 +19,22 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
       );
     }
   }
+
+  async getChatRoomList(userNo: number) {
+    try {
+      const chatRoomList = await this.createQueryBuilder('chat_users')
+        .leftJoin('chat_users.chatRoomNo', 'chatRoomNo')
+        .select([
+          'chatRoomNo.room_name AS roomName',
+          'chat_users.no AS chatRoomNo',
+        ])
+        .where('chat_users.user_no = :userNo', { userNo })
+        .getRawMany();
+      return chatRoomList;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 채팅 목록 조회 (getChatRoomList): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
 }
