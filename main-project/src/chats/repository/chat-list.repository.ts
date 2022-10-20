@@ -1,8 +1,7 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { async } from 'rxjs';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { ChatList } from '../entity/chat-list.entity';
-import { ChatRoom, CreateChat } from '../interface/chat.interface';
+import { CreateChat } from '../interface/chat.interface';
 
 @EntityRepository(ChatList)
 export class ChatListRepository extends Repository<ChatList> {
