@@ -8,21 +8,7 @@ import {
 } from '@nestjs/websockets';
 import { Namespace, Socket } from 'socket.io';
 import { ChatService } from './chats.service';
-import {
-  ChatRoom,
-  CreateChat,
-  JoinChatRoom,
-  MessagePayload,
-} from './interface/chat.interface';
-
-const { initializeApp, cert } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
-
-// initializeApp({
-//   credential: cert(serviceAccount),
-// });
-// let createdRooms: string[] = [];
-// const db = getFirestore();
+import { CreateChat } from './interface/chat.interface';
 
 @WebSocketGateway(4000, { namespace: 'chat' })
 export class ChatsGateway {
