@@ -1,4 +1,5 @@
 import { Boards } from 'src/boards/entity/board.entity';
+import { ChatList } from 'src/chats/entity/chat-list.entity';
 import { GuestMembers } from 'src/members/entity/guest-members.entity';
 import { HostMembers } from 'src/members/entity/host-members.entity';
 import {
@@ -48,4 +49,7 @@ export class Meetings extends BaseEntity {
 
   @OneToOne((type) => Boards, (board) => board.meetingNo)
   board: Boards;
+
+  @OneToMany((type) => ChatList, (chat) => chat.meetingNo)
+  chatMeetingNo: ChatList;
 }

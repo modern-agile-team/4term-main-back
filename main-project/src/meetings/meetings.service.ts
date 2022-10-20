@@ -115,7 +115,7 @@ export class MeetingsService {
       }, []);
 
       const affectedRows: number =
-        side === 'guset'
+        side === this.member.GUEST
           ? await this.guestMembersRepository.saveGuestMembers(memberInfo)
           : await this.hostMembersRepository.saveHostMembers(memberInfo);
       if (affectedRows !== members.length) {
