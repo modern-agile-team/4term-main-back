@@ -7,7 +7,9 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  OneToMany,
 } from 'typeorm';
+import { ChatUsers } from './chat-users.entity';
 
 @Entity('chat_list')
 export class ChatList extends BaseEntity {
@@ -17,11 +19,12 @@ export class ChatList extends BaseEntity {
   @Column({ name: 'room_name', type: 'varchar', length: 255, nullable: false })
   roomName: string;
 
-  @ManyToOne((type) => Users, (user) => user.chatUserNo)
-  @JoinColumn({ name: 'user_no' })
-  userNo: number;
-
-  @ManyToOne((type) => Meetings, (meeting) => meeting.chatMeetingNo)
+  @ManyToOne((type) => Meetings, (meeting) => meeting.chatMeetingNo, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'meeting_no' })
   meetingNo: number;
+
+  @OneToMany((type) => ChatUsers, (chatUsers) => chatUsers.chatRoomNo)
+  chatRoomNo: ChatUsers[];
 }

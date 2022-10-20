@@ -8,7 +8,12 @@ import {
 } from '@nestjs/websockets';
 import { Namespace, Socket } from 'socket.io';
 import { ChatService } from './chats.service';
-import { MessagePayload } from './interface/chat.interface';
+import {
+  ChatRoom,
+  CreateChat,
+  JoinChatRoom,
+  MessagePayload,
+} from './interface/chat.interface';
 
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
@@ -57,11 +62,23 @@ export class ChatsGateway {
   @SubscribeMessage('create-room')
   async handelCreateRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() messagePayload: MessagePayload,
+    @MessageBody() messagePayload: CreateChat,
   ) {
-    await this.chatService.createRoom(socket, messagePayload);
-    return { success: true };
+    try {
+      await this.chatService.createRoom(socket, messagePayload);
+    } catch (err) {
+      throw err;
+    }
   }
+
+  // @SubscribeMessage('join-room')
+  // async handelJoinRoom(
+  //   @ConnectedSocket() socket: Socket,
+  //   @MessageBody() messagePayload: JoinChatRoom,
+  // ) {
+  //   await this.chatService.joinRoom(socket, messagePayload);
+  //   return { success: true };
+  // }
 
   @SubscribeMessage('ClientToServer')
   async handelMessage(
