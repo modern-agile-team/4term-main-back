@@ -99,6 +99,18 @@ export class ChatService {
     }
   }
 
+  async getChatRoomListByUserNo(userNo) {
+    try {
+      const chatList = await this.chatUsersRepository.getChatRoomList(userNo);
+      if (!chatList.length) {
+        throw new BadRequestException('채팅방이 존재하지 않습니다.');
+      }
+      return chatList;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   private async getUserByMeetingNo(meetingNo): Promise<ChatRoom> {
     try {
       const chatRoom: ChatRoom =
