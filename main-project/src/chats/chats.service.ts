@@ -6,7 +6,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { MeetingInfoRepository } from 'src/meetings/repository/meeting-info.repository';
 import { MeetingRepository } from 'src/meetings/repository/meeting.repository';
-import { ChatRoom, CreateChat } from './interface/chat.interface';
+import {
+  ChatRoom,
+  ChatRoomUsers,
+  CreateChat,
+} from './interface/chat.interface';
 import { ChatListRepository } from './repository/chat-list.repository';
 import { ChatUsersRepository } from './repository/chat-users.repository';
 
@@ -79,21 +83,21 @@ export class ChatService {
     }
   }
 
-  // async joinRoom(socket, chat: CreateChat) {
-  //   try {
-  //     //1. 미팅넘버로 채팅방 조회
-  //     //2. 있으면 거기서 유저 조회 후 있으면 조인
-  //     //3. 없으면 리턴
-  //     const { userNo, meetingNo } = chat;
-  //     const roomExist = await this.chatListRepository.checkRoomExist(meetingNo);
-  //     const userExist = await this.chatListRepository.isUserInChatRoom(
-  //       meetingNo,
-  //       userNo,
-  //     );
-  //   } catch (err) {
-  //     throw err;
-  //   }
-  // }
+  async joinRoom(socket, chat: CreateChat): Promise<string> {
+    try {
+      const { userNo, meetingNo } = chat;
+      const userExist: ChatRoomUsers =
+        await this.chatListRepository.isUserInChatRoom(meetingNo, userNo);
+      if (!userExist) {
+        throw new BadRequestException('채팅방에 참여할 수 없습니다.');
+      }
+
+      socket.join(userExist.roomName);
+      return userExist.nickname;
+    } catch (err) {
+      throw err;
+    }
+  }
 
   private async getUserByMeetingNo(meetingNo): Promise<ChatRoom> {
     try {

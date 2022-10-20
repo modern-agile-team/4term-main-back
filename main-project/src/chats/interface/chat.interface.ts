@@ -23,3 +23,10 @@ export interface ChatRoom {
   guestUserNo?: number;
   hostUserNo?: number;
 }
+
+export interface ChatRoomUsers {
+  nickname: string;
+  roomName: string;
+  meetingNo: number;
+  userNo: number;
+}
