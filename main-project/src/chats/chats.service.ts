@@ -10,6 +10,8 @@ import {
   ChatRoom,
   ChatRoomUsers,
   CreateChat,
+  JoinChatRoom,
+  MessagePayload,
 } from './interface/chat.interface';
 import { ChatListRepository } from './repository/chat-list.repository';
 import { ChatUsersRepository } from './repository/chat-users.repository';
@@ -76,24 +78,28 @@ export class ChatService {
           throw new BadRequestException('채팅방 유저정보 생성 오류입니다.');
         }
 
-        socket.join(roomName);
+        socket.join(`${chatRoomNo}`);
       }
     } catch (err) {
       throw err;
     }
   }
 
-  async joinRoom(socket, chat: CreateChat): Promise<string> {
+  async joinRoom(socket, chat: JoinChatRoom): Promise<void> {
     try {
-      const { userNo, meetingNo } = chat;
-      const userExist: ChatRoomUsers =
-        await this.chatListRepository.isUserInChatRoom(meetingNo, userNo);
-      if (!userExist) {
-        throw new BadRequestException('채팅방에 참여할 수 없습니다.');
+      const { userNo, chatRoomNo } = chat;
+      const user: ChatRoomUsers =
+        await this.chatListRepository.isUserInChatRoom(chatRoomNo, userNo);
+      if (!user) {
+        throw new BadRequestException('채팅방에 유저의 정보가 없습니다.');
       }
 
-      socket.join(userExist.roomName);
-      return userExist.nickname;
+      socket.join(`${user.chatRoomNo}`);
+
+      socket.broadcast.to(`${user.chatRoomNo}`).emit('join-room', {
+        username: user.nickname,
+        msg: `${user.nickname}님이 접속하셨습니다.`,
+      });
     } catch (err) {
       throw err;
     }
@@ -106,6 +112,24 @@ export class ChatService {
         throw new BadRequestException('채팅방이 존재하지 않습니다.');
       }
       return chatList;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async sendChat(socket, messagePayload: MessagePayload): Promise<void> {
+    try {
+      const { userNo, chatRoomNo, message } = messagePayload;
+
+      const user: ChatRoomUsers =
+        await this.chatListRepository.isUserInChatRoom(chatRoomNo, userNo);
+      if (!user) {
+        throw new BadRequestException('채팅방에 유저의 정보가 없습니다.');
+      }
+      socket.broadcast.to(`${chatRoomNo}`).emit('message', {
+        message,
+        userNo,
+      });
     } catch (err) {
       throw err;
     }

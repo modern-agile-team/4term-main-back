@@ -36,18 +36,18 @@ export class ChatListRepository extends Repository<ChatList> {
     }
   }
 
-  async isUserInChatRoom(meetingNo, userNo): Promise<ChatRoomUsers> {
+  async isUserInChatRoom(chatRoomNo, userNo): Promise<ChatRoomUsers> {
     try {
       const result = await this.createQueryBuilder('chat_list')
         .leftJoin('chat_list.chatUserNo', 'chatUserNo')
         .leftJoin('chatUserNo.userNo', 'userNo')
         .select([
           'chat_list.room_name AS roomName',
-          'chat_list.meeting_no AS meetingNo',
+          'chat_list.no AS chatRoomNo',
           'chatUserNo.user_no AS userNo',
           'userNo.nickname AS nickname',
         ])
-        .where(`chat_list.meeting_no = :meetingNo`, { meetingNo })
+        .where(`chat_list.no = :chatRoomNo`, { chatRoomNo })
         .andWhere('chatUserNo.user_no = :userNo', { userNo })
         .getRawOne();
       return result;
