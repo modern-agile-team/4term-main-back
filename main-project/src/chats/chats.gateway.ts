@@ -8,7 +8,11 @@ import {
 } from '@nestjs/websockets';
 import { Namespace, Socket } from 'socket.io';
 import { ChatService } from './chats.service';
-import { CreateChat, JoinChatRoom } from './interface/chat.interface';
+import {
+  CreateChat,
+  JoinChatRoom,
+  MessagePayload,
+} from './interface/chat.interface';
 
 @WebSocketGateway(4000, { namespace: 'chat' })
 export class ChatsGateway {
@@ -63,11 +67,7 @@ export class ChatsGateway {
     @MessageBody() messagePayload: JoinChatRoom,
   ) {
     try {
-      const nickname = await this.chatService.joinRoom(socket, messagePayload);
-      this.nsp.emit('join-room', {
-        username: nickname,
-        msg: `${nickname}님이 접속하셨습니다.`,
-      });
+      await this.chatService.joinRoom(socket, messagePayload);
 
       return { success: true };
     } catch (err) {
@@ -75,12 +75,15 @@ export class ChatsGateway {
     }
   }
 
-  @SubscribeMessage('ClientToServer')
+  @SubscribeMessage('message')
   async handelMessage(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() message: string,
+    @MessageBody() messagePayload: MessagePayload,
   ) {
-    socket.broadcast.emit('message', { username: socket.id, message });
-    return { username: socket.id, message };
+    try {
+      await this.chatService.sendChat(socket, messagePayload);
+    } catch (err) {
+      throw err;
+    }
   }
 }
