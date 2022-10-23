@@ -150,7 +150,7 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async deletFriend(deleteFriend): Promise<number> {
+  async deleteFriend(deleteFriend): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()
@@ -165,7 +165,7 @@ export class FriendsRepository extends Repository<Friends> {
       return affected;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 친구 삭제(deletFriend): 알 수 없는 서버 에러입니다. `,
+        `${err}: 친구 삭제(deleteFriend): 알 수 없는 서버 에러입니다. `,
       );
     }
   }
