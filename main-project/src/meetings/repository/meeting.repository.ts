@@ -94,8 +94,6 @@ export class MeetingRepository extends Repository<Meetings> {
           `CONCAT(GROUP_CONCAT(DISTINCT hostMembers.userNo),
           IF(COUNT(guestMembers.userNo),CONCAT(",", GROUP_CONCAT(DISTINCT guestMembers.userNo)), ""))
           AS members`,
-          // 'GROUP_CONCAT(DISTINCT guestMembers.userNo) AS guests',
-          // 'GROUP_CONCAT(DISTINCT hostMembers.userNo) AS hosts',
         ])
         .where('meetings.no = :meetingNo', { meetingNo })
         .getRawOne();

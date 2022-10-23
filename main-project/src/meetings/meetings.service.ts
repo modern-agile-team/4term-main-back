@@ -296,6 +296,30 @@ export class MeetingsService {
     }
   }
 
+  private async isApplicationExist(
+    userNo: number,
+    targetUserNo: number,
+    meetingNo: number,
+  ): Promise<boolean> {
+    try {
+      const notices: Notice[] =
+        await this.noticesRepository.getNoticeByConditions({
+          userNo,
+          targetUserNo,
+          type: NoticeType.APPLY_FOR_MEETING,
+        });
+      for (const notice of notices) {
+        if ((JSON.parse(notice.value).meetingNo = meetingNo)) {
+          return true;
+        }
+      }
+
+      return false;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async applyForMeeting(
     meetingNo: number,
     { guest, userNo }: ApplyForMeetingDto,
@@ -316,6 +340,15 @@ export class MeetingsService {
       }
 
       const adminHost = await this.checkApplyAvailable(meetingNo, guest);
+      const isApplicationExist: boolean = await this.isApplicationExist(
+        adminHost,
+        userNo,
+        meetingNo,
+      );
+
+      if (isApplicationExist) {
+        throw new BadRequestException(`이미 신청을 보낸 약속입니다.`);
+      }
 
       const noticeDetail: NoticeDetail = {
         userNo: adminHost,
