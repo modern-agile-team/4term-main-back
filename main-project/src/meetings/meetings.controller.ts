@@ -151,6 +151,24 @@ export class MeetingsController {
 
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
+    summary: '참여 신청 취소',
+  })
+  @Delete('/:meetingNo/apply')
+  async retractApplication(
+    @Param('meetingNo') meetingNo: number,
+    @Body('userNo') userNo: number,
+  ): Promise<object> {
+    try {
+      await this.meetingsService.retractApplication(meetingNo, userNo);
+
+      return { success: true, msg: `약속 신청이 취소되었습니다.` };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
     summary: '새로운 게스트 멤버 초대',
     description: '참여 중인 약속에 새로운 멤버 초대',
   })

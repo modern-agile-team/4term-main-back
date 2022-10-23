@@ -300,7 +300,7 @@ export class MeetingsService {
     userNo: number,
     targetUserNo: number,
     meetingNo: number,
-  ): Promise<boolean> {
+  ): Promise<number> {
     try {
       const notices: Notice[] =
         await this.noticesRepository.getNoticeByConditions({
@@ -309,12 +309,12 @@ export class MeetingsService {
           type: NoticeType.APPLY_FOR_MEETING,
         });
       for (const notice of notices) {
-        if ((JSON.parse(notice.value).meetingNo = meetingNo)) {
-          return true;
+        if (JSON.parse(notice.value).meetingNo === meetingNo) {
+          return notice.noticeNo;
         }
       }
 
-      return false;
+      return 0;
     } catch (err) {
       throw err;
     }
@@ -340,7 +340,7 @@ export class MeetingsService {
       }
 
       const adminHost = await this.checkApplyAvailable(meetingNo, guest);
-      const isApplicationExist: boolean = await this.isApplicationExist(
+      const isApplicationExist: number = await this.isApplicationExist(
         adminHost,
         userNo,
         meetingNo,
@@ -357,6 +357,37 @@ export class MeetingsService {
         value: JSON.stringify({ guest, meetingNo }),
       };
       await this.setNotice(noticeDetail);
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async retractApplication(meetingNo: number, userNo) {
+    try {
+      await this.findMeetingById(meetingNo);
+      const { adminHost, adminGuest } =
+        await this.meetingInfoRepository.getMeetingInfoById(meetingNo);
+      if (adminGuest === userNo) {
+        throw new BadRequestException(`이미 수락된 요청은 취소할 수 없습니다.`);
+      }
+
+      const noticeNo: number = await this.isApplicationExist(
+        adminHost,
+        userNo,
+        meetingNo,
+      );
+      if (!noticeNo) {
+        throw new BadRequestException(`취소할 신청이 없습니다.`);
+      }
+
+      const affected: number = await this.noticesRepository.deleteNotice(
+        noticeNo,
+      );
+      if (!affected) {
+        throw new InternalServerErrorException(
+          `약속 신청 취소(retractApplication): 서버 오류입니다.`,
+        );
+      }
     } catch (err) {
       throw err;
     }
