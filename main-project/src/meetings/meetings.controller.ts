@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Patch,
   Delete,
+  Get,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MeetingsService } from './meetings.service';
@@ -14,10 +15,11 @@ import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { DeleteGuestDto } from 'src/meetings/dto/deleteGuest.dto';
 import { DeleteHostDto } from './dto/deleteHost.dto';
-import { InviteGuestDto } from './dto/inviteGuest.dto';
+import { InviteMemberDto } from './dto/inviteMember.dto';
 import { ApplyForMeetingDto } from './dto/applyForMeeting.dto';
 import { AcceptInvitaionDto } from './dto/acceptInvitation.dto';
 import { AcceptMeetingDto } from './dto/acceptMeeting.dto';
+import { NoticeType } from 'src/common/configs/notice-type.config';
 
 @Controller('meetings')
 @ApiTags('약속 API')
@@ -56,9 +58,10 @@ export class MeetingsController {
   @Patch('/accept/application/:noticeNo')
   async acceptGuestApplication(
     @Param('noticeNo') noticeNo: number,
+    @Body('userNo') userNo: number,
   ): Promise<object> {
     try {
-      await this.meetingsService.acceptGuestApplication(noticeNo);
+      await this.meetingsService.acceptGuests(noticeNo, userNo);
 
       return { success: true, msg: `게스트의 참여 요청이 수락되었습니다.` };
     } catch (err) {
@@ -97,7 +100,7 @@ export class MeetingsController {
   @Patch('/:meetingNo')
   async updateMeeting(
     @Param('meetingNo') meetingNo: number,
-    @Param() updateMeetingDto: UpdateMeetingDto,
+    @Body() updateMeetingDto: UpdateMeetingDto,
   ): Promise<object> {
     try {
       await this.meetingsService.updateMeeting(meetingNo, updateMeetingDto);
@@ -148,16 +151,46 @@ export class MeetingsController {
 
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: '새로운 멤버 초대',
+    summary: '새로운 게스트 멤버 초대',
     description: '참여 중인 약속에 새로운 멤버 초대',
   })
-  @Post('/:meetingNo/invite')
-  async inviteGuest(
+  @Post('/:meetingNo/invite/guest')
+  async inviteGuestMember(
     @Param('meetingNo') meetingNo: number,
-    @Body() inviteGuestDto: InviteGuestDto,
+    @Body() inviteMemberDto: InviteMemberDto,
   ) {
     try {
-      await this.meetingsService.inviteMember(meetingNo, inviteGuestDto);
+      await this.meetingsService.inviteMember(
+        meetingNo,
+        inviteMemberDto,
+        NoticeType.INVITE_GUEST,
+      );
+
+      return {
+        succes: true,
+        msg: `약속 초대 알림이 전송되었습니다.`,
+      };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '새로운 호스트 멤버 초대',
+    description: '참여 중인 약속에 새로운 멤버 초대',
+  })
+  @Post('/:meetingNo/invite/host')
+  async invitHostMember(
+    @Param('meetingNo') meetingNo: number,
+    @Body() inviteMemberDto: InviteMemberDto,
+  ) {
+    try {
+      await this.meetingsService.inviteMember(
+        meetingNo,
+        inviteMemberDto,
+        NoticeType.INVITE_HOST,
+      );
 
       return {
         succes: true,

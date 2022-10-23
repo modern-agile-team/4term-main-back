@@ -46,15 +46,12 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
     }
   }
 
-  async getMeetingInfoById(meetingNo: number): Promise<MeetingInfo> {
+  async getMeetingInfoById(meetingNo: number): Promise<any> {
     try {
-      const meetingInfo: MeetingInfo = await this.createQueryBuilder(
-        'meeting_info',
-      )
+      const meetingInfo = await this.createQueryBuilder('meeting_info')
         .select([
-          'meeting_info.meetingNo AS meetingNo',
-          'meeting_info.host',
-          'meeting_info.guest',
+          'meeting_info.host AS adminHost',
+          'meeting_info.guest AS adminGuest',
           'meeting_info.guestHeadcount AS guestHeadcount',
           'meeting_info.hostHeadcount AS hostHeadcount',
         ])

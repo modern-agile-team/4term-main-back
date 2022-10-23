@@ -44,4 +44,24 @@ export class GuestMembersRepository extends Repository<GuestMembers> {
       );
     }
   }
+
+  async getMeetingGuest(meetingNo: number): Promise<string> {
+    try {
+      const { guests } = await this.createQueryBuilder('guest_members')
+        .leftJoin(
+          'guest_members.meetingNo',
+          'meetings',
+          'guest_members.meetingNo = meetings.no',
+        )
+        .select('GROUP_CONCAT(DISTINCT guest_members.userNo) AS guests')
+        .where('meetings.no =:meetingNo', { meetingNo })
+        .getRawOne();
+
+      return guests;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} getMeetingGuest: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
 }
