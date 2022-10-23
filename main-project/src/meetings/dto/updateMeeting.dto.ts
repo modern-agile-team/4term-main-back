@@ -3,16 +3,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class UpdateMeetingDto {
-  //Param
-  @IsNotEmpty()
-  @IsInt()
-  @ApiProperty({
-    example: 1,
-    description: '수정하려는 약속 번호',
-  })
-  meetingNo: number;
-
-  //Body
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
