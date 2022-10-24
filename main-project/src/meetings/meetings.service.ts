@@ -137,12 +137,13 @@ export class MeetingsService {
     host,
     guestHeadcount,
   }: CreateMeetingDto): Promise<number> {
-    const queryRunner: QueryRunner = this.connection.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    let queryRunner: QueryRunner;
 
     try {
+      queryRunner = this.connection.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
       const meetingNo: number = await this.setMeetingDetail(queryRunner, {
         location,
         time,
@@ -424,12 +425,14 @@ export class MeetingsService {
   }
 
   async acceptGuests(noticeNo: number, userNo: number): Promise<void> {
-    const queryRunner: QueryRunner = this.connection.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    let queryRunner: QueryRunner;
 
     try {
+      queryRunner = this.connection.createQueryRunner();
+
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
       const { value, targetUserNo, type }: Notice =
         await this.noticesRepository.getNoticeById(noticeNo);
       if (type !== NoticeType.APPLY_FOR_MEETING) {
