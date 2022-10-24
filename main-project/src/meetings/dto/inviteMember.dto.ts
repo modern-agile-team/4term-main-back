@@ -1,23 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty } from 'class-validator';
 
-export class InviteGuestDto {
-  //Param
-  @IsNotEmpty()
-  @IsInt()
-  @ApiProperty({
-    example: 3,
-    description: '초대하려는 약속',
-    required: true,
-  })
-  meetingNo: number;
-
-  //Body
+export class InviteMemberDto {
   @IsNotEmpty()
   @IsInt()
   @ApiProperty({
     example: 1,
-    description: '초대를 보낸 유저',
+    description:
+      '초대를 보낸 유저(해당 유저가 약속 게스트면 요청을 받은 유저도 게스트로 참여)',
     required: true,
   })
   userNo: number;

@@ -19,15 +19,8 @@ export interface MeetingMemberDetail {
 }
 
 export interface ParticipatingMembers {
-  isDone?: boolean;
-  adminHost?: number;
-  adminGuest?: number;
-  guestHeadcount?: number;
-  hostHeadcount?: number;
-  guests?: string;
-  hosts?: string;
-  addGuestAvailable?: boolean;
-  addHostAvailable?: boolean;
+  addGuestAvailable: boolean;
+  addHostAvailable: boolean;
 }
 
 export interface InviteNoticeResult {
@@ -38,11 +31,4 @@ export interface InviteNoticeResult {
 export interface MeetingVacancy {
   addGuestAvailable?: string;
   addHostAvailable?: string;
-}
-
-export interface ChangeAdminGuest {
-  userNo: number;
-  adminGuest: number;
-  meetingNo: number;
-  newAdminGuest: number;
 }
