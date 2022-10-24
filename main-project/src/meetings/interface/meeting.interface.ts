@@ -18,7 +18,7 @@ export interface MeetingMemberDetail {
   guestHeadcount: number;
 }
 
-export interface ParticipatingMembers {
+export interface MeetingVacancy {
   addGuestAvailable: boolean;
   addHostAvailable: boolean;
 }
@@ -28,7 +28,6 @@ export interface InviteNoticeResult {
   side: string;
 }
 
-export interface MeetingVacancy {
-  addGuestAvailable?: string;
-  addHostAvailable?: string;
+export interface Members {
+  members: string;
 }

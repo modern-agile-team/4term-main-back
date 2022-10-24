@@ -21,10 +21,13 @@ import {
   MeetingDetail,
   MeetingMemberDetail,
   MeetingResponse,
+  MeetingVacancy,
+  Members,
 } from './interface/meeting.interface';
 import { DeleteMember } from 'src/members/interface/member.interface';
 import { Notice, NoticeDetail } from 'src/notices/interface/notice.interface';
 import { Connection, QueryRunner } from 'typeorm';
+import { MeetingInfo } from './interface/meeting-info.interface';
 
 @Injectable()
 export class MeetingsService {
@@ -104,9 +107,9 @@ export class MeetingsService {
     meetingNo: number,
     side: string,
     queryRunner: QueryRunner,
-  ) {
+  ): Promise<void> {
     try {
-      const memberInfo = members.reduce((values, userNo) => {
+      const memberInfo: object[] = members.reduce((values, userNo) => {
         values.push({ meetingNo, userNo });
         return values;
       }, []);
@@ -190,6 +193,7 @@ export class MeetingsService {
   private async checkIsAccepted(meetingNo: number): Promise<void> {
     try {
       const { isAccepted }: Meetings = await this.findMeetingById(meetingNo);
+
       if (isAccepted) {
         throw new BadRequestException(`이미 수락된 약속입니다.`);
       }
@@ -200,7 +204,7 @@ export class MeetingsService {
 
   private async isAuthorized(meetingNo: number, userNo: number): Promise<any> {
     try {
-      const { adminHost, adminGuest } =
+      const { adminHost, adminGuest }: MeetingInfo =
         await this.meetingInfoRepository.getMeetingInfoById(meetingNo);
 
       if (userNo === adminGuest || userNo === adminHost) {
@@ -219,7 +223,7 @@ export class MeetingsService {
   ): Promise<void> {
     try {
       await this.checkIsAccepted(meetingNo);
-      const authority = await this.isAuthorized(meetingNo, userNo);
+      const authority: any = await this.isAuthorized(meetingNo, userNo);
 
       if (authority !== this.member.HOST) {
         throw new BadRequestException(`약속 수정 권한이 없는 유저입니다.`);
@@ -240,7 +244,7 @@ export class MeetingsService {
   async acceptMeeting(meetingNo: number, userNo: number): Promise<void> {
     try {
       await this.checkIsAccepted(meetingNo);
-      const authority = await this.isAuthorized(meetingNo, userNo);
+      const authority: any = await this.isAuthorized(meetingNo, userNo);
 
       if (authority !== this.member.GUEST) {
         throw new BadRequestException(`약속 수락 권한이 없는 유저입니다.`);
@@ -277,7 +281,7 @@ export class MeetingsService {
     guest: number[],
   ): Promise<number> {
     try {
-      const { adminGuest, adminHost, guestHeadcount } =
+      const { adminGuest, adminHost, guestHeadcount }: MeetingInfo =
         await this.meetingInfoRepository.getMeetingInfoById(meetingNo);
 
       if (adminGuest) {
@@ -332,14 +336,20 @@ export class MeetingsService {
         guest.push(userNo);
       }
 
-      const isOverlaped = await this.checkUsersInMeeting(guest, meetingNo);
+      const isOverlaped: number = await this.checkUsersInMeeting(
+        guest,
+        meetingNo,
+      );
       if (isOverlaped) {
         throw new BadRequestException(
           `호스트로 참여 중인 유저는 게스트로 추가할 수 없습니다.`,
         );
       }
 
-      const adminHost = await this.checkApplyAvailable(meetingNo, guest);
+      const adminHost: number = await this.checkApplyAvailable(
+        meetingNo,
+        guest,
+      );
       const isApplicationExist: number = await this.isApplicationExist(
         adminHost,
         userNo,
@@ -365,7 +375,7 @@ export class MeetingsService {
   async retractApplication(meetingNo: number, userNo) {
     try {
       await this.findMeetingById(meetingNo);
-      const { adminHost, adminGuest } =
+      const { adminHost, adminGuest }: MeetingInfo =
         await this.meetingInfoRepository.getMeetingInfoById(meetingNo);
       if (adminGuest === userNo) {
         throw new BadRequestException(`이미 수락된 요청은 취소할 수 없습니다.`);
@@ -458,9 +468,8 @@ export class MeetingsService {
 
   async getMeetingMembers(meetingNo: number): Promise<number[]> {
     try {
-      const { members } = await this.meetingRepository.getMeetingMembers(
-        meetingNo,
-      );
+      const { members }: Members =
+        await this.meetingRepository.getMeetingMembers(meetingNo);
 
       return members.split(',').map(Number);
     } catch (err) {
@@ -504,7 +513,7 @@ export class MeetingsService {
         );
       }
 
-      const { addHostAvailable, addGuestAvailable } =
+      const { addHostAvailable, addGuestAvailable }: MeetingVacancy =
         await this.meetingRepository.getMeetingVacancy(meetingNo);
 
       if (
@@ -552,7 +561,7 @@ export class MeetingsService {
     savedMember: object[],
   ): Promise<void> {
     try {
-      const affectedRows =
+      const affectedRows: number =
         noticeType === NoticeType.INVITE_GUEST
           ? await this.guestMembersRepository.saveGuestMembers(savedMember)
           : await this.hostMembersRepository.saveHostMembers(savedMember);
@@ -656,7 +665,7 @@ export class MeetingsService {
     try {
       await this.findMeetingById(meetingNo);
 
-      const { adminGuest } =
+      const { adminGuest }: MeetingInfo =
         await this.meetingInfoRepository.getMeetingInfoById(meetingNo);
 
       const guestCount: number = await this.IsMeetingGuest(meetingNo, [
@@ -694,9 +703,8 @@ export class MeetingsService {
     try {
       await this.findMeetingById(meetingNo);
 
-      const { adminHost } = await this.meetingInfoRepository.getMeetingInfoById(
-        meetingNo,
-      );
+      const { adminHost }: MeetingInfo =
+        await this.meetingInfoRepository.getMeetingInfoById(meetingNo);
 
       if (userNo !== adminHost) {
         await this.IsMeetingHost(meetingNo, userNo);

@@ -8,7 +8,7 @@ import {
 import { Meetings } from '../entity/meeting.entity';
 import { InternalServerErrorException } from '@nestjs/common';
 import {
-  ParticipatingMembers,
+  MeetingVacancy,
   MeetingDetail,
   MeetingResponse,
 } from '../interface/meeting.interface';
@@ -104,11 +104,9 @@ export class MeetingRepository extends Repository<Meetings> {
     }
   }
 
-  async getMeetingVacancy(meetingNo: number): Promise<ParticipatingMembers> {
+  async getMeetingVacancy(meetingNo: number): Promise<MeetingVacancy> {
     try {
-      const result: ParticipatingMembers = await this.createQueryBuilder(
-        'meetings',
-      )
+      const result: MeetingVacancy = await this.createQueryBuilder('meetings')
         .leftJoin(
           'meetings.meetingInfo',
           'meetingInfo',
