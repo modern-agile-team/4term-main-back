@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { AuthCredentialsDto } from 'src/auth/dto/auth-credential.dto';
 import { UserProfileDetail } from 'src/auth/interface/auth.interface';
 import {
   EntityRepository,
@@ -6,14 +7,10 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { CreateUserDto } from '../dto/create-user.dto';
 import { SignUpDto } from '../dto/sign-up.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
-import { UserProfile } from '../entity/user-profile.entity';
 import { Users } from '../entity/user.entity';
 import {
-  UpdateUserInfo,
-  UpdateUsersDetail,
   UserCreateResponse,
   UsersDetail,
 } from '../interface/user-profile.interface';
@@ -23,7 +20,7 @@ export class UsersRepository extends Repository<Users> {
   //회원가입 관련
   async signUp(signUpDto: SignUpDto): Promise<UserCreateResponse> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder('users')
+      const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
         .into(Users)
         .values(signUpDto)
@@ -126,4 +123,22 @@ export class UsersRepository extends Repository<Users> {
   //       );
   //     }
   //   }
+
+  //로그인
+  async signIn(authCredentialsDto: AuthCredentialsDto): Promise<string> {
+    try {
+      const { email } = authCredentialsDto;
+
+      const user = await this.createQueryBuilder('users')
+        .select(['users.email AS email'])
+        .where('users.email = :email', { email })
+        .getRawOne();
+
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error}  알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
 }

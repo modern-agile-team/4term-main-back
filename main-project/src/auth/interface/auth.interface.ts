@@ -5,3 +5,12 @@ export interface UserProfileDetail {
   universityNo: number;
   nickname: string;
 }
+
+export interface User {
+  email: string;
+}
+
+export interface Token {
+  accessToken: string;
+  refreshToken: string;
+}

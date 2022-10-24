@@ -1,22 +1,7 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation } from '@nestjs/swagger';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserProfileDto } from './dto/user-profile.dto';
-import {
-  UpdateUserInfo,
-  UpdateUsersDetail,
-} from './interface/user-profile.interface';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -24,6 +9,7 @@ export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Get('/:userNo')
+  @UseGuards(AuthGuard())
   @ApiOperation({ summary: '유저정보 불러오기' })
   async readUserByNo(@Param('userNo') userNo: number): Promise<object> {
     const readUser = await this.usersService.readUserByNo(userNo);
@@ -37,6 +23,7 @@ export class UsersController {
   }
 
   @Patch('/patch/:userNo')
+  @UseGuards(AuthGuard())
   @ApiOperation({ summary: '유저정보 수정' })
   async updateUser(
     @Param('userNo') userNo: number,
