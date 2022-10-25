@@ -17,7 +17,9 @@ export class NoticeGuests extends BaseEntity {
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 
-  @ManyToOne((type) => Notices, (notices) => notices.noticeMeetings)
+  @ManyToOne((type) => Notices, (notices) => notices.noticeMeetings, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'notice_no' })
   noticeNo: number;
 }

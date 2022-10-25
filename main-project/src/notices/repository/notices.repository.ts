@@ -17,10 +17,46 @@ import {
   NoticeConditions,
   NoticeDetail,
   NoticeGuests,
+  NoticeMeeting,
 } from '../interface/notice.interface';
 
 @EntityRepository(Notices)
 export class NoticesRepository extends Repository<Notices> {
+  async getNoticeInvitation(
+    userNo: number,
+    noticeNo: number,
+  ): Promise<NoticeMeeting> {
+    try {
+      const noticeMeeting: NoticeMeeting = await this.createQueryBuilder(
+        'notices',
+      )
+        .leftJoin(
+          'notices.noticeMeetings',
+          'noticeMeetings',
+          'notices.no = noticeMeetings.noticeNo',
+        )
+        .select([
+          'notices.no AS noticeNo',
+          'notices.type AS type',
+          'noticeMeetings.meetingNo AS meetingNo',
+          'notices.targetUserNo AS targetUserNo',
+        ])
+        .where('notices.no = :noticeNo AND notices.userNo = :userNo', {
+          noticeNo,
+          userNo,
+        })
+        .andWhere(
+          `notices.type = ${NoticeType.INVITE_GUEST} 
+          OR notices.type = ${NoticeType.INVITE_HOST}`,
+        )
+        .getRawOne();
+
+      return noticeMeeting;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async getApplicationGuests(noticeNo: number): Promise<NoticeGuests> {
     try {
       const result = await this.createQueryBuilder('notices')

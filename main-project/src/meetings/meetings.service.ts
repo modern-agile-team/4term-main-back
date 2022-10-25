@@ -32,6 +32,7 @@ import {
   NoticeDetail,
   NoticeGuestDetail,
   NoticeGuests,
+  NoticeMeeting,
 } from 'src/notices/interface/notice.interface';
 import { Connection, QueryRunner } from 'typeorm';
 import { MeetingInfo } from './interface/meeting-info.interface';
@@ -512,6 +513,23 @@ export class MeetingsService {
     }
   }
 
+  private async findNoticeMeeting(
+    userNo: number,
+    noticeNo: number,
+  ): Promise<NoticeMeeting> {
+    try {
+      const noticeMeeting: NoticeMeeting =
+        await this.noticesRepository.getNoticeInvitation(userNo, noticeNo);
+      if (!noticeMeeting) {
+        throw new BadRequestException(`조건에 맞는 알림이 존재하지 않습니다.`);
+      }
+
+      return noticeMeeting;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async acceptGuests(noticeNo: number, userNo: number): Promise<void> {
     let queryRunner: QueryRunner;
     try {
@@ -568,11 +586,6 @@ export class MeetingsService {
       const { affectedRows, insertId }: InsertRaw = await queryRunner.manager
         .getCustomRepository(NoticesRepository)
         .saveNotice(noticeDetail);
-      // const { affectedRows, insertId }: InsertRaw = queryRunner
-      //   ? await queryRunner.manager
-      //       .getCustomRepository(NoticesRepository)
-      //       .saveNotice(noticeDetail)
-      //   : await this.noticesRepository.saveNotice(noticeDetail);
 
       if (!affectedRows) {
         throw new InternalServerErrorException(`약속 알림 생성 에러입니다.`);
@@ -609,7 +622,7 @@ export class MeetingsService {
         (noticeType === NoticeType.INVITE_GUEST && !addGuestAvailable)
       ) {
         throw new BadRequestException(
-          `공석이 없는 약속에는 유저를 초대할 수 없습니다.`,
+          `공석이 없는 약속에는 유저를 추가할 수 없습니다.`,
         );
       }
     } catch (err) {
@@ -622,7 +635,12 @@ export class MeetingsService {
     { invitedUserNo, userNo }: InviteMemberDto,
     noticeType: number,
   ): Promise<void> {
+    let queryRunner: QueryRunner;
     try {
+      queryRunner = this.connection.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
       await this.findMeetingById(meetingNo);
 
       await this.checkInviteAvailable(
@@ -636,11 +654,17 @@ export class MeetingsService {
         userNo: invitedUserNo,
         targetUserNo: userNo,
         type: noticeType,
-        // value: JSON.stringify({ meetingNo }),
       };
-      this.setNotice(noticeDetail);
+      const noticeNo = await this.setNotice(noticeDetail, queryRunner);
+      await this.setNoticeMeeting({ noticeNo, meetingNo, queryRunner });
+
+      await queryRunner.commitTransaction();
     } catch (err) {
+      await queryRunner.rollbackTransaction();
+
       throw err;
+    } finally {
+      await queryRunner.release();
     }
   }
 
@@ -662,28 +686,14 @@ export class MeetingsService {
     }
   }
 
-  async acceptInvitation(noticeNo: number, invitedUser: number): Promise<void> {
+  async acceptInvitation(userNo: number, noticeNo: number): Promise<void> {
     try {
-      const { targetUserNo, userNo, type }: Notice = await this.findNoticeById(
-        noticeNo,
-      );
-      if (type !== NoticeType.INVITE_HOST && type !== NoticeType.INVITE_GUEST) {
-        throw new BadRequestException(`알림 type에 맞지 않는 요청 경로입니다.`);
-      }
-      if (invitedUser !== userNo) {
-        throw new BadRequestException(`초대 알림을 받은 유저가 아닙니다.`);
-      }
+      const { targetUserNo, meetingNo, type }: NoticeMeeting =
+        await this.findNoticeMeeting(userNo, noticeNo);
 
-      // const { meetingNo } = JSON.parse(value);
-      // await this.findMeetingById(meetingNo);
-      // await this.checkInviteAvailable(
-      //   meetingNo,
-      //   targetUserNo,
-      //   invitedUser,
-      //   type,
-      // );
-
-      // await this.saveInvitedMember(type, [{ userNo: invitedUser, meetingNo }]);
+      await this.findMeetingById(meetingNo);
+      await this.checkInviteAvailable(meetingNo, targetUserNo, userNo, type);
+      await this.saveInvitedMember(type, [{ userNo, meetingNo }]);
     } catch (err) {
       throw err;
     }

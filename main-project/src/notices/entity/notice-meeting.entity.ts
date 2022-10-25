@@ -20,7 +20,9 @@ export class NoticeMeetings extends BaseEntity {
   @JoinColumn({ name: 'meeting_no' })
   meetingNo: number;
 
-  @OneToOne((type) => Notices, (notices) => notices.noticeMeetings)
+  @OneToOne((type) => Notices, (notices) => notices.noticeMeetings, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'notice_no' })
   noticeNo: number;
 }

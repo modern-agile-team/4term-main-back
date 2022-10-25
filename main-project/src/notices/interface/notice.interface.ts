@@ -42,3 +42,10 @@ export interface NoticeGuests {
   adminGuest: number;
   guests: any;
 }
+
+export interface NoticeMeeting {
+  noticeNo: number;
+  meetingNo: number;
+  targetUserNo: number;
+  type: number;
+}
