@@ -21,10 +21,7 @@ import {
 
 @EntityRepository(Notices)
 export class NoticesRepository extends Repository<Notices> {
-  async getApplicationGuests({
-    meetingNo,
-    userNo,
-  }: MeetingUser): Promise<NoticeGuests> {
+  async getApplicationGuests(noticeNo: number): Promise<NoticeGuests> {
     try {
       const result = await this.createQueryBuilder('notices')
         .leftJoin(
@@ -38,14 +35,15 @@ export class NoticesRepository extends Repository<Notices> {
           'notices.no = noticeGuests.noticeNo',
         )
         .select([
-          `JSON_ARRAYAGG(noticeGuests.userNo) AS guests`,
           'notices.no AS noticeNo',
+          'noticeMeetings.meetingNo AS meetingNo',
+          'notices.targetUserNo AS adminGuest',
+          `JSON_ARRAYAGG(noticeGuests.userNo) AS guests`,
         ])
-        .where(
-          `noticeMeetings.meetingNo = :meetingNo 
-          AND notices.targetUserNo = :userNo AND notices.type =:type`,
-          { meetingNo, userNo, type: NoticeType.APPLY_FOR_MEETING },
-        )
+        .where(`notices.no = :noticeNo AND notices.type =:type`, {
+          noticeNo,
+          type: NoticeType.APPLY_FOR_MEETING,
+        })
         .groupBy('notices.no')
         .getRawOne();
 
@@ -77,12 +75,12 @@ export class NoticesRepository extends Repository<Notices> {
         .leftJoin(
           'notices.noticeMeetings',
           'noticeMeetings',
-          'notices.no = notice_meetings.noticeNo',
+          'notices.no = noticeMeetings.noticeNo',
         )
-        .select(['notices.no AS noticeNo'])
+        .select('notices.no AS noticeNo')
         .where(
-          `noticeMeetings.meetingNo = : meetingNo 
-          AND notices.targetUserNo = :userNo AND notices.type =:type`,
+          `noticeMeetings.meetingNo = :meetingNo 
+          AND notices.targetUserNo = :userNo AND notices.type = :type`,
           { meetingNo, userNo, type: NoticeType.APPLY_FOR_MEETING },
         )
         .getRawOne();

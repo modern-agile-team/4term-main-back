@@ -8,7 +8,9 @@ import { NoticeGuestDetail } from '../interface/notice.interface';
 export class NoticeGuestsRepository extends Repository<NoticeGuests> {
   async saveNoticeGuest(guestDetails: NoticeGuestDetail[]): Promise<InsertRaw> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder('notices')
+      const { raw }: InsertResult = await this.createQueryBuilder(
+        'notice_guests',
+      )
         .insert()
         .into(NoticeGuests)
         .values(guestDetails)

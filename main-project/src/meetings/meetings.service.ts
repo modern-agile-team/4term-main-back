@@ -24,16 +24,19 @@ import {
   MeetingVacancy,
   Members,
   NoticeGuestParam,
+  NoticeMeetingParam,
 } from './interface/meeting.interface';
 import { DeleteMember } from 'src/members/interface/member.interface';
 import {
   Notice,
   NoticeDetail,
   NoticeGuestDetail,
+  NoticeGuests,
 } from 'src/notices/interface/notice.interface';
 import { Connection, QueryRunner } from 'typeorm';
 import { MeetingInfo } from './interface/meeting-info.interface';
 import { NoticeGuestsRepository } from 'src/notices/repository/notices-guests.repository';
+import { NoticeMeetingsRepository } from 'src/notices/repository/notices-meetings.repository';
 
 @Injectable()
 export class MeetingsService {
@@ -318,12 +321,16 @@ export class MeetingsService {
     meetingNo: number,
   ): Promise<number> {
     try {
-      const { noticeNo }: Notice = await this.noticesRepository.getApplication({
+      const notice: Notice = await this.noticesRepository.getApplication({
         meetingNo,
         userNo,
       });
 
-      return noticeNo ? noticeNo : 0;
+      if (!notice) {
+        return 0;
+      }
+
+      return notice.noticeNo;
     } catch (err) {
       throw err;
     }
@@ -333,7 +340,7 @@ export class MeetingsService {
     noticeNo,
     guest,
     queryRunner,
-  }: NoticeGuestParam) {
+  }: NoticeGuestParam): Promise<void> {
     try {
       const guestDetails: NoticeGuestDetail[] = guest.reduce(
         (values, userNo) => {
@@ -349,6 +356,26 @@ export class MeetingsService {
       if (affectedRows !== guest.length) {
         throw new InternalServerErrorException(
           `게스트 신청 알림 추가(setNoticeGuests): 알 수 없는 서버 에러입니다.`,
+        );
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async setNoticeMeeting({
+    noticeNo,
+    meetingNo,
+    queryRunner,
+  }: NoticeMeetingParam): Promise<void> {
+    try {
+      const { affectedRows }: InsertRaw = await queryRunner.manager
+        .getCustomRepository(NoticeMeetingsRepository)
+        .saveNoticeMeeting({ noticeNo, meetingNo });
+
+      if (!affectedRows) {
+        throw new InternalServerErrorException(
+          `알림 약속 번호 저장(setNoticeMeetings): 알 수 없는 서버 에러입니다.`,
         );
       }
     } catch (err) {
@@ -394,6 +421,7 @@ export class MeetingsService {
       };
       const noticeNo: number = await this.setNotice(noticeDetail, queryRunner);
       await this.setNoticeGuests({ noticeNo, guest, queryRunner });
+      await this.setNoticeMeeting({ noticeNo, meetingNo, queryRunner });
 
       await queryRunner.commitTransaction();
     } catch (err) {
@@ -454,39 +482,62 @@ export class MeetingsService {
     }
   }
 
+  private async findNoticeById(noticeNo: number): Promise<Notice> {
+    try {
+      const notice: Notice = await this.noticesRepository.getNoticeById(
+        noticeNo,
+      );
+      if (!notice) {
+        throw new BadRequestException(`존재하지 않는 알림입니다.`);
+      }
+
+      return notice;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async findNoticeGuests(noticeNo: number): Promise<NoticeGuests> {
+    try {
+      let notice: NoticeGuests =
+        await this.noticesRepository.getApplicationGuests(noticeNo);
+      if (!notice) {
+        throw new BadRequestException(`조건에 맞는 알림이 존재하지 않습니다.`);
+      }
+      notice.guests = JSON.parse(notice.guests);
+
+      return notice;
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async acceptGuests(noticeNo: number, userNo: number): Promise<void> {
     let queryRunner: QueryRunner;
-
     try {
       queryRunner = this.connection.createQueryRunner();
       await queryRunner.connect();
       await queryRunner.startTransaction();
 
-      const { targetUserNo, type }: Notice =
-        await this.noticesRepository.getNoticeById(noticeNo);
-      if (type !== NoticeType.APPLY_FOR_MEETING) {
-        throw new BadRequestException(`알림 type에 맞지 않는 요청 경로입니다.`);
+      const { guests, adminGuest, meetingNo }: NoticeGuests =
+        await this.findNoticeGuests(noticeNo);
+
+      await this.checkUsersInMeeting(guests, meetingNo);
+      const adminHost: number = await this.checkApplyAvailable(
+        meetingNo,
+        guests,
+      );
+      if (adminHost !== userNo) {
+        throw new BadRequestException(`게스트 수락 권한이 없는 유저입니다.`);
       }
 
-      // const { guest, meetingNo } = JSON.parse(value);
-      // await this.findMeetingById(meetingNo);
-
-      // await this.checkUsersInMeeting(guest, meetingNo);
-      // const adminHost: number = await this.checkApplyAvailable(
-      //   meetingNo,
-      //   guest,
-      // );
-      // if (adminHost !== userNo) {
-      //   throw new BadRequestException(`게스트 수락 권한이 없는 유저입니다.`);
-      // }
-
-      // await this.setAdminGuest(queryRunner, meetingNo, targetUserNo);
-      // await this.setMeetingMembers(
-      //   guest,
-      //   meetingNo,
-      //   this.member.GUEST,
-      //   queryRunner,
-      // );
+      await this.setAdminGuest(queryRunner, meetingNo, adminGuest);
+      await this.setMeetingMembers(
+        guests,
+        meetingNo,
+        this.member.GUEST,
+        queryRunner,
+      );
 
       await queryRunner.commitTransaction();
     } catch (err) {
@@ -613,8 +664,9 @@ export class MeetingsService {
 
   async acceptInvitation(noticeNo: number, invitedUser: number): Promise<void> {
     try {
-      const { targetUserNo, userNo, type }: Notice =
-        await this.noticesRepository.getNoticeById(noticeNo);
+      const { targetUserNo, userNo, type }: Notice = await this.findNoticeById(
+        noticeNo,
+      );
       if (type !== NoticeType.INVITE_HOST && type !== NoticeType.INVITE_GUEST) {
         throw new BadRequestException(`알림 type에 맞지 않는 요청 경로입니다.`);
       }

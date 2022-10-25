@@ -26,12 +26,19 @@ export interface Notice {
   isRead?: boolean;
 }
 
-export interface NoticeGuestDetail {
+export interface NoticeMeetingDetail {
   meetingNo: number;
+  noticeNo: number;
+}
+
+export interface NoticeGuestDetail {
+  noticeNo: number;
   userNo: number;
 }
 
 export interface NoticeGuests {
   noticeNo: number;
+  meetingNo: number;
+  adminGuest: number;
   guests: any;
 }

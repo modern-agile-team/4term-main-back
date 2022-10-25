@@ -43,3 +43,9 @@ export interface NoticeGuestParam {
   guest: number[];
   queryRunner: QueryRunner;
 }
+
+export interface NoticeMeetingParam {
+  noticeNo: number;
+  meetingNo: number;
+  queryRunner: QueryRunner;
+}
