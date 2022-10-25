@@ -10,8 +10,8 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { NoticeGuest } from './notice-guest.entity';
-import { NoticeMeeting } from './notice-meeting.entity';
+import { NoticeGuests } from './notice-guest.entity';
+import { NoticeMeetings } from './notice-meeting.entity';
 
 @Entity('notices')
 export class Notices extends BaseEntity {
@@ -43,12 +43,12 @@ export class Notices extends BaseEntity {
   value: string;
 
   @OneToOne(
-    (type) => NoticeMeeting,
+    (type) => NoticeMeetings,
     (noticeMeetings) => noticeMeetings.noticeNo,
     { onDelete: 'CASCADE' },
   )
-  noticeMeetings: NoticeMeeting;
+  noticeMeetings: NoticeMeetings;
 
-  @OneToMany((type) => NoticeGuest, (noticeGuests) => noticeGuests.noticeNo)
-  noticeGuests: NoticeGuest[];
+  @OneToMany((type) => NoticeGuests, (noticeGuests) => noticeGuests.noticeNo)
+  noticeGuests: NoticeGuests[];
 }

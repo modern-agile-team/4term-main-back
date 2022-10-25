@@ -10,7 +10,7 @@ import {
 import { Notices } from './notices.entity';
 
 @Entity('notice_meetings')
-export class NoticeMeeting extends BaseEntity {
+export class NoticeMeetings extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 

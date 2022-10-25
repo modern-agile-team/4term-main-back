@@ -1,7 +1,8 @@
 import { Users } from 'src/users/entity/user.entity';
+import { QueryRunner } from 'typeorm';
 import { Meetings } from '../entity/meeting.entity';
 
-export interface MeetingResponse {
+export interface InsertRaw {
   affectedRows: number;
   insertId?: number;
 }
@@ -30,4 +31,15 @@ export interface InviteNoticeResult {
 
 export interface Members {
   members: string;
+}
+
+export interface MeetingUser {
+  meetingNo: number;
+  userNo: number;
+}
+
+export interface NoticeGuestParam {
+  noticeNo: number;
+  guest: number[];
+  queryRunner: QueryRunner;
 }

@@ -16,11 +16,22 @@ export interface NoticeConditions {
 }
 
 export interface Notice {
-  noticeNo: number;
+  noticeNo?: number;
   userNo?: number;
   targetUserNo: number;
-  type: number;
-  createdDate: Date;
-  value: string;
-  isRead: boolean;
+  type?: number;
+  meetingNo?: number;
+  guest?: any;
+  createdDate?: Date;
+  isRead?: boolean;
+}
+
+export interface NoticeGuestDetail {
+  meetingNo: number;
+  userNo: number;
+}
+
+export interface NoticeGuests {
+  noticeNo: number;
+  guests: any;
 }

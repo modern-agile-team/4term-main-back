@@ -10,12 +10,12 @@ import { InternalServerErrorException } from '@nestjs/common';
 import {
   MeetingVacancy,
   MeetingDetail,
-  MeetingResponse,
+  InsertRaw,
 } from '../interface/meeting.interface';
 
 @EntityRepository(Meetings)
 export class MeetingRepository extends Repository<Meetings> {
-  async createMeeting(meetingInfo: MeetingDetail): Promise<MeetingResponse> {
+  async createMeeting(meetingInfo: MeetingDetail): Promise<InsertRaw> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('meetings')
         .insert()
