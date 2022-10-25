@@ -39,7 +39,9 @@ export class Meetings extends BaseEntity {
   @DeleteDateColumn({ nullable: true, name: 'deleted_date' })
   deletedDate: Date;
 
-  @OneToOne((type) => MeetingInfo, (meetingInfo) => meetingInfo.meetingNo)
+  @OneToOne((type) => MeetingInfo, (meetingInfo) => meetingInfo.meetingNo, {
+    onDelete: 'CASCADE',
+  })
   meetingInfo: MeetingInfo;
 
   @OneToMany((type) => HostMembers, (hostMembers) => hostMembers.meetingNo)
