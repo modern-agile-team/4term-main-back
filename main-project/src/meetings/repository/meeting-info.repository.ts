@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ChatRoom } from 'src/chats/interface/chat.interface';
 import {
   EntityRepository,
   InsertResult,
@@ -46,15 +47,12 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
     }
   }
 
-  async getMeetingInfoById(meetingNo: number): Promise<MeetingInfo> {
+  async getMeetingInfoById(meetingNo: number): Promise<any> {
     try {
-      const meetingInfo: MeetingInfo = await this.createQueryBuilder(
-        'meeting_info',
-      )
+      const meetingInfo = await this.createQueryBuilder('meeting_info')
         .select([
-          'meeting_info.meetingNo AS meetingNo',
-          'meeting_info.host',
-          'meeting_info.guest',
+          'meeting_info.host AS adminHost',
+          'meeting_info.guest AS adminGuest',
           'meeting_info.guestHeadcount AS guestHeadcount',
           'meeting_info.hostHeadcount AS hostHeadcount',
         ])
@@ -66,6 +64,29 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
       throw new InternalServerErrorException(
         `${err} 약속 상세 조회(getMeetingInfoById): 알 수 없는 서버 에러입니다.`,
       );
+    }
+  }
+
+  async getMeetingUser(meetingNo): Promise<ChatRoom> {
+    try {
+      const nickname = await this.createQueryBuilder('meeting_info')
+        .leftJoin('meeting_info.meetingNo', 'meetingNo')
+        .leftJoin('meetingNo.hostMembers', 'hostMembers')
+        .leftJoin('hostMembers.userNo', 'hostUserNo')
+        .leftJoin('meetingNo.guestMembers', 'guestMembers')
+        .leftJoin('guestMembers.userNo', 'guestUserNo')
+        .select([
+          'GROUP_CONCAT(DISTINCT guestUserNo.nickname) AS guestUserNickname',
+          'GROUP_CONCAT(DISTINCT hostUserNo.nickname) AS hostUserNickname',
+          'GROUP_CONCAT(DISTINCT hostMembers.user_no) AS hostUserNo',
+          'GROUP_CONCAT(DISTINCT guestMembers.user_no) AS guestUserNo',
+        ])
+        .where('meeting_info.meetingNo = :meetingNo', { meetingNo })
+        .getRawOne();
+
+      return nickname;
+    } catch (err) {
+      throw err;
     }
   }
 }

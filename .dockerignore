@@ -1,0 +1,19 @@
+node_modules
+
+# Source
+test
+
+# Config
+.env*
+.eslintrc.js
+.gitignore
+.prettierrc
+dump.rdb
+
+# JENKINS
+ecosystem.config.js
+script
+
+# Docs
+README.md
+

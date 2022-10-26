@@ -144,7 +144,7 @@ export class FriendsService {
 
       await this.findFriendByNo({ receiverNo, senderNo });
 
-      const deleteResult = await this.friendsRepository.deletFriend(
+      const deleteResult = await this.friendsRepository.deleteFriend(
         deleteFriend,
       );
       if (!deleteResult) {
