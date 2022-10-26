@@ -14,3 +14,8 @@ export interface Token {
   accessToken: string;
   refreshToken: string;
 }
+
+export enum OAuthAgency {
+  kakao,
+  google,
+}

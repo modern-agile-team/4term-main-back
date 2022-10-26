@@ -7,11 +7,15 @@ import { AuthCredentialsDto } from './dto/auth-credential.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { User } from './interface/auth.interface';
 import { GetUser } from './decorator/get-user.decorator';
+import { UsersService } from 'src/users/users.service';
+import { CreateUserByOAuthDto } from './dto/createUserByOAuthDto';
 
 @Controller('auth')
 @ApiTags('회원가입 기능')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService, // private usersService: UsersService,
+  ) {}
 
   @Post('/signup')
   @ApiOperation({ summary: '회원가입' })
@@ -68,6 +72,14 @@ export class AuthController {
     // console.log('req', user);
     return user;
   }
+
+  // @Delete('/')
+
+  // @Post()
+  // async signInByOAuth(@Body() createUserByOAuthDto: CreateUserByOAuthDto) {
+  //   const id = await this.authService.validateOAuth(createUserByOAuthDto);
+  //   await this.usersService.signInByOAuth(id);
+  // }
 
   // @Delete('/:userNo')
   // @ApiOperation({ summary: '회원 탈퇴 기능' })

@@ -1,15 +1,23 @@
+import { HttpService } from '@nestjs/axios';
 import {
   ConflictException,
+  HttpException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import { lastValueFrom, map } from 'rxjs';
+import { UsersService } from 'src/users/users.service';
 import { SignUpDto } from '../users/dto/sign-up.dto';
 import { UsersRepository } from '../users/repository/users.repository';
 import { AuthCredentialsDto } from './dto/auth-credential.dto';
 import { AuthDto } from './dto/auth.dto';
+import { CreateUserByOAuthDto } from './dto/createUserByOAuthDto';
+import { User } from './interface/auth.interface';
 
 @Injectable()
 export class AuthService {
@@ -17,7 +25,10 @@ export class AuthService {
     @InjectRepository(UsersRepository)
     private usersRepository: UsersRepository,
     private jwtService: JwtService,
-  ) {}
+  ) // private readonly usersService: UsersService,
+  // private readonly configService: ConfigService,
+  // private readonly httpService: HttpService,
+  {}
   //회원생성
   async signUp(signUpDto: SignUpDto): Promise<number> {
     try {
@@ -84,5 +95,21 @@ export class AuthService {
       throw error;
     }
   }
-  //회원탈퇴
+
+  // async validateOAuth(
+  //   createUserByOAuthDto: CreateUserByOAuthDto,
+  // ): Promise<any> {
+  //   try {
+  //     const { accessToken, oAuthAgency } = createUserByOAuthDto;
+  //     const ajaxConfig = {
+  //       headers: { Authorization: 'Bearer' + ' ' + accessToken },
+  //     };
+  //     const response: any = await lastValueFrom(
+  //       this.httpService.get('', ajaxConfig).pipe(map((res) => res.data)),
+  //     );
+  //     // return +response.id;
+  //   } catch (error) {
+  //     throw new UnauthorizedException('소셜 로그인 실패');
+  //   }
+  // }
 }

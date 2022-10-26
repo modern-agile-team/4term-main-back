@@ -1,8 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UserProfileDetail } from 'src/auth/interface/auth.interface';
+import { access } from 'fs';
+import { AuthService } from 'src/auth/auth.service';
+import { CreateUserByOAuthDto } from 'src/auth/dto/createUserByOAuthDto';
+import {
+  OAuthAgency,
+  UserProfileDetail,
+} from 'src/auth/interface/auth.interface';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UpdateUsersDetail } from './interface/user-profile.interface';
 import { UsersRepository } from './repository/users.repository';
 
 @Injectable()
@@ -10,7 +15,8 @@ export class UsersService {
   constructor(
     @InjectRepository(UsersRepository)
     private usersRepository: UsersRepository,
-  ) {}
+  ) // private authService: AuthService,
+  {}
 
   //유저 불러오기
   async readUserByNo(userNo: number): Promise<UserProfileDetail> {
@@ -39,6 +45,18 @@ export class UsersService {
       throw error;
     }
   }
-
-  //유저 삭제하기
 }
+//유저 삭제하기
+
+//   //Refresh Token
+//   async signInByOAuth({ accessToken, oAuthAgency }: CreateUserByOAuthDto) {
+//     const id = await this.authService.validateOAuth(accessToken, oAuthAgency);
+
+//   const userStatus = await this.usersRepository.find({
+//     where:{
+//       accont: id,
+//     },
+//     select: {status: true}
+//   });
+
+// }

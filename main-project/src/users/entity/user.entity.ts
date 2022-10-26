@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import { BoardBookmarks } from 'src/boards/entity/board-bookmark.entity';
 import { Boards } from 'src/boards/entity/board.entity';
 import { Enquiries } from 'src/enquiries/entity/enquiry.entity';
