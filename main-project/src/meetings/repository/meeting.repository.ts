@@ -8,14 +8,14 @@ import {
 import { Meetings } from '../entity/meeting.entity';
 import { InternalServerErrorException } from '@nestjs/common';
 import {
-  ParticipatingMembers,
+  MeetingVacancy,
   MeetingDetail,
-  MeetingResponse,
+  InsertRaw,
 } from '../interface/meeting.interface';
 
 @EntityRepository(Meetings)
 export class MeetingRepository extends Repository<Meetings> {
-  async createMeeting(meetingInfo: MeetingDetail): Promise<MeetingResponse> {
+  async createMeeting(meetingInfo: MeetingDetail): Promise<InsertRaw> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('meetings')
         .insert()
@@ -104,11 +104,9 @@ export class MeetingRepository extends Repository<Meetings> {
     }
   }
 
-  async getMeetingVacancy(meetingNo: number): Promise<ParticipatingMembers> {
+  async getMeetingVacancy(meetingNo: number): Promise<MeetingVacancy> {
     try {
-      const result: ParticipatingMembers = await this.createQueryBuilder(
-        'meetings',
-      )
+      const result: MeetingVacancy = await this.createQueryBuilder('meetings')
         .leftJoin(
           'meetings.meetingInfo',
           'meetingInfo',

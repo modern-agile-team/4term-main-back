@@ -13,7 +13,9 @@ export class GuestMembers extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @ManyToOne((type) => Users, (user) => user.guestMembers)
+  @ManyToOne((type) => Users, (user) => user.guestMembers, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'user_no' })
   userNo: Users;
 

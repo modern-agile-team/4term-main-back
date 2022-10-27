@@ -13,7 +13,9 @@ export class HostMembers extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @ManyToOne((type) => Users, (user) => user.hostMembers)
+  @ManyToOne((type) => Users, (user) => user.hostMembers, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'user_no' })
   userNo: Users;
 

@@ -81,7 +81,7 @@ export class MeetingsController {
     @Body() { userNo }: AcceptInvitaionDto,
   ) {
     try {
-      await this.meetingsService.acceptInvitation(noticeNo, userNo);
+      await this.meetingsService.acceptInvitation(userNo, noticeNo);
 
       return {
         succes: true,
