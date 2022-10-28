@@ -9,6 +9,7 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
 } from 'typeorm';
+import { ChatLog } from './chat-log.entity';
 import { ChatUsers } from './chat-users.entity';
 
 @Entity('chat_list')
@@ -27,4 +28,7 @@ export class ChatList extends BaseEntity {
 
   @OneToMany((type) => ChatUsers, (chatUsers) => chatUsers.chatRoomNo)
   chatUserNo: ChatUsers[];
+
+  @OneToMany((type) => ChatLog, (chatLog) => chatLog.chatRoomNo)
+  chatLogNo: ChatLog[];
 }

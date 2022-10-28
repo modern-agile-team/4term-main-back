@@ -22,8 +22,8 @@ export class ChatsGateway {
 
   @WebSocketServer() nsp: Namespace;
   afterInit() {
-    this.nsp.adapter.on('create-room', (room) => {
-      this.logger.log(`"Room:${room}"이 생성되었습니다.`);
+    this.nsp.adapter.on('init-socket', (room, id) => {
+      this.logger.log(`"Socket:${id}"초기화 되었습니다.`);
     });
 
     this.nsp.adapter.on('join-room', (room, id) => {
@@ -49,6 +49,18 @@ export class ChatsGateway {
     this.logger.log(`${socket.id} 소켓연결 해제`);
   }
 
+  @SubscribeMessage('init-socket')
+  async handelInitSocket(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() userNo: number,
+  ) {
+    try {
+      await this.chatService.initSocket(socket, userNo);
+    } catch (err) {
+      throw err;
+    }
+  }
+
   @SubscribeMessage('create-room')
   async handelCreateRoom(
     @ConnectedSocket() socket: Socket,
@@ -56,6 +68,8 @@ export class ChatsGateway {
   ) {
     try {
       await this.chatService.createRoom(socket, messagePayload);
+
+      return { success: true };
     } catch (err) {
       throw err;
     }

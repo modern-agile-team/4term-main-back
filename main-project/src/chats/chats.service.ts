@@ -8,6 +8,7 @@ import { MeetingInfoRepository } from 'src/meetings/repository/meeting-info.repo
 import { MeetingRepository } from 'src/meetings/repository/meeting.repository';
 import {
   ChatRoom,
+  ChatRoomList,
   ChatRoomUsers,
   CreateChat,
   JoinChatRoom,
@@ -32,6 +33,21 @@ export class ChatService {
     private readonly meetingInfoRepository: MeetingInfoRepository,
   ) {}
 
+  async initSocket(socket, userNo: number): Promise<void> {
+    try {
+      const chatRoomList = await this.getChatRoomListByUserNo(
+        Object.values(userNo),
+      );
+      if (chatRoomList) {
+        chatRoomList.forEach((el) => {
+          socket.join(`${el.chatRoomNo}`);
+        });
+      }
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async createRoom(socket, chat: CreateChat): Promise<void> {
     try {
       const { meetingNo } = chat;
@@ -50,36 +66,34 @@ export class ChatService {
         throw new BadRequestException('이미 생성된 채팅방 입니다.');
       }
 
-      if (meetingExist && !roomExist) {
-        const { roomName, userNo } = await this.getUserByMeetingNo(meetingNo);
-        if (!roomName) {
-          throw new NotFoundException('Meeting 정보 조회 오류입니다.');
-        }
-
-        const userNoList: number[] = userNo.split(',').map((item) => {
-          return parseInt(item);
-        });
-
-        const chatRoomNo: number = await this.createRoomByMeetingNo({
-          meetingNo,
-          roomName,
-        });
-        if (!chatRoomNo) {
-          throw new BadRequestException('채팅방 생성 오류입니다.');
-        }
-
-        const roomUsers: object[] = userNoList.reduce((values, userNo) => {
-          values.push({ chatRoomNo, userNo });
-          return values;
-        }, []);
-
-        const result = await this.setRoomUsers(roomUsers);
-        if (!result) {
-          throw new BadRequestException('채팅방 유저정보 생성 오류입니다.');
-        }
-
-        socket.join(`${chatRoomNo}`);
+      const { roomName, userNo } = await this.getUserByMeetingNo(meetingNo);
+      if (!roomName) {
+        throw new NotFoundException('Meeting 정보 조회 오류입니다.');
       }
+
+      const userNoList: number[] = userNo.split(',').map((item) => {
+        return parseInt(item);
+      });
+
+      const chatRoomNo: number = await this.createRoomByMeetingNo({
+        meetingNo,
+        roomName,
+      });
+      if (!chatRoomNo) {
+        throw new BadRequestException('채팅방 생성 오류입니다.');
+      }
+
+      const roomUsers: object[] = userNoList.reduce((values, userNo) => {
+        values.push({ chatRoomNo, userNo });
+        return values;
+      }, []);
+
+      const result = await this.setRoomUsers(roomUsers);
+      if (!result) {
+        throw new BadRequestException('채팅방 유저정보 생성 오류입니다.');
+      }
+
+      socket.join(`${chatRoomNo}`);
     } catch (err) {
       throw err;
     }
@@ -105,12 +119,14 @@ export class ChatService {
     }
   }
 
-  async getChatRoomListByUserNo(userNo) {
+  async getChatRoomListByUserNo(userNo): Promise<ChatRoomList[]> {
     try {
-      const chatList = await this.chatUsersRepository.getChatRoomList(userNo);
+      const chatList: ChatRoomList[] =
+        await this.chatUsersRepository.getChatRoomList(userNo);
       if (!chatList.length) {
         throw new BadRequestException('채팅방이 존재하지 않습니다.');
       }
+
       return chatList;
     } catch (err) {
       throw err;
@@ -129,6 +145,7 @@ export class ChatService {
       socket.broadcast.to(`${chatRoomNo}`).emit('message', {
         message,
         userNo,
+        chatRoomNo,
       });
     } catch (err) {
       throw err;

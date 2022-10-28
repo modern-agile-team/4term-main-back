@@ -7,6 +7,7 @@ import { ChatService } from './chats.service';
 import { ChatListRepository } from './repository/chat-list.repository';
 import { ChatUsersRepository } from './repository/chat-users.repository';
 import { ChatsController } from './chats.controller';
+import { ChatLogRepository } from './repository/chat-log.repository';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -14,6 +15,7 @@ import { ChatsController } from './chats.controller';
       ChatUsersRepository,
       MeetingRepository,
       MeetingInfoRepository,
+      ChatLogRepository,
     ]),
   ],
   providers: [ChatsGateway, ChatService],

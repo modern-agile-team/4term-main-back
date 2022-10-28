@@ -31,3 +31,8 @@ export interface ChatRoomUsers {
   meetingNo: number;
   userNo: number;
 }
+
+export interface ChatRoomList {
+  roomName: string;
+  chatRoomNo: number;
+}
