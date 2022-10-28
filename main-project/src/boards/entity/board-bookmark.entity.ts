@@ -14,11 +14,13 @@ export class BoardBookmarks extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @OneToOne((type) => Boards, (board) => board.boardBookmark)
+  @OneToOne((type) => Boards, (board) => board.boardBookmark, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'board_no' })
-  boardNo: Boards;
+  boardNo: number;
 
   @ManyToOne((type) => Users, (user) => user.boardBookmark)
   @JoinColumn({ name: 'user_no' })
-  userNo: Users;
+  userNo: number;
 }

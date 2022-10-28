@@ -1,6 +1,8 @@
 import { Boards } from 'src/boards/entity/board.entity';
+import { ChatList } from 'src/chats/entity/chat-list.entity';
 import { GuestMembers } from 'src/members/entity/guest-members.entity';
 import { HostMembers } from 'src/members/entity/host-members.entity';
+import { NoticeMeetings } from 'src/notices/entity/notice-meeting.entity';
 import {
   BaseEntity,
   Column,
@@ -28,16 +30,18 @@ export class Meetings extends BaseEntity {
   @Column({ type: 'tinyint', width: 1, default: false, name: 'is_accepted' })
   isAccepted: boolean;
 
-  @CreateDateColumn()
-  created_date: Date;
+  @CreateDateColumn({ name: 'created_date' })
+  createdDate: Date;
 
-  @UpdateDateColumn({ default: null, nullable: true, name: 'updated_date' })
+  @UpdateDateColumn({ name: 'updated_date' })
   updatedDate: Date;
 
   @DeleteDateColumn({ nullable: true, name: 'deleted_date' })
   deletedDate: Date;
 
-  @OneToOne((type) => MeetingInfo, (meetingInfo) => meetingInfo.meetingNo)
+  @OneToOne((type) => MeetingInfo, (meetingInfo) => meetingInfo.meetingNo, {
+    onDelete: 'CASCADE',
+  })
   meetingInfo: MeetingInfo;
 
   @OneToMany((type) => HostMembers, (hostMembers) => hostMembers.meetingNo)
@@ -48,4 +52,13 @@ export class Meetings extends BaseEntity {
 
   @OneToOne((type) => Boards, (board) => board.meetingNo)
   board: Boards;
+
+  @OneToMany((type) => ChatList, (chat) => chat.meetingNo)
+  chatMeetingNo: ChatList;
+
+  @OneToMany(
+    (type) => NoticeMeetings,
+    (noticeMeetings) => noticeMeetings.meetingNo,
+  )
+  noticeMeetingNo: NoticeMeetings;
 }

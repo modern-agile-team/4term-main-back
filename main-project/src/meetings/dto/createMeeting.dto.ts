@@ -1,15 +1,15 @@
-import { IsDate, IsNotEmpty, IsString, IsObject } from 'class-validator';
+import { IsNotEmpty, IsString, IsInt, IsDate } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
 export class CreateMeetingDto {
   @IsNotEmpty()
-  @IsObject()
   @ApiProperty({
     example: [1, 2, 3],
     description: '약속 주최자 측 정보, 배열 0번지가 게시물 작성자',
     required: true,
   })
-  host: object;
+  host: number[];
 
   @IsNotEmpty()
   @IsString()
@@ -21,6 +21,7 @@ export class CreateMeetingDto {
   location: string;
 
   @IsNotEmpty()
+  @Type(() => Date)
   @IsDate()
   @ApiProperty({
     example: '2022-06-27 15:22:31',
@@ -28,4 +29,13 @@ export class CreateMeetingDto {
     required: true,
   })
   time: Date;
+
+  @IsNotEmpty()
+  @IsInt()
+  @ApiProperty({
+    example: 3,
+    description: '원하는 게스트 인원',
+    required: true,
+  })
+  guestHeadcount: number;
 }

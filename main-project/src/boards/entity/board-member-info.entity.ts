@@ -13,13 +13,15 @@ export class BoardMemberInfos extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: false })
   male: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: false })
   female: number;
 
-  @OneToOne((type) => Boards, (board) => board.boardMemberInfo)
+  @OneToOne((type) => Boards, (board) => board.boardMemberInfo, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'board_no' })
-  boardNo: Boards;
+  boardNo: number;
 }

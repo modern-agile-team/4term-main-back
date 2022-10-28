@@ -8,10 +8,14 @@ import {
   DeleteDateColumn,
   Entity,
   JoinColumn,
+  ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Users } from 'src/users/entity/user.entity';
+import { Reportedboards } from 'src/reports/entity/reported-board.entity';
 
 @Entity('boards')
 export class Boards extends BaseEntity {
@@ -25,8 +29,7 @@ export class Boards extends BaseEntity {
     type: 'tinyint',
     width: 1,
     default: false,
-    comment: '인원 모집 여부',
-    nullable: false,
+    nullable: true,
   })
   isDone: boolean;
 
@@ -36,16 +39,16 @@ export class Boards extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   location: string;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'datetime', name: 'meeting_time', nullable: true })
   meetingTime: Date;
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
 
-  @UpdateDateColumn({ default: null, nullable: false, name: 'updated_date' })
+  @UpdateDateColumn({ default: null, name: 'updated_date' })
   updatedDate: Date;
 
-  @DeleteDateColumn({ nullable: true, name: 'deleted_date' })
+  @DeleteDateColumn({ name: 'deleted_date' })
   deletedDate: Date;
 
   @OneToOne(
@@ -57,7 +60,19 @@ export class Boards extends BaseEntity {
   @OneToOne((type) => BoardBookmarks, (boardBookmark) => boardBookmark.boardNo)
   boardBookmark: BoardBookmarks;
 
-  @OneToOne((type) => Meetings, (meeting) => meeting.board)
-  @JoinColumn({ name: 'board_no' })
-  meetingNo: Meetings;
+  @OneToOne((type) => Meetings, (meeting) => meeting.board, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'meeting_no' })
+  meetingNo: number;
+
+  @ManyToOne((type) => Users, (user) => user.board, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_no' })
+  userNo: number;
+
+  @OneToMany(
+    (type) => Reportedboards,
+    (reportedboards) => reportedboards.targetBoardNo,
+  )
+  reportedBoard: Reportedboards[];
 }

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 name: Docker CI/CD
+=======
+name: CI/CD Docker
+>>>>>>> 479aaffbdc85bfc1cebd220bf4fdfc1ee3f2e2a7
 
 on:
     push:
