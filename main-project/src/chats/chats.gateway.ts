@@ -7,7 +7,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Namespace, Socket } from 'socket.io';
-import { ChatService } from './chats.service';
+import { ChatsGatewayService } from './chats-gateway.service';
 import {
   CreateChat,
   JoinChatRoom,
@@ -16,7 +16,7 @@ import {
 
 @WebSocketGateway(4000, { namespace: 'chat' })
 export class ChatsGateway {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(private readonly chatGatewayService: ChatsGatewayService) {}
 
   private logger = new Logger('GateWay');
 
@@ -55,7 +55,7 @@ export class ChatsGateway {
     @MessageBody() userNo: number,
   ) {
     try {
-      await this.chatService.initSocket(socket, userNo);
+      await this.chatGatewayService.initSocket(socket, userNo);
     } catch (err) {
       throw err;
     }
@@ -67,7 +67,7 @@ export class ChatsGateway {
     @MessageBody() messagePayload: CreateChat,
   ) {
     try {
-      await this.chatService.createRoom(socket, messagePayload);
+      await this.chatGatewayService.createRoom(socket, messagePayload);
 
       return { success: true };
     } catch (err) {
@@ -81,7 +81,7 @@ export class ChatsGateway {
     @MessageBody() messagePayload: JoinChatRoom,
   ) {
     try {
-      await this.chatService.joinRoom(socket, messagePayload);
+      await this.chatGatewayService.joinRoom(socket, messagePayload);
 
       return { success: true };
     } catch (err) {
@@ -95,7 +95,7 @@ export class ChatsGateway {
     @MessageBody() messagePayload: MessagePayload,
   ) {
     try {
-      await this.chatService.sendChat(socket, messagePayload);
+      await this.chatGatewayService.sendChat(socket, messagePayload);
     } catch (err) {
       throw err;
     }

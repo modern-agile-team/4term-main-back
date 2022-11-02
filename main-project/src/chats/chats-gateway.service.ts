@@ -18,7 +18,7 @@ import { ChatListRepository } from './repository/chat-list.repository';
 import { ChatUsersRepository } from './repository/chat-users.repository';
 
 @Injectable()
-export class ChatService {
+export class ChatsGatewayService {
   constructor(
     @InjectRepository(ChatListRepository)
     private readonly chatListRepository: ChatListRepository,
