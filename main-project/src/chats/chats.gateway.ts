@@ -7,7 +7,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Namespace, Socket } from 'socket.io';
-import { ChatService } from './chats.service';
+import { ChatsGatewayService } from './chats-gateway.service';
 import {
   CreateChat,
   JoinChatRoom,
@@ -16,14 +16,14 @@ import {
 
 @WebSocketGateway(4000, { namespace: 'chat' })
 export class ChatsGateway {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(private readonly chatGatewayService: ChatsGatewayService) {}
 
   private logger = new Logger('GateWay');
 
   @WebSocketServer() nsp: Namespace;
   afterInit() {
-    this.nsp.adapter.on('create-room', (room) => {
-      this.logger.log(`"Room:${room}"이 생성되었습니다.`);
+    this.nsp.adapter.on('init-socket', (room, id) => {
+      this.logger.log(`"Socket:${id}"초기화 되었습니다.`);
     });
 
     this.nsp.adapter.on('join-room', (room, id) => {
@@ -49,13 +49,27 @@ export class ChatsGateway {
     this.logger.log(`${socket.id} 소켓연결 해제`);
   }
 
+  @SubscribeMessage('init-socket')
+  async handelInitSocket(
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() userNo: number,
+  ) {
+    try {
+      await this.chatGatewayService.initSocket(socket, userNo);
+    } catch (err) {
+      throw err;
+    }
+  }
+
   @SubscribeMessage('create-room')
   async handelCreateRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: CreateChat,
   ) {
     try {
-      await this.chatService.createRoom(socket, messagePayload);
+      await this.chatGatewayService.createRoom(socket, messagePayload);
+
+      return { success: true };
     } catch (err) {
       throw err;
     }
@@ -67,7 +81,7 @@ export class ChatsGateway {
     @MessageBody() messagePayload: JoinChatRoom,
   ) {
     try {
-      await this.chatService.joinRoom(socket, messagePayload);
+      await this.chatGatewayService.joinRoom(socket, messagePayload);
 
       return { success: true };
     } catch (err) {
@@ -81,7 +95,7 @@ export class ChatsGateway {
     @MessageBody() messagePayload: MessagePayload,
   ) {
     try {
-      await this.chatService.sendChat(socket, messagePayload);
+      await this.chatGatewayService.sendChat(socket, messagePayload);
     } catch (err) {
       throw err;
     }
