@@ -35,11 +35,11 @@ export class Users extends BaseEntity {
   @Column({ default: false })
   gender: boolean;
 
-  @Column({ type: 'varchar', length: 45 })
-  nickname: string;
+  @Column({ type: 'tinyint', width: 1, default: false })
+  isAdmin: boolean;
 
-  @Column({ default: false })
-  admin: boolean;
+  @Column({ type: 'int', default: 0 })
+  status: number;
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;

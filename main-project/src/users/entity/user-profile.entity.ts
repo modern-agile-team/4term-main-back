@@ -23,17 +23,20 @@ export class UserProfile extends BaseEntity {
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 
+  @Column({ type: 'varchar', length: 45 })
+  nickname: string;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
   @ManyToOne((type) => University, (university) => university.usersUniversity, {
-    nullable: false,
+    nullable: true,
   })
   @JoinColumn({ name: 'university_no' })
   universityNo: number;
 
   @ManyToOne((type) => Majors, (majors) => majors.userProfile, {
-    nullable: false,
+    nullable: true,
   })
   @JoinColumn({ name: 'major_no' })
   majorNo: number;

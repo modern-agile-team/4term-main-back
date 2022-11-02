@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Patch, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation } from '@nestjs/swagger';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -22,20 +30,33 @@ export class UsersController {
     return response;
   }
 
-  @Patch('/patch/:userNo')
-  // @UseGuards(AuthGuard())
-  @ApiOperation({ summary: '유저정보 수정' })
-  async updateUser(
-    @Param('userNo') userNo: number,
-    @Body()
-    nickname: UpdateUserDto,
-  ): Promise<object> {
-    await this.usersService.updateUser(userNo, nickname);
-    const response = {
-      success: true,
-      msg: `${userNo}님의 정보가 수정되었습니다`,
-    };
+  // @Patch('/patch/:userNo')
+  // // @UseGuards(AuthGuard())
+  // @ApiOperation({ summary: '유저정보 수정' })
+  // async updateUser(
+  //   @Param('userNo') userNo: number,
+  //   @Body()
+  //   nickname: UpdateUserDto,
+  // ): Promise<object> {
+  //   await this.usersService.updateUser(userNo, nickname);
+  //   const response = {
+  //     success: true,
+  //     msg: `${userNo}님의 정보가 수정되었습니다`,
+  //   };
 
-    return response;
+  //   return response;
+  // }
+
+  @Delete('/signDown/:userNo')
+  async signDown(@Param('userNo') userNo: number): Promise<object> {
+    try {
+      await this.usersService.signDown(userNo);
+
+      return {
+        msg: `성공적으로 회원탈퇴가 진행되었습니다.`,
+      };
+    } catch (err) {
+      throw err;
+    }
   }
 }

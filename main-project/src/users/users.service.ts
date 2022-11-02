@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { access } from 'fs';
 import { AuthService } from 'src/auth/auth.service';
@@ -14,9 +18,8 @@ import { UsersRepository } from './repository/users.repository';
 export class UsersService {
   constructor(
     @InjectRepository(UsersRepository)
-    private usersRepository: UsersRepository,
-  ) // private authService: AuthService,
-  {}
+    private usersRepository: UsersRepository, // private authService: AuthService,
+  ) {}
 
   //유저 불러오기
   async readUserByNo(userNo: number): Promise<UserProfileDetail> {
@@ -35,19 +38,31 @@ export class UsersService {
   }
 
   //유저 정보 수정하기
-  async updateUser(userNo: number, nickname: UpdateUserDto): Promise<void> {
-    try {
-      await this.readUserByNo(userNo);
-      await this.usersRepository.updateUser(userNo, nickname);
+  // async updateUser(userNo: number, nickname: UpdateUserDto): Promise<void> {
+  //   try {
+  //     await this.readUserByNo(userNo);
+  //     await this.usersRepository.updateUser(userNo, nickname);
 
+  //     return;
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // }
+
+  //유저 삭제하기
+  async signDown(userNo: number) {
+    try {
+      const affected = await this.usersRepository.signDown(userNo);
+
+      if (!affected) {
+        throw new InternalServerErrorException();
+      }
       return;
     } catch (error) {
       throw error;
     }
   }
 }
-//유저 삭제하기
-
 //   //Refresh Token
 //   async signInByOAuth({ accessToken, oAuthAgency }: CreateUserByOAuthDto) {
 //     const id = await this.authService.validateOAuth(accessToken, oAuthAgency);
