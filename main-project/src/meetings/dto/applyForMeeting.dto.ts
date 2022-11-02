@@ -2,17 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsNotEmpty } from 'class-validator';
 
 export class ApplyForMeetingDto {
-  //Param
-  @IsNotEmpty()
-  @IsInt()
-  @ApiProperty({
-    example: 1,
-    description: '참여 요청을 보내려는 약속',
-    required: true,
-  })
-  meetingNo: number;
-
-  //Body
   @IsNotEmpty()
   @ApiProperty({
     example: [4, 5, 6],

@@ -1,11 +1,11 @@
-import { Body, Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ChatService } from './chats.service';
+import { ChatsControllerService } from './chats-controller.service';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
 export class ChatsController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(private readonly chatControllerService: ChatsControllerService) {}
 
   @Get('/chatroom/:userNo')
   @ApiOperation({
@@ -14,9 +14,8 @@ export class ChatsController {
   })
   async getChatRoomList(@Param('userNo') userNo: number): Promise<object> {
     try {
-      const chatRoomList = await this.chatService.getChatRoomListByUserNo(
-        userNo,
-      );
+      const chatRoomList =
+        await this.chatControllerService.getChatRoomListByUserNo(userNo);
       return {
         success: true,
         chatRoomList,

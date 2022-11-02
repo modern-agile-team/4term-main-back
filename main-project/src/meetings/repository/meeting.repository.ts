@@ -8,14 +8,14 @@ import {
 import { Meetings } from '../entity/meeting.entity';
 import { InternalServerErrorException } from '@nestjs/common';
 import {
-  ParticipatingMembers,
+  MeetingVacancy,
   MeetingDetail,
-  MeetingResponse,
+  InsertRaw,
 } from '../interface/meeting.interface';
 
 @EntityRepository(Meetings)
 export class MeetingRepository extends Repository<Meetings> {
-  async createMeeting(meetingInfo: MeetingDetail): Promise<MeetingResponse> {
+  async createMeeting(meetingInfo: MeetingDetail): Promise<InsertRaw> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('meetings')
         .insert()
@@ -77,13 +77,36 @@ export class MeetingRepository extends Repository<Meetings> {
     }
   }
 
-  async getParticipatingMembers(
-    meetingNo: number,
-  ): Promise<ParticipatingMembers> {
+  async getMeetingMembers(meetingNo: number): Promise<any> {
     try {
-      const result: ParticipatingMembers = await this.createQueryBuilder(
-        'meetings',
-      )
+      const members: object = await this.createQueryBuilder('meetings')
+        .leftJoin(
+          'meetings.guestMembers',
+          'guestMembers',
+          'meetings.no = guestMembers.meetingNo',
+        )
+        .leftJoin(
+          'meetings.hostMembers',
+          'hostMembers',
+          'meetings.no = hostMembers.meetingNo',
+        )
+        .select([
+          `CONCAT(GROUP_CONCAT(DISTINCT hostMembers.userNo),
+          IF(COUNT(guestMembers.userNo),CONCAT(",", GROUP_CONCAT(DISTINCT guestMembers.userNo)), ""))
+          AS members`,
+        ])
+        .where('meetings.no = :meetingNo', { meetingNo })
+        .getRawOne();
+
+      return members;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  async getMeetingVacancy(meetingNo: number): Promise<MeetingVacancy> {
+    try {
+      const result: MeetingVacancy = await this.createQueryBuilder('meetings')
         .leftJoin(
           'meetings.meetingInfo',
           'meetingInfo',
@@ -99,15 +122,7 @@ export class MeetingRepository extends Repository<Meetings> {
           'hostMembers',
           'meetings.no = hostMembers.meetingNo',
         )
-        .leftJoin('meetings.board', 'board', 'meetings.no = board.meetingNo')
         .select([
-          'board.isDone AS isDone',
-          'meetingInfo.host AS adminHost',
-          'meetingInfo.guest AS adminGuest',
-          'meetingInfo.guestHeadcount AS guestHeadcount',
-          'meetingInfo.hostHeadcount AS hostHeadcount',
-          'GROUP_CONCAT(DISTINCT guestMembers.userNo) AS guests',
-          'GROUP_CONCAT(DISTINCT hostMembers.userNo) AS hosts',
           'IF(meetingInfo.guestHeadcount > COUNT(DISTINCT guestMembers.userNo),TRUE, FALSE) AS addGuestAvailable',
           'IF(meetingInfo.hostHeadcount > COUNT(DISTINCT hostMembers.userNo), TRUE, FALSE) AS addHostAvailable',
         ])
@@ -118,7 +133,7 @@ export class MeetingRepository extends Repository<Meetings> {
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err} 참여 중인 유저 조회(getParticipatingMembers): 알 수 없는 서버 에러입니다.`,
+        `${err} 약속 공석 조회(getMeetingVacancy): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
