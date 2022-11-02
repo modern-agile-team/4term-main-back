@@ -15,6 +15,7 @@ import {
   MessagePayload,
 } from './interface/chat.interface';
 import { ChatListRepository } from './repository/chat-list.repository';
+import { ChatLogRepository } from './repository/chat-log.repository';
 import { ChatUsersRepository } from './repository/chat-users.repository';
 
 @Injectable()
@@ -25,6 +26,9 @@ export class ChatsGatewayService {
 
     @InjectRepository(ChatUsersRepository)
     private readonly chatUsersRepository: ChatUsersRepository,
+
+    @InjectRepository(ChatLogRepository)
+    private readonly chatLogRepository: ChatLogRepository,
 
     @InjectRepository(MeetingRepository)
     private readonly meetingRepository: MeetingRepository,
@@ -142,11 +146,25 @@ export class ChatsGatewayService {
       if (!user) {
         throw new BadRequestException('채팅방에 유저의 정보가 없습니다.');
       }
+
+      await this.saveMessage(messagePayload);
+
       socket.broadcast.to(`${chatRoomNo}`).emit('message', {
         message,
         userNo,
         chatRoomNo,
       });
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  private async saveMessage(messagePayload: MessagePayload): Promise<void> {
+    try {
+      const insertId = await this.chatLogRepository.saveMessage(messagePayload);
+      if (!insertId) {
+        throw new BadRequestException('매세지 저장 오류 입니다.');
+      }
     } catch (err) {
       throw err;
     }
