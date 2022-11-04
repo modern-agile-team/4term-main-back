@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChatsControllerService } from './chats-controller.service';
 
@@ -20,6 +20,23 @@ export class ChatsController {
         success: true,
         chatRoomList,
       };
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  @Get('/chatRoom/:chatRoomNo/log')
+  async getChatLog(
+    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
+    @Body('userNo', ParseIntPipe) userNo: number,
+    @Body('currentChatLogNo', ParseIntPipe) currentChatLogNo: number,
+  ): Promise<any> {
+    try {
+      await this.chatControllerService.getChatLog({
+        userNo,
+        chatRoomNo,
+        currentChatLogNo,
+      });
     } catch (err) {
       throw err;
     }

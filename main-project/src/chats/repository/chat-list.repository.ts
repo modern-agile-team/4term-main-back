@@ -50,6 +50,7 @@ export class ChatListRepository extends Repository<ChatList> {
         .where(`chat_list.no = :chatRoomNo`, { chatRoomNo })
         .andWhere('chatUserNo.user_no = :userNo', { userNo })
         .getRawOne();
+
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
