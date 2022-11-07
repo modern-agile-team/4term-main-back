@@ -6,10 +6,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { MeetingInfoRepository } from 'src/meetings/repository/meeting-info.repository';
 import { MeetingRepository } from 'src/meetings/repository/meeting.repository';
+import { ChatList } from './entity/chat-list.entity';
 import {
   ChatRoom,
   ChatRoomList,
   ChatRoomUsers,
+  ChatUserInfo,
   CreateChat,
   JoinChatRoom,
   MessagePayload,
@@ -65,7 +67,9 @@ export class ChatsGatewayService {
         );
       }
 
-      const roomExist = await this.chatListRepository.checkRoomExist(meetingNo);
+      const roomExist = await this.chatListRepository.checkRoomExistByMeetingNo(
+        meetingNo,
+      );
       if (roomExist) {
         throw new BadRequestException('이미 생성된 채팅방 입니다.');
       }
@@ -140,6 +144,10 @@ export class ChatsGatewayService {
   async sendChat(socket, messagePayload: MessagePayload): Promise<void> {
     try {
       const { userNo, chatRoomNo, message } = messagePayload;
+      const chatRoom: ChatList = await this.checkChatRoom(chatRoomNo);
+      if (!chatRoom) {
+        throw new BadRequestException('존재하지 않는 채팅방입니다.');
+      }
 
       const user: ChatRoomUsers =
         await this.chatListRepository.isUserInChatRoom(chatRoomNo, userNo);
@@ -172,13 +180,15 @@ export class ChatsGatewayService {
 
   private async getUserByMeetingNo(meetingNo): Promise<ChatRoom> {
     try {
-      const chatRoom: ChatRoom =
-        await this.meetingInfoRepository.getMeetingUser(meetingNo);
-      chatRoom.roomName =
-        chatRoom.guestUserNickname + ',' + chatRoom.hostUserNickname;
-      chatRoom.userNo = chatRoom.guestUserNo + ',' + chatRoom.hostUserNo;
+      const meetingInfo: ChatRoom =
+        await this.meetingInfoRepository.getMeetingUserByMeetingNo(meetingNo);
 
-      return chatRoom;
+      meetingInfo.roomName =
+        meetingInfo.guestUserNickname + ',' + meetingInfo.hostUserNickname;
+      meetingInfo.userNo =
+        meetingInfo.guestUserNo + ',' + meetingInfo.hostUserNo;
+
+      return meetingInfo;
     } catch (err) {
       throw err;
     }
@@ -205,6 +215,18 @@ export class ChatsGatewayService {
       return insertId;
     } catch (err) {
       throw err;
+    }
+  }
+
+  private async checkChatRoom(chatRoomNo): Promise<ChatList> {
+    try {
+      const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
+        chatRoomNo,
+      );
+
+      return chatRoom;
+    } catch (error) {
+      throw error;
     }
   }
 }

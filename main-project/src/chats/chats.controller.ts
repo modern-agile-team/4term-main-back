@@ -32,11 +32,13 @@ export class ChatsController {
     @Body('currentChatLogNo', ParseIntPipe) currentChatLogNo: number,
   ): Promise<any> {
     try {
-      await this.chatControllerService.getChatLog({
+      const chatLog = await this.chatControllerService.getChatLog({
         userNo,
         chatRoomNo,
         currentChatLogNo,
       });
+
+      return chatLog;
     } catch (err) {
       throw err;
     }

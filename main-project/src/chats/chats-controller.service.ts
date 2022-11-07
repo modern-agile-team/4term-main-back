@@ -5,6 +5,7 @@ import {
   ChatUserInfo,
   PreviousChatLog,
 } from './interface/chat.interface';
+import { ChatListRepository } from './repository/chat-list.repository';
 import { ChatLogRepository } from './repository/chat-log.repository';
 import { ChatUsersRepository } from './repository/chat-users.repository';
 
@@ -16,6 +17,9 @@ export class ChatsControllerService {
 
     @InjectRepository(ChatLogRepository)
     private readonly chatLogRepository: ChatLogRepository,
+
+    @InjectRepository(ChatListRepository)
+    private readonly chatListRepository: ChatListRepository,
   ) {}
 
   async getChatRoomListByUserNo(userNo): Promise<ChatRoomList[]> {
@@ -27,36 +31,54 @@ export class ChatsControllerService {
       }
 
       return chatList;
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      throw error;
     }
   }
 
   async getChatLog({ userNo, chatRoomNo, currentChatLogNo }: PreviousChatLog) {
     try {
       // await this.checkRoom({userNo, chatRoomNo})
-      await this.checkUserInChatRoom({ userNo, chatRoomNo });
+      await this.checkChatRoom({ userNo, chatRoomNo });
 
       const chatLog = await this.chatLogRepository.getPreviousChatLog(
         chatRoomNo,
         currentChatLogNo,
       );
-      console.log(chatLog);
-    } catch (err) {
-      throw err;
+
+      return chatLog;
+    } catch (error) {
+      throw error;
     }
   }
 
-  private async checkUserInChatRoom(chatUserInfo: ChatUserInfo) {
+  private async checkChatRoom(chatUserInfo: ChatUserInfo): Promise<void> {
     try {
-      const result = await this.chatUsersRepository.checkUserInChatRoom(
+      const { chatRoomNo } = chatUserInfo;
+      const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
+        chatRoomNo,
+      );
+
+      if (!chatRoom) {
+        throw new BadRequestException('존재하지 않는 채팅방입니다.');
+      }
+
+      await this.checkUserInChatRoom(chatUserInfo);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private async checkUserInChatRoom(chatUserInfo: ChatUserInfo): Promise<void> {
+    try {
+      const chatUser = await this.chatUsersRepository.checkUserInChatRoom(
         chatUserInfo,
       );
-      if (!result) {
+      if (!chatUser) {
         throw new BadRequestException(`채팅방에 없는 사용자 입니다.`);
       }
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      throw error;
     }
   }
 }
