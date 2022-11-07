@@ -38,4 +38,21 @@ export class ChatLogRepository extends Repository<ChatLog> {
       );
     }
   }
+
+  async getRecentChatLog(chatRoomNo): Promise<ChatLog[]> {
+    try {
+      const recentChatLog = await this.createQueryBuilder('chat_log')
+        .select(['chat_log.*'])
+        .where('chat_log.chat_room_no = :chatRoomNo', { chatRoomNo })
+        .orderBy('no', 'DESC')
+        .limit(30)
+        .getRawMany();
+
+      return recentChatLog;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 채팅로그 불러오기(getRecentChatLog): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
 }

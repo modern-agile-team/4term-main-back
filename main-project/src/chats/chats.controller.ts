@@ -7,7 +7,7 @@ import { ChatsControllerService } from './chats-controller.service';
 export class ChatsController {
   constructor(private readonly chatControllerService: ChatsControllerService) {}
 
-  @Get('/chatroom/:userNo')
+  @Get('/:userNo')
   @ApiOperation({
     summary: '채팅 목록 API',
     description: ' 채팅 목록 조회',
@@ -25,7 +25,28 @@ export class ChatsController {
     }
   }
 
-  @Get('/chatRoom/:chatRoomNo/log')
+  @Get('/join/:chatRoomNo')
+  @ApiOperation({
+    summary: '채팅방 입장시 대화내역 API',
+    description: '채팅방 입장 시 가장 최신 대화내역 출력',
+  })
+  async getRecentChatLog(
+    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
+    @Body('userNo', ParseIntPipe) userNo: number,
+  ): Promise<any> {
+    try {
+      const chatLog = await this.chatControllerService.getRecentChatLog({
+        userNo,
+        chatRoomNo,
+      });
+
+      return chatLog;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  @Get('/:chatRoomNo/log')
   async getChatLog(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,

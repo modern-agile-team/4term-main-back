@@ -118,6 +118,7 @@ export class ChatsGatewayService {
 
       socket.join(`${user.chatRoomNo}`);
 
+      //추후 로그 또는 삭제
       socket.broadcast.to(`${user.chatRoomNo}`).emit('join-room', {
         username: user.nickname,
         msg: `${user.nickname}님이 접속하셨습니다.`,

@@ -38,13 +38,24 @@ export class ChatsControllerService {
 
   async getChatLog({ userNo, chatRoomNo, currentChatLogNo }: PreviousChatLog) {
     try {
-      // await this.checkRoom({userNo, chatRoomNo})
       await this.checkChatRoom({ userNo, chatRoomNo });
 
       const chatLog = await this.chatLogRepository.getPreviousChatLog(
         chatRoomNo,
         currentChatLogNo,
       );
+
+      return chatLog;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getRecentChatLog({ userNo, chatRoomNo }: PreviousChatLog) {
+    try {
+      await this.checkChatRoom({ userNo, chatRoomNo });
+
+      const chatLog = await this.chatLogRepository.getRecentChatLog(chatRoomNo);
 
       return chatLog;
     } catch (error) {
@@ -75,7 +86,7 @@ export class ChatsControllerService {
         chatUserInfo,
       );
       if (!chatUser) {
-        throw new BadRequestException(`채팅방에 없는 사용자 입니다.`);
+        throw new BadRequestException(`채팅방에 존재하지 않는 사용자 입니다.`);
       }
     } catch (error) {
       throw error;
