@@ -1,63 +1,64 @@
 import {
   Injectable,
-  InternalServerErrorException,
+  BadRequestException,
   NotFoundException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { access } from 'fs';
-import { AuthService } from 'src/auth/auth.service';
-import { CreateUserByOAuthDto } from 'src/auth/dto/createUserByOAuthDto';
-import {
-  OAuthAgency,
-  UserProfileDetail,
-} from 'src/auth/interface/auth.interface';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { create } from 'domain';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UserProfileRepository } from './repository/users-profile.repository';
 import { UsersRepository } from './repository/users.repository';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(UsersRepository)
-    private usersRepository: UsersRepository, // private authService: AuthService,
+    private usersRepository: UsersRepository,
+    private userProfileRepository: UserProfileRepository,
   ) {}
 
-  //유저 불러오기
-  async readUserByNo(userNo: number): Promise<UserProfileDetail> {
+  private async getUserByNo(userNo: number): Promise<any> {
     try {
-      const user = await this.usersRepository.readUserByNo(userNo);
-
+      const user = await this.usersRepository.getUserByNo(userNo);
       if (!user) {
         throw new NotFoundException(
           `${userNo} 님 정보 불러오기를 실패 했습니다.`,
         );
       }
+
       return user;
     } catch (error) {
       throw error;
     }
   }
-
-  //유저 정보 수정하기
-  // async updateUser(userNo: number, nickname: UpdateUserDto): Promise<void> {
-  //   try {
-  //     await this.readUserByNo(userNo);
-  //     await this.usersRepository.updateUser(userNo, nickname);
-
-  //     return;
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // }
-
-  //유저 삭제하기
-  async signDown(userNo: number) {
+  public async createUserProfile(userNo: number, createUserDto: CreateUserDto) {
     try {
-      const affected = await this.usersRepository.signDown(userNo);
-
-      if (!affected) {
-        throw new InternalServerErrorException();
+      const { status } = await this.getUserByNo(userNo);
+      // console.log(createUserDto);
+      //status가 0인지 확인하고 profile 생성
+      if (status == 0) {
+        throw new BadRequestException(
+          `아직 프로필이 생성되지 않은 유저입니다.`,
+        );
       }
-      return;
+      await this.userProfileRepository.createUserProfile(userNo, createUserDto);
+      // console.log(user);                                                                    ``
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async updateUserProfile(userNo: number, description: string) {
+    try {
+      const { status } = await this.getUserByNo(userNo);
+      console.log(status);
+      if (status === 0) {
+        throw new BadRequestException(
+          `아직 프로필이 생성되지 않은 유저입니다.`,
+        );
+      }
+      await this.userProfileRepository.updateUserProfile(description, userNo);
     } catch (error) {
       throw error;
     }

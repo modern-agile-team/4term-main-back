@@ -5,58 +5,35 @@ import {
   Get,
   Param,
   Patch,
-  UseGuards,
+  Post,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { ApiOperation } from '@nestjs/swagger';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
-  @Get('/:userNo')
-  // @UseGuards(AuthGuard())
-  @ApiOperation({ summary: '유저정보 불러오기' })
-  async readUserByNo(@Param('userNo') userNo: number): Promise<object> {
-    const readUser = await this.usersService.readUserByNo(userNo);
-    const response = {
-      success: true,
-      msg: '유저정보를 성공적으로 불러왔습니다.',
-      readUser,
-    };
-
-    return response;
+  @Post('/:userNo/profile/create')
+  @ApiOperation({ summary: ' 로그인 시 status : 0' })
+  async createUserProfile(
+    @Param('userNo') userNo: number,
+    @Body() createUserDto: CreateUserDto,
+  ) {
+    await this.usersService.createUserProfile(userNo, createUserDto);
+    return { success: true };
   }
 
-  // @Patch('/patch/:userNo')
-  // // @UseGuards(AuthGuard())
-  // @ApiOperation({ summary: '유저정보 수정' })
-  // async updateUser(
-  //   @Param('userNo') userNo: number,
-  //   @Body()
-  //   nickname: UpdateUserDto,
-  // ): Promise<object> {
-  //   await this.usersService.updateUser(userNo, nickname);
-  //   const response = {
-  //     success: true,
-  //     msg: `${userNo}님의 정보가 수정되었습니다`,
-  //   };
+  @Patch('/:userNo/profile/update')
+  @ApiOperation({ summary: '로그인 시 status : 1, 2' })
+  async updateUserProfile(
+    @Param('userNo') userNo: number,
+    @Body() { description }: UpdateUserProfileDto,
+  ) {
+    await this.usersService.updateUserProfile(userNo, description);
 
-  //   return response;
-  // }
-
-  @Delete('/signDown/:userNo')
-  async signDown(@Param('userNo') userNo: number): Promise<object> {
-    try {
-      await this.usersService.signDown(userNo);
-
-      return {
-        msg: `성공적으로 회원탈퇴가 진행되었습니다.`,
-      };
-    } catch (err) {
-      throw err;
-    }
+    return { success: true };
   }
 }

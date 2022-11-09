@@ -1,9 +1,7 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
 import { AuthCredentialsDto } from 'src/auth/dto/auth-credential.dto';
-import { UserProfileDetail } from 'src/auth/interface/auth.interface';
 import {
-  DeleteResult,
   EntityRepository,
   InsertResult,
   Repository,
@@ -25,6 +23,18 @@ export class UsersRepository extends Repository<Users> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+  async getUserByNo(userNo: number): Promise<object> {
+    try {
+      const user = this.createQueryBuilder('users')
+        .where('users.no = :userNo', { userNo })
+        .getOne();
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error}  알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -60,64 +70,6 @@ export class UsersRepository extends Repository<Users> {
     }
   }
 
-  //유저 정보 불러오기
-  async readUserByNo(userNo: number): Promise<UserProfileDetail> {
-    try {
-      const user = await this.createQueryBuilder('users')
-        .leftJoin('users.userProfileNo', 'profile')
-        .select([
-          'users.nickname AS nickname',
-          'users.gender AS gender',
-          // 'users.description AS description',
-          // 'userProfile.profileImage AS profileImage',
-          // 'AS mannerNo',
-          //학교추가, 학과추가, 매너온도 추가
-        ])
-        .where('users.no = :userNo', { userNo })
-        .getRawOne();
-
-      return user;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} readUserInfo-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-  //유저 정보 수정
-  async updateUser(userNo: number, nickname: string): Promise<any> {
-    try {
-      // const { raw }: UpdateResult = await this.createQueryBuilder('Users')
-      //   .update(Users)
-      //   .set(nickname)
-      //   .where('no = :userNo', { userNo })
-      //   .execute();
-      // return;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  //   //유저 정보 수정
-  //   async updateUserInfo(userNo: number, description: string): Promise<number> {
-  //     try {
-  //       const updateColumn = { description };
-
-  //       const { affected }: UpdateResult = await this.createQueryBuilder()
-  //         .update(UserProfile)
-  //         .set(updateColumn)
-  //         .where('userNo = :userNo', { userNo })
-  //         .execute();
-
-  //       return affected;
-  //     } catch (error) {
-  //       throw new InternalServerErrorException(
-  //         `${error} 알 수 없는 서버 에러입니다.`,
-  //       );
-  //     }
-  //   }
-
   //로그인
   async signIn(authCredentialsDto: AuthCredentialsDto): Promise<string> {
     try {
@@ -135,22 +87,4 @@ export class UsersRepository extends Repository<Users> {
       );
     }
   }
-
-  async signDown(userNo: number) {
-    try {
-      const { affected }: DeleteResult = await this.createQueryBuilder()
-        .softDelete()
-        .from(Users, 'user')
-        .where('userNo = :userNo', { userNo })
-        .execute();
-      return affected;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-  // async test() {
-  //   console.log(1);
-  // }
 }

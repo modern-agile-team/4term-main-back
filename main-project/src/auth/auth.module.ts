@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserProfileRepository } from 'src/users/repository/users-profile.repository';
 import { UsersModule } from 'src/users/users.module';
 import { UsersService } from 'src/users/users.service';
 import { AuthController } from '../auth/auth.controller';
@@ -18,7 +19,7 @@ import { JwtStrategy } from './jwt/jwt-strategy';
       secret: 'Secret1234',
       signOptions: { expiresIn: 60 * 60 },
     }),
-    TypeOrmModule.forFeature([UsersRepository]),
+    TypeOrmModule.forFeature([UsersRepository, UserProfileRepository]),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, UsersService],
