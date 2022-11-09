@@ -5,7 +5,7 @@ import { ChatRoomUsers, CreateChat } from '../interface/chat.interface';
 
 @EntityRepository(ChatList)
 export class ChatListRepository extends Repository<ChatList> {
-  async checkRoomExist(meetingNo): Promise<ChatList> {
+  async checkRoomExistByMeetingNo(meetingNo): Promise<ChatList> {
     try {
       const result = await this.createQueryBuilder('chat_list')
         .select(['chat_list.meeting_no AS meetingNo'])
@@ -50,10 +50,25 @@ export class ChatListRepository extends Repository<ChatList> {
         .where(`chat_list.no = :chatRoomNo`, { chatRoomNo })
         .andWhere('chatUserNo.user_no = :userNo', { userNo })
         .getRawOne();
+
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
         `${err}: 채팅방 유저 확인 (isUserInChatRoom): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+  async checkRoomExistByChatNo(chatRoomNo): Promise<ChatList> {
+    try {
+      const result = await this.createQueryBuilder('chat_list')
+        .select(['chat_list.no AS chatRoomNo'])
+        .where(`no = :chatRoomNo`, { chatRoomNo })
+        .getRawOne();
+
+      return result;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 채팅방 중복 확인 (checkRoomExist): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
