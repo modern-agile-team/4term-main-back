@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { MeetingInfoRepository } from 'src/meetings/repository/meeting-info.repository';
 import { MeetingRepository } from 'src/meetings/repository/meeting.repository';
+import { InsertResult } from 'typeorm';
 import { ChatList } from './entity/chat-list.entity';
 import {
   ChatRoom,
@@ -195,11 +196,10 @@ export class ChatsGatewayService {
     }
   }
 
-  private async setRoomUsers(roomUsers): Promise<number> {
+  private async setRoomUsers(roomUsers): Promise<InsertResult> {
     try {
-      const affectedRows: number = await this.chatUsersRepository.setRoomUsers(
-        roomUsers,
-      );
+      const affectedRows: InsertResult =
+        await this.chatUsersRepository.setRoomUsers(roomUsers);
 
       return affectedRows;
     } catch (err) {

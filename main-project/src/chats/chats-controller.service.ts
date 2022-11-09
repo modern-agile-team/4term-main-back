@@ -1,5 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { async } from 'rxjs';
+import { InsertResult } from 'typeorm';
+import { ChatLog } from './entity/chat-log.entity';
 import {
   ChatRoomList,
   ChatUserInfo,
@@ -36,7 +39,11 @@ export class ChatsControllerService {
     }
   }
 
-  async getChatLog({ userNo, chatRoomNo, currentChatLogNo }: PreviousChatLog) {
+  async getChatLog({
+    userNo,
+    chatRoomNo,
+    currentChatLogNo,
+  }: PreviousChatLog): Promise<ChatLog[]> {
     try {
       await this.checkChatRoom({ userNo, chatRoomNo });
 
@@ -63,6 +70,26 @@ export class ChatsControllerService {
     }
   }
 
+  async inviteUser(userNo, chatRoomNo): Promise<void> {
+    try {
+      const user = await this.checkUserInChatRoom({ userNo, chatRoomNo });
+      if (user) {
+        throw new BadRequestException('이미 채팅방에 존재하는 유저입니다.');
+      }
+
+      const insertId: InsertResult =
+        await this.chatUsersRepository.inviteUserByUserNo({
+          userNo,
+          chatRoomNo,
+        });
+      if (!insertId) {
+        throw new BadRequestException('채팅방 초대에 실패했습니다.');
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
   private async checkChatRoom(chatUserInfo: ChatUserInfo): Promise<void> {
     try {
       const { chatRoomNo } = chatUserInfo;
@@ -74,20 +101,24 @@ export class ChatsControllerService {
         throw new BadRequestException('존재하지 않는 채팅방입니다.');
       }
 
-      await this.checkUserInChatRoom(chatUserInfo);
+      const user = await this.checkUserInChatRoom(chatUserInfo);
+      if (!user) {
+        throw new BadRequestException(`채팅방에 존재하지 않는 사용자 입니다.`);
+      }
     } catch (error) {
       throw error;
     }
   }
 
-  private async checkUserInChatRoom(chatUserInfo: ChatUserInfo): Promise<void> {
+  private async checkUserInChatRoom(
+    chatUserInfo: ChatUserInfo,
+  ): Promise<ChatUserInfo> {
     try {
       const chatUser = await this.chatUsersRepository.checkUserInChatRoom(
         chatUserInfo,
       );
-      if (!chatUser) {
-        throw new BadRequestException(`채팅방에 존재하지 않는 사용자 입니다.`);
-      }
+
+      return chatUser;
     } catch (error) {
       throw error;
     }

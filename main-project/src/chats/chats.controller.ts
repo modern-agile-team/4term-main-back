@@ -1,6 +1,15 @@
-import { Body, Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChatsControllerService } from './chats-controller.service';
+import { ChatLog } from './entity/chat-log.entity';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -20,8 +29,8 @@ export class ChatsController {
         success: true,
         chatRoomList,
       };
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -41,8 +50,8 @@ export class ChatsController {
       });
 
       return chatLog;
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -51,7 +60,7 @@ export class ChatsController {
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
     @Body('currentChatLogNo', ParseIntPipe) currentChatLogNo: number,
-  ): Promise<any> {
+  ): Promise<ChatLog[]> {
     try {
       const chatLog = await this.chatControllerService.getChatLog({
         userNo,
@@ -60,8 +69,25 @@ export class ChatsController {
       });
 
       return chatLog;
-    } catch (err) {
-      throw err;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Patch('/:chatRoomNo/invite')
+  async inviteUser(
+    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
+    @Body('userNo', ParseIntPipe) userNo: number,
+  ): Promise<any> {
+    try {
+      await this.chatControllerService.inviteUser(userNo, chatRoomNo);
+
+      return {
+        success: true,
+        msg: '초대 성공',
+      };
+    } catch (error) {
+      throw error;
     }
   }
 }
