@@ -36,3 +36,16 @@ export interface ChatRoomList {
   roomName: string;
   chatRoomNo: number;
 }
+
+export interface PreviousChatLog {
+  userNo: number;
+  currentChatLogNo?: number;
+  chatRoomNo: number;
+  message?: string;
+  timeStamp?: Date;
+}
+
+export interface ChatUserInfo {
+  userNo: number;
+  chatRoomNo: number;
+}
