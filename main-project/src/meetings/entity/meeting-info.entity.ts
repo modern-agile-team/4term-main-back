@@ -21,11 +21,15 @@ export class MeetingInfo extends BaseEntity {
   @Column('int', { name: 'host_headcount', default: 0 })
   hostHeadcount: number;
 
-  @ManyToOne((type) => Users, (user) => user.meetingGuest)
+  @ManyToOne((type) => Users, (user) => user.meetingGuest, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'guest' })
   guest: Users | number;
 
-  @ManyToOne((type) => Users, (user) => user.meetingHost)
+  @ManyToOne((type) => Users, (user) => user.meetingHost, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'host' })
   host: Users | number;
 
