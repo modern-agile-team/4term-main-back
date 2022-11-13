@@ -45,7 +45,7 @@ export class AnnouncementsRepository extends Repository<Announcements> {
           'announcements.title AS title',
           'announcements.description AS description',
         ])
-        .where('no=:announcementNo', { announcementNo })
+        .where('no = :announcementNo', { announcementNo })
         .getRawOne();
 
       return announcements;
