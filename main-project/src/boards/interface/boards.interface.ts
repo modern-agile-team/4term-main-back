@@ -21,6 +21,14 @@ export interface BoardMemberDetail {
   female: number;
 }
 
+export interface BoardDetail {
+  title: string;
+  description: string;
+  isDone: boolean;
+  location: string;
+  meetingTime: Date;
+}
+
 export interface BookmarkDetail {
   boardNo: number;
   userNo: number;

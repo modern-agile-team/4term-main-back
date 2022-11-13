@@ -21,7 +21,7 @@ export class FriendsController {
 
   @Get('/:userNo')
   @ApiOperation({
-    summary: '친구 목록 APi',
+    summary: '친구 목록 API',
     description: '친구 목록 조회',
   })
   async getFriendList(
