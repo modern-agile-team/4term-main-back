@@ -35,11 +35,9 @@ export class UsersService {
   public async createUserProfile(userNo: number, createUserDto: CreateUserDto) {
     try {
       const { status } = await this.getUserByNo(userNo);
-      // console.log(createUserDto);
-      //status가 0인지 확인하고 profile 생성
-      if (status == 0) {
+      if (status != 0) {
         throw new BadRequestException(
-          `아직 프로필이 생성되지 않은 유저입니다.`,
+          `status가 0인 유저에 대해서만 프로필을 생성할 수 있습니다.`,
         );
       }
       await this.userProfileRepository.createUserProfile(userNo, createUserDto);
@@ -52,7 +50,6 @@ export class UsersService {
   async updateUserProfile(userNo: number, description: string) {
     try {
       const { status } = await this.getUserByNo(userNo);
-      console.log(status);
       if (status === 0) {
         throw new BadRequestException(
           `아직 프로필이 생성되지 않은 유저입니다.`,

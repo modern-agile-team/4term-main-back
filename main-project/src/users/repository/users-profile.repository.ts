@@ -16,11 +16,13 @@ export class UserProfileRepository extends Repository<UserProfile> {
     createUserDto: CreateUserDto,
   ): Promise<any> {
     try {
-      const raw: UpdateResult = await this.createQueryBuilder()
-        .update(UserProfile)
-        .set(createUserDto)
-        .where('user_no = :userNo', { userNo })
+      const userProfile = { userNo, ...createUserDto };
+      const { raw }: InsertResult = await this.createQueryBuilder('UserProfile')
+        .insert()
+        .into(UserProfile)
+        .values(userProfile)
         .execute();
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 알 수 없는 서버 에러입니다.`,

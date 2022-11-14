@@ -19,3 +19,6 @@ export interface UpdateUserInfo {
 export interface UpdateUsersDetail {
   description?: string;
 }
+export interface UserStatus {
+  status: number;
+}

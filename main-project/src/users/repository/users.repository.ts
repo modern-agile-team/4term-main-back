@@ -8,7 +8,7 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { Users } from '../entity/user.entity';
-import { UsersDetail } from '../interface/user-profile.interface';
+import { UsersDetail, UserStatus } from '../interface/user-profile.interface';
 
 @EntityRepository(Users)
 export class UsersRepository extends Repository<Users> {
@@ -84,6 +84,21 @@ export class UsersRepository extends Repository<Users> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error}  알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+  async updateStatus(userNo: number, status: UserStatus): Promise<any> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(Users)
+        .set(status)
+        .where('userNo = :userNo', { userNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

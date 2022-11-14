@@ -67,9 +67,9 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
     }
   }
 
-  async getMeetingUser(meetingNo): Promise<ChatRoom> {
+  async getMeetingUserByMeetingNo(meetingNo): Promise<ChatRoom> {
     try {
-      const nickname = await this.createQueryBuilder('meeting_info')
+      const meetingInfo = await this.createQueryBuilder('meeting_info')
         .leftJoin('meeting_info.meetingNo', 'meetingNo')
         .leftJoin('meetingNo.hostMembers', 'hostMembers')
         .leftJoin('hostMembers.userNo', 'hostUserNo')
@@ -84,9 +84,11 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
         .where('meeting_info.meetingNo = :meetingNo', { meetingNo })
         .getRawOne();
 
-      return nickname;
+      return meetingInfo;
     } catch (err) {
-      throw err;
+      throw new InternalServerErrorException(
+        `${err} 유저정보 조회(getMeetingUserByMeetingNo): 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 }

@@ -5,7 +5,7 @@ export class CreateUserDto {
   nickname: string;
 
   @IsString()
-  description: string;
+  description?: string;
 
   @IsNumber()
   majorNo: number;

@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
+import { UserStatus } from 'src/users/interface/user-profile.interface';
 import { UserProfileRepository } from 'src/users/repository/users-profile.repository';
 import { UsersRepository } from '../users/repository/users.repository';
 import { AuthDto } from './dto/auth.dto';
@@ -14,9 +15,18 @@ export class AuthService {
   constructor(
     @InjectRepository(UsersRepository)
     private usersRepository: UsersRepository,
-    private userProfileRepository: UserProfileRepository,
     private jwtService: JwtService, // private readonly usersService: UsersService, // private readonly configService: ConfigService, // private readonly httpService: HttpService,
   ) {}
+  private async updateStatus(userNo: number, status: UserStatus) {
+    try {
+      let user = await this.usersRepository.updateStatus(userNo, status);
+      if (user) {
+        user = { status: 2 };
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
 
   private async createUser(email: string) {
     try {
@@ -27,7 +37,6 @@ export class AuthService {
       if (affectedRows == 1) {
         throw new InternalServerErrorException('');
       }
-
       return insertId;
     } catch (err) {
       throw err;
@@ -42,7 +51,7 @@ export class AuthService {
       if (!user) {
         const userNo = await this.createUser(email);
         // await this.userProfileRepository.createUserProfile();
-        // user = { userNo, status: 0 };
+        user = { userNo, status: 0 };
       }
       //(회원가입이 되었고, 학적이 확인이 된 유저 일 때 토큰을 줌)
       if (user.status == 2) {

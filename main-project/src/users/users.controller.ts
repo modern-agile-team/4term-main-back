@@ -16,7 +16,7 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
-  @Post('/:userNo/profile/create')
+  @Post('/:userNo/profile')
   @ApiOperation({ summary: ' 로그인 시 status : 0' })
   async createUserProfile(
     @Param('userNo') userNo: number,
