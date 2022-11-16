@@ -2,6 +2,7 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
 import { AuthCredentialsDto } from 'src/auth/dto/auth-credential.dto';
 import {
+  DeleteResult,
   EntityRepository,
   InsertResult,
   Repository,
@@ -55,11 +56,11 @@ export class UsersRepository extends Repository<Users> {
     }
   }
   //닉네임 중복체크
-  async checkNickname(nickname: string): Promise<UsersDetail> {
+  async checkEmail(email: string): Promise<UsersDetail> {
     try {
       const user = await this.createQueryBuilder('users')
-        .select(['users.nickname AS nickname'])
-        .where('users.nickname = :nickname', { nickname })
+        .select(['users.email AS email'])
+        .where('users.email = :email', { email })
         .getRawOne();
 
       return user;
@@ -87,12 +88,28 @@ export class UsersRepository extends Repository<Users> {
       );
     }
   }
-  async updateStatus(userNo: number, status: UserStatus): Promise<any> {
+
+  async updateStatus(userNo: number, status: number): Promise<any> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
+      const affected: UpdateResult = await this.createQueryBuilder()
         .update(Users)
-        .set(status)
-        .where('userNo = :userNo', { userNo })
+        .set({ status })
+        .where('no = :userNo', { userNo })
+        .execute();
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async deleteUser(userNo: number) {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder()
+        .delete()
+        .from(Users)
+        .where('users.no = :userNo', { userNo })
         .execute();
 
       return affected;

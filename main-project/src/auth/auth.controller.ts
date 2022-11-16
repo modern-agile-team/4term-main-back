@@ -1,10 +1,6 @@
-import { Body, Controller, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { AuthCredentialsDto } from './dto/auth-credential.dto';
-import { AuthGuard } from '@nestjs/passport';
-import { User } from './interface/auth.interface';
-import { GetUser } from './decorator/get-user.decorator';
 import { AuthDto } from './dto/auth.dto';
 
 @Controller('auth')
@@ -14,7 +10,7 @@ export class AuthController {
   //로그인
   @Post('/signin')
   @ApiOperation({ summary: '로그인' })
-  async signIn(@Body() { email }: AuthCredentialsDto): Promise<object> {
+  async signIn(@Body() email: AuthDto): Promise<object> {
     const status = await this.authService.signIn(email);
     const response = {
       status,
@@ -23,23 +19,15 @@ export class AuthController {
     return response;
   }
 
-  @Post('/check/nickname')
-  @ApiOperation({ summary: '닉네임 중복 체크' })
-  async checkNickname(@Body() authDto: AuthDto): Promise<object> {
-    const checkNickname = await this.authService.checkNickname(authDto);
-    const response = {
-      success: true,
-      msg: '사용가능한 닉네임입니다.',
-      checkNickname,
-    };
-    return response;
-  }
-
-  //토큰 이용해서 유저 정보 가져오기
-  @Post('/test')
-  @UseGuards(AuthGuard())
-  userInfoByJwt(@GetUser() user: User) {
-    // console.log('req', user);
-    return user;
-  }
+  // @Post('/check/email')
+  // @ApiOperation({ summary: '이메일 중복 체크' })
+  // async checkemail(@Body() { email }: AuthDto): Promise<any> {
+  //   const checkEmail = await this.authService.checkEmail(email);
+  //   const response = {
+  //     success: true,
+  //     msg: '사용가능한 이메일입니다.',
+  //     checkEmail,
+  //   };
+  //   return response;
+  // }
 }

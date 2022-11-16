@@ -19,6 +19,7 @@ export class UserProfile extends BaseEntity {
 
   @OneToOne((type) => Users, (users) => users.userProfileNo, {
     nullable: false,
+    onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_no' })
   userNo: number;

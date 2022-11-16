@@ -18,6 +18,7 @@ export class ProfileImages extends BaseEntity {
 
   @OneToOne((type) => UserProfile, (userProfile) => userProfile.userNo, {
     nullable: false,
+    onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_no' })
   userNo: number;

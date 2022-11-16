@@ -1,18 +1,11 @@
-import { Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsEmail,
-  IsEmpty,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class AuthDto {
   @IsString()
   @IsOptional()
   email: string;
 
+  @IsNumber()
   @IsOptional()
-  @IsString()
-  nickname: string;
+  status: number;
 }

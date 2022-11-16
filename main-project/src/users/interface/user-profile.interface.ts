@@ -1,6 +1,4 @@
 export interface UsersDetail {
-  gender: boolean;
-  nickname: string;
   email: string;
 }
 

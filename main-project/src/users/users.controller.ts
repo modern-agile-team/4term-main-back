@@ -36,4 +36,11 @@ export class UsersController {
 
     return { success: true };
   }
+  @Delete('/:userNo/signdown')
+  @ApiOperation({ summary: '회원탈퇴' })
+  async deleteUser(@Param('userNo') userNo: number) {
+    await this.usersService.deleteUser(userNo);
+
+    return { success: true };
+  }
 }
