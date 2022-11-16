@@ -1,7 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { async } from 'rxjs';
-import { InsertResult } from 'typeorm';
+import { NoticeType } from 'src/common/configs/notice-type.config';
+import { Notices } from 'src/notices/entity/notices.entity';
+import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
+import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { ChatLog } from './entity/chat-log.entity';
 import {
   ChatRoomList,
@@ -23,6 +25,12 @@ export class ChatsControllerService {
 
     @InjectRepository(ChatListRepository)
     private readonly chatListRepository: ChatListRepository,
+
+    @InjectRepository(NoticesRepository)
+    private readonly noticesRepository: NoticesRepository,
+
+    @InjectRepository(NoticeChatsRepository)
+    private readonly noticeChatsRepository: NoticeChatsRepository,
   ) {}
 
   async getChatRoomListByUserNo(userNo): Promise<ChatRoomList[]> {
@@ -70,25 +78,68 @@ export class ChatsControllerService {
     }
   }
 
-  async inviteUser(userNo, chatRoomNo): Promise<void> {
+  async inviteUser(userNo, targetUserNo, chatRoomNo): Promise<void> {
     try {
-      const user = await this.checkUserInChatRoom({ userNo, chatRoomNo });
+      const type = NoticeType.INVITE_CHAT;
+      const user = await this.checkUserInChatRoom({
+        userNo: targetUserNo,
+        chatRoomNo,
+      });
       if (user) {
         throw new BadRequestException('이미 채팅방에 존재하는 유저입니다.');
       }
 
-      const insertId: InsertResult =
-        await this.chatUsersRepository.inviteUserByUserNo({
-          userNo,
-          chatRoomNo,
-        });
-      if (!insertId) {
+      const noticeChat = await this.checkNoticeChat(
+        targetUserNo,
+        chatRoomNo,
+        type,
+      );
+      if (noticeChat) {
+        throw new BadRequestException('이미 초대를 보낸 상태입니다.');
+      }
+
+      const noticeNo = await this.noticesRepository.saveNoticeChatInvite({
+        userNo,
+        targetUserNo,
+        type,
+      });
+      if (!noticeNo) {
         throw new BadRequestException('채팅방 초대에 실패했습니다.');
+      }
+
+      const insertId = await this.noticeChatsRepository.saveNoticeChat({
+        chatRoomNo,
+        noticeNo,
+      });
+      if (!insertId) {
+        throw new BadRequestException('알람 정보 저장 오류입니다.');
       }
     } catch (error) {
       throw error;
     }
   }
+  private async checkNoticeChat(
+    targetUserNo,
+    chatRoomNo,
+    type,
+  ): Promise<Notices> {
+    try {
+      const noticeChat = await this.noticesRepository.checkNoticeChat(
+        targetUserNo,
+        chatRoomNo,
+        type,
+      );
+
+      return noticeChat;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // async createChatRoom(meetingNo, hostNo, meetingMembersList) {
+  //   console.log(meetingNo, hostNo, meetingMembersList);
+  //   console.log(Object.keys(meetingMembersList));
+  // }
 
   private async checkChatRoom(chatUserInfo: ChatUserInfo): Promise<void> {
     try {

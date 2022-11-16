@@ -10,6 +10,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChatsControllerService } from './chats-controller.service';
 import { ChatLog } from './entity/chat-log.entity';
+import { MeetingMembersList } from './interface/chat.interface';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -55,6 +56,23 @@ export class ChatsController {
     }
   }
 
+  // @Post('/create/:meetingNo/:hostNo')
+  // async createChatRoom(
+  //   @Param('meetingNo', ParseIntPipe) meetingNo: number,
+  //   @Param('hostNo', ParseIntPipe) hostNo: number,
+  //   @Body() meetingMembersList: MeetingMembersList,
+  // ) {
+  //   try {
+  //     await this.chatControllerService.createChatRoom(
+  //       meetingNo,
+  //       hostNo,
+  //       meetingMembersList,
+  //     );
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // }
+
   @Get('/:chatRoomNo/log')
   async getChatLog(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
@@ -78,9 +96,14 @@ export class ChatsController {
   async inviteUser(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
+    @Body('targetUserNo', ParseIntPipe) targetUserNo: number,
   ): Promise<any> {
     try {
-      await this.chatControllerService.inviteUser(userNo, chatRoomNo);
+      await this.chatControllerService.inviteUser(
+        userNo,
+        targetUserNo,
+        chatRoomNo,
+      );
 
       return {
         success: true,

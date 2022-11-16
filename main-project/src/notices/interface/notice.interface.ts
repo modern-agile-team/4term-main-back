@@ -49,3 +49,8 @@ export interface NoticeMeeting {
   targetUserNo: number;
   type: number;
 }
+
+export interface NoticeChatsInfo {
+  chatRoomNo: number;
+  noticeNo: number;
+}
