@@ -4,15 +4,13 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { rename } from 'fs';
-import { send } from 'process';
-import { DeleteResult, InsertResult } from 'typeorm';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { DeleteFriendDto } from './dto/delete-friend.dto';
 import { Friends } from './entity/friend.entity';
 import {
   Friend,
   FriendDetail,
+  FriendInfo,
   FriendList,
   FriendRequest,
   FriendRequestResponse,
@@ -155,7 +153,16 @@ export class FriendsService {
     }
   }
 
-  private async findAllFriendByNo(userNo: number): Promise<object> {
+  async searchFriend(nickname, userNo): Promise<FriendInfo[]> {
+    const searchResult = await this.friendsRepository.searchFriendByNickname({
+      nickname,
+      userNo,
+    });
+
+    return searchResult;
+  }
+
+  private async findAllFriendByNo(userNo: number): Promise<FriendList[]> {
     try {
       const friendList: FriendList[] =
         await this.friendsRepository.getAllFriendList(userNo);
