@@ -57,11 +57,9 @@ export class BoardsService {
     try {
       const boardNo: number = await this.setBoard(createBoardDto);
 
-      const { male, female }: CreateBoardDto = createBoardDto;
       const boardMemberDetail: BoardMemberDetail = {
+        ...createBoardDto,
         boardNo,
-        male,
-        female,
       };
 
       await this.setBoardMember(boardMemberDetail);
@@ -72,9 +70,8 @@ export class BoardsService {
     }
   }
 
-  async createBookmark(boardNo: number, userNo: number): Promise<number> {
+  async createBookmark(bookmarkDetail: BookmarkDetail): Promise<number> {
     try {
-      const bookmarkDetail: BookmarkDetail = { userNo, boardNo };
       const { affectedRows, insertId }: BoardCreateResponse =
         await this.boardRepository.createBookmark(bookmarkDetail);
 
@@ -123,12 +120,11 @@ export class BoardsService {
   //게시글 수정 관련
   async editBoard(
     boardNo: number,
-    updateBoardDto: UpdateBoardDto,
+    { male, female, ...boardDetail }: UpdateBoardDto,
   ): Promise<string> {
     try {
       await this.getBoardByNo(boardNo);
 
-      const { male, female, ...boardDetail } = updateBoardDto;
       const boardMember: BoardMemberDetail = {
         male,
         female,
@@ -195,7 +191,7 @@ export class BoardsService {
           `${boardNo}번 게시글 삭제 에러 deleteBoardByNo-service`,
         );
       }
-      return `${boardNo}번 게시글 삭제 성공 :)`;
+      return `${boardNo}번 게시글 삭제 성공`;
     } catch (error) {
       throw error;
     }
