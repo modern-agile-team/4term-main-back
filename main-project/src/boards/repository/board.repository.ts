@@ -30,7 +30,6 @@ export class BoardRepository extends Repository<Boards> {
         .select([
           'boards.no AS no',
           'boards.userNo AS user_no',
-          'boards.meetingNo AS meeting_no',
           'userNo.nickname AS nickname',
           'boards.title AS title',
           'boards.description AS description',
@@ -57,7 +56,6 @@ export class BoardRepository extends Repository<Boards> {
         .select([
           'boards.no AS no',
           'boards.userNo AS user_no',
-          'boards.meetingNo AS meeting_no',
           'boards.title AS title',
           'boards.description AS description',
           'boards.location AS location',

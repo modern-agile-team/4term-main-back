@@ -1,7 +1,6 @@
 import { Boards } from 'src/boards/entity/board.entity';
 import {
   BaseEntity,
-  Column,
   Entity,
   JoinColumn,
   ManyToOne,
