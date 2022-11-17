@@ -14,11 +14,6 @@ export class CreateBoardDto {
   userNo: number;
 
   @IsNotEmpty()
-  @IsNumber()
-  @ApiProperty({ example: 32, description: '약속 번호' })
-  meetingNo: number;
-
-  @IsNotEmpty()
   @IsString()
   @ApiProperty({
     example: '크리스마스를 즐기자',

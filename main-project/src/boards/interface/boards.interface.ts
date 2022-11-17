@@ -11,7 +11,6 @@ export interface BoardReadResponse {
   location: string;
   nickname: string;
   meetingTime: Date;
-  meetingNo: number;
   userNo: number;
 }
 
@@ -27,6 +26,7 @@ export interface BoardDetail {
   isDone: boolean;
   location: string;
   meetingTime: Date;
+  userNo?: number; // host 후에 옵셔널 삭제
 }
 
 export interface BookmarkDetail {

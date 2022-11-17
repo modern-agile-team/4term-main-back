@@ -87,10 +87,10 @@ export class BoardsController {
   ): Promise<object> {
     try {
       const { boardNo, userNo } = params;
-      const bookmark: number = await this.boardService.createBookmark(
+      const bookmark: number = await this.boardService.createBookmark({
         boardNo,
         userNo,
-      );
+      });
       const response = { success: true, bookmark };
 
       return response;
