@@ -16,6 +16,8 @@ import {
 } from 'typeorm';
 import { Users } from 'src/users/entity/user.entity';
 import { Reportedboards } from 'src/reports/entity/reported-board.entity';
+import { NoticeBoards } from 'src/notices/entity/notice-board.entity';
+import { Notices } from 'src/notices/entity/notices.entity';
 
 @Entity('boards')
 export class Boards extends BaseEntity {
@@ -69,6 +71,12 @@ export class Boards extends BaseEntity {
   @ManyToOne((type) => Users, (user) => user.board, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_no' })
   userNo: number;
+
+  @OneToMany((type) => NoticeBoards, (noticeBoards) => noticeBoards.boardNo, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
+  noticeBoard: NoticeBoards;
 
   @OneToMany(
     (type) => Reportedboards,
