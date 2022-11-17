@@ -22,3 +22,13 @@ export interface FriendRequestResponse {
   affectedRows: number;
   insertId?: number;
 }
+
+export interface FriendToSearch {
+  userNo: number;
+  nickname: string;
+}
+
+export interface FriendInfo {
+  friendNo: number;
+  nickname: string;
+}

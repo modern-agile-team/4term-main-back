@@ -92,12 +92,12 @@ export class ChatsGatewayService {
         throw new BadRequestException('채팅방 생성 오류입니다.');
       }
 
-      const roomUsers: object[] = userNoList.reduce((values, userNo) => {
+      const roomUsers: ChatUserInfo[] = userNoList.reduce((values, userNo) => {
         values.push({ chatRoomNo, userNo });
         return values;
       }, []);
 
-      const result = await this.setRoomUsers(roomUsers);
+      const result = await this.setChatRoomUsers(roomUsers);
       if (!result) {
         throw new BadRequestException('채팅방 유저정보 생성 오류입니다.');
       }
@@ -196,10 +196,12 @@ export class ChatsGatewayService {
     }
   }
 
-  private async setRoomUsers(roomUsers): Promise<InsertResult> {
+  private async setChatRoomUsers(
+    roomUsers: ChatUserInfo[],
+  ): Promise<InsertResult> {
     try {
       const affectedRows: InsertResult =
-        await this.chatUsersRepository.setRoomUsers(roomUsers);
+        await this.chatUsersRepository.setChatRoomUsers(roomUsers);
 
       return affectedRows;
     } catch (err) {
