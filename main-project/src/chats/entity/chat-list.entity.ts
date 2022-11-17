@@ -19,9 +19,6 @@ export class ChatList extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @Column({ name: 'is_host', type: 'boolean' })
-  isHost: number;
-
   @Column({ name: 'room_name', type: 'varchar', length: 255, nullable: false })
   roomName: string;
 

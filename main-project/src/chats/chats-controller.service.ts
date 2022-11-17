@@ -53,8 +53,14 @@ export class ChatsControllerService {
     currentChatLogNo,
   }: PreviousChatLog): Promise<ChatLog[]> {
     try {
-      await this.checkChatRoom({ userNo, chatRoomNo });
-
+      const chatRoom = await this.checkChatRoom({ userNo, chatRoomNo });
+      if (!chatRoom) {
+        throw new BadRequestException('존재하지 않는 채팅방입니다.');
+      }
+      const user = await this.checkUserInChatRoom({ userNo, chatRoomNo });
+      if (!user) {
+        throw new BadRequestException('채팅방에 존재하지 않는 유저입니다.');
+      }
       const chatLog = await this.chatLogRepository.getPreviousChatLog(
         chatRoomNo,
         currentChatLogNo,
@@ -68,7 +74,14 @@ export class ChatsControllerService {
 
   async getRecentChatLog({ userNo, chatRoomNo }: PreviousChatLog) {
     try {
-      await this.checkChatRoom({ userNo, chatRoomNo });
+      const chatRoom = await this.checkChatRoom({ userNo, chatRoomNo });
+      if (!chatRoom) {
+        throw new BadRequestException('존재하지 않는 채팅방입니다.');
+      }
+      const user = await this.checkUserInChatRoom({ userNo, chatRoomNo });
+      if (!user) {
+        throw new BadRequestException('채팅방에 존재하지 않는 유저입니다.');
+      }
 
       const chatLog = await this.chatLogRepository.getRecentChatLog(chatRoomNo);
 
@@ -118,6 +131,7 @@ export class ChatsControllerService {
       throw error;
     }
   }
+
   private async checkNoticeChat(
     targetUserNo,
     chatRoomNo,
@@ -136,26 +150,65 @@ export class ChatsControllerService {
     }
   }
 
+  async acceptInvitation(noticeNo, userNo): Promise<void> {
+    try {
+      const chatRoomNo = await this.getNoticeChatRoomNo(noticeNo, userNo);
+      if (!chatRoomNo) {
+        throw new BadRequestException('초대 정보가 존재하지 않습니다.');
+      }
+      const chatRoom = await this.checkChatRoom({ chatRoomNo, userNo });
+      if (!chatRoom) {
+        throw new BadRequestException('존재하지 않는 채팅방입니다.');
+      }
+      const user = await this.checkUserInChatRoom({ chatRoomNo, userNo });
+      if (user) {
+        throw new BadRequestException('이미 참여중인 채팅방 입니다.');
+      }
+      const result = await this.setChatRoomUser({ chatRoomNo, userNo });
+      if (!result) {
+        throw new BadRequestException('채팅방 초대 수락 오류입니다.');
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // async createChatRoom(meetingNo, hostNo, meetingMembersList) {
   //   console.log(meetingNo, hostNo, meetingMembersList);
   //   console.log(Object.keys(meetingMembersList));
   // }
 
-  private async checkChatRoom(chatUserInfo: ChatUserInfo): Promise<void> {
+  private async setChatRoomUser(chatUserInfo: ChatUserInfo): Promise<number> {
+    try {
+      const affectedRows = await this.chatUsersRepository.setChatRoomUser(
+        chatUserInfo,
+      );
+      return affectedRows;
+    } catch (error) {}
+  }
+
+  private async getNoticeChatRoomNo(
+    noticeNo: number,
+    userNo: number,
+  ): Promise<number> {
+    try {
+      const chatRoomNo = await this.noticesRepository.getNoticeChatRoomNo(
+        noticeNo,
+        userNo,
+      );
+
+      return chatRoomNo;
+    } catch (error) {}
+  }
+
+  private async checkChatRoom(chatUserInfo: ChatUserInfo): Promise<any> {
     try {
       const { chatRoomNo } = chatUserInfo;
       const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
         chatRoomNo,
       );
 
-      if (!chatRoom) {
-        throw new BadRequestException('존재하지 않는 채팅방입니다.');
-      }
-
-      const user = await this.checkUserInChatRoom(chatUserInfo);
-      if (!user) {
-        throw new BadRequestException(`채팅방에 존재하지 않는 사용자 입니다.`);
-      }
+      return chatRoom;
     } catch (error) {
       throw error;
     }

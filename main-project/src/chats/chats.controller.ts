@@ -6,6 +6,7 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Post,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChatsControllerService } from './chats-controller.service';
@@ -74,6 +75,10 @@ export class ChatsController {
   // }
 
   @Get('/:chatRoomNo/log')
+  @ApiOperation({
+    summary: '채팅 내역 API',
+    description: ' 채팅 내역 조회',
+  })
   async getChatLog(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
@@ -92,7 +97,11 @@ export class ChatsController {
     }
   }
 
-  @Patch('/:chatRoomNo/invite')
+  @Post('/:chatRoomNo/invite')
+  @ApiOperation({
+    summary: '채팅방 초대 API',
+    description: '알람을 통해 채팅방 초대',
+  })
   async inviteUser(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
@@ -108,6 +117,27 @@ export class ChatsController {
       return {
         success: true,
         msg: '초대 성공',
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @Post('/accept/:noticeNo')
+  @ApiOperation({
+    summary: '채팅방 초대 수락 API',
+    description: 'notice 번호를 통한 초대 수락',
+  })
+  async acceptInvitation(
+    @Param('noticeNo', ParseIntPipe) noticeNo: number,
+    @Body('userNo', ParseIntPipe) userNo: number,
+  ) {
+    try {
+      await this.chatControllerService.acceptInvitation(noticeNo, userNo);
+
+      return {
+        success: true,
+        msg: '채팅방 참여 성공',
       };
     } catch (error) {
       throw error;

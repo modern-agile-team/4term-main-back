@@ -11,6 +11,7 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
+import { NoticeChats } from '../entity/notice-chat.entity';
 import { Notices } from '../entity/notices.entity';
 import {
   Notice,
@@ -239,7 +240,11 @@ export class NoticesRepository extends Repository<Notices> {
     }
   }
 
-  async checkNoticeChat(targetUserNo, chatRoomNo, type): Promise<Notices> {
+  async checkNoticeChat(
+    targetUserNo: number,
+    chatRoomNo: number,
+    type: number,
+  ): Promise<Notices> {
     try {
       const noticeChat = await this.createQueryBuilder('notices')
         .leftJoin('notices.noticeChats', 'noticeChats')
@@ -253,6 +258,23 @@ export class NoticesRepository extends Repository<Notices> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 채팅 알람 확인 에러(checkNoticeChat): 알 수 없는 서버 오류입니다.`,
+      );
+    }
+  }
+
+  async getNoticeChatRoomNo(noticeNo, userNo): Promise<number> {
+    try {
+      const notice = await this.createQueryBuilder('notices')
+        .leftJoin('notices.noticeChats', 'noticeChats')
+        .select(['noticeChats.chatRoomNo AS chatRoomNo'])
+        .where('notices.no = :noticeNo', { noticeNo })
+        .andWhere('notices.targetUserNo = :userNo', { userNo })
+        .getRawOne();
+
+      return notice.chatRoomNo;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error}: 채팅 알람 조회 에러(checkNoticeChatByUserNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
