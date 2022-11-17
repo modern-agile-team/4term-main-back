@@ -6,9 +6,8 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { CreateBoardDto } from '../dto/create-board.dto';
-import { UpdateBoardDto } from '../dto/update-board.dto';
 import { BoardBookmarks } from '../entity/board-bookmark.entity';
+import { BoardHostMembers } from '../entity/board-host-members.entity';
 import { BoardMemberInfos } from '../entity/board-member-info.entity';
 import { Boards } from '../entity/board.entity';
 import {
@@ -74,9 +73,7 @@ export class BoardRepository extends Repository<Boards> {
   }
 
   //게시글 생성 관련
-  async createBoard(
-    createBoardDto: CreateBoardDto,
-  ): Promise<BoardCreateResponse> {
+  async createBoard(createBoardDto: BoardDetail): Promise<BoardCreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('boards')
         .insert()
@@ -102,6 +99,24 @@ export class BoardRepository extends Repository<Boards> {
         .insert()
         .into(BoardMemberInfos)
         .values(boardMemberDetail)
+        .execute();
+
+      return raw;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async createHostMember(hostMember: object): Promise<BoardCreateResponse> {
+    try {
+      const { raw }: InsertResult = await this.createQueryBuilder(
+        'board_member_infos',
+      )
+        .insert()
+        .into(BoardHostMembers)
+        .values(hostMember)
         .execute();
 
       return raw;

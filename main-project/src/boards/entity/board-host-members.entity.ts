@@ -14,9 +14,10 @@ export class BoardHostMembers extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @OneToMany((type) => Users, (users) => users.hostMembers, {
+  @ManyToOne((type) => Users, (users) => users.hostMembers, {
     onDelete: 'CASCADE',
   })
+  @JoinColumn({ name: 'user_no' })
   userNo: Users;
 
   @ManyToOne((type) => Boards, (board) => board.hostMember, {

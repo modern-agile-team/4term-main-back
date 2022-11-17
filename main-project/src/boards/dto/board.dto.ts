@@ -1,18 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsDate,
   IsNotEmpty,
   IsNumber,
   IsString,
 } from 'class-validator';
-export class CreateBoardDto {
-  @IsNotEmpty()
-  @IsNumber()
-  @ApiProperty({ example: 21, description: 'User 번호' })
-  userNo: number;
-
+export class BoardDto {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
@@ -55,4 +51,12 @@ export class CreateBoardDto {
   @IsNumber()
   @ApiProperty({ example: 2, description: '여자 인원수' })
   female: number;
+
+  @IsNotEmpty()
+  @IsArray()
+  @ApiProperty({
+    example: ['modern', 'agile', '4term'],
+    description: 'host members',
+  })
+  hosts: [];
 }

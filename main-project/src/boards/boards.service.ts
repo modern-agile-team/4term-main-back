@@ -4,8 +4,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateBoardDto } from './dto/create-board.dto';
-import { UpdateBoardDto } from './dto/update-board.dto';
+import { UsersRepository } from 'src/users/repository/users.repository';
+import { BoardDto } from './dto/board.dto';
 import {
   BoardMemberDetail,
   BoardCreateResponse,
@@ -20,19 +20,39 @@ export class BoardsService {
   constructor(
     @InjectRepository(BoardRepository)
     private readonly boardRepository: BoardRepository,
+    @InjectRepository(UsersRepository)
+    private readonly usersRepository: UsersRepository,
   ) {}
 
   // 게시글 생성 관련
-  private async setBoard(createBoardDto: CreateBoardDto): Promise<number> {
+  private async setBoard(boardInfo: BoardDetail): Promise<number> {
     try {
       const { affectedRows, insertId }: BoardCreateResponse =
-        await this.boardRepository.createBoard(createBoardDto);
+        await this.boardRepository.createBoard(boardInfo);
 
       if (!(affectedRows && insertId)) {
         throw new InternalServerErrorException(`board 생성 오류입니다.`);
       }
 
       return insertId;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private async setHostMembers(hosts: []): Promise<void> {
+    try {
+      hosts.forEach(async (el) => {
+        // const user = await this.usersRepository.유저검색(el)
+        const { affectedRows, insertId }: BoardCreateResponse =
+          await this.boardRepository.createHostMember({ userNo: 1 }); // 수정 필요
+
+        if (!(affectedRows && insertId)) {
+          throw new InternalServerErrorException(
+            `host-member 생성 오류입니다.`,
+          );
+        }
+      });
     } catch (error) {
       throw error;
     }
@@ -53,12 +73,13 @@ export class BoardsService {
     }
   }
 
-  async createBoard(createBoardDto: CreateBoardDto): Promise<number> {
+  async createBoard({ hosts, ...boardInfo }: BoardDto): Promise<number> {
     try {
-      const boardNo: number = await this.setBoard(createBoardDto); // user_no 추가 필요 -> 작성자
+      const boardNo: number = await this.setBoard(boardInfo); // user_no 추가 필요 -> 작성자
+      const hostMembers = await this.setHostMembers(hosts);
 
       const boardMemberDetail: BoardMemberDetail = {
-        ...createBoardDto,
+        ...boardInfo,
         boardNo,
       };
 
@@ -120,7 +141,7 @@ export class BoardsService {
   //게시글 수정 관련
   async editBoard(
     boardNo: number,
-    { male, female, ...boardDetail }: UpdateBoardDto,
+    { male, female, ...boardDetail }: BoardDto,
   ): Promise<string> {
     try {
       await this.getBoardByNo(boardNo);
