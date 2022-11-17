@@ -1,4 +1,6 @@
+import { type } from 'os';
 import { Meetings } from 'src/meetings/entity/meeting.entity';
+import { NoticeChats } from 'src/notices/entity/notice-chat.entity';
 import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
@@ -31,4 +33,7 @@ export class ChatList extends BaseEntity {
 
   @OneToMany((type) => ChatLog, (chatLog) => chatLog.chatRoomNo)
   chatLogNo: ChatLog[];
+
+  @OneToMany((type) => NoticeChats, (noticeChats) => noticeChats.chatRoomNo)
+  noticeChat: NoticeChats[];
 }
