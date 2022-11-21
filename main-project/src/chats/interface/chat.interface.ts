@@ -1,3 +1,8 @@
+export interface MeetingMembersList {
+  hostUserNo: number[];
+  guestUserNo: number[];
+}
+
 export interface CreateChat {
   userNo?: number;
   meetingNo: number;

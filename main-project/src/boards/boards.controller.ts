@@ -11,8 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
-import { CreateBoardDto } from './dto/create-board.dto';
-import { UpdateBoardDto } from './dto/update-board.dto';
+import { BoardDto } from './dto/board.dto';
 import { BoardReadResponse } from './interface/boards.interface';
 
 @Controller('boards')
@@ -66,7 +65,7 @@ export class BoardsController {
     summary: '게시글 생성 API',
     description: '입력한 정보로 게시글, 멤버 정보을 생성한다.',
   })
-  async createBoard(@Body() createBoarddto: CreateBoardDto): Promise<object> {
+  async createBoard(@Body() createBoarddto: BoardDto): Promise<object> {
     try {
       const board: number = await this.boardService.createBoard(createBoarddto);
       const response = { success: true, board };
@@ -107,12 +106,12 @@ export class BoardsController {
   })
   async updateBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
-    @Body() updateBoardDto: UpdateBoardDto,
+    @Body() BoardDto: BoardDto,
   ): Promise<object> {
     try {
       const board: string = await this.boardService.editBoard(
         boardNo,
-        updateBoardDto,
+        BoardDto,
       );
 
       const response: object = {

@@ -11,6 +11,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { DeleteFriendDto } from './dto/delete-friend.dto';
+import { SearchFriendDto } from './dto/search-friend.dto';
 import { FriendsService } from './friends.service';
 import { Friend } from './interface/friend.interface';
 
@@ -147,5 +148,17 @@ export class FriendsController {
     } catch (err) {
       throw err;
     }
+  }
+
+  @Get('/search/:nickname')
+  @ApiOperation({
+    summary: '친구 검색 API',
+    description: '닉네임으로 친구 검색',
+  })
+  async searchFriend(
+    @Param('nickname') nickname: string,
+    @Body('userNo', ParseIntPipe) userNo: number,
+  ) {
+    return await this.friendsService.searchFriend(nickname, userNo);
   }
 }
