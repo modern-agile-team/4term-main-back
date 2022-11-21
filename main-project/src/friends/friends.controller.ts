@@ -29,6 +29,7 @@ export class FriendsController {
     @Param('userNo', ParseIntPipe) userNo: number,
   ): Promise<Friend> {
     const friendList = await this.friendsService.getFriendList(userNo);
+
     return friendList;
   }
 
@@ -40,15 +41,11 @@ export class FriendsController {
   async createFriendRequest(
     @Body() createFriendDto: CreateFriendDto,
   ): Promise<object> {
-    try {
-      const sendRequest = await this.friendsService.createFriendRequest(
-        createFriendDto,
-      );
+    const sendRequest = await this.friendsService.createFriendRequest(
+      createFriendDto,
+    );
 
-      return sendRequest;
-    } catch (err) {
-      throw err;
-    }
+    return sendRequest;
   }
 
   @Patch('/accept/:userNo')
@@ -60,16 +57,12 @@ export class FriendsController {
     @Param('userNo', ParseIntPipe) receiverNo: number,
     @Body('senderNo', ParseIntPipe) senderNo: number,
   ): Promise<object> {
-    try {
-      const friendAccept = await this.friendsService.acceptFriendRequest(
-        receiverNo,
-        senderNo,
-      );
+    const friendAccept = await this.friendsService.acceptFriendRequest(
+      receiverNo,
+      senderNo,
+    );
 
-      return friendAccept;
-    } catch (err) {
-      throw err;
-    }
+    return friendAccept;
   }
 
   @Get('/request/receive/:userNo')
@@ -80,14 +73,10 @@ export class FriendsController {
   async getAllReceiveFriendRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
   ): Promise<object> {
-    try {
-      const friendRequestList =
-        await this.friendsService.getAllReceiveFriendRequest(receiverNo);
+    const friendRequestList =
+      await this.friendsService.getAllReceiveFriendRequest(receiverNo);
 
-      return friendRequestList;
-    } catch (err) {
-      throw err;
-    }
+    return friendRequestList;
   }
 
   @Get('/request/send/:userNo')
@@ -98,14 +87,11 @@ export class FriendsController {
   async getAllSendFriendRequest(
     @Param('userNo', ParseIntPipe) senderNo: number,
   ): Promise<object> {
-    try {
-      const friendRequestList =
-        await this.friendsService.getAllSendFriendRequest(senderNo);
+    const friendRequestList = await this.friendsService.getAllSendFriendRequest(
+      senderNo,
+    );
 
-      return friendRequestList;
-    } catch (err) {
-      throw err;
-    }
+    return friendRequestList;
   }
 
   @Delete('/request/refuse/:userNo')
@@ -117,16 +103,12 @@ export class FriendsController {
     @Param('userNo', ParseIntPipe) receiverNo: number,
     @Body('friendNo', ParseIntPipe) senderNo: number,
   ) {
-    try {
-      await this.friendsService.refuseRequest({ receiverNo, senderNo });
+    await this.friendsService.refuseRequest({ receiverNo, senderNo });
 
-      return {
-        success: true,
-        msg: '친구 요청을 거절했습니다.',
-      };
-    } catch (err) {
-      throw err;
-    }
+    return {
+      success: true,
+      msg: '친구 요청을 거절했습니다.',
+    };
   }
 
   // 추후 토큰의 유저no와 friendNo 확인 후 삭제
@@ -138,16 +120,12 @@ export class FriendsController {
   async deleteFriend(
     @Body() deleteFriendDto: DeleteFriendDto,
   ): Promise<object> {
-    try {
-      await this.friendsService.deleteFriend(deleteFriendDto);
+    await this.friendsService.deleteFriend(deleteFriendDto);
 
-      return {
-        success: true,
-        msg: '친구삭제가 완료되었습니다.',
-      };
-    } catch (err) {
-      throw err;
-    }
+    return {
+      success: true,
+      msg: '친구삭제가 완료되었습니다.',
+    };
   }
 
   @Get('/search/:nickname')
