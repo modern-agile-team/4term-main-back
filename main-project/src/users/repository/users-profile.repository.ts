@@ -1,5 +1,4 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { ResultSetHeader } from 'mysql2';
 import {
   EntityRepository,
   InsertResult,

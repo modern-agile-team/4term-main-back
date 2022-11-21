@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Param, Patch, Post } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserProfileDto } from './dto/update-user-profile.dto';
@@ -36,6 +28,7 @@ export class UsersController {
 
     return { success: true };
   }
+
   @Delete('/:userNo/signdown')
   @ApiOperation({ summary: '회원탈퇴' })
   async deleteUser(@Param('userNo') userNo: number) {

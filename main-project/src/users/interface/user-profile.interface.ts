@@ -11,7 +11,6 @@ export interface UpdateUserInfo {
   gender: boolean;
   nickname: string;
   email: string;
-  // description: string;
 }
 
 export interface UpdateUsersDetail {

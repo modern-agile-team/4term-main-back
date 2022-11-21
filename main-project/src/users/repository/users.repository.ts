@@ -9,7 +9,7 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { Users } from '../entity/user.entity';
-import { UsersDetail, UserStatus } from '../interface/user-profile.interface';
+import { UsersDetail } from '../interface/user-profile.interface';
 
 @EntityRepository(Users)
 export class UsersRepository extends Repository<Users> {

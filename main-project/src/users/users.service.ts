@@ -92,15 +92,3 @@ export class UsersService {
     }
   }
 }
-//   //Refresh Token
-//   async signInByOAuth({ accessToken, oAuthAgency }: CreateUserByOAuthDto) {
-//     const id = await this.authService.validateOAuth(accessToken, oAuthAgency);
-
-//   const userStatus = await this.usersRepository.find({
-//     where:{
-//       accont: id,
-//     },
-//     select: {status: true}
-//   });
-
-// }
