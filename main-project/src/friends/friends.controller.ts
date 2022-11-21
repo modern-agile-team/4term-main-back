@@ -12,8 +12,9 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { DeleteFriendDto } from './dto/delete-friend.dto';
 import { SearchFriendDto } from './dto/search-friend.dto';
+import { Friends } from './entity/friend.entity';
 import { FriendsService } from './friends.service';
-import { Friend } from './interface/friend.interface';
+import { Friend, FriendList } from './interface/friend.interface';
 
 @Controller('friends')
 @ApiTags('친구 API')
@@ -27,7 +28,7 @@ export class FriendsController {
   })
   async getFriendList(
     @Param('userNo', ParseIntPipe) userNo: number,
-  ): Promise<Friend> {
+  ): Promise<FriendList[]> {
     const friendList = await this.friendsService.getFriendList(userNo);
 
     return friendList;
@@ -41,11 +42,12 @@ export class FriendsController {
   async createFriendRequest(
     @Body() createFriendDto: CreateFriendDto,
   ): Promise<object> {
-    const sendRequest = await this.friendsService.createFriendRequest(
-      createFriendDto,
-    );
+    await this.friendsService.createFriendRequest(createFriendDto);
 
-    return sendRequest;
+    return {
+      success: true,
+      msg: '친구 신청이 완료되었습니다.',
+    };
   }
 
   @Patch('/accept/:userNo')
@@ -57,12 +59,11 @@ export class FriendsController {
     @Param('userNo', ParseIntPipe) receiverNo: number,
     @Body('senderNo', ParseIntPipe) senderNo: number,
   ): Promise<object> {
-    const friendAccept = await this.friendsService.acceptFriendRequest(
-      receiverNo,
-      senderNo,
-    );
-
-    return friendAccept;
+    await this.friendsService.acceptFriendRequest(receiverNo, senderNo);
+    return {
+      success: true,
+      msg: '친구 신청을 수락했습니다.',
+    };
   }
 
   @Get('/request/receive/:userNo')
@@ -72,7 +73,7 @@ export class FriendsController {
   })
   async getAllReceiveFriendRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
-  ): Promise<object> {
+  ): Promise<Friends[]> {
     const friendRequestList =
       await this.friendsService.getAllReceiveFriendRequest(receiverNo);
 
@@ -86,7 +87,7 @@ export class FriendsController {
   })
   async getAllSendFriendRequest(
     @Param('userNo', ParseIntPipe) senderNo: number,
-  ): Promise<object> {
+  ): Promise<Friends[]> {
     const friendRequestList = await this.friendsService.getAllSendFriendRequest(
       senderNo,
     );

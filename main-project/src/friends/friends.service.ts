@@ -27,7 +27,7 @@ export class FriendsService {
   async acceptFriendRequest(
     receiverNo: number,
     senderNo: number,
-  ): Promise<object> {
+  ): Promise<void> {
     const acceptFriend = await this.friendsRepository.acceptFriend(
       receiverNo,
       senderNo,
@@ -35,26 +35,23 @@ export class FriendsService {
     if (!acceptFriend) {
       throw new BadRequestException(`이미 친구이거나 잘못된 요청 입니다.`);
     }
-
-    return {
-      success: true,
-      msg: '친구 신청을 수락했습니다.',
-    };
   }
 
-  async getAllReceiveFriendRequest(receiverNo: number): Promise<object> {
-    const requestList = await this.findAllReceiveFriendReqByNo(receiverNo);
+  async getAllReceiveFriendRequest(receiverNo: number): Promise<Friends[]> {
+    const receivedRequestList = await this.findAllReceiveFriendReqByNo(
+      receiverNo,
+    );
 
-    return requestList;
+    return receivedRequestList;
   }
 
-  async getAllSendFriendRequest(senderNo: number): Promise<object> {
-    const requestList = await this.findAllSendFriendReqByNo(senderNo);
+  async getAllSendFriendRequest(senderNo: number): Promise<Friends[]> {
+    const sendedRequestList = await this.findAllSendFriendReqByNo(senderNo);
 
-    return requestList;
+    return sendedRequestList;
   }
 
-  async createFriendRequest(createFriendDto: CreateFriendDto): Promise<object> {
+  async createFriendRequest(createFriendDto: CreateFriendDto): Promise<void> {
     const { receiverNo, senderNo }: CreateFriendDto = createFriendDto;
     if (receiverNo === senderNo) {
       throw new BadRequestException('동일한 유저 번호입니다.');
@@ -71,11 +68,6 @@ export class FriendsService {
           `friend request 생성 오류입니다.`,
         );
       }
-
-      return {
-        success: true,
-        msg: '친구 신청이 완료되었습니다.',
-      };
     }
     if (!check.isAccept) {
       throw new BadRequestException(
@@ -86,13 +78,10 @@ export class FriendsService {
     }
   }
 
-  async getFriendList(userNo: number): Promise<object> {
+  async getFriendList(userNo: number): Promise<FriendList[]> {
     const friendList = await this.findAllFriendByNo(userNo);
 
-    return {
-      success: true,
-      friendList,
-    };
+    return friendList;
   }
 
   async refuseRequest(refuseFriendNo: FriendDetail): Promise<void> {
