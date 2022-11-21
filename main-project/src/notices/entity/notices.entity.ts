@@ -1,4 +1,3 @@
-import { type } from 'os';
 import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
@@ -11,6 +10,7 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { NoticeBoards } from './notice-board.entity';
 import { NoticeChats } from './notice-chat.entity';
 import { NoticeGuests } from './notice-guest.entity';
 import { NoticeMeetings } from './notice-meeting.entity';
@@ -56,6 +56,9 @@ export class Notices extends BaseEntity {
 
   @OneToMany((type) => NoticeGuests, (noticeGuests) => noticeGuests.noticeNo)
   noticeGuests: NoticeGuests[];
+
+  @OneToMany((type) => NoticeBoards, (noticeBoards) => noticeBoards.noticeNo)
+  noticeBoards: NoticeBoards;
 
   @OneToMany((type) => NoticeChats, (noticeChats) => noticeChats.noticeNo)
   noticeChats: NoticeChats[];
