@@ -13,9 +13,9 @@ export class ChatListRepository extends Repository<ChatList> {
         .getRawOne();
 
       return result;
-    } catch (err) {
+    } catch (error) {
       throw new InternalServerErrorException(
-        `${err}: 채팅방 중복 확인 (checkRoomExist): 알 수 없는 서버 에러입니다.`,
+        `${error}: 채팅방 중복 확인 (checkRoomExist): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -29,9 +29,9 @@ export class ChatListRepository extends Repository<ChatList> {
         .execute();
 
       return raw.insertId;
-    } catch (err) {
+    } catch (error) {
       throw new InternalServerErrorException(
-        `${err}: 채팅방 생성 오류(createRoom): 알 수 없는 서버 에러입니다.`,
+        `${error}: 채팅방 생성 오류(createRoom): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -52,9 +52,9 @@ export class ChatListRepository extends Repository<ChatList> {
         .getRawOne();
 
       return result;
-    } catch (err) {
+    } catch (error) {
       throw new InternalServerErrorException(
-        `${err}: 채팅방 유저 확인 (isUserInChatRoom): 알 수 없는 서버 에러입니다.`,
+        `${error}: 채팅방 유저 확인 (isUserInChatRoom): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -66,9 +66,9 @@ export class ChatListRepository extends Repository<ChatList> {
         .getRawOne();
 
       return result;
-    } catch (err) {
+    } catch (error) {
       throw new InternalServerErrorException(
-        `${err}: 채팅방 중복 확인 (checkRoomExist): 알 수 없는 서버 에러입니다.`,
+        `${error}: 채팅방 중복 확인 (checkRoomExist): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
