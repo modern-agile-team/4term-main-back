@@ -50,9 +50,6 @@ export class Meetings extends BaseEntity {
   @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.meetingNo)
   guestMembers: GuestMembers[];
 
-  @OneToOne((type) => Boards, (board) => board.meetingNo)
-  board: Boards;
-
   @OneToMany((type) => ChatList, (chat) => chat.meetingNo)
   chatMeetingNo: ChatList;
 
