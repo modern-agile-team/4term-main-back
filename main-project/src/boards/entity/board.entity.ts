@@ -81,7 +81,7 @@ export class Boards extends BaseEntity {
     },
   )
   @JoinColumn()
-  hostMember: BoardHostMembers;
+  hostMembers: BoardHostMembers;
 
   @OneToMany(
     (type) => BoardGuestTeams,

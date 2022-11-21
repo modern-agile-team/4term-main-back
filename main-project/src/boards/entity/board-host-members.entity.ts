@@ -18,11 +18,11 @@ export class BoardHostMembers extends BaseEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_no' })
-  userNo: Users;
+  userNo: number;
 
-  @ManyToOne((type) => Boards, (board) => board.hostMember, {
+  @ManyToOne((type) => Boards, (board) => board.hostMembers, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'board_no' })
-  boardNo: Boards;
+  boardNo: number;
 }

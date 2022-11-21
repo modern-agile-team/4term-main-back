@@ -18,11 +18,11 @@ export class BoardGuestTeams extends BaseEntity {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'board_no' })
-  boardNo: Boards;
+  boardNo: number;
 
   @OneToMany(
     (type) => BoardGuestMembers,
     (boardGuestMembers) => boardGuestMembers.teamNo,
   )
-  userNo: BoardGuestMembers;
+  userNo: number;
 }

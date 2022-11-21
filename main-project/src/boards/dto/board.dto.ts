@@ -58,5 +58,5 @@ export class BoardDto {
     example: ['modern', 'agile', '4term'],
     description: 'host members',
   })
-  hosts: [];
+  hostMembers: [];
 }

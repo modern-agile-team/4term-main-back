@@ -1,4 +1,7 @@
-export interface BoardCreateResponse {
+import { Users } from 'src/users/entity/user.entity';
+import { Boards } from '../entity/board.entity';
+
+export interface CreateResponse {
   affectedRows: number;
   insertId?: number;
 }
@@ -30,6 +33,11 @@ export interface BoardDetail {
 }
 
 export interface BookmarkDetail {
+  boardNo: number;
+  userNo: number;
+}
+
+export interface CreateHostMembers {
   boardNo: number;
   userNo: number;
 }
