@@ -54,11 +54,7 @@ export class ChatsGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() userNo: number,
   ) {
-    try {
-      await this.chatGatewayService.initSocket(socket, userNo);
-    } catch (err) {
-      throw err;
-    }
+    await this.chatGatewayService.initSocket(socket, userNo);
   }
 
   @SubscribeMessage('create-room')
@@ -66,13 +62,9 @@ export class ChatsGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: CreateChat,
   ) {
-    try {
-      await this.chatGatewayService.createRoom(socket, messagePayload);
+    await this.chatGatewayService.createRoom(socket, messagePayload);
 
-      return { success: true };
-    } catch (err) {
-      throw err;
-    }
+    return { success: true };
   }
 
   @SubscribeMessage('join-room')
@@ -80,13 +72,9 @@ export class ChatsGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: JoinChatRoom,
   ) {
-    try {
-      await this.chatGatewayService.joinRoom(socket, messagePayload);
+    await this.chatGatewayService.joinRoom(socket, messagePayload);
 
-      return { success: true };
-    } catch (err) {
-      throw err;
-    }
+    return { success: true };
   }
 
   @SubscribeMessage('message')
@@ -94,10 +82,6 @@ export class ChatsGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: MessagePayload,
   ) {
-    try {
-      await this.chatGatewayService.sendChat(socket, messagePayload);
-    } catch (err) {
-      throw err;
-    }
+    await this.chatGatewayService.sendChat(socket, messagePayload);
   }
 }
