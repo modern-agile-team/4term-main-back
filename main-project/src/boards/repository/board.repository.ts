@@ -17,6 +17,7 @@ import {
   BoardReadResponse,
   BoardDetail,
   CreateHostMembers,
+  HostMembers,
 } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
@@ -28,6 +29,7 @@ export class BoardRepository extends Repository<Boards> {
         .leftJoin('boards.boardMemberInfo', 'boardMemberInfo')
         .leftJoin('boards.userNo', 'users')
         .leftJoin('boards.hostMembers', 'hostMembers')
+        .leftJoin('hostMembers.userNo', 'hostUsers')
         .select([
           'boards.no AS no',
           'boards.userNo AS host_user_no',
@@ -40,7 +42,7 @@ export class BoardRepository extends Repository<Boards> {
           'boardMemberInfo.male AS male',
           'boardMemberInfo.female AS female',
           'GROUP_CONCAT(hostMembers.userNo) AS host_member_no',
-          'GROUP_CONCAT(users.nickname) AS host_member_name',
+          'GROUP_CONCAT(hostUsers.nickname) AS host_member_nickname',
         ])
         .where('boards.no = :boardNo', { boardNo })
         .where('hostMembers.boardNo = :boardNo', { boardNo })

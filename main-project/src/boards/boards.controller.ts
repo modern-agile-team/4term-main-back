@@ -45,6 +45,7 @@ export class BoardsController {
   })
   async getBoardByNo(@Param('boardNo') boardNo: number): Promise<object> {
     try {
+      // const board = await this.boardService.getHostMembers(boardNo);
       const board: BoardReadResponse = await this.boardService.getBoardByNo(
         boardNo,
       );

@@ -41,3 +41,8 @@ export interface CreateHostMembers {
   boardNo: number;
   userNo: number;
 }
+
+export interface HostMembers {
+  userNo: [];
+  nickname: [];
+}

@@ -15,6 +15,7 @@ import {
   BoardReadResponse,
   BoardDetail,
   CreateHostMembers,
+  HostMembers,
 } from './interface/boards.interface';
 import { BoardRepository } from './repository/board.repository';
 
@@ -151,20 +152,6 @@ export class BoardsService {
       throw error;
     }
   }
-
-  // async getHostMembers(boardNo: number): Promise<[]> {
-  //   try {
-  //     await this.getBoardByNo(boardNo);
-
-  //     if (!board) {
-  //       throw new NotFoundException(`${boardNo}번 게시글을 찾을 수 없습니다.`);
-  //     }
-
-  //     return board;
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // }
 
   //게시글 수정 관련
   async editBoard(
