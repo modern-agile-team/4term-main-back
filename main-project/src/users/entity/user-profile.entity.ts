@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { Manners } from 'src/manners/entity/manners.entity';
+=======
+import { MannersTemperature } from 'src/manners/entity/manner-Temperatures.entity';
+>>>>>>> 7080587f7cbbd4b54e71a7817e08c42c3444bd79
 import { Majors } from 'src/universities/entity/majors.entity';
 import { University } from 'src/universities/entity/university.entity';
 import {
@@ -42,4 +46,7 @@ export class UserProfile extends BaseEntity {
 
   @OneToOne((type) => ProfileImages, (profileImages) => profileImages.userNo)
   profileImages: ProfileImages;
+
+  @OneToOne((type) => MannersTemperature, (manners) => manners.userProfile)
+  mannerTemperature: MannersTemperature;
 }
