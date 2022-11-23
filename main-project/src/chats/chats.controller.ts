@@ -22,11 +22,11 @@ export class ChatsController {
     description: ' 채팅 목록 조회',
   })
   async getChatRoomList(@Param('userNo') userNo: number): Promise<object> {
-    const chatRoomList =
-      await this.chatControllerService.getChatRoomListByUserNo(userNo);
+    const response = await this.chatControllerService.getChatRoomListByUserNo(
+      userNo,
+    );
     return {
-      success: true,
-      chatRoomList,
+      response,
     };
   }
 
@@ -38,13 +38,13 @@ export class ChatsController {
   async getRecentChatLog(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
-  ): Promise<any> {
-    const chatLog = await this.chatControllerService.getRecentChatLog({
+  ): Promise<object> {
+    const response = await this.chatControllerService.getRecentChatLog({
       userNo,
       chatRoomNo,
     });
 
-    return chatLog;
+    return { response };
   }
 
   // @Post('/create/:meetingNo/:hostNo')
@@ -73,14 +73,14 @@ export class ChatsController {
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
     @Body('currentChatLogNo', ParseIntPipe) currentChatLogNo: number,
-  ): Promise<ChatLog[]> {
-    const chatLog = await this.chatControllerService.getChatLog({
+  ): Promise<object> {
+    const response = await this.chatControllerService.getChatLog({
       userNo,
       chatRoomNo,
       currentChatLogNo,
     });
 
-    return chatLog;
+    return { response };
   }
 
   @Post('/:chatRoomNo/invite')
@@ -92,7 +92,7 @@ export class ChatsController {
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
     @Body('targetUserNo', ParseIntPipe) targetUserNo: number,
-  ): Promise<any> {
+  ): Promise<object> {
     await this.chatControllerService.inviteUser(
       userNo,
       targetUserNo,
@@ -100,7 +100,6 @@ export class ChatsController {
     );
 
     return {
-      success: true,
       msg: '초대 성공',
     };
   }
@@ -117,7 +116,6 @@ export class ChatsController {
     await this.chatControllerService.acceptInvitation(noticeNo, userNo);
 
     return {
-      success: true,
       msg: '채팅방 참여 성공',
     };
   }
