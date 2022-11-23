@@ -46,6 +46,7 @@ export class FriendsRepository extends Repository<Friends> {
       const result = await this.createQueryBuilder('friends')
         .select(['friends.sender_no AS senderNo'])
         .where('receiver_no = :receiverNo', { receiverNo })
+        .andWhere('is_accept = 0')
         .getRawMany();
 
       return result;
@@ -61,6 +62,7 @@ export class FriendsRepository extends Repository<Friends> {
       const result = await this.createQueryBuilder('friends')
         .select(['friends.receiver_no AS receiverNo'])
         .where('sender_no = :senderNo', { senderNo })
+        .andWhere('is_accept = 0')
         .getRawMany();
       return result;
     } catch (err) {
