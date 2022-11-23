@@ -10,7 +10,6 @@ import { Friends } from 'src/friends/entity/friend.entity';
 import { MeetingInfo } from 'src/meetings/entity/meeting-info.entity';
 import { GuestMembers } from 'src/members/entity/guest-members.entity';
 import { HostMembers } from 'src/members/entity/host-members.entity';
-import { NoticeGuests } from 'src/notices/entity/notice-guest.entity';
 import { Notices } from 'src/notices/entity/notices.entity';
 import { ReportedUsers } from 'src/reports/entity/reported-user.entity';
 import { Reports } from 'src/reports/entity/reports.entity';
@@ -107,9 +106,6 @@ export class Users extends BaseEntity {
     (boardHostMembers) => boardHostMembers.userNo,
   )
   guestmember: BoardGuestMembers;
-
-  @OneToMany((type) => NoticeGuests, (noticeGuests) => noticeGuests.userNo)
-  noticeGuests: NoticeGuests[];
 
   @OneToMany((type) => ChatLog, (chatLog) => chatLog.userNo)
   chatLogUserNo: ChatLog[];

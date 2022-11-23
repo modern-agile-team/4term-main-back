@@ -1,10 +1,10 @@
 import { ChatList } from 'src/chats/entity/chat-list.entity';
-import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Notices } from './notices.entity';
@@ -20,7 +20,7 @@ export class NoticeChats extends BaseEntity {
   @JoinColumn({ name: 'chat_room_no' })
   chatRoomNo: number;
 
-  @ManyToOne((type) => Notices, (notices) => notices.noticeChats, {
+  @OneToOne((type) => Notices, (notices) => notices.noticeChats, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'notice_no' })
