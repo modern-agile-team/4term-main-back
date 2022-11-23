@@ -1,10 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
-import { get } from 'http';
-import { MannersService } from './manners.service';
+import { Controller } from '@nestjs/common';
 
 @Controller('manners')
-export class MannersController {
-  constructor(private mannerService: MannersService) {}
-
-  // @Get()
-}
+export class MannersController {}
