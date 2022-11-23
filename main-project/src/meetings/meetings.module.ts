@@ -7,7 +7,6 @@ import { MeetingInfoRepository } from './repository/meeting-info.repository';
 import { HostMembersRepository } from 'src/members/repository/host-members.repository';
 import { GuestMembersRepository } from 'src/members/repository/guest-members.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
-import { NoticeGuestsRepository } from 'src/notices/repository/notices-guests.repository';
 
 @Module({
   imports: [
@@ -17,7 +16,6 @@ import { NoticeGuestsRepository } from 'src/notices/repository/notices-guests.re
       HostMembersRepository,
       GuestMembersRepository,
       NoticesRepository,
-      NoticeGuestsRepository,
     ]),
   ],
   providers: [MeetingsService],
