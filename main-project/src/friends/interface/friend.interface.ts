@@ -32,3 +32,9 @@ export interface FriendInfo {
   friendNo: number;
   nickname: string;
 }
+export interface NoticeFriend {
+  noticeNo?: number;
+  senderNo?: number;
+  receiverNo?: number;
+  friendNo?: number;
+}
