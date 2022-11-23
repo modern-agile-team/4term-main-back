@@ -28,10 +28,11 @@ export class FriendsController {
   })
   async getFriendList(
     @Param('userNo', ParseIntPipe) userNo: number,
-  ): Promise<FriendList[]> {
-    const friendList = await this.friendsService.getFriendList(userNo);
+  ): Promise<object> {
+    const response = await this.friendsService.getFriendList(userNo);
+    console.log(response);
 
-    return friendList;
+    return { response };
   }
 
   @Post('/request')
@@ -45,7 +46,6 @@ export class FriendsController {
     await this.friendsService.createFriendRequest(createFriendDto);
 
     return {
-      success: true,
       msg: '친구 신청이 완료되었습니다.',
     };
   }
@@ -61,7 +61,6 @@ export class FriendsController {
   ): Promise<object> {
     await this.friendsService.acceptFriendRequest(receiverNo, senderNo);
     return {
-      success: true,
       msg: '친구 신청을 수락했습니다.',
     };
   }
@@ -73,11 +72,12 @@ export class FriendsController {
   })
   async getAllReceiveFriendRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
-  ): Promise<Friends[]> {
-    const friendRequestList =
-      await this.friendsService.getAllReceiveFriendRequest(receiverNo);
+  ): Promise<object> {
+    const response = await this.friendsService.getAllReceiveFriendRequest(
+      receiverNo,
+    );
 
-    return friendRequestList;
+    return { response };
   }
 
   @Get('/request/send/:userNo')
@@ -87,12 +87,12 @@ export class FriendsController {
   })
   async getAllSendFriendRequest(
     @Param('userNo', ParseIntPipe) senderNo: number,
-  ): Promise<Friends[]> {
-    const friendRequestList = await this.friendsService.getAllSendFriendRequest(
+  ): Promise<object> {
+    const response = await this.friendsService.getAllSendFriendRequest(
       senderNo,
     );
 
-    return friendRequestList;
+    return { response };
   }
 
   @Delete('/request/refuse/:userNo')
@@ -107,7 +107,6 @@ export class FriendsController {
     await this.friendsService.refuseRequest({ receiverNo, senderNo });
 
     return {
-      success: true,
       msg: '친구 요청을 거절했습니다.',
     };
   }
@@ -124,7 +123,6 @@ export class FriendsController {
     await this.friendsService.deleteFriend(deleteFriendDto);
 
     return {
-      success: true,
       msg: '친구삭제가 완료되었습니다.',
     };
   }
@@ -138,6 +136,9 @@ export class FriendsController {
     @Param('nickname') nickname: string,
     @Body('userNo', ParseIntPipe) userNo: number,
   ) {
-    return await this.friendsService.searchFriend(nickname, userNo);
+    const response = await this.friendsService.searchFriend(nickname, userNo);
+    return {
+      response,
+    };
   }
 }

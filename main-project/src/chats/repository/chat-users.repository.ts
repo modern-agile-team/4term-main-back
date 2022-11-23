@@ -1,6 +1,4 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { UserInfo } from 'firebase-admin/lib/auth/user-record';
-import { async } from 'rxjs';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { ChatUsers } from '../entity/chat-users.entity';
 import { ChatRoomList, ChatUserInfo } from '../interface/chat.interface';

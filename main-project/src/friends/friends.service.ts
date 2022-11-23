@@ -126,6 +126,8 @@ export class FriendsService {
   private async findAllFriendByNo(userNo: number): Promise<FriendList[]> {
     const friendList: FriendList[] =
       await this.friendsRepository.getAllFriendList(userNo);
+    console.log(friendList);
+
     if (!friendList.length) {
       throw new BadRequestException('친구 목록이 없습니다.');
     }
