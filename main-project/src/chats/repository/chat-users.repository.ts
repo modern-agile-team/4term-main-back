@@ -6,7 +6,23 @@ import { ChatRoomList, ChatUserInfo } from '../interface/chat.interface';
 
 @EntityRepository(ChatUsers)
 export class ChatUsersRepository extends Repository<ChatUsers> {
-  async setRoomUsers(roomUsers): Promise<InsertResult> {
+  async setChatRoomUsers(roomUsers: ChatUserInfo[]): Promise<InsertResult> {
+    try {
+      const { raw }: InsertResult = await this.createQueryBuilder('chat_users')
+        .insert()
+        .into(ChatUsers)
+        .values(roomUsers)
+        .execute();
+
+      return raw.affectedRows;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error}: 채팅방 유저 정보 설정(setRoomUsers): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async setChatRoomUser(roomUsers: ChatUserInfo): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('chat_users')
         .insert()
@@ -32,6 +48,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
         ])
         .where('chat_users.user_no = :userNo', { userNo })
         .getRawMany();
+
       return chatRoomList;
     } catch (error) {
       throw new InternalServerErrorException(

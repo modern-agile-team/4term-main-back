@@ -5,9 +5,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ExtractJwt } from 'passport-jwt';
 import { Strategy } from 'passport-jwt';
 import { UsersRepository } from 'src/users/repository/users.repository';
+import { UserPayload } from '../interface/auth.interface';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-refresh-token',
+) {
   constructor(
     @InjectRepository(UsersRepository)
     private usersRepository: UsersRepository,
@@ -19,13 +23,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     });
   }
-  async validate(payload) {
-    const { email } = payload;
-    const user = await this.usersRepository.findOne({ email });
+  async validate(jwtFromRequest: UserPayload) {
+    const user: UserPayload = jwtFromRequest;
 
-    if (!user && payload.token === 'accessToken') {
-      throw new UnauthorizedException();
-    }
-    return user;
+    // if(user.token === ' accessToken'){
+    //     const user = await this.authService.validateAccessToken(jwtFromRequest)
+    // return user;
+    // }
+    // if(user.token === ' refreshToken'){
+    //     await this.authService.createAccessToken(user);
+    // }
   }
 }

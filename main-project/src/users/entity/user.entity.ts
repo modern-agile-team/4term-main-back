@@ -1,5 +1,7 @@
 import { Exclude } from 'class-transformer';
 import { BoardBookmarks } from 'src/boards/entity/board-bookmark.entity';
+import { BoardGuestMembers } from 'src/boards/entity/board-guest-members.entity';
+import { BoardHostMembers } from 'src/boards/entity/board-host-members.entity';
 import { Boards } from 'src/boards/entity/board.entity';
 import { ChatList } from 'src/chats/entity/chat-list.entity';
 import { ChatLog } from 'src/chats/entity/chat-log.entity';
@@ -95,6 +97,18 @@ export class Users extends BaseEntity {
 
   @OneToMany((type) => ChatUsers, (chatUsers) => chatUsers.userNo)
   chatUserNo: ChatUsers[];
+
+  @OneToMany(
+    (type) => BoardHostMembers,
+    (boardHostMembers) => boardHostMembers.userNo,
+  )
+  hostmember: BoardHostMembers;
+
+  @OneToMany(
+    (type) => BoardGuestMembers,
+    (boardHostMembers) => boardHostMembers.userNo,
+  )
+  guestmember: BoardGuestMembers;
 
   @OneToMany((type) => NoticeGuests, (noticeGuests) => noticeGuests.userNo)
   noticeGuests: NoticeGuests[];

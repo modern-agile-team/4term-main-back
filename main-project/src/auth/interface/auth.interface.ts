@@ -19,3 +19,13 @@ export enum OAuthAgency {
   kakao,
   google,
 }
+
+export interface UserPayload {
+  userNo: number;
+  email: string;
+  nickname: string;
+  issuer: string;
+  isAdmin: boolean;
+  expiration: number;
+  token: string;
+}

@@ -55,6 +55,21 @@ export class UsersRepository extends Repository<Users> {
       );
     }
   }
+  // test용으로 만든 임시 메서드 - board
+  async getUserByNickname(nickname: string) {
+    try {
+      const user = await this.createQueryBuilder('users')
+        .select(['users.no AS no', 'users.nickname AS nickname'])
+        .where('nickname = :nickname', { nickname })
+        .getRawOne();
+
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error}  알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
   //닉네임 중복체크
   async checkEmail(email: string): Promise<UsersDetail> {
     try {
@@ -99,7 +114,7 @@ export class UsersRepository extends Repository<Users> {
       return affected;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
+        `${error}  알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -115,7 +130,27 @@ export class UsersRepository extends Repository<Users> {
       return affected;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+  async getUserPayload(userNo: number) {
+    try {
+      const user = await this.createQueryBuilder()
+        .leftJoin('users.usersProfileNo', 'users')
+        .select([
+          'users.userNo AS userNo',
+          'users.isAdmin AS isAdmin',
+          'users.email AS email',
+          'usersProfile.nickname AS nickname',
+        ])
+        .where('users.no = :userNo', { userNo })
+        .getRawOne();
+
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 알 수 없는 서버 에러입니다.`,
       );
     }
   }

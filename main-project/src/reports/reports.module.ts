@@ -18,7 +18,7 @@ import { ReportRepository } from './repository/reports.repository';
       UserProfileRepository,
     ]),
   ],
+  providers: [ReportsService, BoardRepository, UsersRepository],
   controllers: [ReportsController],
-  providers: [ReportsService, BoardsService, UsersService],
 })
 export class ReportsModule {}
