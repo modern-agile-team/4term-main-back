@@ -11,10 +11,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { DeleteFriendDto } from './dto/delete-friend.dto';
-import { SearchFriendDto } from './dto/search-friend.dto';
-import { Friends } from './entity/friend.entity';
 import { FriendsService } from './friends.service';
-import { Friend, FriendList } from './interface/friend.interface';
 
 @Controller('friends')
 @ApiTags('친구 API')
@@ -30,7 +27,6 @@ export class FriendsController {
     @Param('userNo', ParseIntPipe) userNo: number,
   ): Promise<object> {
     const response = await this.friendsService.getFriendList(userNo);
-    console.log(response);
 
     return { response };
   }
@@ -60,6 +56,7 @@ export class FriendsController {
     @Body('senderNo', ParseIntPipe) senderNo: number,
   ): Promise<object> {
     await this.friendsService.acceptFriendRequest(receiverNo, senderNo);
+
     return {
       msg: '친구 신청을 수락했습니다.',
     };
@@ -137,6 +134,7 @@ export class FriendsController {
     @Body('userNo', ParseIntPipe) userNo: number,
   ) {
     const response = await this.friendsService.searchFriend(nickname, userNo);
+
     return {
       response,
     };
