@@ -1,14 +1,17 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BoardsService } from 'src/boards/boards.service';
+import { BoardReadResponse } from 'src/boards/interface/boards.interface';
+import { BoardRepository } from 'src/boards/repository/board.repository';
 import { CreateReportDto } from './dto/create-reports.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
 import {
-  BoardReportDetail,
+  ReportDetail,
   ReportCreateResponse,
   ReportReadResponse,
 } from './interface/reports.interface';
@@ -18,9 +21,9 @@ import { ReportRepository } from './repository/reports.repository';
 export class ReportsService {
   constructor(
     @InjectRepository(ReportRepository)
-    @InjectRepository(BoardsService)
+    @InjectRepository(BoardRepository)
     private readonly reportRepository: ReportRepository,
-    private readonly boardsService: BoardsService,
+    private readonly boardRepository: BoardRepository,
   ) {}
   // 신고글 조회 관련
   async getAllReports(): Promise<ReportReadResponse[]> {
@@ -29,7 +32,9 @@ export class ReportsService {
         await this.reportRepository.getAllReports();
 
       if (!boards) {
-        throw new NotFoundException(`전체 Reports의 조회를 실패 했습니다.`);
+        throw new NotFoundException(
+          `전체 신고 조회 오류 getAllReports-service.`,
+        );
       }
 
       return boards;
@@ -44,7 +49,9 @@ export class ReportsService {
         await this.reportRepository.getAllReportedBoards();
 
       if (!reportedBoards) {
-        throw new NotFoundException(`전체 Boards 신고의 조회를 실패 했습니다.`);
+        throw new NotFoundException(
+          `전체 게시글신고 조회 오류 getAllReports-service.`,
+        );
       }
 
       return reportedBoards;
@@ -59,7 +66,9 @@ export class ReportsService {
         await this.reportRepository.getAllReportedusers();
 
       if (!reportedUsers) {
-        throw new NotFoundException(`전체 Users 신고의 조회를 실패 했습니다.`);
+        throw new NotFoundException(
+          `전체 사용자신고 조회 오류 getAllReportedusers-service.`,
+        );
       }
 
       return reportedUsers;
@@ -75,7 +84,7 @@ export class ReportsService {
 
       if (!report) {
         throw new NotFoundException(
-          `${reportNo}번 신고 내역의 조회를 실패 했습니다.`,
+          `${reportNo}번 신고 조회 오류 getReportByNo-service.`,
         );
       }
 
@@ -90,22 +99,38 @@ export class ReportsService {
   }
 
   // 신고글 작성 관련
-  async setReport(createReportDto: CreateReportDto): Promise<number> {
+  private async setReport(createReportDto: CreateReportDto): Promise<number> {
     const { affectedRows, insertId }: ReportCreateResponse =
       await this.reportRepository.createReport(createReportDto);
 
     if (!(affectedRows && insertId)) {
-      throw new InternalServerErrorException(`report 생성 오류입니다.`);
+      throw new InternalServerErrorException(
+        `report 생성 오류 setReport-service.`,
+      );
     }
     return insertId;
   }
 
-  async setBoardReport(boardReportDetail: BoardReportDetail): Promise<number> {
+  private async setBoardReport(reportDetail: ReportDetail): Promise<number> {
     const { affectedRows, insertId }: ReportCreateResponse =
-      await this.reportRepository.createBoardReport(boardReportDetail);
+      await this.reportRepository.createBoardReport(reportDetail);
 
     if (!(affectedRows && insertId)) {
-      throw new InternalServerErrorException(`board-report 생성 오류입니다.`);
+      throw new InternalServerErrorException(
+        `board-report 생성 오류 setReport-service.`,
+      );
+    }
+    return insertId;
+  }
+
+  private async setUserReport(reportDetail: ReportDetail): Promise<number> {
+    const { affectedRows, insertId }: ReportCreateResponse =
+      await this.reportRepository.createUserReport(reportDetail);
+
+    if (!(affectedRows && insertId)) {
+      throw new InternalServerErrorException(
+        `user-report 생성 오류 setUserReport-service.`,
+      );
     }
     return insertId;
   }
@@ -115,16 +140,44 @@ export class ReportsService {
     boardNo: number,
   ): Promise<number> {
     try {
-      await this.boardsService.getBoardByNo(boardNo);
+      const board: BoardReadResponse = await this.boardRepository.getBoardByNo(
+        boardNo,
+      );
+      if (!board.no) {
+        throw new BadRequestException(`해당 게시글이 없습니다.`);
+      }
 
       const reportNo: number = await this.setReport(createReportDto);
 
-      const boardReportDetail: BoardReportDetail = {
+      const reportDetail: ReportDetail = {
         reportNo,
         targetBoardNo: boardNo,
       };
 
-      await this.setBoardReport(boardReportDetail);
+      await this.setBoardReport(reportDetail);
+
+      return reportNo;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async createUserReport(
+    createReportDto: CreateReportDto,
+    userNo: number,
+  ): Promise<number> {
+    try {
+      // await this.usersService.getUserByNo(userNo);
+      // User 확인 Method 사용 부분
+
+      const reportNo: number = await this.setReport(createReportDto);
+
+      const reportDetail: ReportDetail = {
+        reportNo,
+        targetUserNo: userNo,
+      };
+
+      await this.setUserReport(reportDetail);
 
       return reportNo;
     } catch (error) {
@@ -136,11 +189,21 @@ export class ReportsService {
   async updateReport(
     reportNo: number,
     updateReportDto: UpdateReportDto,
-  ): Promise<void> {
+  ): Promise<string> {
     try {
       await this.getReportByNo(reportNo);
+      const report: number = await this.reportRepository.updateReport(
+        reportNo,
+        updateReportDto,
+      );
 
-      await this.reportRepository.updateReport(reportNo, updateReportDto);
+      if (!report) {
+        throw new InternalServerErrorException(
+          `신고내역 수정 오류 updateReport-service.`,
+        );
+      }
+
+      return `${reportNo}번 신고내역이 수정되었습니다.`;
     } catch (error) {
       throw error;
     }
@@ -149,11 +212,7 @@ export class ReportsService {
   // 신고 삭제 관련
   async deleteReportByNo(reportNo: number): Promise<string> {
     try {
-      const report: ReportReadResponse = await this.getReportByNo(reportNo);
-      !report.targetBoardNo
-        ? await this.reportRepository.deleteUserReport(reportNo)
-        : await this.reportRepository.deleteBoardReport(reportNo);
-
+      await this.getReportByNo(reportNo);
       await this.reportRepository.deleteReport(reportNo);
 
       return `${reportNo}번 신고내역 삭제 성공 :)`;

@@ -1,9 +1,9 @@
-import { IsOptional, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class UpdateMeetingDto {
-  @IsOptional()
+  @IsNotEmpty()
   @IsString()
   @ApiProperty({
     example: '경기도',
@@ -11,11 +11,19 @@ export class UpdateMeetingDto {
   })
   location: string;
 
-  @IsOptional()
+  @IsNotEmpty()
   @Type(() => Date)
   @ApiProperty({
     example: '2022-06-27 15:22:31',
     description: '약속 시간',
   })
   time: Date;
+
+  @IsNotEmpty()
+  @IsInt()
+  @ApiProperty({
+    example: 1,
+    description: '약속을 수정하려는 유저 번호',
+  })
+  userNo: number;
 }

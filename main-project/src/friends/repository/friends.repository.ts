@@ -11,9 +11,11 @@ import { Friends } from '../entity/friend.entity';
 import {
   Friend,
   FriendDetail,
+  FriendInfo,
   FriendList,
   FriendRequest,
   FriendRequestResponse,
+  FriendToSearch,
 } from '../interface/friend.interface';
 
 @EntityRepository(Friends)
@@ -24,10 +26,6 @@ export class FriendsRepository extends Repository<Friends> {
         .leftJoin('friends.receiverNo', 'receiverNo')
         .leftJoin('friends.senderNo', 'senderNo')
         .select([
-          // 'receiverNo.nickname AS r_nickname',
-          // 'senderNo.nickname AS s_nickname',
-          // 'friends.receiver_no AS receiverNo',
-          // 'friends.sender_no AS senderNo ',
           `IF(friends.receiver_no = ${userNo} , friends.sender_no, friends.receiver_no) AS friendNo`,
           `IF(friends.receiver_no = ${userNo} , senderNo.nickname, receiverNo.nickname) AS friendNickname`,
         ])
@@ -48,6 +46,7 @@ export class FriendsRepository extends Repository<Friends> {
       const result = await this.createQueryBuilder('friends')
         .select(['friends.sender_no AS senderNo'])
         .where('receiver_no = :receiverNo', { receiverNo })
+        .andWhere('is_accept = 0')
         .getRawMany();
 
       return result;
@@ -63,6 +62,7 @@ export class FriendsRepository extends Repository<Friends> {
       const result = await this.createQueryBuilder('friends')
         .select(['friends.receiver_no AS receiverNo'])
         .where('sender_no = :senderNo', { senderNo })
+        .andWhere('is_accept = 0')
         .getRawMany();
       return result;
     } catch (err) {
@@ -150,9 +150,11 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async deletFriend(deleteFriend): Promise<number> {
+  async deleteFriend(deleteFriend): Promise<number> {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder()
+      const { affected }: DeleteResult = await this.createQueryBuilder(
+        'friends',
+      )
         .delete()
         .from(Friends)
         .where('receiver_no = :userNo AND sender_no = :friendNo', deleteFriend)
@@ -165,7 +167,7 @@ export class FriendsRepository extends Repository<Friends> {
       return affected;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err}: 친구 삭제(deletFriend): 알 수 없는 서버 에러입니다. `,
+        `${err}: 친구 삭제(deleteFriend): 알 수 없는 서버 에러입니다. `,
       );
     }
   }
@@ -185,6 +187,41 @@ export class FriendsRepository extends Repository<Friends> {
     } catch (err) {
       throw new InternalServerErrorException(
         `${err}: 친구 거절(refuseRequestByNo): 알 수 없는 서버 에러입니다. `,
+      );
+    }
+  }
+  async searchFriendByNickname({
+    userNo,
+    nickname,
+  }: FriendToSearch): Promise<FriendInfo[]> {
+    try {
+      const friend = await this.createQueryBuilder('friends')
+        .leftJoin('friends.receiverNo', 'receiverNo')
+        .leftJoin('friends.senderNo', 'senderNo')
+        .select([
+          `IF(friends.receiver_no = ${userNo} , friends.sender_no, friends.receiver_no) AS friendNo`,
+          `IF(friends.receiver_no = ${userNo} , senderNo.nickname, receiverNo.nickname) AS friendNickname`,
+        ])
+        .where(
+          `friends.receiver_no = :userNo AND senderNo.nickname LIKE :nickname`,
+          {
+            nickname: `%${nickname}%`,
+            userNo,
+          },
+        )
+        .orWhere(
+          `friends.senderNo = :userNo AND receiverNo.nickname LIKE :nickname`,
+          {
+            nickname: `%${nickname}%`,
+            userNo,
+          },
+        )
+        .getRawMany();
+
+      return friend;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err}: 친구 검색(searchFriendByNickname): 알 수 없는 서버 에러입니다. `,
       );
     }
   }

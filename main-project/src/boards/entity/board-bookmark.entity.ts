@@ -14,7 +14,9 @@ export class BoardBookmarks extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @OneToOne((type) => Boards, (board) => board.boardBookmark)
+  @OneToOne((type) => Boards, (board) => board.boardBookmark, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'board_no' })
   boardNo: number;
 

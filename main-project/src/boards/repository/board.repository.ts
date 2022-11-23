@@ -6,16 +6,17 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { CreateBoardDto } from '../dto/create-board.dto';
-import { UpdateBoardDto } from '../dto/update-board.dto';
 import { BoardBookmarks } from '../entity/board-bookmark.entity';
+import { BoardHostMembers } from '../entity/board-host-members.entity';
 import { BoardMemberInfos } from '../entity/board-member-info.entity';
 import { Boards } from '../entity/board.entity';
 import {
   BoardMemberDetail,
-  BoardCreateResponse,
+  CreateResponse,
   BookmarkDetail,
   BoardReadResponse,
+  BoardDetail,
+  CreateHostMembers,
 } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
@@ -23,14 +24,14 @@ export class BoardRepository extends Repository<Boards> {
   // 게시글 조회 관련
   async getBoardByNo(boardNo: number): Promise<BoardReadResponse> {
     try {
-      const board = this.createQueryBuilder('boards')
+      const board = await this.createQueryBuilder('boards')
         .leftJoin('boards.boardMemberInfo', 'boardMemberInfo')
-        .leftJoin('boards.userNo', 'userNo')
+        .leftJoin('boards.userNo', 'users')
+        .leftJoin('boards.hostMembers', 'hostMembers')
         .select([
           'boards.no AS no',
-          'boards.userNo AS user_no',
-          'boards.meetingNo AS meeting_no',
-          'userNo.nickname AS nickname',
+          'boards.userNo AS host_user_no',
+          'users.nickname AS nickname',
           'boards.title AS title',
           'boards.description AS description',
           'boards.location AS location',
@@ -38,8 +39,11 @@ export class BoardRepository extends Repository<Boards> {
           'boards.isDone AS isDone',
           'boardMemberInfo.male AS male',
           'boardMemberInfo.female AS female',
+          'GROUP_CONCAT(hostMembers.userNo) AS host_member_no',
+          'GROUP_CONCAT(users.nickname) AS host_member_name',
         ])
-        .where('boards.no=:boardNo', { boardNo })
+        .where('boards.no = :boardNo', { boardNo })
+        .where('hostMembers.boardNo = :boardNo', { boardNo })
         .getRawOne();
 
       return board;
@@ -52,11 +56,10 @@ export class BoardRepository extends Repository<Boards> {
 
   async getAllBoards(): Promise<BoardReadResponse[]> {
     try {
-      const boards = this.createQueryBuilder('boards')
+      const boards = await this.createQueryBuilder('boards')
         .select([
           'boards.no AS no',
           'boards.userNo AS user_no',
-          'boards.meetingNo AS meeting_no',
           'boards.title AS title',
           'boards.description AS description',
           'boards.location AS location',
@@ -75,9 +78,7 @@ export class BoardRepository extends Repository<Boards> {
   }
 
   //게시글 생성 관련
-  async createBoard(
-    createBoardDto: CreateBoardDto,
-  ): Promise<BoardCreateResponse> {
+  async createBoard(createBoardDto: BoardDetail): Promise<CreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('boards')
         .insert()
@@ -95,7 +96,7 @@ export class BoardRepository extends Repository<Boards> {
 
   async createBoardMember(
     boardMemberDetail: BoardMemberDetail,
-  ): Promise<BoardCreateResponse> {
+  ): Promise<CreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
         'board_member_infos',
@@ -113,9 +114,29 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
+  async createHostMember(
+    hostMember: CreateHostMembers,
+  ): Promise<CreateResponse> {
+    try {
+      const { raw }: InsertResult = await this.createQueryBuilder(
+        'board_member_infos',
+      )
+        .insert()
+        .into(BoardHostMembers)
+        .values(hostMember)
+        .execute();
+
+      return raw;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async createBookmark(
     bookmarkDetail: BookmarkDetail,
-  ): Promise<BoardCreateResponse> {
+  ): Promise<CreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
         'boardBookmark',
@@ -136,12 +157,12 @@ export class BoardRepository extends Repository<Boards> {
   //게시글 수정 관련
   async updateBoard(
     boardNo: number,
-    updateBoardDto: UpdateBoardDto,
+    boardDetail: BoardDetail,
   ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Boards)
-        .set(updateBoardDto)
+        .set(boardDetail)
         .where('no = :boardNo', { boardNo })
         .execute();
 
@@ -161,6 +182,23 @@ export class BoardRepository extends Repository<Boards> {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(BoardMemberInfos)
         .set(boardMember)
+        .where('boardNo = :boardNo', { boardNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} updateBoardMember-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async updateHostMember(boardNo: number, userNo: number): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(BoardHostMembers)
+        .set({ userNo })
+        .where('userNo = :userNo', { userNo })
         .where('boardNo = :boardNo', { boardNo })
         .execute();
 
