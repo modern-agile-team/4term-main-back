@@ -36,8 +36,6 @@ import {
 } from 'src/notices/interface/notice.interface';
 import { Connection, QueryRunner } from 'typeorm';
 import { MeetingInfo } from './interface/meeting-info.interface';
-import { NoticeGuestsRepository } from 'src/notices/repository/notices-guests.repository';
-import { NoticeMeetingsRepository } from 'src/notices/repository/notices-meetings.repository';
 
 @Injectable()
 export class MeetingsService {
@@ -56,9 +54,6 @@ export class MeetingsService {
 
     @InjectRepository(NoticesRepository)
     private readonly noticesRepository: NoticesRepository,
-
-    @InjectRepository(NoticeGuestsRepository)
-    private readonly noticeGuestsRepository: NoticeGuestsRepository,
 
     private readonly connection: Connection,
   ) {}
@@ -342,26 +337,25 @@ export class MeetingsService {
     guest,
     queryRunner,
   }: NoticeGuestParam): Promise<void> {
-    try {
-      const guestDetails: NoticeGuestDetail[] = guest.reduce(
-        (values, userNo) => {
-          values.push({ noticeNo, userNo });
-          return values;
-        },
-        [],
-      );
-
-      const { affectedRows }: InsertRaw = await queryRunner.manager
-        .getCustomRepository(NoticeGuestsRepository)
-        .saveNoticeGuest(guestDetails);
-      if (affectedRows !== guest.length) {
-        throw new InternalServerErrorException(
-          `게스트 신청 알림 추가(setNoticeGuests): 알 수 없는 서버 에러입니다.`,
-        );
-      }
-    } catch (err) {
-      throw err;
-    }
+    // try {
+    //   const guestDetails: NoticeGuestDetail[] = guest.reduce(
+    //     (values, userNo) => {
+    //       values.push({ noticeNo, userNo });
+    //       return values;
+    //     },
+    //     [],
+    //   );
+    //   const { affectedRows }: InsertRaw = await queryRunner.manager
+    //     .getCustomRepository(NoticeGuestsRepository)
+    //     .saveNoticeGuest(guestDetails);
+    //   if (affectedRows !== guest.length) {
+    //     throw new InternalServerErrorException(
+    //       `게스트 신청 알림 추가(setNoticeGuests): 알 수 없는 서버 에러입니다.`,
+    //     );
+    //   }
+    // } catch (err) {
+    //   throw err;
+    // }
   }
 
   private async setNoticeMeeting({
@@ -370,15 +364,14 @@ export class MeetingsService {
     queryRunner,
   }: NoticeMeetingParam): Promise<void> {
     try {
-      const { affectedRows }: InsertRaw = await queryRunner.manager
-        .getCustomRepository(NoticeMeetingsRepository)
-        .saveNoticeMeeting({ noticeNo, meetingNo });
-
-      if (!affectedRows) {
-        throw new InternalServerErrorException(
-          `알림 약속 번호 저장(setNoticeMeetings): 알 수 없는 서버 에러입니다.`,
-        );
-      }
+      // const { affectedRows }: InsertRaw = await queryRunner.manager
+      //   .getCustomRepository(NoticeMeetingsRepository)
+      //   .saveNoticeMeeting({ noticeNo, meetingNo });
+      // if (!affectedRows) {
+      //   throw new InternalServerErrorException(
+      //     `알림 약속 번호 저장(setNoticeMeetings): 알 수 없는 서버 에러입니다.`,
+      //   );
+      // }
     } catch (err) {
       throw err;
     }

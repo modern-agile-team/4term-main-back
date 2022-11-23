@@ -1,3 +1,4 @@
+import { NoticeFriends } from 'src/notices/entity/notice-friend.entity';
 import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
@@ -5,6 +6,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
@@ -23,4 +25,7 @@ export class Friends extends BaseEntity {
   @ManyToOne((type) => Users, (user) => user.friendSenderNo)
   @JoinColumn({ name: 'sender_no' })
   senderNo: number;
+
+  @OneToMany(() => NoticeFriends, (noticeFriend) => noticeFriend.friendNo)
+  noticeFriends: number;
 }
