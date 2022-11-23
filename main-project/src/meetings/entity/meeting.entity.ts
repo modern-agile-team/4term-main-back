@@ -1,3 +1,5 @@
+import { Boards } from 'src/boards/entity/board.entity';
+import { ChatList } from 'src/chats/entity/chat-list.entity';
 import { GuestMembers } from 'src/members/entity/guest-members.entity';
 import { HostMembers } from 'src/members/entity/host-members.entity';
 import {
@@ -14,7 +16,7 @@ import {
 import { MeetingInfo } from './meeting-info.entity';
 
 @Entity('meetings')
-export class Meeting extends BaseEntity {
+export class Meetings extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
@@ -27,25 +29,18 @@ export class Meeting extends BaseEntity {
   @Column({ type: 'tinyint', width: 1, default: false, name: 'is_accepted' })
   isAccepted: boolean;
 
-  //   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
-  //   created_date: string;
+  @CreateDateColumn({ name: 'created_date' })
+  createdDate: Date;
 
-  @CreateDateColumn()
-  created_date: Date;
-
-  //   @Column({
-  //     type: 'datetime',
-  //     onUpdate: 'CURRENT_TIMESTAMP',
-  //   })
-  //   updated_date: string;
-
-  @UpdateDateColumn({ nullable: true, name: 'updated_date' })
+  @UpdateDateColumn({ name: 'updated_date' })
   updatedDate: Date;
 
   @DeleteDateColumn({ nullable: true, name: 'deleted_date' })
   deletedDate: Date;
 
-  @OneToOne((type) => MeetingInfo, (meetingInfo) => meetingInfo.meetingNo)
+  @OneToOne((type) => MeetingInfo, (meetingInfo) => meetingInfo.meetingNo, {
+    onDelete: 'CASCADE',
+  })
   meetingInfo: MeetingInfo;
 
   @OneToMany((type) => HostMembers, (hostMembers) => hostMembers.meetingNo)
@@ -53,4 +48,7 @@ export class Meeting extends BaseEntity {
 
   @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.meetingNo)
   guestMembers: GuestMembers[];
+
+  @OneToMany((type) => ChatList, (chat) => chat.meetingNo)
+  chatMeetingNo: ChatList;
 }
