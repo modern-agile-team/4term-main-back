@@ -5,10 +5,10 @@ import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { BoardsController } from './boards.controller';
 import { BoardsService } from './boards.service';
-import { BoardRepository } from './repository/board.repository';
+import { BoardRepository, TestProfileRepo, TestUserRepo } from './repository/board.repository';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([BoardRepository, UsersRepository, NoticesRepository, NoticeBoardsRepository])],
+  imports: [TypeOrmModule.forFeature([BoardRepository, UsersRepository, NoticesRepository, NoticeBoardsRepository, TestProfileRepo, TestUserRepo])],
   providers: [BoardsService],
   controllers: [BoardsController],
 })

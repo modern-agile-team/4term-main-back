@@ -16,9 +16,8 @@ import {
 import { Users } from 'src/users/entity/user.entity';
 import { Reportedboards } from 'src/reports/entity/reported-board.entity';
 import { NoticeBoards } from 'src/notices/entity/notice-board.entity';
-import { Notices } from 'src/notices/entity/notices.entity';
-import { BoardHostMembers } from './board-host-members.entity';
-import { BoardGuestTeams } from './board-guest-team.entity';
+import { BoardHosts } from './board-host.entity';
+import { BoardGuests } from './board-guest.entity';
 
 @Entity('boards')
 export class Boards extends BaseEntity {
@@ -74,28 +73,24 @@ export class Boards extends BaseEntity {
   noticeBoard: NoticeBoards;
 
   @OneToMany(
-    (type) => BoardHostMembers,
+    (type) => BoardHosts,
     (boardHostMembers) => boardHostMembers.boardNo,
     {
       onDelete: 'CASCADE',
     },
   )
   @JoinColumn()
-  hostMembers: BoardHostMembers;
-
-  @OneToMany(
-    (type) => BoardGuestTeams,
-    (boardGuestTeams) => boardGuestTeams.boardNo,
-    {
-      onDelete: 'CASCADE',
-    },
-  )
-  @JoinColumn()
-  guestTeams: BoardGuestTeams;
+  hosts: BoardHosts;
 
   @OneToMany(
     (type) => Reportedboards,
     (reportedboards) => reportedboards.targetBoardNo,
   )
   reportedBoard: Reportedboards[];
+
+  @OneToMany(
+    (type) => BoardGuests,
+    (reportedboards) => reportedboards.boardNo,
+  )
+  guests: BoardGuests;
 }
