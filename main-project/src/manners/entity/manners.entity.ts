@@ -1,3 +1,5 @@
+import { MeetingInfo } from 'src/meetings/entity/meeting-info.entity';
+import { Meetings } from 'src/meetings/entity/meeting.entity';
 import { UserProfile } from 'src/users/entity/user-profile.entity';
 import {
   BaseEntity,
@@ -21,4 +23,8 @@ export class Manners extends BaseEntity {
   })
   @JoinColumn({ name: 'user_profile_no' })
   userProfileNo: number;
+
+  @OneToOne((type) => Meetings, (meetings) => meetings.mannerNo)
+  @JoinColumn({ name: 'meetings_no' })
+  meetingNo: number;
 }
