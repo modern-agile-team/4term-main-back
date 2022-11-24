@@ -21,7 +21,7 @@ export class BoardGuests extends BaseEntity {
 
   @ManyToOne(
     (type) => Boards,
-    (boards) => boards.userNo,
+    (boards) => boards.guests,
     {
       onDelete: 'CASCADE',
     },

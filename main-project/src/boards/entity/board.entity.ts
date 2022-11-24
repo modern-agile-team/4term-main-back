@@ -74,7 +74,7 @@ export class Boards extends BaseEntity {
 
   @OneToMany(
     (type) => BoardHosts,
-    (boardHostMembers) => boardHostMembers.boardNo,
+    (boardHosts) => boardHosts.boardNo,
     {
       onDelete: 'CASCADE',
     },
@@ -83,14 +83,14 @@ export class Boards extends BaseEntity {
   hosts: BoardHosts;
 
   @OneToMany(
+    (type) => BoardGuests,
+    (boardGuests) => boardGuests.boardNo,
+  )
+  guests: BoardGuests;
+
+  @OneToMany(
     (type) => Reportedboards,
     (reportedboards) => reportedboards.targetBoardNo,
   )
   reportedBoard: Reportedboards[];
-
-  @OneToMany(
-    (type) => BoardGuests,
-    (reportedboards) => reportedboards.boardNo,
-  )
-  guests: BoardGuests;
 }

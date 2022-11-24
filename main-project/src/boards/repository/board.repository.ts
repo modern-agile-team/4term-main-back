@@ -313,25 +313,6 @@ export class BoardRepository extends Repository<Boards> {
 }
 
 // 삭제 예정
-@EntityRepository(UserProfile)
-export class TestProfileRepo extends Repository<UserProfile> {
-  async getProfileByNickname(nickname: string) {
-    try {
-      const profile = await this.createQueryBuilder('user_profiles')
-        .select([
-          'user_profiles.no AS no',
-        ])
-        .where('nickname = :nickname', { nickname })
-        .getRawOne();
-
-      return profile;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} getProfileByNickname-testRepo: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-}
 
 @EntityRepository(Users)
 export class TestUserRepo extends Repository<UsersRepository> {

@@ -20,7 +20,7 @@ import {
   GuestApplication,
   NoticeBoard,
 } from './interface/boards.interface';
-import { BoardRepository, TestProfileRepo, TestUserRepo } from './repository/board.repository';
+import { BoardRepository, TestUserRepo } from './repository/board.repository';
 
 @Injectable()
 export class BoardsService {
@@ -34,8 +34,6 @@ export class BoardsService {
     @InjectRepository(NoticeBoardsRepository)
     private readonly noticeBoardsRepository: NoticeBoardsRepository,
     // test repo 삭제 예정
-    @InjectRepository(TestProfileRepo)
-    private readonly testProfileRepo: TestProfileRepo,
     @InjectRepository(TestUserRepo)
     private readonly testUserRepo: TestUserRepo,
   ) { }
@@ -54,12 +52,16 @@ export class BoardsService {
 
   private async setHostMembers(
     boardNo: number,
-    hostMembers: [],
+    host: string,
+    hostMembers: string[],
   ): Promise<void> {
+    hostMembers.push(host)
+
     for (let el in hostMembers) {
-      const user = await this.usersRepository.getUserByNickname(
+      const user = await this.testUserRepo.getUserByNickname(
         hostMembers[el],
       );
+
       // 수정 예정
       if (!user) {
         throw new NotFoundException(`해당 유저가 없습니다.`);
@@ -87,9 +89,9 @@ export class BoardsService {
     }
   }
 
-  async createBoard({ hostMembers, ...boardInfo }: BoardDto): Promise<number> {
-    const boardNo: number = await this.setBoard(boardInfo); // user_no 추가 필요 -> 작성자 / transaction
-    await this.setHostMembers(boardNo, hostMembers); // transaction
+  async createBoard({ hostMembers, host, ...boardInfo }: BoardDto): Promise<number> {
+    const boardNo: number = await this.setBoard(boardInfo);
+    await this.setHostMembers(boardNo, host, hostMembers); // transaction
 
     const boardMemberDetail: BoardMemberDetail = {
       ...boardInfo,
@@ -123,7 +125,7 @@ export class BoardsService {
     for (let index in guests) {
       const user = await this.testUserRepo.getUserByNickname(guests[index])
       if (!user) {
-        throw new NotFoundException(`( 사용자가 없습니다.`)
+        throw new NotFoundException(`${guests[index]} 사용자가 없습니다.`)
       }
 
       const { affectedRows, insertId }: CreateResponse =
@@ -213,7 +215,7 @@ export class BoardsService {
     hostMembers: [],
   ): Promise<void> {
     for (let member in hostMembers) {
-      const userNo: number = await this.usersRepository.getUserByNickname(
+      const userNo: number = await this.testUserRepo.getUserByNickname(
         hostMembers[member],
       );
       const updateHostMember = await this.boardRepository.updateHostMember(
