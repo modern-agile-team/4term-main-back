@@ -4,4 +4,5 @@ export const NoticeType = {
   INVITE_GUEST: 3,
   INVITE_CHAT: 4,
   FRIEND_REQUEST: 5,
+  GUEST_APPLICATION: 6,
 };

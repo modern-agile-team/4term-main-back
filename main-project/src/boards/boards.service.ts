@@ -1,12 +1,14 @@
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { async } from 'rxjs';
+import { NoticeType } from 'src/common/configs/notice-type.config';
+import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.repository';
+import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { UsersRepository } from 'src/users/repository/users.repository';
+import { ApplicationDto } from './dto/application.dto';
 import { BoardDto } from './dto/board.dto';
 import {
   BoardMemberDetail,
@@ -15,7 +17,8 @@ import {
   BoardReadResponse,
   BoardDetail,
   CreateHostMembers,
-  HostMembers,
+  GuestApplication,
+  NoticeBoard,
 } from './interface/boards.interface';
 import { BoardRepository } from './repository/board.repository';
 
@@ -26,7 +29,11 @@ export class BoardsService {
     private readonly boardRepository: BoardRepository,
     @InjectRepository(UsersRepository)
     private readonly usersRepository: UsersRepository,
-  ) {}
+    @InjectRepository(NoticesRepository)
+    private readonly noticeRepository: NoticesRepository,
+    @InjectRepository(NoticeBoardsRepository)
+    private readonly noticeBoardsRepository: NoticeBoardsRepository,
+  ) { }
 
   // 게시글 생성 관련
   private async setBoard(boardInfo: BoardDetail): Promise<number> {
@@ -48,6 +55,7 @@ export class BoardsService {
       const user = await this.usersRepository.getUserByNickname(
         hostMembers[el],
       );
+      // 수정 예정
       if (!user) {
         throw new NotFoundException(`해당 유저가 없습니다.`);
       }
@@ -97,6 +105,42 @@ export class BoardsService {
     }
 
     return insertId;
+  }
+
+  async createAplication({ boardNo, guests }: GuestApplication): Promise<number> {
+    const teamNo: number = await this.createGuestTeam(boardNo);
+    const guestMembers: void = await this.createGuestMembers(teamNo, guests);
+    const notice = await this.saveNoticeApplication(boardNo);
+
+    return notice;
+  }
+
+  private async createGuestTeam(boardNo: number): Promise<number> {
+    const { affectedRows, insertId }: CreateResponse =
+      await this.boardRepository.createGuestTeam(boardNo);
+
+    if (!(affectedRows && insertId)) {
+      throw new InternalServerErrorException(`guest-team 생성 오류입니다.`);
+    }
+
+    return insertId;
+  }
+
+  private async createGuestMembers(teamNo: number, guests: []): Promise<void> {
+    for (let index in guests) {
+      const user = await this.usersRepository.getUserByNickname(guests[index])
+
+      if (!user) {
+        throw new NotFoundException(`( 사용자가 없습니다.`)
+      }
+
+      const { affectedRows, insertId }: CreateResponse =
+        await this.boardRepository.createGuestMembers(teamNo, user.no);
+
+      if (!(affectedRows && insertId)) {
+        throw new InternalServerErrorException(`guest-application 생성 오류입니다.`);
+      }
+    }
   }
 
   // 게시글 조회 관련
@@ -178,9 +222,12 @@ export class BoardsService {
     hostMembers: [],
   ): Promise<void> {
     for (let member in hostMembers) {
+      const userNo: number = await this.usersRepository.getUserByNickname(
+        hostMembers[member],
+      );
       const updateHostMember = await this.boardRepository.updateHostMember(
         boardNo,
-        hostMembers[member],
+        userNo,
       );
 
       if (!updateHostMember) {
@@ -210,5 +257,30 @@ export class BoardsService {
     await this.boardRepository.cancelBookmark(boardNo, userNo);
 
     return `${boardNo}번 게시글 ${userNo}번 user 북마크 삭제 성공 :)`;
+  }
+
+  // 알람 생성
+  private async saveNoticeApplication(boardNo: number): Promise<number> {
+    const type = NoticeType.GUEST_APPLICATION;
+    const board = await this.getBoardByNo(boardNo)
+
+    const noticeNo = await this.noticeRepository.saveNoticeBoard({
+      type,
+      targetUserNo: board.hostUserNo,
+    });
+
+    if (!noticeNo) {
+      throw new InternalServerErrorException('notice-데이터 생성에 실패하였습니다.');
+    }
+
+    const result = await this.noticeBoardsRepository.saveNoticeBoard({
+      noticeNo,
+      boardNo,
+    });
+    if (!result) {
+      throw new InternalServerErrorException('saveNoticeApplication-알람 생성에 실패하였습니다.');
+    }
+
+    return result;
   }
 }

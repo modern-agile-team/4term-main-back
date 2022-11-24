@@ -8,13 +8,13 @@ export interface CreateResponse {
 
 export interface BoardReadResponse {
   no: number;
+  hostUserNo: number;
   title: string;
+  nickname: string;
   isDone: boolean;
   description: string;
   location: string;
-  nickname: string;
   meetingTime: Date;
-  userNo: number;
 }
 
 export interface BoardMemberDetail {
@@ -46,3 +46,21 @@ export interface HostMembers {
   userNo: [];
   nickname: [];
 }
+
+export interface GuestApplication {
+  boardNo: number;
+  guests: [];
+}
+
+export interface NoticeGuest {
+  boardNo: number;
+  guests: [];
+}
+
+export interface NoticeBoard {
+  boardNo: number;
+  noticeNo: number
+}
+
+
+

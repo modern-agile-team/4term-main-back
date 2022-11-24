@@ -7,17 +7,17 @@ import {
   ParseIntPipe,
   Post,
   Patch,
-  InternalServerErrorException,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
+import { ApplicationDto } from './dto/application.dto';
 import { BoardDto } from './dto/board.dto';
 import { BoardReadResponse } from './interface/boards.interface';
 
 @Controller('boards')
 @ApiTags('게시글 API')
 export class BoardsController {
-  constructor(private boardService: BoardsService) {}
+  constructor(private boardService: BoardsService) { }
   //Get Methods
   @Get()
   @ApiOperation({
@@ -25,13 +25,9 @@ export class BoardsController {
     description: '게시글 전부를 내림차순으로 조회한다.',
   })
   async getAllBoards(): Promise<object> {
-    const boards: object = await this.boardService.getAllBoards();
-    const response = {
-      success: true,
-      boards,
-    };
+    const response: object = await this.boardService.getAllBoards();
 
-    return response;
+    return { response };
   }
 
   @Get('/:boardNo')
@@ -40,16 +36,11 @@ export class BoardsController {
     description: '게시글 번호를 사용해 상세조회한다.',
   })
   async getBoardByNo(@Param('boardNo') boardNo: number): Promise<object> {
-    // const board = await this.boardService.getHostMembers(boardNo);
-    const board: BoardReadResponse = await this.boardService.getBoardByNo(
+    const response: BoardReadResponse = await this.boardService.getBoardByNo(
       boardNo,
     );
-    const response = {
-      success: true,
-      board,
-    };
 
-    return response;
+    return { response };
   }
 
   // Post Methods
@@ -59,13 +50,12 @@ export class BoardsController {
     description: '입력한 정보로 게시글, 멤버 정보을 생성한다.',
   })
   async createBoard(@Body() createBoarddto: BoardDto): Promise<object> {
-    const board: number = await this.boardService.createBoard(createBoarddto);
-    const response = { success: true, board };
+    const response: number = await this.boardService.createBoard(createBoarddto);
 
-    return response;
+    return { response };
   }
 
-  @Post('/:boardNo/:userNo')
+  @Post('/:boardNo/:userNo/bookmark')
   @ApiOperation({
     summary: '북마크 생성 API',
     description: '게시글 번호를 통해 해당 User의 북마크를 생성한다..',
@@ -73,14 +63,29 @@ export class BoardsController {
   async createBookmark(
     @Param() params: { [key: string]: number }, // jwt -> userNo
   ): Promise<object> {
+
     const { boardNo, userNo } = params;
-    const bookmark: number = await this.boardService.createBookmark({
+    const response: number = await this.boardService.createBookmark({
       boardNo,
       userNo,
     });
-    const response = { success: true, bookmark };
 
-    return response;
+    return { response };
+  }
+
+  @Post('/:boardNo/application')
+  @ApiOperation({
+    summary: '게스트 참가 신청 API',
+    description: '',
+  })
+  async createAplication(
+    @Param('boardNo') boardNo: number, @Body() applicationDto: ApplicationDto
+  ): Promise<object> {
+    const response: number = await this.boardService.createAplication(
+      { boardNo, ...applicationDto }
+    );
+
+    return { response };
   }
 
   // Patch Methods
@@ -93,14 +98,9 @@ export class BoardsController {
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body() BoardDto: BoardDto,
   ): Promise<object> {
-    const board: string = await this.boardService.editBoard(boardNo, BoardDto);
+    const response: string = await this.boardService.editBoard(boardNo, BoardDto);
 
-    const response: object = {
-      success: true,
-      msg: board,
-    };
-
-    return response;
+    return { response };
   }
 
   // Delete Methods
@@ -111,10 +111,10 @@ export class BoardsController {
   })
   async deleteBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
-  ): Promise<string> {
-    const board: string = await this.boardService.deleteBoardByNo(boardNo);
+  ): Promise<object> {
+    const response: string = await this.boardService.deleteBoardByNo(boardNo);
 
-    return board;
+    return { response };
   }
 
   @Delete('/:boardNo/:userNo') // 후에 jwt에서 userNo 빼올 예정
@@ -124,10 +124,10 @@ export class BoardsController {
   })
   async cancelBookmark(
     @Param() params: { [key: string]: number }, // userNo -> jwt
-  ): Promise<string> {
+  ): Promise<object> {
     const { boardNo, userNo } = params;
-    const board = await this.boardService.cancelBookmark(boardNo, userNo);
+    const response = await this.boardService.cancelBookmark(boardNo, userNo);
 
-    return board;
+    return { response };
   }
 }

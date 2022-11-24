@@ -6,7 +6,10 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
+import { ApplicationDto } from '../dto/application.dto';
 import { BoardBookmarks } from '../entity/board-bookmark.entity';
+import { BoardGuestMembers } from '../entity/board-guest-members.entity';
+import { BoardGuestTeams } from '../entity/board-guest-team.entity';
 import { BoardHostMembers } from '../entity/board-host-members.entity';
 import { BoardMemberInfos } from '../entity/board-member-info.entity';
 import { Boards } from '../entity/board.entity';
@@ -17,7 +20,6 @@ import {
   BoardReadResponse,
   BoardDetail,
   CreateHostMembers,
-  HostMembers,
 } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
@@ -32,12 +34,12 @@ export class BoardRepository extends Repository<Boards> {
         .leftJoin('hostMembers.userNo', 'hostUsers')
         .select([
           'boards.no AS no',
-          'boards.userNo AS host_user_no',
+          'boards.userNo AS hostUserNo',
           'users.nickname AS nickname',
           'boards.title AS title',
           'boards.description AS description',
           'boards.location AS location',
-          'boards.meetingTime AS meeting_time',
+          'boards.meetingTime AS meetingTime',
           'boards.isDone AS isDone',
           'boardMemberInfo.male AS male',
           'boardMemberInfo.female AS female',
@@ -111,7 +113,7 @@ export class BoardRepository extends Repository<Boards> {
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createBoardMember-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -131,7 +133,7 @@ export class BoardRepository extends Repository<Boards> {
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createHostMember-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -152,6 +154,46 @@ export class BoardRepository extends Repository<Boards> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createBookmark-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async createGuestTeam(
+    boardNo: number
+  ): Promise<CreateResponse> {
+    try {
+      const { raw }: InsertResult = await this.createQueryBuilder(
+        'board_guest_teams',
+      )
+        .insert()
+        .into(BoardGuestTeams)
+        .values({ boardNo })
+        .execute();
+
+      return raw;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} createGuestTeam-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async createGuestMembers(
+    teamNo: number, userNo: number
+  ): Promise<CreateResponse> {
+    try {
+      const { raw }: InsertResult = await this.createQueryBuilder(
+        'board_guest_members',
+      )
+        .insert()
+        .into(BoardGuestMembers)
+        .values({ userNo, teamNo })
+        .execute();
+
+      return raw;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} createGuestMembers-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
