@@ -8,8 +8,9 @@ export class UsersRepository extends Repository<Users> {
   async getUserByNickname(nickname: string) {
     try {
       const user = await this.createQueryBuilder('users')
-        .select(['users.no AS no', 'users.nickname AS nickname'])
-        .where('nickname = :nickname', { nickname })
+        .leftJoin('users.userProfileNo', 'profile')
+        .select(['users.no AS no', 'profile.nickname AS nickname'])
+        .where('profile.nickname = :nickname', { nickname })
         .getRawOne();
 
       return user;
