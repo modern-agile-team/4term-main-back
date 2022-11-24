@@ -20,7 +20,7 @@ import {
   GuestApplication,
   NoticeBoard,
 } from './interface/boards.interface';
-import { BoardRepository } from './repository/board.repository';
+import { BoardRepository, TestProfileRepo, TestUserRepo } from './repository/board.repository';
 
 @Injectable()
 export class BoardsService {
@@ -33,6 +33,11 @@ export class BoardsService {
     private readonly noticeRepository: NoticesRepository,
     @InjectRepository(NoticeBoardsRepository)
     private readonly noticeBoardsRepository: NoticeBoardsRepository,
+    // test repo 삭제 예정
+    @InjectRepository(TestProfileRepo)
+    private readonly testProfileRepo: TestProfileRepo,
+    @InjectRepository(TestUserRepo)
+    private readonly testUserRepo: TestUserRepo,
   ) { }
 
   // 게시글 생성 관련
@@ -108,35 +113,21 @@ export class BoardsService {
   }
 
   async createAplication({ boardNo, guests }: GuestApplication): Promise<number> {
-    const teamNo: number = await this.createGuestTeam(boardNo);
-    const guestMembers: void = await this.createGuestMembers(teamNo, guests);
+    const guestMembers: void = await this.createGuestMembers(boardNo, guests);
     const notice = await this.saveNoticeApplication(boardNo);
 
     return notice;
   }
 
-  private async createGuestTeam(boardNo: number): Promise<number> {
-    const { affectedRows, insertId }: CreateResponse =
-      await this.boardRepository.createGuestTeam(boardNo);
-
-    if (!(affectedRows && insertId)) {
-      throw new InternalServerErrorException(`guest-team 생성 오류입니다.`);
-    }
-
-    return insertId;
-  }
-
-  private async createGuestMembers(teamNo: number, guests: []): Promise<void> {
+  private async createGuestMembers(boardNo: number, guests: []): Promise<void> {
     for (let index in guests) {
-      const user = await this.usersRepository.getUserByNickname(guests[index])
-
+      const user = await this.testUserRepo.getUserByNickname(guests[index])
       if (!user) {
         throw new NotFoundException(`( 사용자가 없습니다.`)
       }
 
       const { affectedRows, insertId }: CreateResponse =
-        await this.boardRepository.createGuestMembers(teamNo, user.no);
-
+        await this.boardRepository.createGuestMembers(boardNo, user.no);
       if (!(affectedRows && insertId)) {
         throw new InternalServerErrorException(`guest-application 생성 오류입니다.`);
       }

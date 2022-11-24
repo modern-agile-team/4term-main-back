@@ -20,9 +20,13 @@ export class UserProfile extends BaseEntity {
 
   @OneToOne((type) => Users, (users) => users.userProfileNo, {
     nullable: false,
+    onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'user_no' })
   userNo: number;
+
+  @Column({ type: 'varchar', length: 45 })
+  nickname: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
@@ -40,6 +44,9 @@ export class UserProfile extends BaseEntity {
   @JoinColumn({ name: 'major_no' })
   majorNo: number;
 
-  @OneToOne((type) => ProfileImages, (profileImages) => profileImages.userNo)
-  profileImages: ProfileImages;
+  @OneToOne(
+    (type) => ProfileImages,
+    (profileImages) => profileImages.userProfileNo,
+  )
+  profileImage: ProfileImages;
 }

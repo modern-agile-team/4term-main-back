@@ -1,8 +1,7 @@
 import { BoardBookmarks } from 'src/boards/entity/board-bookmark.entity';
-import { BoardGuestMembers } from 'src/boards/entity/board-guest-members.entity';
-import { BoardHostMembers } from 'src/boards/entity/board-host-members.entity';
+import { BoardGuests } from 'src/boards/entity/board-guest.entity';
+import { BoardHosts } from 'src/boards/entity/board-host.entity';
 import { Boards } from 'src/boards/entity/board.entity';
-import { ChatList } from 'src/chats/entity/chat-list.entity';
 import { ChatLog } from 'src/chats/entity/chat-log.entity';
 import { ChatUsers } from 'src/chats/entity/chat-users.entity';
 import { Enquiries } from 'src/enquiries/entity/enquiry.entity';
@@ -17,6 +16,7 @@ import {
   BaseEntity,
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   OneToMany,
   OneToOne,
@@ -32,19 +32,19 @@ export class Users extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   email: string;
 
-  @Column()
+  @Column({ default: false })
   gender: boolean;
 
-  @Column({ type: 'varchar', length: 45 })
-  nickname: string;
+  @Column({ type: 'tinyint', width: 1, default: false })
+  isAdmin: boolean;
 
-  @Column()
-  admin: boolean;
+  @Column({ type: 'int', default: 0 })
+  status: number;
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
 
-  @CreateDateColumn({ name: 'deleted_date', nullable: true })
+  @DeleteDateColumn({ name: 'deleted_date', nullable: true })
   deletedDate: Date;
 
   @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.userNo)
@@ -96,16 +96,16 @@ export class Users extends BaseEntity {
   chatUserNo: ChatUsers[];
 
   @OneToMany(
-    (type) => BoardHostMembers,
+    (type) => BoardHosts,
     (boardHostMembers) => boardHostMembers.userNo,
   )
-  hostmember: BoardHostMembers;
+  hostmember: BoardHosts;
 
   @OneToMany(
-    (type) => BoardGuestMembers,
+    (type) => BoardGuests,
     (boardHostMembers) => boardHostMembers.userNo,
   )
-  guestmember: BoardGuestMembers;
+  guestmember: BoardGuests;
 
   @OneToMany((type) => ChatLog, (chatLog) => chatLog.userNo)
   chatLogUserNo: ChatLog[];
