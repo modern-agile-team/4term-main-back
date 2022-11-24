@@ -4,6 +4,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Notices } from './notices.entity';
@@ -19,7 +20,7 @@ export class NoticeBoards extends BaseEntity {
   @JoinColumn({ name: 'board_no' })
   boardNo: number;
 
-  @ManyToOne((type) => Notices, (notices) => notices.noticeBoards, {
+  @OneToOne((type) => Notices, (notices) => notices.noticeBoards, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'notice_no' })

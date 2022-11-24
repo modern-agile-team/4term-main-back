@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { MannersController } from './manners.controller';
 import { MannersService } from './manners.service';
+import { MannersController } from './manners.controller';
 
 @Module({
-  controllers: [MannersController],
-  providers: [MannersService]
+  providers: [MannersService],
+  controllers: [MannersController]
 })
 export class MannersModule {}

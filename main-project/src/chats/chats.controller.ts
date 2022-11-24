@@ -1,17 +1,15 @@
 import {
+  BadRequestException,
   Body,
   Controller,
-  Delete,
   Get,
   Param,
   ParseIntPipe,
-  Patch,
   Post,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChatsControllerService } from './chats-controller.service';
 import { ChatLog } from './entity/chat-log.entity';
-import { MeetingMembersList } from './interface/chat.interface';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -24,16 +22,12 @@ export class ChatsController {
     description: ' 채팅 목록 조회',
   })
   async getChatRoomList(@Param('userNo') userNo: number): Promise<object> {
-    try {
-      const chatRoomList =
-        await this.chatControllerService.getChatRoomListByUserNo(userNo);
-      return {
-        success: true,
-        chatRoomList,
-      };
-    } catch (error) {
-      throw error;
-    }
+    const response = await this.chatControllerService.getChatRoomListByUserNo(
+      userNo,
+    );
+    return {
+      response,
+    };
   }
 
   @Get('/join/:chatRoomNo')
@@ -44,17 +38,13 @@ export class ChatsController {
   async getRecentChatLog(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
-  ): Promise<any> {
-    try {
-      const chatLog = await this.chatControllerService.getRecentChatLog({
-        userNo,
-        chatRoomNo,
-      });
+  ): Promise<object> {
+    const response = await this.chatControllerService.getRecentChatLog({
+      userNo,
+      chatRoomNo,
+    });
 
-      return chatLog;
-    } catch (error) {
-      throw error;
-    }
+    return { response };
   }
 
   // @Post('/create/:meetingNo/:hostNo')
@@ -63,7 +53,7 @@ export class ChatsController {
   //   @Param('hostNo', ParseIntPipe) hostNo: number,
   //   @Body() meetingMembersList: MeetingMembersList,
   // ) {
-  //   try {
+  //
   //     await this.chatControllerService.createChatRoom(
   //       meetingNo,
   //       hostNo,
@@ -83,18 +73,14 @@ export class ChatsController {
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
     @Body('currentChatLogNo', ParseIntPipe) currentChatLogNo: number,
-  ): Promise<ChatLog[]> {
-    try {
-      const chatLog = await this.chatControllerService.getChatLog({
-        userNo,
-        chatRoomNo,
-        currentChatLogNo,
-      });
+  ): Promise<object> {
+    const response = await this.chatControllerService.getChatLog({
+      userNo,
+      chatRoomNo,
+      currentChatLogNo,
+    });
 
-      return chatLog;
-    } catch (error) {
-      throw error;
-    }
+    return { response };
   }
 
   @Post('/:chatRoomNo/invite')
@@ -106,21 +92,16 @@ export class ChatsController {
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
     @Body('targetUserNo', ParseIntPipe) targetUserNo: number,
-  ): Promise<any> {
-    try {
-      await this.chatControllerService.inviteUser(
-        userNo,
-        targetUserNo,
-        chatRoomNo,
-      );
+  ): Promise<object> {
+    await this.chatControllerService.inviteUser(
+      userNo,
+      targetUserNo,
+      chatRoomNo,
+    );
 
-      return {
-        success: true,
-        msg: '초대 성공',
-      };
-    } catch (error) {
-      throw error;
-    }
+    return {
+      msg: '초대 성공',
+    };
   }
 
   @Post('/accept/:noticeNo')
@@ -132,15 +113,15 @@ export class ChatsController {
     @Param('noticeNo', ParseIntPipe) noticeNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
   ) {
-    try {
-      await this.chatControllerService.acceptInvitation(noticeNo, userNo);
+    await this.chatControllerService.acceptInvitation(noticeNo, userNo);
 
-      return {
-        success: true,
-        msg: '채팅방 참여 성공',
-      };
-    } catch (error) {
-      throw error;
-    }
+    return {
+      msg: '채팅방 참여 성공',
+    };
+  }
+
+  @Post('/error')
+  err(@Body('no') no: number) {
+    throw new BadRequestException('에러');
   }
 }
