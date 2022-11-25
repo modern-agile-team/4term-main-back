@@ -18,6 +18,7 @@ import { Reportedboards } from 'src/reports/entity/reported-board.entity';
 import { NoticeBoards } from 'src/notices/entity/notice-board.entity';
 import { BoardHosts } from './board-host.entity';
 import { BoardGuests } from './board-guest.entity';
+import { ChatList } from 'src/chats/entity/chat-list.entity';
 
 @Entity('boards')
 export class Boards extends BaseEntity {
@@ -93,4 +94,7 @@ export class Boards extends BaseEntity {
     (reportedboards) => reportedboards.targetBoardNo,
   )
   reportedBoard: Reportedboards[];
+
+  @OneToMany((type) => ChatList, (chat) => chat.boardChat)
+  chatBoard: ChatList[];
 }
