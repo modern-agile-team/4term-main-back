@@ -1,6 +1,7 @@
 export interface FriendDetail {
-  receiverNo: number;
-  senderNo: number;
+  receiverNo?: number;
+  senderNo?: number;
+  friendNo?: number;
 }
 export interface FriendRequest {
   isAccept?: number;
@@ -31,4 +32,10 @@ export interface FriendToSearch {
 export interface FriendInfo {
   friendNo: number;
   nickname: string;
+}
+export interface NoticeFriend {
+  noticeNo?: number;
+  senderNo?: number;
+  receiverNo?: number;
+  friendNo?: number;
 }

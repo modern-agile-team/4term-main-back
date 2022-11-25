@@ -119,4 +119,9 @@ export class ChatsController {
       msg: '채팅방 참여 성공',
     };
   }
+
+  @Post('/error')
+  err(@Body('no') no: number) {
+    throw new BadRequestException('에러');
+  }
 }

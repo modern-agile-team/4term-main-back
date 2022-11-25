@@ -83,7 +83,7 @@ export class ChatsControllerService {
   }
 
   async inviteUser(userNo, targetUserNo, chatRoomNo): Promise<void> {
-    const type = NoticeType.INVITE_CHAT;
+    const type = NoticeType.INVITE_HOST;
     const user = await this.checkUserInChatRoom({
       userNo: targetUserNo,
       chatRoomNo,
