@@ -1,15 +1,13 @@
-import { BoardGuestTeams } from 'src/boards/entity/board-guest-team.entity';
-import { BoardHostMembers } from 'src/boards/entity/board-host-members.entity';
 import { Boards } from 'src/boards/entity/board.entity';
-import { MeetingInfo } from 'src/meetings/entity/meeting-info.entity';
-import { Meetings } from 'src/meetings/entity/meeting.entity';
+import { ChatList } from 'src/chats/entity/chat-list.entity';
+import { ChatUsers } from 'src/chats/entity/chat-users.entity';
 import { UserProfile } from 'src/users/entity/user-profile.entity';
-import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
   Column,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -27,8 +25,4 @@ export class Manners extends BaseEntity {
   })
   @JoinColumn({ name: 'user_profile_no' })
   userProfileNo: number;
-
-  // @OneToOne((type) => Meetings, (meetings) => meetings.mannerNo)
-  // @JoinColumn({ name: 'meetings_no' })
-  // meetingNo: number;
 }

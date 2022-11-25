@@ -59,4 +59,13 @@ export class BoardDto {
     description: 'host members',
   })
   hostMembers: [];
+
+  // 삭제 예정
+  @IsNotEmpty()
+  @IsString()
+  @ApiProperty({
+    example: "host nickname",
+    description: 'host user_nickname',
+  })
+  host: string;
 }

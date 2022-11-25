@@ -1,4 +1,7 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { UserProfile } from 'src/users/entity/user-profile.entity';
+import { Users } from 'src/users/entity/user.entity';
+import { UsersRepository } from 'src/users/repository/users.repository';
 import {
   DeleteResult,
   EntityRepository,
@@ -7,7 +10,8 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { BoardBookmarks } from '../entity/board-bookmark.entity';
-import { BoardHostMembers } from '../entity/board-host-members.entity';
+import { BoardGuests } from '../entity/board-guest.entity';
+import { BoardHosts } from '../entity/board-host.entity';
 import { BoardMemberInfos } from '../entity/board-member-info.entity';
 import { Boards } from '../entity/board.entity';
 import {
@@ -27,23 +31,26 @@ export class BoardRepository extends Repository<Boards> {
       const board = await this.createQueryBuilder('boards')
         .leftJoin('boards.boardMemberInfo', 'boardMemberInfo')
         .leftJoin('boards.userNo', 'users')
-        .leftJoin('boards.hostMembers', 'hostMembers')
+        .leftJoin('users.userProfileNo', 'profile')
+        .leftJoin('boards.hosts', 'hosts')
+        .leftJoin('hosts.userNo', 'hostUsers')
+        .leftJoin('hostUsers.userProfileNo', 'hostProfile')
         .select([
           'boards.no AS no',
-          'boards.userNo AS host_user_no',
-          'users.nickname AS nickname',
+          'boards.userNo AS hostUserNo',
+          'profile.nickname AS nickname',
           'boards.title AS title',
           'boards.description AS description',
           'boards.location AS location',
-          'boards.meetingTime AS meeting_time',
+          'boards.meetingTime AS meetingTime',
           'boards.isDone AS isDone',
           'boardMemberInfo.male AS male',
           'boardMemberInfo.female AS female',
-          'GROUP_CONCAT(hostMembers.userNo) AS host_member_no',
-          'GROUP_CONCAT(users.nickname) AS host_member_name',
+          'GROUP_CONCAT(hosts.userNo) AS host_member_no',
+          'GROUP_CONCAT(hostProfile.nickname) AS host_member_nickname',
         ])
         .where('boards.no = :boardNo', { boardNo })
-        .where('hostMembers.boardNo = :boardNo', { boardNo })
+        .where('hosts.boardNo = :boardNo', { boardNo })
         .getRawOne();
 
       return board;
@@ -109,7 +116,7 @@ export class BoardRepository extends Repository<Boards> {
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createBoardMember-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -122,14 +129,14 @@ export class BoardRepository extends Repository<Boards> {
         'board_member_infos',
       )
         .insert()
-        .into(BoardHostMembers)
+        .into(BoardHosts)
         .values(hostMember)
         .execute();
 
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createHostMember-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -150,6 +157,28 @@ export class BoardRepository extends Repository<Boards> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createBookmark-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async createGuestMembers(
+    boardNo: number, userNo: number
+  ): Promise<CreateResponse> {
+    try {
+      console.log({ boardNo, userNo });
+
+      const { raw }: InsertResult = await this.createQueryBuilder(
+        'board_guest_members',
+      )
+        .insert()
+        .into(BoardGuests)
+        .values({ userNo, boardNo })
+        .execute();
+
+      return raw;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} createGuestMembers-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -196,7 +225,7 @@ export class BoardRepository extends Repository<Boards> {
   async updateHostMember(boardNo: number, userNo: number): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
-        .update(BoardHostMembers)
+        .update(BoardHosts)
         .set({ userNo })
         .where('userNo = :userNo', { userNo })
         .where('boardNo = :boardNo', { boardNo })
@@ -278,6 +307,29 @@ export class BoardRepository extends Repository<Boards> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+}
+
+// 삭제 예정
+
+@EntityRepository(Users)
+export class TestUserRepo extends Repository<UsersRepository> {
+  async getUserByNickname(nickname: string) {
+    try {
+      const userNo = await this.createQueryBuilder('users')
+        .leftJoin('users.userProfileNo', 'profile')
+        .select([
+          'users.no AS no',
+        ])
+        .where('profile.nickname = :nickname', { nickname })
+        .getRawOne();
+
+      return userNo;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getUserByNickname-testRepo: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

@@ -1,3 +1,4 @@
+import { MannerLog } from 'src/manners/entity/manners-log.entity';
 import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
@@ -5,6 +6,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ChatList } from './chat-list.entity';
@@ -26,4 +28,12 @@ export class ChatUsers extends BaseEntity {
   @ManyToOne((type) => Users, (user) => user.chatUserNo)
   @JoinColumn({ name: 'user_no' })
   userNo: number;
+
+  @OneToMany((type) => MannerLog, (mannerLog) => mannerLog.chatUserNo)
+  @JoinColumn({ name: 'manner_log_no' })
+  mannerUserNo: number;
+
+  @OneToMany((type) => MannerLog, (mannerLog) => mannerLog.chatTargetUserNo)
+  @JoinColumn({ name: 'manner_log_no' })
+  mannerTargetUserNo: number;
 }

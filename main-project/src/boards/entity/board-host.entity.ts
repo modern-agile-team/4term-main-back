@@ -11,8 +11,8 @@ import {
 } from 'typeorm';
 import { Boards } from './board.entity';
 
-@Entity('board_host_members')
-export class BoardHostMembers extends BaseEntity {
+@Entity('board_hosts')
+export class BoardHosts extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
@@ -22,7 +22,7 @@ export class BoardHostMembers extends BaseEntity {
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 
-  @ManyToOne((type) => Boards, (board) => board.hostMembers, {
+  @ManyToOne((type) => Boards, (board) => board.hosts, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'board_no' })
