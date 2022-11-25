@@ -101,5 +101,5 @@ export class Boards extends BaseEntity {
   reportedBoard: Reportedboards[];
 
   @OneToMany((type) => ChatList, (chat) => chat.boardChat)
-  chatBoard: ChatList;
+  chatBoard: ChatList[];
 }
