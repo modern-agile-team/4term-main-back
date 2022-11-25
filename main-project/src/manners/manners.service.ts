@@ -25,4 +25,14 @@ export class MannersService {
       throw error;
     }
   }
+
+  async findAllMembers(boardNo: number) {
+    try {
+      const findAllMembers =
+        await this.mannersRepository.findAllMembersByBoardNo(boardNo);
+      console.log(findAllMembers);
+    } catch (error) {
+      throw error;
+    }
+  }
 }

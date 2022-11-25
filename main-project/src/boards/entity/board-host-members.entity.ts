@@ -1,3 +1,4 @@
+import { Manners } from 'src/manners/entity/manners.entity';
 import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
@@ -5,6 +6,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Boards } from './board.entity';
@@ -25,4 +27,7 @@ export class BoardHostMembers extends BaseEntity {
   })
   @JoinColumn({ name: 'board_no' })
   boardNo: number;
+
+  @OneToOne((type) => Manners, (manners) => manners.hostMemebersboardNo)
+  mannerNo: Manners;
 }

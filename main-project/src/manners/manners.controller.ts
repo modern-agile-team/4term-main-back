@@ -19,8 +19,28 @@ export class MannersController {
 
       return {
         success: true,
-        msg: ' 존재하는 파티/약속입니다.',
+        msg: ' 존재하는 게시물/파티/약속입니다.',
         meeting,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  @ApiOperation({
+    summary: '게시물, 상대, 자기 자신이 있는지 확인해주는 API',
+    description:
+      '특정 게시물 안에 상대방과 자기자신이 포함되어 있는지 검사한다.',
+  })
+  @Get('/boards/:boardNo')
+  async findAllMembersByBoardNo(@Param('boardNo') boardNo: number) {
+    try {
+      const findAllMembers = await this.mannersService.findAllMembers(boardNo);
+
+      return {
+        success: true,
+        msg: `게시판 번호${boardNo}에 포함되어 있습니다.`,
+        findAllMembers,
       };
     } catch (error) {
       throw error;

@@ -6,6 +6,7 @@ import { ChatLog } from 'src/chats/entity/chat-log.entity';
 import { ChatUsers } from 'src/chats/entity/chat-users.entity';
 import { Enquiries } from 'src/enquiries/entity/enquiry.entity';
 import { Friends } from 'src/friends/entity/friend.entity';
+import { Manners } from 'src/manners/entity/manners.entity';
 import { MeetingInfo } from 'src/meetings/entity/meeting-info.entity';
 import { GuestMembers } from 'src/members/entity/guest-members.entity';
 import { HostMembers } from 'src/members/entity/host-members.entity';
@@ -109,4 +110,7 @@ export class Users extends BaseEntity {
 
   @OneToMany((type) => ChatLog, (chatLog) => chatLog.userNo)
   chatLogUserNo: ChatLog[];
+
+  @OneToOne((type) => Manners, (manners) => manners.userNo)
+  mannerNo: Manners;
 }
