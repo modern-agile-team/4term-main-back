@@ -4,7 +4,6 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { send } from 'process';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { NoticeFriendsRepository } from 'src/notices/repository/notices-friend.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
@@ -66,6 +65,10 @@ export class FriendsService {
     }
 
     return raw.insertId;
+  }
+
+  async acceptFriendRequestByNoticeNo(noticeNo: number, userNo: number) {
+    const check = await this.checkRequest({ friendNo: 1, senderNo: 2 });
   }
 
   async saveNoticeFriend(noticeFriend: NoticeFriend): Promise<void> {
@@ -223,15 +226,20 @@ export class FriendsService {
   }
 
   private async checkRequest(
-    checkUserNo: FriendDetail,
+    friendDetail: FriendDetail,
   ): Promise<FriendRequest> {
-    const checkRequestResult = await this.friendsRepository.checkRequest(
-      checkUserNo,
-    );
-    if (!checkRequestResult) {
-      throw new BadRequestException('받은 요청이 없습니다.');
-    }
+    if (friendDetail.receiverNo && friendDetail.senderNo) {
+      const checkRequest = await this.friendsRepository.checkRequest(
+        friendDetail,
+      );
+      if (!checkRequest) {
+        throw new BadRequestException('받은 요청이 없습니다.');
+      }
 
-    return checkRequestResult;
+      return checkRequest;
+    }
+    if (friendDetail.friendNo) {
+      const checkRequest = await this.friendsRepository.checkRequestByFriendNo;
+    }
   }
 }

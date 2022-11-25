@@ -1,6 +1,7 @@
 export interface FriendDetail {
-  receiverNo: number;
-  senderNo: number;
+  receiverNo?: number;
+  senderNo?: number;
+  friendNo?: number;
 }
 export interface FriendRequest {
   isAccept?: number;

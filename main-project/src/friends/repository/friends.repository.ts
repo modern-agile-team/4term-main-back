@@ -111,7 +111,7 @@ export class FriendsRepository extends Repository<Friends> {
       );
     }
   }
-
+  async checkRequestByFriendNo() {}
   async createFriendRequest(
     friendDetail: FriendDetail,
   ): Promise<FriendRequestResponse> {
