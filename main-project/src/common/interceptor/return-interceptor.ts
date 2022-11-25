@@ -5,9 +5,8 @@ import {
   CallHandler,
   BadGatewayException,
 } from '@nestjs/common';
-import { Observable, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
-import { HttpExceptionFilter } from '../exceptions/http-exception-filter';
+import { Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 
 @Injectable()
 export class ReturnInterceptor implements NestInterceptor {
