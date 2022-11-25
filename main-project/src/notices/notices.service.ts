@@ -9,6 +9,10 @@ export class NoticesService {
     @InjectRepository(NoticesRepository)
     private readonly noticeRepository: NoticesRepository,
   ) {}
+  async getNoticeByUserNo(userNo: number) {
+    return await this.noticeRepository.getNoticeByUserNo(userNo);
+  }
+
   async getNoticeByConditions(
     noticeConditions: NoticeConditions,
   ): Promise<Notice[]> {
