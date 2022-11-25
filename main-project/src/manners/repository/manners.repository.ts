@@ -18,26 +18,26 @@ export class MannersRepository extends Repository<Manners> {
     }
   }
 
-  async findAllMembersByBoardNo(boardNo: number): Promise<any> {
-    //   async findAllMembersByBoardNo(boardNo: number, userNo : number): Promise<any> {
-    try {
-      const anything = await this.createQueryBuilder('manners')
-        .leftJoin('manners.userNo', 'users')
-        .leftJoin('manners.boardNo', 'board')
-        .leftJoin('board.hostMembers', 'boardHosts')
-        .leftJoin('board.guestMembers', 'boardGuests')
-        // .leftJoin('boardHostMembers.boardNo', 'boardNo')
-        // .leftJoin('boardGuestTeams.boardNo', 'boardNo')
-        .select(['boardHosts.userNo AS userNo'])
-        .where('board.no = :boardNo', { boardNo })
-        // .andWhere('boardGuestTeams.boardNo = :boardNo', { boardNo })
-        .getRawMany();
+  // async findAllMembersByBoardNo(boardNo: number): Promise<any> {
+  //   //   async findAllMembersByBoardNo(boardNo: number, userNo : number): Promise<any> {
+  //   try {
+  //     const anything = await this.createQueryBuilder('manners')
+  //       .leftJoin('manners.userNo', 'users')
+  //       .leftJoin('manners.boardNo', 'board')
+  //       .leftJoin('board.hostMembers', 'boardHosts')
+  //       .leftJoin('board.guestMembers', 'boardGuests')
+  //       // .leftJoin('boardHostMembers.boardNo', 'boardNo')
+  //       // .leftJoin('boardGuestTeams.boardNo', 'boardNo')
+  //       .select(['boardHosts.userNo AS userNo'])
+  //       // .where('board.no = :boardNo', { boardNo })
+  //       // .andWhere('boardGuestTeams.boardNo = :boardNo', { boardNo })
+  //       .getRawMany();
 
-      return anything;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error}: 멤버 조회(findAllMembersByBoardNo): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
+  //     return anything;
+  //   } catch (error) {
+  //     throw new InternalServerErrorException(
+  //       `${error}: 멤버 조회(findAllMembersByBoardNo): 알 수 없는 서버 에러입니다.`,
+  //     );
+  //   }
+  // }
 }

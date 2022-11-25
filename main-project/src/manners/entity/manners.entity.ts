@@ -28,25 +28,7 @@ export class Manners extends BaseEntity {
   @JoinColumn({ name: 'user_profile_no' })
   userProfileNo: number;
 
-  @OneToOne((type) => Meetings, (meetings) => meetings.mannerNo)
-  @JoinColumn({ name: 'meetings_no' })
-  meetingNo: number;
-
-  @OneToOne((type) => Users, (users) => users.mannerNo)
-  @JoinColumn({ name: 'no' })
-  userNo: number;
-
-  @OneToOne(
-    (type) => BoardGuestTeams,
-    (boardGuestTeams) => boardGuestTeams.mannerNo,
-  )
-  @JoinColumn({ name: 'guest_board_no' })
-  guestMembersboardNo: number;
-
-  @OneToOne(
-    (type) => BoardHostMembers,
-    (boardHostMembers) => boardHostMembers.mannerNo,
-  )
-  @JoinColumn({ name: 'host_board_no' })
-  hostMemebersboardNo: number;
+  // @OneToOne((type) => Meetings, (meetings) => meetings.mannerNo)
+  // @JoinColumn({ name: 'meetings_no' })
+  // meetingNo: number;
 }

@@ -27,7 +27,4 @@ export class BoardHostMembers extends BaseEntity {
   })
   @JoinColumn({ name: 'board_no' })
   boardNo: number;
-
-  @OneToOne((type) => Manners, (manners) => manners.hostMemebersboardNo)
-  mannerNo: Manners;
 }

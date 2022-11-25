@@ -10,17 +10,15 @@ export class MannersController {
     summary: '파티, 약속 검색 API',
     description: '파티/약속이 있는지 검사한다.',
   })
-  @Get('/:meetingNo')
-  async findMeetingByNo(
-    @Param('meetingNo') meetingNo: number,
-  ): Promise<object> {
+  @Get('/:boardNo')
+  async findboardByNo(@Param('boardNo') boardNo: number): Promise<object> {
     try {
-      const meeting = await this.mannersService.findMeetingByNo(meetingNo);
+      const board = await this.mannersService.findMeetingByNo(boardNo);
 
       return {
         success: true,
-        msg: ' 존재하는 게시물/파티/약속입니다.',
-        meeting,
+        msg: ' 존재하는 게시물입니다.',
+        board,
       };
     } catch (error) {
       throw error;
@@ -35,12 +33,12 @@ export class MannersController {
   @Get('/boards/:boardNo')
   async findAllMembersByBoardNo(@Param('boardNo') boardNo: number) {
     try {
-      const findAllMembers = await this.mannersService.findAllMembers(boardNo);
+      // const findAllMembers = await this.mannersService.findAllMembers(boardNo);
 
       return {
         success: true,
         msg: `게시판 번호${boardNo}에 포함되어 있습니다.`,
-        findAllMembers,
+        // findAllMembers,
       };
     } catch (error) {
       throw error;

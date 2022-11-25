@@ -110,7 +110,4 @@ export class Users extends BaseEntity {
 
   @OneToMany((type) => ChatLog, (chatLog) => chatLog.userNo)
   chatLogUserNo: ChatLog[];
-
-  @OneToOne((type) => Manners, (manners) => manners.userNo)
-  mannerNo: Manners;
 }

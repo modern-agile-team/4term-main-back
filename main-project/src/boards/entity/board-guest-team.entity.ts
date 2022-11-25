@@ -27,7 +27,4 @@ export class BoardGuestTeams extends BaseEntity {
     (boardGuestMembers) => boardGuestMembers.teamNo,
   )
   userNo: number;
-
-  @OneToOne((type) => Manners, (manners) => manners.guestMembersboardNo)
-  mannerNo: Manners;
 }
