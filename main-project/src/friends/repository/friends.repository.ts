@@ -23,11 +23,13 @@ export class FriendsRepository extends Repository<Friends> {
   async getAllFriendList(userNo: number): Promise<FriendList[]> {
     try {
       const result = await this.createQueryBuilder('friends')
-        .leftJoin('friends.receiverNo', 'receiverNo')
-        .leftJoin('friends.senderNo', 'senderNo')
+        .leftJoin('friends.receiverNo', 'receiverUser')
+        .leftJoin('receiverUser.userProfileNo', 'receiverUserProfile')
+        .leftJoin('friends.senderNo', 'senderUser')
+        .leftJoin('senderUser.userProfileNo', 'senderUserProfile')
         .select([
           `IF(friends.receiver_no = ${userNo} , friends.sender_no, friends.receiver_no) AS friendNo`,
-          `IF(friends.receiver_no = ${userNo} , senderNo.nickname, receiverNo.nickname) AS friendNickname`,
+          `IF(friends.receiver_no = ${userNo} , senderUserProfile.nickname, receiverUserProfile.nickname) AS friendNickname`,
         ])
         .where('receiver_no = :userNo AND is_accept = 1', { userNo })
         .orWhere('sender_no = :userNo AND is_accept = 1', { userNo })
@@ -44,7 +46,12 @@ export class FriendsRepository extends Repository<Friends> {
   async getAllReceiveFriendReq(receiverNo: number): Promise<Friends[]> {
     try {
       const result = await this.createQueryBuilder('friends')
-        .select(['friends.sender_no AS senderNo'])
+        .leftJoin('friends.senderNo', 'senderUser')
+        .leftJoin('senderUser.userProfileNo', 'senderUserProfile')
+        .select([
+          'friends.sender_no AS senderUserNo',
+          'senderUserProfile.nickname AS senderUserNickname',
+        ])
         .where('receiver_no = :receiverNo', { receiverNo })
         .andWhere('is_accept = 0')
         .getRawMany();
@@ -60,10 +67,16 @@ export class FriendsRepository extends Repository<Friends> {
   async getAllSendFriendReq(senderNo: number): Promise<Friends[]> {
     try {
       const result = await this.createQueryBuilder('friends')
-        .select(['friends.receiver_no AS receiverNo'])
+        .leftJoin('friends.receiverNo', 'receiverUser')
+        .leftJoin('receiverUser.userProfileNo', 'receiverUserProfile')
+        .select([
+          'friends.receiver_no AS receiverUserNo',
+          'receiverUserProfile.nickname AS receiverUserNickname',
+        ])
         .where('sender_no = :senderNo', { senderNo })
         .andWhere('is_accept = 0')
         .getRawMany();
+
       return result;
     } catch (error) {
       throw new InternalServerErrorException(
