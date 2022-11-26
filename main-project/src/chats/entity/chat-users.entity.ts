@@ -14,6 +14,9 @@ export class ChatUsers extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
+  @Column({ name: 'user_type', nullable: false })
+  userType: number;
+
   @ManyToOne((type) => ChatList, (chatRoom) => chatRoom.chatUserNo, {
     onDelete: 'CASCADE',
   })

@@ -51,7 +51,7 @@ export class FriendsController {
     summary: '친구  요청 수락 API',
     description: '토큰의 userNo와 body로 받은 senderNo',
   })
-  async acceptFriend(
+  async acceptFriendRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
     @Body('senderNo', ParseIntPipe) senderNo: number,
   ): Promise<object> {
@@ -59,6 +59,22 @@ export class FriendsController {
 
     return {
       msg: '친구 신청을 수락했습니다.',
+    };
+  }
+
+  @Patch('/accept/notice/:noticeNo')
+  @ApiOperation({
+    summary: '친구 요청 수락 API',
+    description: 'notice번호를 통한 요청 수락',
+  })
+  async acceptFriendRequestByNoticeNo(
+    @Param('noticeNo', ParseIntPipe) noticeNo: number,
+    @Body('userNo', ParseIntPipe) userNo: number,
+  ): Promise<object> {
+    await this.friendsService.acceptFriendRequestByNoticeNo(noticeNo, userNo);
+
+    return {
+      msg: '친구요청을 수락했습니다.',
     };
   }
 
@@ -70,7 +86,7 @@ export class FriendsController {
   async getAllReceiveFriendRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
   ): Promise<object> {
-    const response = await this.friendsService.getAllReceiveFriendRequest(
+    const response = await this.friendsService.getAllReceivedFriendRequest(
       receiverNo,
     );
 
@@ -85,7 +101,7 @@ export class FriendsController {
   async getAllSendFriendRequest(
     @Param('userNo', ParseIntPipe) senderNo: number,
   ): Promise<object> {
-    const response = await this.friendsService.getAllSendFriendRequest(
+    const response = await this.friendsService.getAllSendedFriendRequest(
       senderNo,
     );
 
