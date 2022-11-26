@@ -278,22 +278,6 @@ export class NoticesRepository extends Repository<Notices> {
     }
   }
 
-  async saveNoticeFriend(noticeFriend: NoticeDetail) {
-    try {
-      const { raw }: InsertResult = await this.createQueryBuilder('notices')
-        .insert()
-        .into(Notices)
-        .values(noticeFriend)
-        .execute();
-
-      return raw.insertId;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} 알람 생성 에러(saveNoticeChats): 알 수 없는 서버 오류입니다.`,
-      );
-    }
-  }
-
   async saveNoticeBoard(noticeBoard: Notice) {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('notices')
