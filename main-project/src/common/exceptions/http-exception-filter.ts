@@ -28,6 +28,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       url: req.url,
       response,
     };
+
     this.logger.error(log);
 
     res.status((exception as HttpException).getStatus()).json(response);

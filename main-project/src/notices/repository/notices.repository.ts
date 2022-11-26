@@ -309,7 +309,7 @@ export class NoticesRepository extends Repository<Notices> {
       );
     }
   }
-
+  
   async getNoticeByUserNo(userNo: number) {
     try {
       const boardNotices = await this.createQueryBuilder('notices')

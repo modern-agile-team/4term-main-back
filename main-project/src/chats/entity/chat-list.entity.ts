@@ -1,4 +1,5 @@
 import { type } from 'os';
+import { Boards } from 'src/boards/entity/board.entity';
 import { Meetings } from 'src/meetings/entity/meeting.entity';
 import { NoticeChats } from 'src/notices/entity/notice-chat.entity';
 import { Users } from 'src/users/entity/user.entity';
@@ -22,11 +23,9 @@ export class ChatList extends BaseEntity {
   @Column({ name: 'room_name', type: 'varchar', length: 255, nullable: false })
   roomName: string;
 
-  @ManyToOne((type) => Meetings, (meeting) => meeting.chatMeetingNo, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'meeting_no' })
-  meetingNo: number;
+  @ManyToOne((type) => Boards, (boards) => boards.chatBoard)
+  @JoinColumn({ name: 'board_no' })
+  boardChat: number;
 
   @OneToMany((type) => ChatUsers, (chatUsers) => chatUsers.chatRoomNo)
   chatUserNo: ChatUsers[];
