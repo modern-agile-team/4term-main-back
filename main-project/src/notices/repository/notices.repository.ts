@@ -300,7 +300,7 @@ export class NoticesRepository extends Repository<Notices> {
               THEN JSON_OBJECT("chatNo", noticeChats.chatRoomNo, "boardNo", noticeBoards.boardNo)
             WHEN notices.type =${NoticeType.INVITE_GUEST} 
             OR notices.type = ${NoticeType.INVITE_HOST} 
-              THEN JSON_OBJECT("chatNo", noticeChats.chatRoomNo)
+              THEN JSON_OBJECT("chatRoomNo", noticeChats.chatRoomNo)
             WHEN notices.type = ${NoticeType.FRIEND_REQUEST}
             OR notices.type = ${NoticeType.FRIEND_REQUEST_ACCEPTED}
               THEN JSON_OBJECT("friendNo", noticeFriends.friendNo)
