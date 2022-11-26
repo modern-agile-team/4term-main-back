@@ -1,3 +1,4 @@
+import { Manners } from 'src/manners/entity/manners.entity';
 import { Majors } from 'src/universities/entity/majors.entity';
 import { University } from 'src/universities/entity/university.entity';
 import {
@@ -10,7 +11,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ProfileImages } from './profile-images.entity';
-import { UserManners } from './user-manners.entity';
 import { Users } from './user.entity';
 
 @Entity('user_profiles')
@@ -31,12 +31,10 @@ export class UserProfile extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
-  @OneToOne((type) => UserManners, (userManners) => userManners.userProfileNo)
-  mannerNo: UserManners;
+  @OneToOne((type) => Manners, (Manners) => Manners.userProfileNo)
+  mannerNo: Manners;
 
-  @ManyToOne((type) => University, (university) => university.usersUniversity, {
-    nullable: false,
-  })
+  @ManyToOne((type) => University, (university) => university.usersUniversity)
   @JoinColumn({ name: 'university_no' })
   universityNo: number;
 
