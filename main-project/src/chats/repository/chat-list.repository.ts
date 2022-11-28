@@ -1,4 +1,8 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import {
+  ChatRoomNo,
+  MannerChatUserInfo,
+} from 'src/manners/interface/manner.interface';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { ChatList } from '../entity/chat-list.entity';
 import { ChatRoomUsers, CreateChat } from '../interface/chat.interface';
@@ -69,6 +73,22 @@ export class ChatListRepository extends Repository<ChatList> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error}: 채팅방 중복 확인 (checkRoomExist): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getChatRoomNoByBoardNo(boardNo: number): Promise<ChatRoomNo> {
+    try {
+      //게시판 있는지 확인 후 채팅방 있는지 확인해주는 ~~
+      const chatRoomNo = await this.createQueryBuilder('chat_list')
+        .select('chat_list.no AS chatRoomNo')
+        .where(`chat_list.board_no = :boardNo`, { boardNo })
+        .getRawOne();
+
+      return chatRoomNo;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error}: 채팅방 확인(getChatRoomNoByBoardNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

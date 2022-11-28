@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { UserType } from 'src/manners/interface/manner.interface';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { ChatUsers } from '../entity/chat-users.entity';
 import { ChatRoomList, ChatUserInfo } from '../interface/chat.interface';
@@ -86,6 +87,49 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 유처 초대(inviteUserByUserNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getTargetUserChatRoomNo(
+    chatRoomNo: number,
+    userType: number,
+  ): Promise<UserType[]> {
+    try {
+      const userList = await this.createQueryBuilder('chat_users')
+        .select([
+          'chat_users.user_type AS userType',
+          'chat_users.chat_room_no AS chatRoomNo',
+          'chat_users.user_no AS userNo',
+        ])
+        .where(
+          'chat_users.chat_room_no = :chatRoomNo AND chat_users.user_type = :userType',
+          { chatRoomNo, userType },
+        )
+        .getRawMany();
+
+      return userList;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 상대유저 타입 검색(getTargetUserChatRoomNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getUserTypeByUserNo({ chatRoomNo, userNo }): Promise<UserType> {
+    try {
+      const userType: UserType = await this.createQueryBuilder('chat_users')
+        .select('chat_users.user_type AS userType')
+        .where(
+          'chat_users.chat_room_no = :chatRoomNo AND chat_users.user_no = :userNo',
+          { chatRoomNo, userNo },
+        )
+        .getRawOne();
+
+      return userType;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 유저 타입 검색(getUserTypeByUserNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
