@@ -9,7 +9,6 @@ import {
   Post,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { async } from 'rxjs';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { DeleteFriendDto } from './dto/delete-friend.dto';
 import { FriendsService } from './friends.service';
@@ -87,7 +86,7 @@ export class FriendsController {
   async getAllReceiveFriendRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
   ): Promise<object> {
-    const response = await this.friendsService.getAllReceiveFriendRequest(
+    const response = await this.friendsService.getAllReceivedFriendRequest(
       receiverNo,
     );
 
@@ -102,7 +101,7 @@ export class FriendsController {
   async getAllSendFriendRequest(
     @Param('userNo', ParseIntPipe) senderNo: number,
   ): Promise<object> {
-    const response = await this.friendsService.getAllSendFriendRequest(
+    const response = await this.friendsService.getAllSendedFriendRequest(
       senderNo,
     );
 
