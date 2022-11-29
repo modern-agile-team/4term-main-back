@@ -37,7 +37,7 @@ export interface BoardAndUserNumber {
 export interface HostMembers {
   boardNo: number,
   userNo: number,
-  hostMembers: string[],
+  hosts: number[],
 }
 
 export interface GuestApplication {

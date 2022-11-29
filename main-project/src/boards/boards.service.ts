@@ -52,36 +52,19 @@ export class BoardsService {
   }
 
   private async setHostMembers(
-    { boardNo, userNo, hostMembers }: HostMembers
+    { boardNo, userNo, hosts }: HostMembers
   ): Promise<void> {
-    for (let el in hostMembers) {
+    hosts.push(userNo)
 
-      const user = await this.testUserRepo.getUserByNickname(
-        hostMembers[el],
-      );
+    for (let el in hosts) {
+      const hostMember: BoardAndUserNumber = (Number(el) === hosts.length - 1) ? { boardNo, userNo } : { boardNo, userNo: Number(hosts[el]) };
 
-      // 수정 예정
-      if (!user) {
-        throw new NotFoundException(`해당 유저가 없습니다.`);
-      }
-      const hostMember: BoardAndUserNumber = { boardNo, userNo: user.no };
 
       const { affectedRows, insertId }: CreateResponse =
         await this.boardRepository.createHostMember(hostMember);
 
       if (!(affectedRows && insertId)) {
         throw new InternalServerErrorException(`host-member 생성 오류입니다.`);
-      }
-
-      if (Number(el) === hostMembers.length - 1) {
-        const hostMember: BoardAndUserNumber = { boardNo, userNo };
-
-        const { affectedRows, insertId }: CreateResponse =
-          await this.boardRepository.createHostMember(hostMember);
-
-        if (!(affectedRows && insertId)) {
-          throw new InternalServerErrorException(`host 생성 오류입니다.`);
-        }
       }
     }
   }
@@ -99,8 +82,9 @@ export class BoardsService {
 
   async createBoard({ hostMembers, userNo, ...boardInfo }: BoardDto): Promise<number> {
     const boardNo: number = await this.setBoard(boardInfo, userNo);
-    const memberInfo: HostMembers = { boardNo, userNo, hostMembers }
+    const hosts: number[] = await this.validateUsers(boardNo, hostMembers)
 
+    const memberInfo: HostMembers = { boardNo, userNo, hosts }
     await this.setHostMembers(memberInfo); // transaction
 
     const boardMemberDetail: BoardMemberDetail = {
@@ -125,7 +109,7 @@ export class BoardsService {
   }
 
   async createAplication({ boardNo, guests }: GuestApplication): Promise<number> {
-    const guestNums: number[] = await this.validateGuests(boardNo, guests)
+    const guestNums: number[] = await this.validateUsers(boardNo, guests)
 
     const guestMembers: void = await this.createGuestMembers(boardNo, guestNums);
     const notice = await this.saveNoticeApplication(boardNo);
@@ -133,25 +117,25 @@ export class BoardsService {
     return notice;
   }
 
-  private async validateGuests(boardNo: number, guests: []): Promise<number[]> {
+  private async validateUsers(boardNo: number, users: []): Promise<number[]> {
     const board = await this.boardRepository.getAllGuestByBoardNo(boardNo);
-    const guestNums: number[] = [];
+    const userArr: number[] = [];
 
-    for (let index in guests) {
-      const user: UserNo = await this.testUserRepo.getUserByNickname(guests[index])
+    for (let index in users) {
+      const user: UserNo = await this.testUserRepo.getUserByNickname(users[index])
       if (!user) {
-        throw new NotFoundException(`${guests[index]} 사용자가 없습니다.`)
+        throw new NotFoundException(`${users[index]} 사용자가 없습니다.`)
       }
 
       for (let idx in board) {
         if (board[idx].userNo === user.no) {
-          throw new BadRequestException(`${guests[index]} 사용자가 이미 신청 목록에 있습니다.`)
+          throw new BadRequestException(`${users[index]} 사용자가 이미 신청 목록에 있습니다.`)
         }
       }
-      guestNums.push(user.no)
+      userArr.push(user.no)
     }
 
-    return guestNums;
+    return userArr;
   }
 
   private async createGuestMembers(boardNo: number, guestNums: number[]): Promise<void> {
