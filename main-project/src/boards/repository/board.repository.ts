@@ -1,5 +1,4 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { UserProfile } from 'src/users/entity/user-profile.entity';
 import { Users } from 'src/users/entity/user.entity';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import {
@@ -17,10 +16,9 @@ import { Boards } from '../entity/board.entity';
 import {
   BoardMemberDetail,
   CreateResponse,
-  BookmarkDetail,
   BoardReadResponse,
   BoardDetail,
-  CreateHostMembers,
+  BoardAndUserNumber,
 } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
@@ -84,6 +82,24 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
+  async getAllGuestByBoardNo(boardNo: number): Promise<BoardAndUserNumber[]> {
+    try {
+      const boards = await this.createQueryBuilder('boards')
+        .leftJoin('boards.guests', 'guests')
+        .select([
+          'guests.userNo AS userNo'
+        ])
+        .where('guests.boardNo = :boardNo', { boardNo })
+        .getRawMany();
+
+      return boards;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getAllGuestByBoardNo-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   //게시글 생성 관련
   async createBoard(createBoardDto: BoardDetail): Promise<CreateResponse> {
     try {
@@ -122,7 +138,7 @@ export class BoardRepository extends Repository<Boards> {
   }
 
   async createHostMember(
-    hostMember: CreateHostMembers,
+    hostMember: BoardAndUserNumber,
   ): Promise<CreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
@@ -142,7 +158,7 @@ export class BoardRepository extends Repository<Boards> {
   }
 
   async createBookmark(
-    bookmarkDetail: BookmarkDetail,
+    bookmarkDetail: BoardAndUserNumber,
   ): Promise<CreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
@@ -165,8 +181,6 @@ export class BoardRepository extends Repository<Boards> {
     boardNo: number, userNo: number
   ): Promise<CreateResponse> {
     try {
-      console.log({ boardNo, userNo });
-
       const { raw }: InsertResult = await this.createQueryBuilder(
         'board_guest_members',
       )
