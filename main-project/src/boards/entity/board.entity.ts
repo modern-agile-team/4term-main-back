@@ -18,6 +18,7 @@ import { Reportedboards } from 'src/reports/entity/reported-board.entity';
 import { NoticeBoards } from 'src/notices/entity/notice-board.entity';
 import { BoardHosts } from './board-host.entity';
 import { BoardGuests } from './board-guest.entity';
+import { ChatList } from 'src/chats/entity/chat-list.entity';
 
 @Entity('boards')
 export class Boards extends BaseEntity {
@@ -74,7 +75,7 @@ export class Boards extends BaseEntity {
 
   @OneToMany(
     (type) => BoardHosts,
-    (boardHostMembers) => boardHostMembers.boardNo,
+    (boardHosts) => boardHosts.boardNo,
     {
       onDelete: 'CASCADE',
     },
@@ -83,14 +84,17 @@ export class Boards extends BaseEntity {
   hosts: BoardHosts;
 
   @OneToMany(
+    (type) => BoardGuests,
+    (boardGuests) => boardGuests.boardNo,
+  )
+  guests: BoardGuests;
+
+  @OneToMany(
     (type) => Reportedboards,
     (reportedboards) => reportedboards.targetBoardNo,
   )
   reportedBoard: Reportedboards[];
 
-  @OneToMany(
-    (type) => BoardGuests,
-    (reportedboards) => reportedboards.boardNo,
-  )
-  guests: BoardGuests;
+  @OneToMany((type) => ChatList, (chat) => chat.boardChat)
+  chatBoard: ChatList[];
 }

@@ -26,9 +26,9 @@ export class FriendsController {
   async getFriendList(
     @Param('userNo', ParseIntPipe) userNo: number,
   ): Promise<object> {
-    const response = await this.friendsService.getFriendList(userNo);
+    const friendList = await this.friendsService.getFriendList(userNo);
 
-    return { response };
+    return { response: { friendList } };
   }
 
   @Post('/request')
@@ -51,7 +51,7 @@ export class FriendsController {
     summary: '친구  요청 수락 API',
     description: '토큰의 userNo와 body로 받은 senderNo',
   })
-  async acceptFriend(
+  async acceptFriendRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
     @Body('senderNo', ParseIntPipe) senderNo: number,
   ): Promise<object> {
@@ -59,6 +59,22 @@ export class FriendsController {
 
     return {
       msg: '친구 신청을 수락했습니다.',
+    };
+  }
+
+  @Patch('/accept/notice/:noticeNo')
+  @ApiOperation({
+    summary: '친구 요청 수락 API',
+    description: 'notice번호를 통한 요청 수락',
+  })
+  async acceptFriendRequestByNoticeNo(
+    @Param('noticeNo', ParseIntPipe) noticeNo: number,
+    @Body('userNo', ParseIntPipe) userNo: number,
+  ): Promise<object> {
+    await this.friendsService.acceptFriendRequestByNoticeNo(noticeNo, userNo);
+
+    return {
+      msg: '친구요청을 수락했습니다.',
     };
   }
 
@@ -70,11 +86,10 @@ export class FriendsController {
   async getAllReceiveFriendRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
   ): Promise<object> {
-    const response = await this.friendsService.getAllReceiveFriendRequest(
-      receiverNo,
-    );
+    const receivedRequestList =
+      await this.friendsService.getAllReceivedFriendRequest(receiverNo);
 
-    return { response };
+    return { response: { receivedRequestList } };
   }
 
   @Get('/request/send/:userNo')
@@ -85,11 +100,10 @@ export class FriendsController {
   async getAllSendFriendRequest(
     @Param('userNo', ParseIntPipe) senderNo: number,
   ): Promise<object> {
-    const response = await this.friendsService.getAllSendFriendRequest(
-      senderNo,
-    );
+    const sendedRequestList =
+      await this.friendsService.getAllSendedFriendRequest(senderNo);
 
-    return { response };
+    return { response: { sendedRequestList } };
   }
 
   @Delete('/request/refuse/:userNo')
@@ -133,10 +147,13 @@ export class FriendsController {
     @Param('nickname') nickname: string,
     @Body('userNo', ParseIntPipe) userNo: number,
   ) {
-    const response = await this.friendsService.searchFriend(nickname, userNo);
+    const searchResult = await this.friendsService.searchFriend(
+      nickname,
+      userNo,
+    );
 
     return {
-      response,
+      response: { searchResult },
     };
   }
 }

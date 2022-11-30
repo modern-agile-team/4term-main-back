@@ -2,9 +2,9 @@ import {
   BadRequestException,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { send } from 'process';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { NoticeFriendsRepository } from 'src/notices/repository/notices-friend.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
@@ -16,9 +16,10 @@ import {
   FriendDetail,
   FriendInfo,
   FriendList,
-  FriendRequest,
   FriendRequestResponse,
+  FriendRequestStatus,
   NoticeFriend,
+  NoticeUser,
 } from './interface/friend.interface';
 import { FriendsRepository } from './repository/friends.repository';
 
@@ -44,8 +45,10 @@ export class FriendsService {
     await this.saveNoticeFriend({ receiverNo, senderNo, friendNo });
   }
 
-  async saveFriendRequest(createFriendDto: CreateFriendDto): Promise<number> {
-    const check: FriendRequest = await this.friendsRepository.checkFriend(
+  private async saveFriendRequest(
+    createFriendDto: CreateFriendDto,
+  ): Promise<number> {
+    const check: FriendRequestStatus = await this.friendsRepository.checkFriend(
       createFriendDto,
     );
     if (check) {
@@ -68,18 +71,52 @@ export class FriendsService {
     return raw.insertId;
   }
 
-  async saveNoticeFriend(noticeFriend: NoticeFriend): Promise<void> {
+  async acceptFriendRequestByNoticeNo(
+    noticeNo: number,
+    userNo: number,
+  ): Promise<void> {
+    const friendNo = await this.getFriendNoByNoticeNo({ noticeNo, userNo });
+
+    const check = await this.checkRequest({ friendNo });
+    if (check.isAccept == 1) {
+      throw new BadRequestException('이미 수락한 상태입니다.');
+    }
+
+    await this.acceptFriendRequestByFriendNo(friendNo);
+  }
+
+  private async acceptFriendRequestByFriendNo(friendNo): Promise<void> {
+    const affected = await this.friendsRepository.acceptFriendRequestByFriendNo(
+      friendNo,
+    );
+    if (!affected) {
+      throw new BadRequestException('친구 요청 수락에 실패하였습니다.');
+    }
+  }
+
+  private async getFriendNoByNoticeNo(noticeUser: NoticeUser): Promise<number> {
+    const friendNo = await this.noticeFriendsRepository.getFriendNoByNoticeNo(
+      noticeUser,
+    );
+    if (!friendNo) {
+      throw new NotFoundException('친구요청이 존재하지 않습니다.');
+    }
+
+    return friendNo;
+  }
+
+  private async saveNoticeFriend(noticeFriend: NoticeFriend): Promise<void> {
     const { senderNo, receiverNo, friendNo }: NoticeFriend = noticeFriend;
     const type = NoticeType.FRIEND_REQUEST;
 
-    const noticeNo = await this.noticeRepository.saveNoticeFriend({
+    const raw = await this.noticeRepository.saveNotice({
       type,
       userNo: senderNo,
       targetUserNo: receiverNo,
     });
 
     const result = await this.noticeFriendsRepository.saveNoticeFriend({
-      noticeNo,
+      noticeNo: raw.insertId,
       friendNo,
     });
     if (!result) {
@@ -100,22 +137,33 @@ export class FriendsService {
     }
   }
 
-  async getAllReceiveFriendRequest(receiverNo: number): Promise<Friends[]> {
-    const receivedRequestList = await this.findAllReceiveFriendReqByNo(
-      receiverNo,
-    );
+  async getAllReceivedFriendRequest(receiverNo: number): Promise<Friends[]> {
+    const receivedRequestList: Friends[] =
+      await this.friendsRepository.getAllReceiveFriendReq(receiverNo);
+    if (!receivedRequestList.length) {
+      throw new NotFoundException(`받은 친구 신청이 없습니다.`);
+    }
 
     return receivedRequestList;
   }
 
-  async getAllSendFriendRequest(senderNo: number): Promise<Friends[]> {
-    const sendedRequestList = await this.findAllSendFriendReqByNo(senderNo);
+  async getAllSendedFriendRequest(senderNo: number): Promise<Friends[]> {
+    const sendedRequestList: Friends[] =
+      await this.friendsRepository.getAllSendFriendReq(senderNo);
+    if (!sendedRequestList.length) {
+      throw new NotFoundException(`보낸 친구 신청이 없습니다.`);
+    }
 
     return sendedRequestList;
   }
 
   async getFriendList(userNo: number): Promise<FriendList[]> {
-    const friendList = await this.findAllFriendByNo(userNo);
+    const friendList: FriendList[] =
+      await this.friendsRepository.getAllFriendList(userNo);
+
+    if (!friendList.length) {
+      throw new NotFoundException('친구 목록이 없습니다.');
+    }
 
     return friendList;
   }
@@ -159,26 +207,14 @@ export class FriendsService {
     return searchResult;
   }
 
-  private async findAllFriendByNo(userNo: number): Promise<FriendList[]> {
-    const friendList: FriendList[] =
-      await this.friendsRepository.getAllFriendList(userNo);
-    console.log(friendList);
-
-    if (!friendList.length) {
-      throw new BadRequestException('친구 목록이 없습니다.');
-    }
-
-    return friendList;
-  }
-
   private async findFriendByNo(
     friendDetail: FriendDetail,
-  ): Promise<FriendRequest> {
-    const friendRequest: FriendRequest =
+  ): Promise<FriendRequestStatus> {
+    const friendRequest: FriendRequestStatus =
       await this.friendsRepository.checkFriend(friendDetail);
 
     if (!friendRequest) {
-      throw new BadRequestException('친구 목록에 없는 유저입니다.');
+      throw new NotFoundException('친구 목록에 없는 유저입니다.');
     }
 
     if (!friendRequest.isAccept) {
@@ -188,27 +224,6 @@ export class FriendsService {
     return friendRequest;
   }
 
-  private async findAllReceiveFriendReqByNo(
-    receiverNo: number,
-  ): Promise<Friends[]> {
-    const requestList: Friends[] =
-      await this.friendsRepository.getAllReceiveFriendReq(receiverNo);
-
-    if (!requestList.length) {
-      throw new BadRequestException(`받은 친구 신청이 없습니다.`);
-    }
-    return requestList;
-  }
-
-  private async findAllSendFriendReqByNo(senderNo: number): Promise<Friends[]> {
-    const requestList: Friends[] =
-      await this.friendsRepository.getAllSendFriendReq(senderNo);
-    if (!requestList.length) {
-      throw new BadRequestException(`보낸 친구 신청이 없습니다.`);
-    }
-
-    return requestList;
-  }
   private async refuseRequestByNo(
     refuseFriendNo: FriendDetail,
   ): Promise<number> {
@@ -223,15 +238,27 @@ export class FriendsService {
   }
 
   private async checkRequest(
-    checkUserNo: FriendDetail,
-  ): Promise<FriendRequest> {
-    const checkRequestResult = await this.friendsRepository.checkRequest(
-      checkUserNo,
-    );
-    if (!checkRequestResult) {
-      throw new BadRequestException('받은 요청이 없습니다.');
-    }
+    friendDetail: FriendDetail,
+  ): Promise<FriendRequestStatus> {
+    if (friendDetail.receiverNo && friendDetail.senderNo) {
+      const checkRequest = await this.friendsRepository.checkRequest(
+        friendDetail,
+      );
+      if (!checkRequest) {
+        throw new NotFoundException('받은 요청이 없습니다.');
+      }
 
-    return checkRequestResult;
+      return checkRequest;
+    }
+    if (friendDetail.friendNo) {
+      const checkRequest = await this.friendsRepository.checkRequestByFriendNo(
+        friendDetail.friendNo,
+      );
+      if (!checkRequest) {
+        throw new NotFoundException('받은 요청이 없습니다.');
+      }
+
+      return checkRequest;
+    }
   }
 }
