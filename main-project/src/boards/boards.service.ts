@@ -8,7 +8,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
-import { UsersRepository } from 'src/users/repository/users.repository';
 import { BoardDto } from './dto/board.dto';
 import {
   BoardMemberDetail,
@@ -33,8 +32,6 @@ export class BoardsService {
     private readonly boardMemberInfoRepository: BoardMemberInfoRepository,
     @InjectRepository(BoardRepository)
     private readonly boardRepository: BoardRepository,
-    @InjectRepository(UsersRepository)
-    private readonly usersRepository: UsersRepository,
     @InjectRepository(NoticesRepository)
     private readonly noticeRepository: NoticesRepository,
     @InjectRepository(NoticeBoardsRepository)
@@ -64,7 +61,6 @@ export class BoardsService {
 
     for (let el in hosts) {
       const hostMember: BoardAndUserNumber = (Number(el) === hosts.length - 1) ? { boardNo, userNo } : { boardNo, userNo: Number(hosts[el]) };
-
 
       const { affectedRows, insertId }: CreateResponse =
         await this.boardRepository.createHostMember(hostMember);
@@ -103,23 +99,13 @@ export class BoardsService {
     return boardNo;
   }
 
-  async createBookmark(bookmarkDetail: BoardAndUserNumber): Promise<number> {
-    const { affectedRows, insertId }: CreateResponse =
-      await this.boardBookmarkRepository.createBookmark(bookmarkDetail);
-
-    if (!(affectedRows && insertId)) {
-      throw new InternalServerErrorException(`bookmark 생성 오류입니다.`);
-    }
-
-    return insertId;
-  }
 
   async createAplication({ boardNo, guests }: GuestApplication): Promise<number> {
     const board: BoardMemberDetail = await this.getBoardByNo(boardNo)
     const memberLimit: number = board.male + board.female;
 
-    if (memberLimit < guests.length) {
-      throw new BadRequestException(`신청 인원이 모집 인원보다 많습니다..`)
+    if (memberLimit != guests.length) {
+      throw new BadRequestException(`신청 인원과모집 인원이 맞지 않습니다.`)
     }
 
     const guestNums: number[] = await this.validateUsers(boardNo, guests)
@@ -155,10 +141,22 @@ export class BoardsService {
     for (let index in guestNums) {
       const { affectedRows, insertId }: CreateResponse =
         await this.boardRepository.createGuestMembers(boardNo, guestNums[index]);
+
       if (!(affectedRows && insertId)) {
         throw new InternalServerErrorException(`guest-application 생성 오류입니다.`);
       }
     }
+  }
+
+  async createBookmark(bookmarkDetail: BoardAndUserNumber): Promise<number> {
+    const { affectedRows, insertId }: CreateResponse =
+      await this.boardBookmarkRepository.createBookmark(bookmarkDetail);
+
+    if (!(affectedRows && insertId)) {
+      throw new InternalServerErrorException(`bookmark 생성 오류입니다.`);
+    }
+
+    return insertId;
   }
 
   // 게시글 조회 관련
