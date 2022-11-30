@@ -8,13 +8,10 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { BoardBookmarks } from '../entity/board-bookmark.entity';
 import { BoardGuests } from '../entity/board-guest.entity';
 import { BoardHosts } from '../entity/board-host.entity';
-import { BoardMemberInfos } from '../entity/board-member-info.entity';
 import { Boards } from '../entity/board.entity';
 import {
-  BoardMemberDetail,
   CreateResponse,
   BoardReadResponse,
   BoardDetail,
@@ -117,26 +114,6 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async createBoardMember(
-    boardMemberDetail: BoardMemberDetail,
-  ): Promise<CreateResponse> {
-    try {
-      const { raw }: InsertResult = await this.createQueryBuilder(
-        'board_member_infos',
-      )
-        .insert()
-        .into(BoardMemberInfos)
-        .values(boardMemberDetail)
-        .execute();
-
-      return raw;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} createBoardMember-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
   async createHostMember(
     hostMember: BoardAndUserNumber,
   ): Promise<CreateResponse> {
@@ -153,26 +130,6 @@ export class BoardRepository extends Repository<Boards> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createHostMember-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async createBookmark(
-    bookmarkDetail: BoardAndUserNumber,
-  ): Promise<CreateResponse> {
-    try {
-      const { raw }: InsertResult = await this.createQueryBuilder(
-        'boardBookmark',
-      )
-        .insert()
-        .into(BoardBookmarks)
-        .values(bookmarkDetail)
-        .execute();
-
-      return raw;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} createBookmark-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -217,25 +174,6 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async updateBoardMember(
-    boardNo: number,
-    boardMember: BoardMemberDetail,
-  ): Promise<number> {
-    try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
-        .update(BoardMemberInfos)
-        .set(boardMember)
-        .where('boardNo = :boardNo', { boardNo })
-        .execute();
-
-      return affected;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} updateBoardMember-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
   async updateHostMember(boardNo: number, userNo: number): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
@@ -254,24 +192,6 @@ export class BoardRepository extends Repository<Boards> {
   }
 
   // 게시글 삭제 관련
-  async deleteBoardMember(boardNo: number): Promise<number> {
-    try {
-      const { affected }: DeleteResult = await this.createQueryBuilder(
-        'board_member_infos',
-      )
-        .delete()
-        .from(BoardMemberInfos)
-        .where('boardNo = :boardNo', { boardNo })
-        .execute();
-
-      return affected;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} deleteBoardMember-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
   async deleteBoard(boardNo: number): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder('boards')
@@ -287,47 +207,9 @@ export class BoardRepository extends Repository<Boards> {
       );
     }
   }
-
-  async cancelBookmark(boardNo: number, userNo: number): Promise<number> {
-    try {
-      const { affected }: DeleteResult = await this.createQueryBuilder(
-        'boardBookmark',
-      )
-        .delete()
-        .from(BoardBookmarks)
-        .where('boardNo = :boardNo', { boardNo })
-        .andWhere('userNo = :userNo', { userNo })
-        .execute();
-
-      return affected;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async deleteBookmark(boardNo: number): Promise<number> {
-    try {
-      const { affected }: DeleteResult = await this.createQueryBuilder(
-        'boardBookmark',
-      )
-        .delete()
-        .from(BoardBookmarks)
-        .where('boardNo = :boardNo', { boardNo })
-        .execute();
-
-      return affected;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
 }
 
 // 삭제 예정
-
 @EntityRepository(Users)
 export class TestUserRepo extends Repository<UsersRepository> {
   async getUserByNickname(nickname: string) {

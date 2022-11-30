@@ -20,11 +20,17 @@ import {
   HostMembers,
   UserNo,
 } from './interface/boards.interface';
+import { BoardBookmarkRepository } from './repository/board-bookmark.repository';
+import { BoardMemberInfoRepository } from './repository/board-member-info.repository';
 import { BoardRepository, TestUserRepo } from './repository/board.repository';
 
 @Injectable()
 export class BoardsService {
   constructor(
+    @InjectRepository(BoardBookmarkRepository)
+    private readonly boardBookmarkRepository: BoardBookmarkRepository,
+    @InjectRepository(BoardMemberInfoRepository)
+    private readonly boardMemberInfoRepository: BoardMemberInfoRepository,
     @InjectRepository(BoardRepository)
     private readonly boardRepository: BoardRepository,
     @InjectRepository(UsersRepository)
@@ -73,7 +79,7 @@ export class BoardsService {
     boardMemberDetail: BoardMemberDetail,
   ): Promise<void> {
     const { affectedRows, insertId }: CreateResponse =
-      await this.boardRepository.createBoardMember(boardMemberDetail);
+      await this.boardMemberInfoRepository.createBoardMember(boardMemberDetail);
 
     if (!(affectedRows && insertId)) {
       throw new InternalServerErrorException(`board-member 생성 오류입니다.`);
@@ -99,7 +105,7 @@ export class BoardsService {
 
   async createBookmark(bookmarkDetail: BoardAndUserNumber): Promise<number> {
     const { affectedRows, insertId }: CreateResponse =
-      await this.boardRepository.createBookmark(bookmarkDetail);
+      await this.boardBookmarkRepository.createBookmark(bookmarkDetail);
 
     if (!(affectedRows && insertId)) {
       throw new InternalServerErrorException(`bookmark 생성 오류입니다.`);
@@ -217,7 +223,7 @@ export class BoardsService {
     boardNo: number,
     boardMember: BoardMemberDetail,
   ): Promise<void> {
-    const updateBoardMember = await this.boardRepository.updateBoardMember(
+    const updateBoardMember = await this.boardMemberInfoRepository.updateBoardMember(
       boardNo,
       boardMember,
     );
@@ -266,7 +272,7 @@ export class BoardsService {
 
   async cancelBookmark(boardNo: number, userNo: number): Promise<string> {
     await this.getBoardByNo(boardNo);
-    await this.boardRepository.cancelBookmark(boardNo, userNo);
+    await this.boardBookmarkRepository.cancelBookmark(boardNo, userNo);
 
     return `${boardNo}번 게시글 ${userNo}번 user 북마크 삭제 성공 :)`;
   }
