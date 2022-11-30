@@ -99,13 +99,12 @@ export class BoardsService {
     return boardNo;
   }
 
-
   async createAplication({ boardNo, guests }: GuestApplication): Promise<number> {
     const board: BoardMemberDetail = await this.getBoardByNo(boardNo)
-    const memberLimit: number = board.male + board.female;
+    const applicantCount: number = board.male + board.female;
 
-    if (memberLimit != guests.length) {
-      throw new BadRequestException(`신청 인원과모집 인원이 맞지 않습니다.`)
+    if (applicantCount != guests.length) {
+      throw new BadRequestException(`신청 인원과 모집 인원이 맞지 않습니다.`)
     }
 
     const guestNums: number[] = await this.validateUsers(boardNo, guests)
