@@ -12,6 +12,8 @@ export interface BoardReadResponse {
   description: string;
   location: string;
   meetingTime: Date;
+  male: number;
+  female: number;
 }
 
 export interface BoardMemberDetail {

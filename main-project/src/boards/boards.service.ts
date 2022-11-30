@@ -109,6 +109,13 @@ export class BoardsService {
   }
 
   async createAplication({ boardNo, guests }: GuestApplication): Promise<number> {
+    const board: BoardMemberDetail = await this.getBoardByNo(boardNo)
+    const memberLimit: number = board.male + board.female;
+
+    if (memberLimit < guests.length) {
+      throw new BadRequestException(`신청 인원이 모집 인원보다 많습니다..`)
+    }
+
     const guestNums: number[] = await this.validateUsers(boardNo, guests)
 
     const guestMembers: void = await this.createGuestMembers(boardNo, guestNums);
@@ -147,7 +154,6 @@ export class BoardsService {
       }
     }
   }
-
 
   // 게시글 조회 관련
   async getAllBoards(): Promise<BoardReadResponse[]> {
