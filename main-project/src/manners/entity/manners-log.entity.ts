@@ -1,3 +1,4 @@
+import { LargeNumberLike } from 'crypto';
 import { ChatList } from 'src/chats/entity/chat-list.entity';
 import { ChatUsers } from 'src/chats/entity/chat-users.entity';
 import {
@@ -6,8 +7,10 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Manners } from './manners.entity';
 
 @Entity('manner_log')
 export class MannerLog extends BaseEntity {
@@ -28,4 +31,7 @@ export class MannerLog extends BaseEntity {
   @ManyToOne((type) => ChatUsers, (chatUserNo) => chatUserNo.mannerTargetUserNo)
   @JoinColumn({ name: 'chat_target_user_no' })
   chatTargetUserNo: number;
+
+  @Column({ name: 'grade' })
+  giveGrade: number;
 }

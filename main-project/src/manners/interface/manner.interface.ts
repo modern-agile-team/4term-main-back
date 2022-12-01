@@ -10,3 +10,14 @@ export interface ChatRoomNo {
 export interface UserType {
   userType: number;
 }
+
+export interface UserNo {
+  userNo: string;
+}
+
+export interface UserGrade {
+  grade: number;
+}
+// export interface UserList {
+//   newUserList: number;
+// }

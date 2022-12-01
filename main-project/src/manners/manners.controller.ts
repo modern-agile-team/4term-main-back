@@ -1,6 +1,12 @@
-import { Body, Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+} from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
-import { BodyAndParam } from 'src/common/decorator/body-and-param.decorator';
 import { MannersService } from './manners.service';
 
 @Controller('manners')
@@ -8,20 +14,39 @@ export class MannersController {
   constructor(private readonly mannersService: MannersService) {}
 
   @ApiOperation({
-    summary: '매너평점을 남겨주는 API',
-    description: '매너평점을 남겨줄 수 있다.',
+    summary: '매너평점을 가져오는 API',
+    description: '유저의 매너평점을 가져와준다.',
   })
   @Get('/:boardNo')
-  async giveScore(
+  async getScore(
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
   ): Promise<object> {
     try {
-      const board = await this.mannersService.giveScore(boardNo, userNo);
+      const response = await this.mannersService.getScore(boardNo, userNo);
       return {
-        board,
+        response,
         success: true,
-        msg: ' 존재하는 게시물입니다.',
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+  @ApiOperation({
+    summary: '매너평점을 가져오는 API',
+    description: '유저의 매너평점을 가져와준다.',
+  })
+  @Get('/')
+  async getScoreByProfile(
+    @Body('userProfileNo', ParseIntPipe) userProfileNo: number,
+  ): Promise<object> {
+    try {
+      const response = await this.mannersService.userGradebyUserProfileNo(
+        userProfileNo,
+      );
+      return {
+        response,
+        success: true,
       };
     } catch (error) {
       throw error;

@@ -162,7 +162,8 @@ export class BoardRepository extends Repository<Boards> {
   }
 
   async createGuestMembers(
-    boardNo: number, userNo: number
+    boardNo: number,
+    userNo: number,
   ): Promise<CreateResponse> {
     try {
       console.log({ boardNo, userNo });
@@ -320,9 +321,7 @@ export class TestUserRepo extends Repository<UsersRepository> {
     try {
       const userNo = await this.createQueryBuilder('users')
         .leftJoin('users.userProfileNo', 'profile')
-        .select([
-          'users.no AS no',
-        ])
+        .select(['users.no AS no'])
         .where('profile.nickname = :nickname', { nickname })
         .getRawOne();
 

@@ -1,5 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { UserType } from 'src/manners/interface/manner.interface';
+import { UserNo, UserType } from 'src/manners/interface/manner.interface';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { ChatUsers } from '../entity/chat-users.entity';
 import { ChatRoomList, ChatUserInfo } from '../interface/chat.interface';
@@ -91,24 +91,25 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
-  async getTargetUserChatRoomNo(
+  async getTargetUserByChatRoomNo(
     chatRoomNo: number,
     userType: number,
-  ): Promise<UserType[]> {
+  ): Promise<UserNo> {
     try {
-      const userList = await this.createQueryBuilder('chat_users')
+      const user = await this.createQueryBuilder('chat_users')
         .select([
-          'chat_users.user_type AS userType',
-          'chat_users.chat_room_no AS chatRoomNo',
+          // 'chat_users.user_type AS userType',
+          // 'chat_users.chat_room_no AS chatRoomNo',
           'chat_users.user_no AS userNo',
+          'GROUP_CONCAT(DISTINCT chat_users.user_no) AS userNo',
         ])
         .where(
           'chat_users.chat_room_no = :chatRoomNo AND chat_users.user_type = :userType',
           { chatRoomNo, userType },
         )
-        .getRawMany();
+        .getRawOne();
 
-      return userList;
+      return user;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 상대유저 타입 검색(getTargetUserChatRoomNo): 알 수 없는 서버 에러입니다.`,
