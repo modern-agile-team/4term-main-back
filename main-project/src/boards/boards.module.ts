@@ -6,11 +6,13 @@ import { UsersRepository } from 'src/users/repository/users.repository';
 import { BoardsController } from './boards.controller';
 import { BoardsService } from './boards.service';
 import { BoardBookmarkRepository } from './repository/board-bookmark.repository';
+import { BoardGuestRepository } from './repository/board-guest.repository';
+import { BoardHostRepository } from './repository/board-host.repository';
 import { BoardMemberInfoRepository } from './repository/board-member-info.repository';
 import { BoardRepository, TestUserRepo } from './repository/board.repository';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([BoardRepository, BoardMemberInfoRepository, BoardBookmarkRepository, UsersRepository, NoticesRepository, NoticeBoardsRepository, TestUserRepo])],
+  imports: [TypeOrmModule.forFeature([BoardRepository, BoardGuestRepository, BoardHostRepository, BoardMemberInfoRepository, BoardBookmarkRepository, UsersRepository, NoticesRepository, NoticeBoardsRepository, TestUserRepo])],
   providers: [BoardsService],
   controllers: [BoardsController],
 })

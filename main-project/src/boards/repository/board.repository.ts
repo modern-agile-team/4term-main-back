@@ -79,24 +79,6 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async getAllGuestByBoardNo(boardNo: number): Promise<BoardAndUserNumber[]> {
-    try {
-      const boards = await this.createQueryBuilder('boards')
-        .leftJoin('boards.guests', 'guests')
-        .select([
-          'guests.userNo AS userNo'
-        ])
-        .where('guests.boardNo = :boardNo', { boardNo })
-        .getRawMany();
-
-      return boards;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} getAllGuestByBoardNo-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
   //게시글 생성 관련
   async createBoard(createBoardDto: BoardDetail): Promise<CreateResponse> {
     try {
@@ -114,45 +96,9 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async createHostMember(
-    hostMember: BoardAndUserNumber,
-  ): Promise<CreateResponse> {
-    try {
-      const { raw }: InsertResult = await this.createQueryBuilder(
-        'board_member_infos',
-      )
-        .insert()
-        .into(BoardHosts)
-        .values(hostMember)
-        .execute();
 
-      return raw;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} createHostMember-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
 
-  async createGuestMembers(
-    boardNo: number, userNo: number
-  ): Promise<CreateResponse> {
-    try {
-      const { raw }: InsertResult = await this.createQueryBuilder(
-        'board_guest_members',
-      )
-        .insert()
-        .into(BoardGuests)
-        .values({ userNo, boardNo })
-        .execute();
 
-      return raw;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} createGuestMembers-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
 
   //게시글 수정 관련
   async updateBoard(
@@ -160,7 +106,7 @@ export class BoardRepository extends Repository<Boards> {
     boardDetail: BoardDetail,
   ): Promise<number> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
+      const { affected }: UpdateResult = await this.createQueryBuilder('boards')
         .update(Boards)
         .set(boardDetail)
         .where('no = :boardNo', { boardNo })
@@ -176,7 +122,7 @@ export class BoardRepository extends Repository<Boards> {
 
   async updateHostMember(boardNo: number, userNo: number): Promise<number> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
+      const { affected }: UpdateResult = await this.createQueryBuilder('boards')
         .update(BoardHosts)
         .set({ userNo })
         .where('userNo = :userNo', { userNo })

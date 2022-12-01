@@ -1,3 +1,5 @@
+import { QueryRunner } from "typeorm";
+
 export interface CreateResponse {
   affectedRows: number;
   insertId?: number;
@@ -20,6 +22,7 @@ export interface BoardMemberDetail {
   boardNo?: number;
   male: number;
   female: number;
+  queryRunner?: QueryRunner
 }
 
 export interface BoardDetail {
@@ -29,6 +32,7 @@ export interface BoardDetail {
   location: string;
   meetingTime: Date;
   userNo?: number; // host 후에 옵셔널 삭제
+  queryRunner?: QueryRunner
 }
 
 export interface BoardAndUserNumber {
@@ -40,6 +44,7 @@ export interface HostMembers {
   boardNo: number,
   userNo: number,
   hosts: number[],
+  queryRunner?: QueryRunner
 }
 
 export interface GuestApplication {
@@ -51,10 +56,3 @@ export interface NoticeBoard {
   boardNo: number;
   noticeNo: number
 }
-
-export interface UserNo {
-  no: number
-}
-
-
-

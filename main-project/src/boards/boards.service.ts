@@ -8,7 +8,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
+import { Connection, QueryRunner } from 'typeorm';
 import { BoardDto } from './dto/board.dto';
+import { BoardGuests } from './entity/board-guest.entity';
 import {
   BoardMemberDetail,
   CreateResponse,
@@ -17,9 +19,10 @@ import {
   BoardAndUserNumber,
   GuestApplication,
   HostMembers,
-  UserNo,
 } from './interface/boards.interface';
 import { BoardBookmarkRepository } from './repository/board-bookmark.repository';
+import { BoardGuestRepository } from './repository/board-guest.repository';
+import { BoardHostRepository } from './repository/board-host.repository';
 import { BoardMemberInfoRepository } from './repository/board-member-info.repository';
 import { BoardRepository, TestUserRepo } from './repository/board.repository';
 
@@ -28,24 +31,37 @@ export class BoardsService {
   constructor(
     @InjectRepository(BoardBookmarkRepository)
     private readonly boardBookmarkRepository: BoardBookmarkRepository,
+
     @InjectRepository(BoardMemberInfoRepository)
     private readonly boardMemberInfoRepository: BoardMemberInfoRepository,
+
+    @InjectRepository(BoardGuestRepository)
+    private readonly boardGuestRepository: BoardGuestRepository,
+
+    @InjectRepository(BoardHostRepository)
+    private readonly boardHostRepository: BoardHostRepository,
+
     @InjectRepository(BoardRepository)
     private readonly boardRepository: BoardRepository,
+
     @InjectRepository(NoticesRepository)
     private readonly noticeRepository: NoticesRepository,
+
     @InjectRepository(NoticeBoardsRepository)
     private readonly noticeBoardsRepository: NoticeBoardsRepository,
+
     // test repo 삭제 예정
     @InjectRepository(TestUserRepo)
     private readonly testUserRepo: TestUserRepo,
+
+    private readonly connection: Connection,
   ) { }
 
   // 게시글 생성 관련
-  private async setBoard(boardInfo: BoardDetail, userNo: number): Promise<number> {
+  private async setBoard({ queryRunner, userNo, ...boardInfo }: BoardDetail): Promise<number> {
     const board: BoardDetail = { ...boardInfo, userNo }
     const { affectedRows, insertId }: CreateResponse =
-      await this.boardRepository.createBoard(board);
+      await queryRunner.manager.getCustomRepository(BoardRepository).createBoard(board);
 
     if (!(affectedRows && insertId)) {
       throw new InternalServerErrorException(`board 생성 오류입니다.`);
@@ -55,48 +71,66 @@ export class BoardsService {
   }
 
   private async setHostMembers(
-    { boardNo, userNo, hosts }: HostMembers
+    { queryRunner, boardNo, userNo, hosts }: HostMembers
   ): Promise<void> {
     hosts.push(userNo)
 
     for (let el in hosts) {
       const hostMember: BoardAndUserNumber = (Number(el) === hosts.length - 1) ? { boardNo, userNo } : { boardNo, userNo: Number(hosts[el]) };
 
-      const { affectedRows, insertId }: CreateResponse =
-        await this.boardRepository.createHostMember(hostMember);
+      const { affectedRows }: CreateResponse =
+        await queryRunner.manager.getCustomRepository(BoardHostRepository).createHostMember(hostMember);
 
-      if (!(affectedRows && insertId)) {
+      if (!(affectedRows)) {
         throw new InternalServerErrorException(`host-member 생성 오류입니다.`);
       }
     }
   }
 
   private async setBoardMember(
-    boardMemberDetail: BoardMemberDetail,
-  ): Promise<void> {
-    const { affectedRows, insertId }: CreateResponse =
-      await this.boardMemberInfoRepository.createBoardMember(boardMemberDetail);
 
-    if (!(affectedRows && insertId)) {
+    { boardNo,
+      queryRunner, ...boardInfo }: BoardMemberDetail,
+  ): Promise<void> {
+    const { affectedRows }: CreateResponse =
+      await queryRunner.manager.getCustomRepository(BoardMemberInfoRepository).createBoardMember({ boardNo, ...boardInfo });
+
+    if (!(affectedRows)) {
       throw new InternalServerErrorException(`board-member 생성 오류입니다.`);
     }
   }
 
   async createBoard({ hostMembers, userNo, ...boardInfo }: BoardDto): Promise<number> {
-    const boardNo: number = await this.setBoard(boardInfo, userNo);
-    const hosts: number[] = await this.validateUsers(boardNo, hostMembers)
+    const queryRunner: QueryRunner = this.connection.createQueryRunner();
 
-    const memberInfo: HostMembers = { boardNo, userNo, hosts }
-    await this.setHostMembers(memberInfo); // transaction
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
 
-    const boardMemberDetail: BoardMemberDetail = {
-      ...boardInfo,
-      boardNo,
-    };
+      const boardNo: number = await this.setBoard({ ...boardInfo, queryRunner, userNo });
+      const hosts: number[] = await this.validateUsers(boardNo, hostMembers)
 
-    await this.setBoardMember(boardMemberDetail);
+      const memberInfo: HostMembers = { queryRunner, boardNo, userNo, hosts }
+      await this.setHostMembers(memberInfo); // transaction
 
-    return boardNo;
+      const boardMemberDetail: BoardMemberDetail = {
+        ...boardInfo,
+        boardNo,
+        queryRunner
+      };
+
+      await this.setBoardMember(boardMemberDetail);
+
+      await queryRunner.commitTransaction();
+
+      return boardNo;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async createAplication({ boardNo, guests }: GuestApplication): Promise<number> {
@@ -108,7 +142,6 @@ export class BoardsService {
     }
 
     const guestNums: number[] = await this.validateUsers(boardNo, guests)
-
     const guestMembers: void = await this.createGuestMembers(boardNo, guestNums);
     const notice = await this.saveNoticeApplication(boardNo);
 
@@ -116,11 +149,11 @@ export class BoardsService {
   }
 
   private async validateUsers(boardNo: number, users: []): Promise<number[]> {
-    const board = await this.boardRepository.getAllGuestByBoardNo(boardNo);
+    const board = await this.boardRepository.find({ where: [boardNo] });
     const userArr: number[] = [];
 
     for (let index in users) {
-      const user: UserNo = await this.testUserRepo.getUserByNickname(users[index])
+      const user: any = await this.testUserRepo.getUserByNickname(users[index])
       if (!user) {
         throw new NotFoundException(`${users[index]} 사용자가 없습니다.`)
       }
@@ -138,10 +171,10 @@ export class BoardsService {
 
   private async createGuestMembers(boardNo: number, guestNums: number[]): Promise<void> {
     for (let index in guestNums) {
-      const { affectedRows, insertId }: CreateResponse =
-        await this.boardRepository.createGuestMembers(boardNo, guestNums[index]);
+      const guests: CreateResponse =
+        await this.boardGuestRepository.createGuestMembers(boardNo, guestNums[index]);
 
-      if (!(affectedRows && insertId)) {
+      if (!guests) {
         throw new InternalServerErrorException(`guest-application 생성 오류입니다.`);
       }
     }
