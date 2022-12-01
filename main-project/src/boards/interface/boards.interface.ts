@@ -1,6 +1,3 @@
-import { Users } from 'src/users/entity/user.entity';
-import { Boards } from '../entity/board.entity';
-
 export interface CreateResponse {
   affectedRows: number;
   insertId?: number;
@@ -9,12 +6,14 @@ export interface CreateResponse {
 export interface BoardReadResponse {
   no: number;
   hostUserNo: number;
-  title: string;
   nickname: string;
+  title: string;
   isDone: boolean;
   description: string;
   location: string;
   meetingTime: Date;
+  male: number;
+  female: number;
 }
 
 export interface BoardMemberDetail {
@@ -32,19 +31,15 @@ export interface BoardDetail {
   userNo?: number; // host 후에 옵셔널 삭제
 }
 
-export interface BookmarkDetail {
-  boardNo: number;
-  userNo: number;
-}
-
-export interface CreateHostMembers {
+export interface BoardAndUserNumber {
   boardNo: number;
   userNo: number;
 }
 
 export interface HostMembers {
-  userNo: [];
-  nickname: [];
+  boardNo: number,
+  userNo: number,
+  hosts: number[],
 }
 
 export interface GuestApplication {
@@ -52,14 +47,13 @@ export interface GuestApplication {
   guests: [];
 }
 
-export interface NoticeGuest {
-  boardNo: number;
-  guests: [];
-}
-
 export interface NoticeBoard {
   boardNo: number;
   noticeNo: number
+}
+
+export interface UserNo {
+  no: number
 }
 
 

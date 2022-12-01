@@ -62,10 +62,10 @@ export class BoardDto {
 
   // 삭제 예정
   @IsNotEmpty()
-  @IsString()
+  @IsNumber()
   @ApiProperty({
-    example: "host nickname",
-    description: 'host user_nickname',
+    example: "host userNo -> jwt로 빠질 예정",
+    description: 'host user_no',
   })
-  host: string;
+  userNo: number;
 }
