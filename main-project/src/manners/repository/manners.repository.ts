@@ -19,7 +19,7 @@ export class MannersRepository extends Repository<Manners> {
     }
   }
 
-  async userGradebyUserProfileNo(userProfileNo) {
+  async userGradebyUserProfileNo(userProfileNo): Promise<number> {
     try {
       const grade = await this.createQueryBuilder('manners')
         .select('manners.grade AS grade')

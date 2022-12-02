@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Param,
-  ParseIntPipe,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
 import { MannersService } from './manners.service';
 
@@ -22,15 +15,8 @@ export class MannersController {
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
   ): Promise<object> {
-    try {
-      const response = await this.mannersService.getScore(boardNo, userNo);
-      return {
-        response,
-        success: true,
-      };
-    } catch (error) {
-      throw error;
-    }
+    const response = await this.mannersService.getScore(boardNo, userNo);
+    return { response };
   }
   @ApiOperation({
     summary: '매너평점을 가져오는 API',
@@ -40,16 +26,9 @@ export class MannersController {
   async getScoreByProfile(
     @Body('userProfileNo', ParseIntPipe) userProfileNo: number,
   ): Promise<object> {
-    try {
-      const response = await this.mannersService.userGradebyUserProfileNo(
-        userProfileNo,
-      );
-      return {
-        response,
-        success: true,
-      };
-    } catch (error) {
-      throw error;
-    }
+    const response = await this.mannersService.userGradebyUserProfileNo(
+      userProfileNo,
+    );
+    return { response };
   }
 }
