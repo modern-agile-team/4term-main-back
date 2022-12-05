@@ -83,7 +83,6 @@ export class ChatsControllerService {
   }
 
   async inviteUser(userNo, targetUserNo, chatRoomNo): Promise<void> {
-    const type = NoticeType.INVITE_HOST;
     const user = await this.checkUserInChatRoom({
       userNo: targetUserNo,
       chatRoomNo,
@@ -91,6 +90,12 @@ export class ChatsControllerService {
     if (user) {
       throw new BadRequestException('이미 채팅방에 존재하는 유저입니다.');
     }
+
+    const { userType } = await this.checkUserInChatRoom({
+      userNo,
+      chatRoomNo,
+    });
+    const type = userType ? NoticeType.INVITE_HOST : NoticeType.INVITE_GUEST;
 
     const noticeChat = await this.checkNoticeChat(
       targetUserNo,
