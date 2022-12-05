@@ -51,7 +51,8 @@ export interface PreviousChatLog {
 }
 
 export interface ChatUserInfo {
-  userNo: number;
+  userNo?: number;
   chatRoomNo: number;
   userType?: number;
+  type?: number;
 }
