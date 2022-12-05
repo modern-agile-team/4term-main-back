@@ -5,11 +5,11 @@ import { ChatRoomUsers, CreateChat } from '../interface/chat.interface';
 
 @EntityRepository(ChatList)
 export class ChatListRepository extends Repository<ChatList> {
-  async checkRoomExistByMeetingNo(meetingNo): Promise<ChatList> {
+  async checkRoomExistByBoardNo(boardNo): Promise<ChatList> {
     try {
       const result = await this.createQueryBuilder('chat_list')
-        .select(['chat_list.meeting_no AS meetingNo'])
-        .where(`meeting_no = :meetingNo`, { meetingNo })
+        .select(['chat_list.board_no AS boardNo'])
+        .where(`board_no = :boardNo`, { boardNo })
         .getRawOne();
 
       return result;
@@ -39,16 +39,17 @@ export class ChatListRepository extends Repository<ChatList> {
   async isUserInChatRoom(chatRoomNo, userNo): Promise<ChatRoomUsers> {
     try {
       const result = await this.createQueryBuilder('chat_list')
-        .leftJoin('chat_list.chatUserNo', 'chatUserNo')
-        .leftJoin('chatUserNo.userNo', 'userNo')
+        .leftJoin('chat_list.chatUserNo', 'chatUser')
+        .leftJoin('chatUser.userNo', 'user')
+        .leftJoin('user.userProfileNo', 'userProfile')
         .select([
           'chat_list.room_name AS roomName',
           'chat_list.no AS chatRoomNo',
-          'chatUserNo.user_no AS userNo',
-          'userNo.nickname AS nickname',
+          'chatUser.user_no AS userNo',
+          'userProfile.nickname AS nickname',
         ])
         .where(`chat_list.no = :chatRoomNo`, { chatRoomNo })
-        .andWhere('chatUserNo.user_no = :userNo', { userNo })
+        .andWhere('chatUser.user_no = :userNo', { userNo })
         .getRawOne();
 
       return result;

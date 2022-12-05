@@ -5,7 +5,7 @@ export interface MeetingMembersList {
 
 export interface CreateChat {
   userNo?: number;
-  meetingNo: number;
+  boardNo: number;
   roomName?: string;
 }
 
@@ -21,12 +21,12 @@ export interface MessagePayload {
 }
 
 export interface ChatRoom {
-  guestUserNickname: string;
-  hostUserNickname: string;
+  guestNickname?: string;
+  hostNickname?: string;
   roomName?: string;
   userNo?: string;
-  guestUserNo?: number;
-  hostUserNo?: number;
+  guestUserNo?: string;
+  hostUserNo?: string;
 }
 
 export interface ChatRoomUsers {
@@ -51,6 +51,8 @@ export interface PreviousChatLog {
 }
 
 export interface ChatUserInfo {
-  userNo: number;
+  userNo?: number;
   chatRoomNo: number;
+  userType?: number;
+  type?: number;
 }

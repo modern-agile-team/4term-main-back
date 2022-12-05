@@ -99,13 +99,13 @@ export class Users extends BaseEntity {
     (type) => BoardHosts,
     (boardHostMembers) => boardHostMembers.userNo,
   )
-  hostmember: BoardHosts;
+  hostMember: BoardHosts;
 
   @OneToMany(
     (type) => BoardGuests,
     (boardHostMembers) => boardHostMembers.userNo,
   )
-  guestmember: BoardGuests;
+  guestMember: BoardGuests;
 
   @OneToMany((type) => ChatLog, (chatLog) => chatLog.userNo)
   chatLogUserNo: ChatLog[];

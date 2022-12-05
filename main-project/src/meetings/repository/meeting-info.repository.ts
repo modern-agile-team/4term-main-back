@@ -66,29 +66,4 @@ export class MeetingInfoRepository extends Repository<MeetingInfo> {
       );
     }
   }
-
-  async getMeetingUserByMeetingNo(meetingNo): Promise<ChatRoom> {
-    try {
-      const meetingInfo = await this.createQueryBuilder('meeting_info')
-        .leftJoin('meeting_info.meetingNo', 'meetingNo')
-        .leftJoin('meetingNo.hostMembers', 'hostMembers')
-        .leftJoin('hostMembers.userNo', 'hostUserNo')
-        .leftJoin('meetingNo.guestMembers', 'guestMembers')
-        .leftJoin('guestMembers.userNo', 'guestUserNo')
-        .select([
-          'GROUP_CONCAT(DISTINCT guestUserNo.nickname) AS guestUserNickname',
-          'GROUP_CONCAT(DISTINCT hostUserNo.nickname) AS hostUserNickname',
-          'GROUP_CONCAT(DISTINCT hostMembers.user_no) AS hostUserNo',
-          'GROUP_CONCAT(DISTINCT guestMembers.user_no) AS guestUserNo',
-        ])
-        .where('meeting_info.meetingNo = :meetingNo', { meetingNo })
-        .getRawOne();
-
-      return meetingInfo;
-    } catch (err) {
-      throw new InternalServerErrorException(
-        `${err} 유저정보 조회(getMeetingUserByMeetingNo): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
 }

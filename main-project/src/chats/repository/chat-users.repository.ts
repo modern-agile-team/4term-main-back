@@ -62,6 +62,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
         .select([
           'chat_users.user_no AS userNo',
           'chat_users.chat_room_no AS chatRoomNo',
+          'chat_users.user_type AS userType',
         ])
         .where('user_no = :userNo AND chat_room_no = :chatRoomNo', chatUserInfo)
         .getRawOne();
