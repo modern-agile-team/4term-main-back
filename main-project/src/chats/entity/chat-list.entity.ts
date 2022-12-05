@@ -23,11 +23,9 @@ export class ChatList extends BaseEntity {
   @Column({ name: 'room_name', type: 'varchar', length: 255, nullable: false })
   roomName: string;
 
-  @ManyToOne((type) => Boards, (boards) => boards.chatBoard, {
-    onDelete: 'CASCADE',
-  })
+  @ManyToOne((type) => Boards, (boards) => boards.chatBoard)
   @JoinColumn({ name: 'board_no' })
-  boardChat: number;
+  boardNo: number;
 
   @OneToMany((type) => ChatUsers, (chatUsers) => chatUsers.chatRoomNo)
   chatUserNo: ChatUsers[];
