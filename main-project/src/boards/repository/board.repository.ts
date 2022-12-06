@@ -8,6 +8,7 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
+import { BoardBookmarks } from '../entity/board-bookmark.entity';
 import { BoardGuests } from '../entity/board-guest.entity';
 import { BoardHosts } from '../entity/board-host.entity';
 import { Boards } from '../entity/board.entity';
@@ -83,9 +84,7 @@ export class BoardRepository extends Repository<Boards> {
     try {
       const boards = await this.createQueryBuilder('boards')
         .leftJoin('boards.guests', 'guests')
-        .select([
-          'guests.userNo AS userNo'
-        ])
+        .select(['guests.userNo AS userNo'])
         .where('guests.boardNo = :boardNo', { boardNo })
         .getRawMany();
 
@@ -207,6 +206,64 @@ export class BoardRepository extends Repository<Boards> {
         `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
+  }
+
+  async cancelBookmark(boardNo: number, userNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder(
+        'boardBookmark',
+      )
+        .delete()
+        .from(BoardBookmarks)
+        .where('boardNo = :boardNo', { boardNo })
+        .andWhere('userNo = :userNo', { userNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async deleteBookmark(boardNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder(
+        'boardBookmark',
+      )
+        .delete()
+        .from(BoardBookmarks)
+        .where('boardNo = :boardNo', { boardNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+  async getUserListByBoardNo(boardNo) {
+    try {
+      const userList = await this.createQueryBuilder('boards')
+        .leftJoin('boards.hosts', 'hostList')
+        .leftJoin('boards.guests', 'guestList')
+        .leftJoin('hostList.userNo', 'hostUser')
+        .leftJoin('guestList.userNo', 'guestUser')
+        .leftJoin('hostUser.userProfileNo', 'hostProfile')
+        .leftJoin('guestUser.userProfileNo', 'guestProfile')
+        .select([
+          'GROUP_CONCAT(DISTINCT hostProfile.nickname) AS hostNickname',
+          'GROUP_CONCAT(DISTINCT guestProfile.nickname) AS guestNickname',
+          'GROUP_CONCAT(DISTINCT hostList.user_no) AS hostUserNo',
+          'GROUP_CONCAT(DISTINCT guestList.user_no) AS guestUserNo',
+        ])
+        .where('boards.no = :boardNo', { boardNo })
+        .getRawOne();
+
+      return userList;
+    } catch (error) {}
   }
 }
 

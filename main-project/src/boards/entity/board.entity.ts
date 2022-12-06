@@ -73,20 +73,13 @@ export class Boards extends BaseEntity {
   @JoinColumn()
   noticeBoard: NoticeBoards;
 
-  @OneToMany(
-    (type) => BoardHosts,
-    (boardHosts) => boardHosts.boardNo,
-    {
-      onDelete: 'CASCADE',
-    },
-  )
+  @OneToMany((type) => BoardHosts, (boardHosts) => boardHosts.boardNo, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   hosts: BoardHosts;
 
-  @OneToMany(
-    (type) => BoardGuests,
-    (boardGuests) => boardGuests.boardNo,
-  )
+  @OneToMany((type) => BoardGuests, (boardGuests) => boardGuests.boardNo)
   guests: BoardGuests;
 
   @OneToMany(
@@ -95,6 +88,6 @@ export class Boards extends BaseEntity {
   )
   reportedBoard: Reportedboards[];
 
-  @OneToMany((type) => ChatList, (chat) => chat.boardChat)
+  @OneToMany((type) => ChatList, (chat) => chat.boardNo)
   chatBoard: ChatList[];
 }
