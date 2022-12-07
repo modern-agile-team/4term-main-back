@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { ChatListRepository } from 'src/chats/repository/chat-list.repository';
 import { ChatUsersRepository } from 'src/chats/repository/chat-users.repository';
+import { MannerDto } from './dto/createManners.dto';
 import { MannerChatUserInfo, UserNo } from './interface/manner.interface';
 import { MannersRepository } from './repository/manners.repository';
 import { MannersLogRepository } from './repository/mannersLog.repository';
@@ -15,6 +16,7 @@ export class MannersService {
   constructor(
     @InjectRepository(MannersRepository)
     private readonly mannersRepository: MannersRepository,
+    private readonly mannersLogRepository: MannersLogRepository,
     private readonly chatListRepository: ChatListRepository,
     private readonly chatUsersRepository: ChatUsersRepository,
   ) {}
@@ -25,7 +27,6 @@ export class MannersService {
     await this.getUserTypeByUserNo({ chatRoomNo, userNo });
 
     const targetUserGrade = await this.getGradeByUserNo(userNo);
-
     return targetUserGrade;
   }
   // boardNo를 이용 채팅방 찾는 기능
@@ -77,10 +78,14 @@ export class MannersService {
     const userGrade = await this.mannersRepository.userGradebyUserProfileNo(
       userProfileNo,
     );
+    if (!userGrade) {
+      throw new BadRequestException('유저 평점 가져오기에 실패하였습니다');
+    }
 
     return userGrade;
   }
-
-  // private async giveScoreByUserNo(grade) {
-  // const giveScore = await this.mannerLogRepository.giveScoreByUserNo(grade);
+  //평점주기
+  async giveScore(mannerInfo: MannerDto) {
+    const give = await this.mannersLogRepository.giveScore(mannerInfo);
+  }
 }

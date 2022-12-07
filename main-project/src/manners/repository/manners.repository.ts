@@ -28,7 +28,9 @@ export class MannersRepository extends Repository<Manners> {
 
       return grade;
     } catch (error) {
-      throw error;
+      throw new InternalServerErrorException(
+        `${error} userGradebyUserProfileNo-repository: 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 }

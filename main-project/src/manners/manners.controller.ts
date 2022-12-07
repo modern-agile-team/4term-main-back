@@ -1,5 +1,14 @@
-import { Body, Controller, Get, Param, ParseIntPipe } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
+import { MannerDto } from './dto/createManners.dto';
 import { MannersService } from './manners.service';
 
 @Controller('manners')
@@ -29,6 +38,18 @@ export class MannersController {
     const response = await this.mannersService.userGradebyUserProfileNo(
       userProfileNo,
     );
+    return { response };
+  }
+  @ApiOperation({
+    summary: '매너평점을 주는 API',
+    description: '유저에게 매너평점을 남긴다.',
+  })
+  @Post('/give/manner')
+  async giveScore(
+    @Body()
+    mannerInfo: MannerDto,
+  ): Promise<object> {
+    const response = await this.mannersService.giveScore(mannerInfo);
     return { response };
   }
 }

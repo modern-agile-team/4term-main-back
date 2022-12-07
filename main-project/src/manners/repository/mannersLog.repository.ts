@@ -1,21 +1,41 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { EntityRepository, Repository } from 'typeorm';
+import { EntityRepository, Repository, UpdateResult } from 'typeorm';
+import { MannerDto } from '../dto/createManners.dto';
 import { MannerLog } from '../entity/manners-log.entity';
 
 @EntityRepository(MannerLog)
 export class MannersLogRepository extends Repository<MannerLog> {
-  async getGradeByUserNo(userNo: number): Promise<number> {
+  // async giveScore(mannerInfo: MannerDto) {
+  //   try {
+  //     const { raw } = await this.createQueryBuilder('mannerLog')
+  //       .insert()
+  //       .into(MannerLog)
+  //       .values(mannerInfo)
+  //       .execute();
+
+  //     return raw;
+  //   } catch (error) {
+  //     throw error;
+  //   }
+  // }
+  async giveScore(mannerInfo: MannerDto): Promise<number> {
     try {
-      const { grade } = await this.createQueryBuilder('manner_log')
-        .leftJoin('manner_log.mannerNo', 'grade')
-        .select('grade.grade AS grade')
-        .where('chat_user_no = :userNo', { userNo })
-        .getRawOne();
-      console.log(grade);
-      return grade;
+      const { chatUserNo, chatListNo, chatTargetUserNo, grade } = mannerInfo;
+
+      const { affected }: UpdateResult = await this.createQueryBuilder(
+        'mannerLog',
+      )
+        .update(MannerLog)
+        .set(mannerInfo)
+        .where('chatUserNo = :chatUserNo', { chatUserNo })
+        .andWhere('chatListNo = :chatListNo', { chatListNo })
+        .andWhere('chatTargetUserNo = :chatTargetUserNo', { chatTargetUserNo })
+        .execute();
+
+      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getGradeByUserNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} giveScore-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
