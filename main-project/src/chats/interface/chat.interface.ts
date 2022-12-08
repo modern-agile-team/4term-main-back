@@ -1,10 +1,13 @@
+import { IsNumber } from 'class-validator';
+
 export interface MeetingMembersList {
   hostUserNo: number[];
   guestUserNo: number[];
 }
 
-export interface CreateChat {
+export class CreateChat {
   userNo?: number;
+  @IsNumber()
   boardNo: number;
   roomName?: string;
 }

@@ -4,11 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Socket } from 'socket.io';
 import { BoardRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
 import { MeetingInfoRepository } from 'src/meetings/repository/meeting-info.repository';
-import { MeetingRepository } from 'src/meetings/repository/meeting.repository';
 import { InsertResult } from 'typeorm';
+import { CreateChatDto } from './dto/create-chat.dto';
 import { ChatList } from './entity/chat-list.entity';
 import {
   ChatRoom,
@@ -53,7 +54,7 @@ export class ChatsGatewayService {
     }
   }
 
-  async createRoom(socket, chat: CreateChat): Promise<void> {
+  async createRoom(socket: Socket, chat: CreateChatDto): Promise<void> {
     const { boardNo } = chat;
     const host = UserType.HOST;
     const guest = UserType.GUEST;
@@ -179,15 +180,22 @@ export class ChatsGatewayService {
     }
   }
 
-  private async getUserByBoardNo(boardNo): Promise<ChatRoom> {
+  private async getUserByBoardNo(boardNo: number): Promise<ChatRoom> {
     const chatInfo: ChatRoom = await this.boardRepository.getUserListByBoardNo(
       boardNo,
     );
+    const chatRoom = this.setChatRoom(chatInfo);
 
-    chatInfo.roomName = chatInfo.guestNickname + ',' + chatInfo.hostNickname;
-    chatInfo.userNo = chatInfo.guestUserNo + ',' + chatInfo.hostUserNo;
+    return chatRoom;
+  }
 
-    return chatInfo;
+  private setChatRoom(chatRoom: ChatRoom) {
+    chatRoom.roomName = chatRoom.guestNickname + ',' + chatRoom.hostNickname;
+    chatRoom.userNo = chatRoom.guestUserNo + ',' + chatRoom.hostUserNo;
+
+    console.log(chatRoom);
+
+    return chatRoom;
   }
 
   private async setChatRoomUsers(
@@ -207,7 +215,7 @@ export class ChatsGatewayService {
     return insertId;
   }
 
-  private async checkChatRoom(chatRoomNo): Promise<ChatList> {
+  private async checkChatRoom(chatRoomNo: number): Promise<ChatList> {
     const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
       chatRoomNo,
     );
