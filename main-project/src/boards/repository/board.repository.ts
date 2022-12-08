@@ -19,7 +19,6 @@ export class BoardRepository extends Repository<Boards> {
   async getBoardByNo(boardNo: number): Promise<BoardIF> {
     try {
       const board = await this.createQueryBuilder('boards')
-        .leftJoin('boards.boardMemberInfo', 'boardMemberInfo')
         .leftJoin('boards.userNo', 'users')
         .leftJoin('users.userProfileNo', 'profile')
         .leftJoin('boards.hosts', 'hosts')
@@ -34,8 +33,8 @@ export class BoardRepository extends Repository<Boards> {
           'boards.location AS location',
           'boards.meetingTime AS meetingTime',
           'boards.isDone AS isDone',
-          'boardMemberInfo.male AS male',
-          'boardMemberInfo.female AS female',
+          'boards.male AS male',
+          'boards.female AS female',
           'GROUP_CONCAT(hosts.userNo) AS hostUserNums',
           'GROUP_CONCAT(hostProfile.nickname) AS hostNicknames',
         ])
@@ -75,7 +74,7 @@ export class BoardRepository extends Repository<Boards> {
   }
 
   //게시글 생성 관련
-  async createBoard(userNo: number, newBoard: Omit<BoardDto, 'hostMembers' | 'userNo'>): Promise<number> {
+  async createBoard(userNo: number, newBoard: Partial<BoardDto>): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('boards')
         .insert()
@@ -94,12 +93,12 @@ export class BoardRepository extends Repository<Boards> {
   //게시글 수정 관련
   async updateBoard(
     boardNo: number,
-    board: Partial<BoardDto>,
+    newBoard: Partial<BoardDto>,
   ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder('boards')
         .update(Boards)
-        .set(board)
+        .set(newBoard)
         .where('no = :boardNo', { boardNo })
         .execute();
 
@@ -107,23 +106,6 @@ export class BoardRepository extends Repository<Boards> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async updateHostMember(boardNo: number, userNo: number): Promise<number> {
-    try {
-      const { affected }: UpdateResult = await this.createQueryBuilder('boards')
-        .update(BoardHosts)
-        .set({ userNo })
-        .where('userNo = :userNo', { userNo })
-        .where('boardNo = :boardNo', { boardNo })
-        .execute();
-
-      return affected;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} updateBoardMember-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -145,7 +127,7 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async getUserListByBoardNo(boardNo) {
+  async getUserListByBoardNo(boardNo: number) {
     try {
       const userList = await this.createQueryBuilder('boards')
         .leftJoin('boards.hosts', 'hostList')

@@ -50,6 +50,7 @@ export class BoardsController {
     description: '입력한 정보로 게시글, 멤버 정보을 생성한다.',
   })
   async createBoard(@Body() createBoarddto: BoardDto): Promise<object> {
+    // TODO: userNo -> jwt
     const response: number = await this.boardService.createBoard(createBoarddto);
 
     return { response };
@@ -61,9 +62,9 @@ export class BoardsController {
     description: '게시글 번호를 통해 해당 User의 북마크를 생성한다.',
   })
   async createBookmark(
-    @Param() params: { [key: string]: number }, // jwt -> userNo
+    @Param() params: { [key: string]: number },
   ): Promise<object> {
-
+    // TODO: userNo -> jwt
     const { boardNo, userNo } = params;
     const response: string = await this.boardService.createBookmark(
       boardNo,
@@ -94,11 +95,13 @@ export class BoardsController {
     summary: '게시글 수정 API',
     description: '입력한 정보로 게시글, 멤버 정보을 수정한다.',
   })
+  // TODO: userNo -> jwt
   async updateBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
-    @Body() BoardDto: BoardDto,
+    @Body() boardDto: BoardDto,
   ): Promise<object> {
-    const response: string = await this.boardService.editBoard(boardNo, BoardDto);
+    const { userNo, ...board }: BoardDto = boardDto
+    const response: string = await this.boardService.editBoard(boardNo, userNo, board);
 
     return { response };
   }
@@ -112,20 +115,22 @@ export class BoardsController {
   async deleteBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
   ): Promise<object> {
+    // TODO: userNo -> jwt
     const response: string = await this.boardService.deleteBoardByNo(boardNo);
 
     return { response };
   }
 
-  @Delete('/:boardNo/:userNo/bookmark') // 후에 jwt에서 userNo 빼올 예정
+  @Delete('/:boardNo/:userNo/bookmark')
   @ApiOperation({
     summary: '북마크 취소 API',
     description: '게시글 번호를 사용해 해당 User의 북마크를 취소한다.',
   })
   async cancelBookmark(
-    @Param() params: { [key: string]: number }, // userNo -> jwt
+    @Param() params: { [key: string]: number },
   ): Promise<object> {
     const { boardNo, userNo } = params;
+    // TODO: userNo -> jwt
     const response = await this.boardService.cancelBookmark(boardNo, userNo);
 
     return { response };

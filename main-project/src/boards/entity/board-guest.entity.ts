@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { Boards } from './board.entity';
 
-@Entity('board_guest')
+@Entity('board_guests')
 export class BoardGuests extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
