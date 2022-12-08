@@ -1,13 +1,14 @@
 import { InternalServerErrorException } from "@nestjs/common";
 import { DeleteResult, EntityRepository, InsertResult, Repository, UpdateResult } from "typeorm";
+import { CreateResponse } from "../boards.service";
+import { BoardDto } from "../dto/board.dto";
 import { BoardMemberInfos } from "../entity/board-member-info.entity";
-import { BoardMemberDetail, CreateResponse } from "../interface/boards.interface";
 
 @EntityRepository(BoardMemberInfos)
 export class BoardMemberInfoRepository extends Repository<BoardMemberInfos> {
     // 생성
     async createBoardMember(
-        boardMemberDetail: BoardMemberDetail,
+        boardNo: number, newBoard: Omit<BoardDto, 'userNo' | 'hostMembers'>
     ): Promise<CreateResponse> {
         try {
             const { raw }: InsertResult = await this.createQueryBuilder(
@@ -15,7 +16,7 @@ export class BoardMemberInfoRepository extends Repository<BoardMemberInfos> {
             )
                 .insert()
                 .into(BoardMemberInfos)
-                .values(boardMemberDetail)
+                .values({ boardNo, ...newBoard })
                 .execute();
 
             return raw;
@@ -29,7 +30,7 @@ export class BoardMemberInfoRepository extends Repository<BoardMemberInfos> {
     // 수정
     async updateBoardMember(
         boardNo: number,
-        boardMember: BoardMemberDetail,
+        boardMember: Pick<BoardMemberInfos, 'female' | 'male'>
     ): Promise<number> {
         try {
             const { affected }: UpdateResult = await this.createQueryBuilder()
