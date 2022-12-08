@@ -145,42 +145,6 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async cancelBookmark(boardNo: number, userNo: number): Promise<number> {
-    try {
-      const { affected }: DeleteResult = await this.createQueryBuilder(
-        'boardBookmark',
-      )
-        .delete()
-        .from(BoardBookmarks)
-        .where('boardNo = :boardNo', { boardNo })
-        .andWhere('userNo = :userNo', { userNo })
-        .execute();
-
-      return affected;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async deleteBookmark(boardNo: number): Promise<number> {
-    try {
-      const { affected }: DeleteResult = await this.createQueryBuilder(
-        'boardBookmark',
-      )
-        .delete()
-        .from(BoardBookmarks)
-        .where('boardNo = :boardNo', { boardNo })
-        .execute();
-
-      return affected;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
   async getUserListByBoardNo(boardNo) {
     try {
       const userList = await this.createQueryBuilder('boards')
