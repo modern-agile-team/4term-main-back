@@ -4,11 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Socket } from 'socket.io';
 import { BoardRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
 import { MeetingInfoRepository } from 'src/meetings/repository/meeting-info.repository';
-import { MeetingRepository } from 'src/meetings/repository/meeting.repository';
 import { InsertResult } from 'typeorm';
+import { CreateChatDto } from './dto/create-chat.dto';
 import { ChatList } from './entity/chat-list.entity';
 import {
   ChatRoom,
@@ -53,7 +54,7 @@ export class ChatsGatewayService {
     }
   }
 
-  async createRoom(socket, chat: CreateChat): Promise<void> {
+  async createRoom(socket: Socket, chat: CreateChatDto): Promise<void> {
     const { boardNo } = chat;
     const host = UserType.HOST;
     const guest = UserType.GUEST;

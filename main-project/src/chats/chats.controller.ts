@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChatsControllerService } from './chats-controller.service';
+import { GetChatLogDTO } from './dto/get-chat-log.dto';
+import { InviteUserDTO } from './dto/invite-user.dto';
 import { ChatLog } from './entity/chat-log.entity';
 
 @Controller('chats')
@@ -54,14 +56,12 @@ export class ChatsController {
   })
   async getChatLog(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body('userNo', ParseIntPipe) userNo: number,
-    @Body('currentChatLogNo', ParseIntPipe) currentChatLogNo: number,
+    @Body() getChatLogDto: GetChatLogDTO,
   ): Promise<object> {
-    const response = await this.chatControllerService.getChatLog({
-      userNo,
+    const response = await this.chatControllerService.getChatLog(
+      getChatLogDto,
       chatRoomNo,
-      currentChatLogNo,
-    });
+    );
 
     return { response };
   }
@@ -73,14 +73,9 @@ export class ChatsController {
   })
   async inviteUser(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body('userNo', ParseIntPipe) userNo: number,
-    @Body('targetUserNo', ParseIntPipe) targetUserNo: number,
+    @Body() inviteUser: InviteUserDTO,
   ): Promise<{ msg: string }> {
-    await this.chatControllerService.inviteUser(
-      userNo,
-      targetUserNo,
-      chatRoomNo,
-    );
+    await this.chatControllerService.inviteUser(inviteUser, chatRoomNo);
 
     return {
       msg: '초대 성공',
