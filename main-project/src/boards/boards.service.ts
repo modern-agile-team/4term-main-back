@@ -7,11 +7,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
-import { Users } from 'src/users/entity/user.entity';
 import { Connection, QueryRunner } from 'typeorm';
 import { ApplicationDto } from './dto/application.dto';
 import { BoardDto } from './dto/board.dto';
-import { BoardGuests } from './entity/board-guest.entity';
 import { BoardMemberInfos } from './entity/board-member-info.entity';
 import { Boards } from './entity/board.entity';
 import { BoardIF } from './interface/boards.interface';
@@ -21,10 +19,6 @@ import { BoardHostRepository } from './repository/board-host.repository';
 import { BoardMemberInfoRepository } from './repository/board-member-info.repository';
 import { BoardRepository, TestUserRepo } from './repository/board.repository';
 
-export interface CreateResponse {
-  affectedRows: number;
-  insertId?: number;
-}
 @Injectable()
 export class BoardsService {
   constructor(
@@ -185,68 +179,30 @@ export class BoardsService {
     boardNo: number,
     { male, female, hostMembers, ...boardDetail }: BoardDto,
   ): Promise<string> {
-    await this.getBoardByNo(boardNo);
+    const queryRunner: QueryRunner = this.connection.createQueryRunner();
 
-    const boardMember: Pick<BoardMemberInfos, 'female' | 'male'> = {
-      male,
-      female,
-    };
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      await this.getBoardByNo(boardNo);
 
-    await this.updateBoard(boardNo, boardDetail);
-    await this.updateBoardMember(boardNo, boardMember);
-    await this.updateHostMember(boardNo, hostMembers);
-    return `${boardNo}번 게시글이 수정되었습니다.`;
-  }
+      const boardMember: Pick<BoardMemberInfos, 'female' | 'male'> = {
+        male,
+        female,
+      };
 
-  private async updateBoard(
-    boardNo: number,
-    boardDetail: Partial<BoardDto>
-  ): Promise<void> {
-    const updateBoard = await this.boardRepository.updateBoard(
-      boardNo,
-      boardDetail,
-    );
+      await queryRunner.manager.getCustomRepository(BoardRepository).updateBoard(boardNo, boardDetail);
+      await queryRunner.manager.getCustomRepository(BoardMemberInfoRepository).updateBoardMember(boardNo, boardMember);
+      // await queryRunner.manager.getCustomRepository(BoardHostRepository).updateHostMember(boardNo, hostMembers);
+      return `${boardNo}번 게시글이 수정되었습니다.`;
+    } catch (error) {
+      await queryRunner?.rollbackTransaction();
 
-    if (!updateBoard) {
-      throw new NotFoundException(
-        `${boardNo}번 게시글 수정 에러 updateBoard-service`,
-      );
+      throw error
+    } finally {
+      await queryRunner?.release();
     }
   }
-
-  private async updateBoardMember(
-    boardNo: number,
-    boardMember: Pick<BoardMemberInfos, 'female' | 'male'>,
-  ): Promise<void> {
-    const updateBoardMember = await this.boardMemberInfoRepository.updateBoardMember(
-      boardNo,
-      boardMember,
-    );
-
-    if (!updateBoardMember) {
-      throw new NotFoundException(
-        `${boardNo}번 게시글 수정 에러 updateBoardMember-service`,
-      );
-    }
-  }
-
-  private async updateHostMember(
-    boardNo: number,
-    hostMembers: number[],
-  ): Promise<void> {
-    const hostArr: object[] = hostMembers.map((el: number) => {
-      return { boardNo, userNo: el }
-    });
-
-
-    // for (let member in hostMembers) {
-    //   const updateHostMember = await this.boardRepository.updateHostMember(
-    //     boardNo,
-    //     userNo,
-    //   );
-    // }
-  }
-
   // 삭제 관련
   async deleteBoardByNo(boardNo: number): Promise<string> {
     await this.getBoardByNo(boardNo);

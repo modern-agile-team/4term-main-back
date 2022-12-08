@@ -1,7 +1,7 @@
 import { InternalServerErrorException } from "@nestjs/common";
 import { EntityRepository, InsertResult, Repository } from "typeorm";
-import { CreateResponse } from "../boards.service";
 import { BoardHosts } from "../entity/board-host.entity";
+import { CreateResponse } from "../interface/boards.interface";
 
 @EntityRepository(BoardHosts)
 export class BoardHostRepository extends Repository<BoardHosts> {
