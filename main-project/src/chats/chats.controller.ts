@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChatsControllerService } from './chats-controller.service';
+import { GetChatLogDTO } from './dto/get-chat-log.dto';
+import { InviteUserDTO } from './dto/invite-user.dto';
 import { ChatLog } from './entity/chat-log.entity';
 
 @Controller('chats')
@@ -47,23 +49,6 @@ export class ChatsController {
     return { response };
   }
 
-  // @Post('/create/:meetingNo/:hostNo')
-  // async createChatRoom(
-  //   @Param('meetingNo', ParseIntPipe) meetingNo: number,
-  //   @Param('hostNo', ParseIntPipe) hostNo: number,
-  //   @Body() meetingMembersList: MeetingMembersList,
-  // ) {
-  //
-  //     await this.chatControllerService.createChatRoom(
-  //       meetingNo,
-  //       hostNo,
-  //       meetingMembersList,
-  //     );
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // }
-
   @Get('/:chatRoomNo/log')
   @ApiOperation({
     summary: '채팅 내역 API',
@@ -71,14 +56,12 @@ export class ChatsController {
   })
   async getChatLog(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body('userNo', ParseIntPipe) userNo: number,
-    @Body('currentChatLogNo', ParseIntPipe) currentChatLogNo: number,
+    @Body() getChatLogDto: GetChatLogDTO,
   ): Promise<object> {
-    const response = await this.chatControllerService.getChatLog({
-      userNo,
+    const response = await this.chatControllerService.getChatLog(
+      getChatLogDto,
       chatRoomNo,
-      currentChatLogNo,
-    });
+    );
 
     return { response };
   }
@@ -90,14 +73,9 @@ export class ChatsController {
   })
   async inviteUser(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body('userNo', ParseIntPipe) userNo: number,
-    @Body('targetUserNo', ParseIntPipe) targetUserNo: number,
-  ): Promise<object> {
-    await this.chatControllerService.inviteUser(
-      userNo,
-      targetUserNo,
-      chatRoomNo,
-    );
+    @Body() inviteUser: InviteUserDTO,
+  ): Promise<{ msg: string }> {
+    await this.chatControllerService.inviteUser(inviteUser, chatRoomNo);
 
     return {
       msg: '초대 성공',
@@ -112,7 +90,7 @@ export class ChatsController {
   async acceptInvitation(
     @Param('noticeNo', ParseIntPipe) noticeNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
-  ) {
+  ): Promise<{ msg: string }> {
     await this.chatControllerService.acceptInvitation(noticeNo, userNo);
 
     return {

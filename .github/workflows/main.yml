@@ -47,8 +47,9 @@ jobs:
                   password: ${{ secrets.MAIN_TOKEN }}
             - name: Docker run
               run: |
-                  cd ~/summer-prod
+                  cd ~/summer
                   docker-compose down
                   docker rmi ghcr.io/klaus9267/summer-auto-deploy:latest
                   docker-compose pull
                   docker-compose up -d
+                  

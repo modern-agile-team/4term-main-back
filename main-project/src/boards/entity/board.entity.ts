@@ -1,5 +1,4 @@
 import { BoardBookmarks } from './board-bookmark.entity';
-import { BoardMemberInfos } from './board-member-info.entity';
 import {
   BaseEntity,
   Column,
@@ -45,6 +44,12 @@ export class Boards extends BaseEntity {
   @Column({ type: 'datetime', name: 'meeting_time', nullable: true })
   meetingTime: Date;
 
+  @Column({ type: 'int', nullable: false })
+  male: number;
+
+  @Column({ type: 'int', nullable: false })
+  female: number;
+
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
 
@@ -54,12 +59,6 @@ export class Boards extends BaseEntity {
   @DeleteDateColumn({ name: 'deleted_date' })
   deletedDate: Date;
 
-  @OneToOne(
-    (type) => BoardMemberInfos,
-    (boardMemberInfo) => boardMemberInfo.boardNo,
-  )
-  boardMemberInfo: BoardMemberInfos;
-
   @OneToOne((type) => BoardBookmarks, (boardBookmark) => boardBookmark.boardNo)
   boardBookmark: BoardBookmarks;
 
@@ -67,26 +66,17 @@ export class Boards extends BaseEntity {
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 
-  @OneToMany((type) => NoticeBoards, (noticeBoards) => noticeBoards.boardNo, {
-    onDelete: 'CASCADE',
-  })
+  @OneToMany((type) => NoticeBoards, (noticeBoards) => noticeBoards.boardNo)
   @JoinColumn()
   noticeBoard: NoticeBoards;
 
-  @OneToMany(
-    (type) => BoardHosts,
-    (boardHosts) => boardHosts.boardNo,
-    {
-      onDelete: 'CASCADE',
-    },
-  )
+  @OneToMany((type) => BoardHosts, (boardHosts) => boardHosts.boardNo, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn()
   hosts: BoardHosts;
 
-  @OneToMany(
-    (type) => BoardGuests,
-    (boardGuests) => boardGuests.boardNo,
-  )
+  @OneToMany((type) => BoardGuests, (boardGuests) => boardGuests.boardNo)
   guests: BoardGuests;
 
   @OneToMany(
@@ -95,6 +85,6 @@ export class Boards extends BaseEntity {
   )
   reportedBoard: Reportedboards[];
 
-  @OneToMany((type) => ChatList, (chat) => chat.boardChat)
+  @OneToMany((type) => ChatList, (chat) => chat.boardNo)
   chatBoard: ChatList[];
 }

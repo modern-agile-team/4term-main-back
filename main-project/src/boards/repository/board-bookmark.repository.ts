@@ -1,21 +1,20 @@
 import { InternalServerErrorException } from "@nestjs/common";
 import { DeleteResult, EntityRepository, InsertResult, Repository } from "typeorm";
 import { BoardBookmarks } from "../entity/board-bookmark.entity";
-import { BoardAndUserNumber, CreateResponse } from "../interface/boards.interface";
 
 @EntityRepository(BoardBookmarks)
 export class BoardBookmarkRepository extends Repository<BoardBookmarks> {
     // 생성
     async createBookmark(
-        bookmarkDetail: BoardAndUserNumber,
-    ): Promise<CreateResponse> {
+        boardNo: number, userNo: number
+    ): Promise<number> {
         try {
             const { raw }: InsertResult = await this.createQueryBuilder(
                 'boardBookmark',
             )
                 .insert()
                 .into(BoardBookmarks)
-                .values(bookmarkDetail)
+                .values({ boardNo, userNo })
                 .execute();
 
             return raw;

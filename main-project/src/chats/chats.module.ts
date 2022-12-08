@@ -11,6 +11,7 @@ import { ChatLogRepository } from './repository/chat-log.repository';
 import { ChatsControllerService } from './chats-controller.service';
 import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
+import { BoardRepository } from 'src/boards/repository/board.repository';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -21,6 +22,7 @@ import { NoticesRepository } from 'src/notices/repository/notices.repository';
       ChatLogRepository,
       NoticeChatsRepository,
       NoticesRepository,
+      BoardRepository,
     ]),
   ],
   providers: [ChatsGateway, ChatsGatewayService, ChatsControllerService],
