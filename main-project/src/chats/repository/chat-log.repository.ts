@@ -21,7 +21,10 @@ export class ChatLogRepository extends Repository<ChatLog> {
     }
   }
 
-  async getPreviousChatLog(chatRoomNo, currentChatLogNo): Promise<ChatLog[]> {
+  async getPreviousChatLog(
+    chatRoomNo: number,
+    currentChatLogNo: number,
+  ): Promise<ChatLog[]> {
     try {
       const previousChatLog = await this.createQueryBuilder('chat_log')
         .select(['chat_log.*'])
@@ -39,7 +42,7 @@ export class ChatLogRepository extends Repository<ChatLog> {
     }
   }
 
-  async getRecentChatLog(chatRoomNo): Promise<ChatLog[]> {
+  async getRecentChatLog(chatRoomNo: number): Promise<ChatLog[]> {
     try {
       const recentChatLog = await this.createQueryBuilder('chat_log')
         .select(['chat_log.*'])

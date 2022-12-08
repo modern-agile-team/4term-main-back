@@ -179,15 +179,22 @@ export class ChatsGatewayService {
     }
   }
 
-  private async getUserByBoardNo(boardNo): Promise<ChatRoom> {
+  private async getUserByBoardNo(boardNo: number): Promise<ChatRoom> {
     const chatInfo: ChatRoom = await this.boardRepository.getUserListByBoardNo(
       boardNo,
     );
+    const chatRoom = this.setChatRoom(chatInfo);
 
-    chatInfo.roomName = chatInfo.guestNickname + ',' + chatInfo.hostNickname;
-    chatInfo.userNo = chatInfo.guestUserNo + ',' + chatInfo.hostUserNo;
+    return chatRoom;
+  }
 
-    return chatInfo;
+  private setChatRoom(chatRoom: ChatRoom) {
+    chatRoom.roomName = chatRoom.guestNickname + ',' + chatRoom.hostNickname;
+    chatRoom.userNo = chatRoom.guestUserNo + ',' + chatRoom.hostUserNo;
+
+    console.log(chatRoom);
+
+    return chatRoom;
   }
 
   private async setChatRoomUsers(
@@ -207,7 +214,7 @@ export class ChatsGatewayService {
     return insertId;
   }
 
-  private async checkChatRoom(chatRoomNo): Promise<ChatList> {
+  private async checkChatRoom(chatRoomNo: number): Promise<ChatList> {
     const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
       chatRoomNo,
     );
