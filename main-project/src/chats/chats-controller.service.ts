@@ -4,6 +4,8 @@ import { NoticeType } from 'src/common/configs/notice-type.config';
 import { UserType } from 'src/common/configs/user-type.config';
 import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
+import { GetChatLogDTO } from './dto/get-chat-log.dto';
+import { InviteUserDTO } from './dto/invite-user.dto';
 import { ChatLog } from './entity/chat-log.entity';
 import { ChatRoomList, PreviousChatLog } from './interface/chat.interface';
 import { ChatListRepository } from './repository/chat-list.repository';
@@ -39,11 +41,11 @@ export class ChatsControllerService {
     return chatList;
   }
 
-  async getChatLog({
-    userNo,
-    chatRoomNo,
-    currentChatLogNo,
-  }: PreviousChatLog): Promise<ChatLog[]> {
+  async getChatLog(
+    getChatLogDto: GetChatLogDTO,
+    chatRoomNo: number,
+  ): Promise<ChatLog[]> {
+    const { userNo, currentChatLogNo }: GetChatLogDTO = getChatLogDto;
     const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
       chatRoomNo,
     );
@@ -88,7 +90,11 @@ export class ChatsControllerService {
     return chatLog;
   }
 
-  async inviteUser(userNo, targetUserNo, chatRoomNo): Promise<void> {
+  async inviteUser(
+    inviteUser: InviteUserDTO,
+    chatRoomNo: number,
+  ): Promise<void> {
+    const { userNo, targetUserNo }: InviteUserDTO = inviteUser;
     const user = await this.chatUsersRepository.checkUserInChatRoom({
       userNo: targetUserNo,
       chatRoomNo,
