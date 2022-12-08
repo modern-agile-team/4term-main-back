@@ -47,23 +47,6 @@ export class ChatsController {
     return { response };
   }
 
-  // @Post('/create/:meetingNo/:hostNo')
-  // async createChatRoom(
-  //   @Param('meetingNo', ParseIntPipe) meetingNo: number,
-  //   @Param('hostNo', ParseIntPipe) hostNo: number,
-  //   @Body() meetingMembersList: MeetingMembersList,
-  // ) {
-  //
-  //     await this.chatControllerService.createChatRoom(
-  //       meetingNo,
-  //       hostNo,
-  //       meetingMembersList,
-  //     );
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // }
-
   @Get('/:chatRoomNo/log')
   @ApiOperation({
     summary: '채팅 내역 API',
@@ -92,7 +75,7 @@ export class ChatsController {
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
     @Body('targetUserNo', ParseIntPipe) targetUserNo: number,
-  ): Promise<object> {
+  ): Promise<{ msg: string }> {
     await this.chatControllerService.inviteUser(
       userNo,
       targetUserNo,
@@ -112,7 +95,7 @@ export class ChatsController {
   async acceptInvitation(
     @Param('noticeNo', ParseIntPipe) noticeNo: number,
     @Body('userNo', ParseIntPipe) userNo: number,
-  ) {
+  ): Promise<{ msg: string }> {
     await this.chatControllerService.acceptInvitation(noticeNo, userNo);
 
     return {

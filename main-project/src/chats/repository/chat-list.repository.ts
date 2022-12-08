@@ -5,7 +5,7 @@ import { ChatRoomUsers, CreateChat } from '../interface/chat.interface';
 
 @EntityRepository(ChatList)
 export class ChatListRepository extends Repository<ChatList> {
-  async checkRoomExistByBoardNo(boardNo): Promise<ChatList> {
+  async checkRoomExistByBoardNo(boardNo: number): Promise<ChatList> {
     try {
       const result = await this.createQueryBuilder('chat_list')
         .select(['chat_list.board_no AS boardNo'])
@@ -36,7 +36,10 @@ export class ChatListRepository extends Repository<ChatList> {
     }
   }
 
-  async isUserInChatRoom(chatRoomNo, userNo): Promise<ChatRoomUsers> {
+  async isUserInChatRoom(
+    chatRoomNo: number,
+    userNo: number,
+  ): Promise<ChatRoomUsers> {
     try {
       const result = await this.createQueryBuilder('chat_list')
         .leftJoin('chat_list.chatUserNo', 'chatUser')
@@ -59,7 +62,7 @@ export class ChatListRepository extends Repository<ChatList> {
       );
     }
   }
-  async checkRoomExistByChatNo(chatRoomNo): Promise<ChatList> {
+  async checkRoomExistByChatNo(chatRoomNo: number): Promise<ChatList> {
     try {
       const result = await this.createQueryBuilder('chat_list')
         .select(['chat_list.no AS chatRoomNo'])
