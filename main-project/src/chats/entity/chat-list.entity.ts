@@ -25,7 +25,7 @@ export class ChatList extends BaseEntity {
 
   @ManyToOne((type) => Boards, (boards) => boards.chatBoard)
   @JoinColumn({ name: 'board_no' })
-  boardChat: number;
+  boardNo: number;
 
   @OneToMany((type) => ChatUsers, (chatUsers) => chatUsers.chatRoomNo)
   chatUserNo: ChatUsers[];

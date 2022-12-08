@@ -4,9 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Socket } from 'socket.io';
+import { BoardRepository } from 'src/boards/repository/board.repository';
+import { UserType } from 'src/common/configs/user-type.config';
 import { MeetingInfoRepository } from 'src/meetings/repository/meeting-info.repository';
-import { MeetingRepository } from 'src/meetings/repository/meeting.repository';
 import { InsertResult } from 'typeorm';
+import { CreateChatDto } from './dto/create-chat.dto';
 import { ChatList } from './entity/chat-list.entity';
 import {
   ChatRoom,
@@ -33,11 +36,11 @@ export class ChatsGatewayService {
     @InjectRepository(ChatLogRepository)
     private readonly chatLogRepository: ChatLogRepository,
 
-    @InjectRepository(MeetingRepository)
-    private readonly meetingRepository: MeetingRepository,
-
     @InjectRepository(MeetingInfoRepository)
     private readonly meetingInfoRepository: MeetingInfoRepository,
+
+    @InjectRepository(BoardRepository)
+    private readonly boardRepository: BoardRepository,
   ) {}
 
   async initSocket(socket, userNo: number): Promise<void> {
@@ -51,49 +54,66 @@ export class ChatsGatewayService {
     }
   }
 
-  async createRoom(socket, chat: CreateChat): Promise<void> {
-    const { meetingNo } = chat;
-
-    const meetingExist = await this.meetingRepository.findMeetingById(
-      meetingNo,
-    );
-    if (!meetingExist) {
-      throw new NotFoundException(
-        `meetingNo가 ${meetingNo}인 약속을 찾지 못했습니다.`,
-      );
+  async createRoom(socket: Socket, chat: CreateChatDto): Promise<void> {
+    const { boardNo } = chat;
+    const host = UserType.HOST;
+    const guest = UserType.GUEST;
+    const boardExist = await this.boardRepository.getBoardByNo(boardNo);
+    if (!boardExist.no) {
+      throw new NotFoundException(`게시물을 찾지 못했습니다.`);
     }
 
-    const roomExist = await this.chatListRepository.checkRoomExistByMeetingNo(
-      meetingNo,
+    const roomExist = await this.chatListRepository.checkRoomExistByBoardNo(
+      boardNo,
     );
     if (roomExist) {
       throw new BadRequestException('이미 생성된 채팅방 입니다.');
     }
 
-    const { roomName, userNo } = await this.getUserByMeetingNo(meetingNo);
+    const { roomName, hostUserNo, guestUserNo } = await this.getUserByBoardNo(
+      boardNo,
+    );
     if (!roomName) {
-      throw new NotFoundException('Meeting 정보 조회 오류입니다.');
+      throw new NotFoundException('유저 조회 오류입니다.');
     }
 
-    const userNoList: number[] = userNo.split(',').map((item) => {
-      return parseInt(item);
-    });
-
-    const chatRoomNo: number = await this.createRoomByMeetingNo({
-      meetingNo,
+    const chatRoomNo: number = await this.createRoomByBoardNo({
+      boardNo,
       roomName,
     });
     if (!chatRoomNo) {
       throw new BadRequestException('채팅방 생성 오류입니다.');
     }
 
-    const roomUsers: ChatUserInfo[] = userNoList.reduce((values, userNo) => {
-      values.push({ chatRoomNo, userNo });
-      return values;
-    }, []);
+    const hostUserNoList: number[] = hostUserNo.split(',').map((item) => {
+      return parseInt(item);
+    });
+    const roomHostUsers: ChatUserInfo[] = hostUserNoList.reduce(
+      (values, userNo) => {
+        values.push({ chatRoomNo, userNo, userType: host });
+        return values;
+      },
+      [],
+    );
 
-    const result = await this.setChatRoomUsers(roomUsers);
-    if (!result) {
+    const guestUserNoList: number[] = guestUserNo.split(',').map((item) => {
+      return parseInt(item);
+    });
+    const roomGuestUsers: ChatUserInfo[] = guestUserNoList.reduce(
+      (values, userNo) => {
+        values.push({ chatRoomNo, userNo, userType: guest });
+        return values;
+      },
+      [],
+    );
+
+    const saveHostUsers = await this.setChatRoomUsers(roomHostUsers);
+    if (!saveHostUsers) {
+      throw new BadRequestException('채팅방 유저정보 생성 오류입니다.');
+    }
+
+    const saveGuestUsers = await this.setChatRoomUsers(roomGuestUsers);
+    if (!saveGuestUsers) {
       throw new BadRequestException('채팅방 유저정보 생성 오류입니다.');
     }
 
@@ -160,15 +180,22 @@ export class ChatsGatewayService {
     }
   }
 
-  private async getUserByMeetingNo(meetingNo): Promise<ChatRoom> {
-    const meetingInfo: ChatRoom =
-      await this.meetingInfoRepository.getMeetingUserByMeetingNo(meetingNo);
+  private async getUserByBoardNo(boardNo: number): Promise<ChatRoom> {
+    const chatInfo: ChatRoom = await this.boardRepository.getUserListByBoardNo(
+      boardNo,
+    );
+    const chatRoom = this.setChatRoom(chatInfo);
 
-    meetingInfo.roomName =
-      meetingInfo.guestUserNickname + ',' + meetingInfo.hostUserNickname;
-    meetingInfo.userNo = meetingInfo.guestUserNo + ',' + meetingInfo.hostUserNo;
+    return chatRoom;
+  }
 
-    return meetingInfo;
+  private setChatRoom(chatRoom: ChatRoom) {
+    chatRoom.roomName = chatRoom.guestNickname + ',' + chatRoom.hostNickname;
+    chatRoom.userNo = chatRoom.guestUserNo + ',' + chatRoom.hostUserNo;
+
+    console.log(chatRoom);
+
+    return chatRoom;
   }
 
   private async setChatRoomUsers(
@@ -180,7 +207,7 @@ export class ChatsGatewayService {
     return affectedRows;
   }
 
-  private async createRoomByMeetingNo(createChat: CreateChat): Promise<number> {
+  private async createRoomByBoardNo(createChat: CreateChat): Promise<number> {
     const insertId: number = await this.chatListRepository.createRoom(
       createChat,
     );
@@ -188,7 +215,7 @@ export class ChatsGatewayService {
     return insertId;
   }
 
-  private async checkChatRoom(chatRoomNo): Promise<ChatList> {
+  private async checkChatRoom(chatRoomNo: number): Promise<ChatList> {
     const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
       chatRoomNo,
     );
