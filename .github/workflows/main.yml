@@ -4,7 +4,7 @@ on:
     push:
         branches: ["develop"]
 env:
-    DOCKER_IMAGE: ghcr.io/${{ github.actor }}/summer-auto-deploy
+    DOCKER_IMAGE: ghcr.io/summer-auto-deploy
     VERSION: ${{ github.sha }}
     NAME: docker_cicd
 jobs:
@@ -49,7 +49,7 @@ jobs:
               run: |
                   cd ~/summer
                   docker-compose down
-                  docker rmi ghcr.io/klaus9267/summer-auto-deploy:latest
+                  docker rmi ghcr.io/summer-auto-deploy:latest
                   docker-compose pull
                   docker-compose up -d
                   
