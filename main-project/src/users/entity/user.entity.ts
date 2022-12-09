@@ -1,13 +1,14 @@
 import { BoardBookmarks } from 'src/boards/entity/board-bookmark.entity';
+import { BoardGuests } from 'src/boards/entity/board-guest.entity';
+import { BoardHosts } from 'src/boards/entity/board-host.entity';
 import { Boards } from 'src/boards/entity/board.entity';
-import { ChatList } from 'src/chats/entity/chat-list.entity';
+import { ChatLog } from 'src/chats/entity/chat-log.entity';
 import { ChatUsers } from 'src/chats/entity/chat-users.entity';
 import { Enquiries } from 'src/enquiries/entity/enquiry.entity';
 import { Friends } from 'src/friends/entity/friend.entity';
 import { MeetingInfo } from 'src/meetings/entity/meeting-info.entity';
 import { GuestMembers } from 'src/members/entity/guest-members.entity';
 import { HostMembers } from 'src/members/entity/host-members.entity';
-import { NoticeGuests } from 'src/notices/entity/notice-guest.entity';
 import { Notices } from 'src/notices/entity/notices.entity';
 import { ReportedUsers } from 'src/reports/entity/reported-user.entity';
 import { Reports } from 'src/reports/entity/reports.entity';
@@ -15,6 +16,7 @@ import {
   BaseEntity,
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   OneToMany,
   OneToOne,
@@ -30,19 +32,19 @@ export class Users extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   email: string;
 
-  @Column()
+  @Column({ default: false })
   gender: boolean;
 
-  @Column({ type: 'varchar', length: 45 })
-  nickname: string;
+  @Column({ type: 'tinyint', width: 1, default: false })
+  isAdmin: boolean;
 
-  @Column()
-  admin: boolean;
+  @Column({ type: 'int', default: 0 })
+  status: number;
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
 
-  @CreateDateColumn({ name: 'deleted_date', nullable: true })
+  @DeleteDateColumn({ name: 'deleted_date', nullable: true })
   deletedDate: Date;
 
   @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.userNo)
@@ -93,6 +95,18 @@ export class Users extends BaseEntity {
   @OneToMany((type) => ChatUsers, (chatUsers) => chatUsers.userNo)
   chatUserNo: ChatUsers[];
 
-  @OneToMany((type) => NoticeGuests, (noticeGuests) => noticeGuests.userNo)
-  noticeGuests: NoticeGuests[];
+  @OneToMany(
+    (type) => BoardHosts,
+    (boardHostMembers) => boardHostMembers.userNo,
+  )
+  hostMember: BoardHosts;
+
+  @OneToMany(
+    (type) => BoardGuests,
+    (boardHostMembers) => boardHostMembers.userNo,
+  )
+  guestMember: BoardGuests;
+
+  @OneToMany((type) => ChatLog, (chatLog) => chatLog.userNo)
+  chatLogUserNo: ChatLog[];
 }
