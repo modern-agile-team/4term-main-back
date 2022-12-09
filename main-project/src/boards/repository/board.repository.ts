@@ -9,7 +9,6 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { BoardDto } from '../dto/board.dto';
-import { BoardHosts } from '../entity/board-host.entity';
 import { Boards } from '../entity/board.entity';
 import { BoardIF } from '../interface/boards.interface';
 
