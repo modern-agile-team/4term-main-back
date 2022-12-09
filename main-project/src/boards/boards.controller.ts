@@ -12,7 +12,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { ApplicationDto } from './dto/application.dto';
 import { BoardDto } from './dto/board.dto';
-import { BoardReadResponse } from './interface/boards.interface';
+import { BoardIF } from './interface/boards.interface';
 
 @Controller('boards')
 @ApiTags('게시글 API')
@@ -25,7 +25,7 @@ export class BoardsController {
     description: '게시글 전부를 내림차순으로 조회한다.',
   })
   async getAllBoards(): Promise<object> {
-    const response: object = await this.boardService.getAllBoards();
+    const response: BoardIF[] = await this.boardService.getAllBoards();
 
     return { response };
   }
@@ -36,7 +36,7 @@ export class BoardsController {
     description: '게시글 번호를 사용해 상세조회한다.',
   })
   async getBoardByNo(@Param('boardNo') boardNo: number): Promise<object> {
-    const response: BoardReadResponse = await this.boardService.getBoardByNo(
+    const response: BoardIF = await this.boardService.getBoardByNo(
       boardNo,
     );
 
@@ -50,6 +50,7 @@ export class BoardsController {
     description: '입력한 정보로 게시글, 멤버 정보을 생성한다.',
   })
   async createBoard(@Body() createBoarddto: BoardDto): Promise<object> {
+    // TODO: userNo -> jwt
     const response: number = await this.boardService.createBoard(createBoarddto);
 
     return { response };
@@ -58,17 +59,17 @@ export class BoardsController {
   @Post('/:boardNo/:userNo/bookmark')
   @ApiOperation({
     summary: '북마크 생성 API',
-    description: '게시글 번호를 통해 해당 User의 북마크를 생성한다..',
+    description: '게시글 번호를 통해 해당 User의 북마크를 생성한다.',
   })
   async createBookmark(
-    @Param() params: { [key: string]: number }, // jwt -> userNo
+    @Param() params: { [key: string]: number },
   ): Promise<object> {
-
+    // TODO: userNo -> jwt
     const { boardNo, userNo } = params;
-    const response: number = await this.boardService.createBookmark({
+    const response: string = await this.boardService.createBookmark(
       boardNo,
       userNo,
-    });
+    );
 
     return { response };
   }
@@ -81,8 +82,8 @@ export class BoardsController {
   async createAplication(
     @Param('boardNo') boardNo: number, @Body() applicationDto: ApplicationDto
   ): Promise<object> {
-    const response: number = await this.boardService.createAplication(
-      { boardNo, ...applicationDto }
+    const response: string = await this.boardService.createAplication(
+      boardNo, applicationDto
     );
 
     return { response };
@@ -94,11 +95,13 @@ export class BoardsController {
     summary: '게시글 수정 API',
     description: '입력한 정보로 게시글, 멤버 정보을 수정한다.',
   })
+  // TODO: userNo -> jwt
   async updateBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
-    @Body() BoardDto: BoardDto,
+    @Body() boardDto: BoardDto,
   ): Promise<object> {
-    const response: string = await this.boardService.editBoard(boardNo, BoardDto);
+    const { userNo, ...board }: BoardDto = boardDto
+    const response: string = await this.boardService.editBoard(boardNo, userNo, board);
 
     return { response };
   }
@@ -112,20 +115,22 @@ export class BoardsController {
   async deleteBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
   ): Promise<object> {
+    // TODO: userNo -> jwt
     const response: string = await this.boardService.deleteBoardByNo(boardNo);
 
     return { response };
   }
 
-  @Delete('/:boardNo/:userNo') // 후에 jwt에서 userNo 빼올 예정
+  @Delete('/:boardNo/:userNo/bookmark')
   @ApiOperation({
     summary: '북마크 취소 API',
     description: '게시글 번호를 사용해 해당 User의 북마크를 취소한다.',
   })
   async cancelBookmark(
-    @Param() params: { [key: string]: number }, // userNo -> jwt
+    @Param() params: { [key: string]: number },
   ): Promise<object> {
     const { boardNo, userNo } = params;
+    // TODO: userNo -> jwt
     const response = await this.boardService.cancelBookmark(boardNo, userNo);
 
     return { response };

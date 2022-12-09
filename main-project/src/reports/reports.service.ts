@@ -5,8 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BoardsService } from 'src/boards/boards.service';
-import { BoardReadResponse } from 'src/boards/interface/boards.interface';
+import { Boards } from 'src/boards/entity/board.entity';
 import { BoardRepository } from 'src/boards/repository/board.repository';
 import { CreateReportDto } from './dto/create-reports.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
@@ -24,7 +23,7 @@ export class ReportsService {
     @InjectRepository(BoardRepository)
     private readonly reportRepository: ReportRepository,
     private readonly boardRepository: BoardRepository,
-  ) {}
+  ) { }
   // 신고글 조회 관련
   async getAllReports(): Promise<ReportReadResponse[]> {
     try {
@@ -140,7 +139,7 @@ export class ReportsService {
     boardNo: number,
   ): Promise<number> {
     try {
-      const board: BoardReadResponse = await this.boardRepository.getBoardByNo(
+      const board: Boards = await this.boardRepository.getBoardByNo(
         boardNo,
       );
       if (!board.no) {

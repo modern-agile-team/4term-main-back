@@ -1,15 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
-  IsArray,
   IsNotEmpty,
+  IsNumber,
 } from 'class-validator';
 
 export class ApplicationDto {
-  @IsNotEmpty()
-  @IsArray()
   @ApiProperty({
-    example: ['modern', 'agile', '4term'],
-    description: 'guest members',
+    example: [3, 2, 98],
+    description: 'guest_members_userNo',
   })
-  guests: [];
+  @IsNumber({}, { each: true })
+  @IsNotEmpty()
+  guests: number[];
 }
