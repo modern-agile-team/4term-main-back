@@ -193,8 +193,6 @@ export class ChatsGatewayService {
     chatRoom.roomName = chatRoom.guestNickname + ',' + chatRoom.hostNickname;
     chatRoom.userNo = chatRoom.guestUserNo + ',' + chatRoom.hostUserNo;
 
-    console.log(chatRoom);
-
     return chatRoom;
   }
 
