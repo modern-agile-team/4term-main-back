@@ -1,0 +1,21 @@
+export interface UsersDetail {
+  email: string;
+}
+
+export interface UserCreateResponse {
+  affectedRows: number;
+  insertId?: number;
+}
+
+export interface UpdateUserInfo {
+  gender: boolean;
+  nickname: string;
+  email: string;
+}
+
+export interface UpdateUsersDetail {
+  description?: string;
+}
+export interface UserStatus {
+  status: number;
+}

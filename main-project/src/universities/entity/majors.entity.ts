@@ -13,7 +13,7 @@ export class Majors extends BaseEntity {
   no: number;
 
   @Column({ type: 'varchar', length: '50' })
-  university: string;
+  major: string;
 
   @OneToMany((type) => UserProfile, (userProfile) => userProfile.majorNo)
   userProfile: UserProfile[];
