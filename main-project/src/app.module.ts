@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { CacheModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -13,12 +13,16 @@ import { ReportsModule } from './reports/reports.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { FriendsModule } from './friends/friends.module';
 import { UniversitiesModule } from './universities/universities.module';
+import { AuthModule } from './auth/auth.module';
+import { ProfileModule } from './profile/profile.module';
 import { EnquiriesModule } from './enquiries/enquiries.module';
 import { ChatsModule } from './chats/chats.module';
 import { MannersModule } from './manners/manners.module';
+import { cacheModule } from './common/configs/redis.config';
 
 @Module({
   imports: [
+    CacheModule.register(),
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync(typeOrmConfig),
     MeetingsModule,
@@ -30,9 +34,12 @@ import { MannersModule } from './manners/manners.module';
     AnnouncementsModule,
     FriendsModule,
     UniversitiesModule,
+    AuthModule,
+    ProfileModule,
     EnquiriesModule,
     ChatsModule,
     MannersModule,
+    cacheModule,
   ],
   controllers: [AppController],
   providers: [AppService],
