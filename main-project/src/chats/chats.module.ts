@@ -12,6 +12,7 @@ import { ChatsControllerService } from './chats-controller.service';
 import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { BoardRepository } from 'src/boards/repository/board.repository';
+import { AwsService } from 'src/aws/aws.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -25,7 +26,12 @@ import { BoardRepository } from 'src/boards/repository/board.repository';
       BoardRepository,
     ]),
   ],
-  providers: [ChatsGateway, ChatsGatewayService, ChatsControllerService],
+  providers: [
+    ChatsGateway,
+    ChatsGatewayService,
+    ChatsControllerService,
+    AwsService,
+  ],
   controllers: [ChatsController],
 })
 export class ChatsModule {}

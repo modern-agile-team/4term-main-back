@@ -4,13 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { send } from 'process';
 import { Socket } from 'socket.io';
 import { BoardRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
 import { MeetingInfoRepository } from 'src/meetings/repository/meeting-info.repository';
 import { InsertResult } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
-import { ChatList } from './entity/chat-list.entity';
 import {
   ChatRoom,
   ChatRoomList,
@@ -150,19 +150,11 @@ export class ChatsGatewayService {
   }
 
   async sendChat(socket, messagePayload: MessagePayload): Promise<void> {
-    const { userNo, chatRoomNo, message } = messagePayload;
-    const chatRoom: ChatList = await this.checkChatRoom(chatRoomNo);
-    if (!chatRoom) {
-      throw new BadRequestException('존재하지 않는 채팅방입니다.');
-    }
+    console.log(messagePayload);
 
-    const user: ChatRoomUsers = await this.chatListRepository.isUserInChatRoom(
-      chatRoomNo,
-      userNo,
-    );
-    if (!user) {
-      throw new BadRequestException('채팅방에 유저의 정보가 없습니다.');
-    }
+    const { userNo, chatRoomNo, message }: MessagePayload = messagePayload;
+
+    await this.checkChatRoom(chatRoomNo, userNo);
 
     await this.saveMessage(messagePayload);
 
@@ -171,6 +163,26 @@ export class ChatsGatewayService {
       userNo,
       chatRoomNo,
     });
+  }
+
+  async sendFile(socket, messagePayload: MessagePayload): Promise<void> {
+    const files = JSON.stringify(messagePayload.uploadedFileUrlList);
+    console.log(files.length);
+
+    messagePayload.message = files;
+    console.log(messagePayload);
+    await this.sendChat(socket, messagePayload);
+    // const { userNo, chatRoomNo, message }: MessagePayload = messagePayload;
+
+    // await this.checkChatRoom(chatRoomNo, userNo);
+
+    // await this.saveMessage(messagePayload);
+
+    // socket.broadcast.to(`${chatRoomNo}`).emit('message', {
+    //   message,
+    //   userNo,
+    //   chatRoomNo,
+    // });
   }
 
   private async saveMessage(messagePayload: MessagePayload): Promise<void> {
@@ -213,11 +225,23 @@ export class ChatsGatewayService {
     return insertId;
   }
 
-  private async checkChatRoom(chatRoomNo: number): Promise<ChatList> {
+  private async checkChatRoom(
+    chatRoomNo: number,
+    userNo: number,
+  ): Promise<void> {
     const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
       chatRoomNo,
     );
+    if (!chatRoomNo) {
+      throw new NotFoundException(`해당 채팅방이 존재하지 않습니다.`);
+    }
 
-    return chatRoom;
+    const user: ChatRoomUsers = await this.chatListRepository.isUserInChatRoom(
+      chatRoomNo,
+      userNo,
+    );
+    if (!user) {
+      throw new BadRequestException('채팅방에 유저의 정보가 없습니다.');
+    }
   }
 }
