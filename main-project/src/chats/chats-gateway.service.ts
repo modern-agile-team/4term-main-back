@@ -201,9 +201,8 @@ export class ChatsGatewayService {
     return chatRoom;
   }
 
-  private setChatRoom(chatRoom: ChatRoom) {
+  private setChatRoom(chatRoom: ChatRoom): ChatRoom {
     chatRoom.roomName = chatRoom.guestNickname + ',' + chatRoom.hostNickname;
-    chatRoom.userNo = chatRoom.guestUserNo + ',' + chatRoom.hostUserNo;
 
     return chatRoom;
   }

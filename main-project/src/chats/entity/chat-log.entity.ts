@@ -6,8 +6,10 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { ChatFileUrls } from './chat-file-urls.entity';
 import { ChatList } from './chat-list.entity';
 
 @Entity('chat_log')
@@ -28,4 +30,7 @@ export class ChatLog extends BaseEntity {
 
   @CreateDateColumn({ name: 'sended_time' })
   sendedTime: Date;
+
+  @OneToMany((type) => ChatFileUrls, (chatFileUrls) => chatFileUrls.chatListNo)
+  chatFileUrl: ChatFileUrls[];
 }

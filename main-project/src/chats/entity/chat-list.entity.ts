@@ -9,6 +9,7 @@ import {
   PrimaryGeneratedColumn,
   OneToMany,
 } from 'typeorm';
+import { ChatFileUrls } from './chat-file-urls.entity';
 import { ChatLog } from './chat-log.entity';
 import { ChatUsers } from './chat-users.entity';
 
