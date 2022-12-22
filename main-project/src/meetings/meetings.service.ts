@@ -10,7 +10,11 @@ import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { Meetings } from './entity/meeting.entity';
-import { InsertRaw, MeetingHosts } from './interface/meeting.interface';
+import {
+  InsertRaw,
+  MeetingGuests,
+  MeetingHosts,
+} from './interface/meeting.interface';
 import { Connection, QueryRunner } from 'typeorm';
 import { ChatListRepository } from 'src/chats/repository/chat-list.repository';
 import { ChatList } from 'src/chats/entity/chat-list.entity';
@@ -21,13 +25,8 @@ export class MeetingsService {
     @InjectRepository(MeetingRepository)
     private readonly meetingRepository: MeetingRepository,
 
-    @InjectRepository(NoticesRepository)
-    private readonly noticesRepository: NoticesRepository,
-
     @InjectRepository(ChatListRepository)
     private readonly chacListRepository: ChatListRepository,
-
-    private readonly connection: Connection,
   ) {}
 
   async createMeeting(createMeetingDto: CreateMeetingDto): Promise<number> {
@@ -71,6 +70,19 @@ export class MeetingsService {
     }
   }
 
+  async acceptMeeting(meetingNo: number, userNo: number): Promise<void> {
+    await this.checkIsAccepted(meetingNo);
+    await this.validateGuestAuthority(meetingNo, userNo);
+
+    const affected: number = await this.meetingRepository.acceptMeeting(
+      meetingNo,
+    );
+
+    if (!affected) {
+      throw new InternalServerErrorException(`약속 수락 관련 오류입니다.`);
+    }
+  }
+
   private async validateChatRoom(chatRoomNo: number): Promise<void> {
     const chatRoom: ChatList =
       await this.chacListRepository.checkRoomExistByChatNo(chatRoomNo);
@@ -96,9 +108,9 @@ export class MeetingsService {
     const { hosts }: MeetingHosts =
       await this.meetingRepository.getMeetingHosts(meetingNo);
 
-    const haveDeleteAuthority = JSON.parse(hosts).includes(userNo);
+    const haveAuthority = JSON.parse(hosts).includes(userNo);
 
-    if (!haveDeleteAuthority) {
+    if (!haveAuthority) {
       throw new BadRequestException(`호스트가 아닌 유저입니다.`);
     }
   }
@@ -117,21 +129,22 @@ export class MeetingsService {
     return meeting;
   }
 
-  async acceptMeeting(meetingNo: number, userNo: number): Promise<void> {
-    // try {
-    //   await this.checkIsAccepted(meetingNo);
-    //   const authority: any = await this.isAuthorized(meetingNo, userNo);
-    //   if (authority !== this.member.GUEST) {
-    //     throw new BadRequestException(`약속 수락 권한이 없는 유저입니다.`);
-    //   }
-    //   const affected: number = await this.meetingRepository.acceptMeeting(
-    //     meetingNo,
-    //   );
-    //   if (!affected) {
-    //     throw new InternalServerErrorException(`약속 수락 관련 오류입니다.`);
-    //   }
-    // } catch (err) {
-    //   throw err;
-    // }
+  private async checkIsAccepted(meetingNo: number): Promise<void> {
+    const { isAccepted }: Meetings = await this.findMeetingById(meetingNo);
+
+    if (isAccepted) {
+      throw new BadRequestException(`이미 수락된 약속입니다.`);
+    }
+  }
+
+  private async validateGuestAuthority(meetingNo: number, userNo: number) {
+    const { guests }: MeetingGuests =
+      await this.meetingRepository.getMeetingGuests(meetingNo);
+
+    const haveAuthority = JSON.parse(guests).includes(userNo);
+
+    if (!haveAuthority) {
+      throw new BadRequestException(`게스트가 아닌 유저입니다.`);
+    }
   }
 }

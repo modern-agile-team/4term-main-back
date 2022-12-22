@@ -10,10 +10,10 @@ import { InternalServerErrorException } from '@nestjs/common';
 import {
   InsertRaw,
   Meeting,
+  MeetingGuests,
   MeetingHosts,
   UpdatedMeeting,
 } from '../interface/meeting.interface';
-import { throws } from 'assert';
 import { UserType } from 'src/common/configs/user-type.config';
 
 @EntityRepository(Meetings)
@@ -82,6 +82,26 @@ export class MeetingRepository extends Repository<Meetings> {
     }
   }
 
+  async getMeetingGuests(meetingNo: number): Promise<MeetingGuests> {
+    try {
+      const meetingGuests: MeetingGuests = await this.createQueryBuilder(
+        'meetings',
+      )
+        .leftJoin('meetings.chatRoomNo', 'chatList')
+        .leftJoin('chatList.chatUserNo', 'chatUsers')
+        .select('JSON_ARRAYAGG(chatUsers.no) AS guests')
+        .where('meetings.no = :meetingNo', { meetingNo })
+        .andWhere(`chatUsers.userType = ${UserType.GUEST}`)
+        .getRawOne();
+
+      return meetingGuests;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 호스트 조회 에러(getMeetingHosts): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async updateMeeting(
     no: number,
     updatedMeeting: UpdatedMeeting,
@@ -114,33 +134,6 @@ export class MeetingRepository extends Repository<Meetings> {
       throw new InternalServerErrorException(
         `${err} 약속 수락 에러(acceptMeeting): 알 수 없는 서버 에러입니다.`,
       );
-    }
-  }
-
-  async getMeetingMembers(meetingNo: number): Promise<any> {
-    try {
-      const members: object = await this.createQueryBuilder('meetings')
-        .leftJoin(
-          'meetings.guestMembers',
-          'guestMembers',
-          'meetings.no = guestMembers.meetingNo',
-        )
-        .leftJoin(
-          'meetings.hostMembers',
-          'hostMembers',
-          'meetings.no = hostMembers.meetingNo',
-        )
-        .select([
-          `CONCAT(GROUP_CONCAT(DISTINCT hostMembers.userNo),
-          IF(COUNT(guestMembers.userNo),CONCAT(",", GROUP_CONCAT(DISTINCT guestMembers.userNo)), ""))
-          AS members`,
-        ])
-        .where('meetings.no = :meetingNo', { meetingNo })
-        .getRawOne();
-
-      return members;
-    } catch (err) {
-      throw err;
     }
   }
 

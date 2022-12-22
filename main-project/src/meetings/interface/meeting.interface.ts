@@ -13,6 +13,10 @@ export interface MeetingHosts {
   hosts: any;
 }
 
+export interface MeetingGuests {
+  guests: any;
+}
+
 export interface MeetingUser {
   meetingNo: number;
   userNo: number;

@@ -81,12 +81,8 @@ export class MeetingsController {
     @Param('meetingNo') meetingNo: number,
     @Body() { userNo }: AcceptMeetingDto,
   ): Promise<object> {
-    try {
-      await this.meetingsService.acceptMeeting(meetingNo, userNo);
+    await this.meetingsService.acceptMeeting(meetingNo, userNo);
 
-      return { success: true, msg: `약속이 수락되었습니다` };
-    } catch (err) {
-      throw err;
-    }
+    return { success: true, msg: `약속이 수락되었습니다` };
   }
 }
