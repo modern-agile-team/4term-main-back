@@ -297,4 +297,44 @@ export class NoticesRepository extends Repository<Notices> {
       );
     }
   }
+  
+  async getNoticeByUserNo(userNo: number) {
+    try {
+      const boardNotices = await this.createQueryBuilder('notices')
+        .leftJoin('notices.targetUserNo', 'users')
+        .leftJoin('users.userProfileNo', 'userProfiles')
+        .leftJoin('userProfiles.profileImage', 'profileImages')
+        .leftJoin('notices.noticeBoards', 'noticeBoards')
+        .leftJoin('notices.noticeChats', 'noticeChats')
+        .leftJoin('notices.noticeFriends', 'noticeFriends')
+        .select([
+          'notices.no AS noticeNo',
+          'notices.targetUserNo AS senderUserNo',
+          'userProfiles.nickname AS senderNickname',
+          'profileImages.imageUrl AS senderProfileImage',
+          'notices.type AS type',
+          `CASE 
+            WHEN notices.type = ${NoticeType.APPLY_FOR_MEETING} 
+              THEN JSON_OBJECT("boardNo", noticeBoards.boardNo)
+            WHEN notices.type = ${NoticeType.APPLICATION_ACCEPTED} 
+              THEN JSON_OBJECT("chatNo", noticeChats.chatRoomNo, "boardNo", noticeBoards.boardNo)
+            WHEN notices.type =${NoticeType.INVITE_GUEST} 
+            OR notices.type = ${NoticeType.INVITE_HOST} 
+              THEN JSON_OBJECT("chatRoomNo", noticeChats.chatRoomNo)
+            WHEN notices.type = ${NoticeType.FRIEND_REQUEST}
+            OR notices.type = ${NoticeType.FRIEND_REQUEST_ACCEPTED}
+              THEN JSON_OBJECT("friendNo", noticeFriends.friendNo)
+          END AS value`,
+          'IF(notices.readDatetime, TRUE, FALSE) AS isRead',
+        ])
+        .where('notices.userNo = :userNo', { userNo })
+        .getRawMany();
+
+      return boardNotices;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 유저 번호로 알림 조회(getNoticeByUserNo): 알 수 없는 서버 오류입니다.`,
+      );
+    }
+  }
 }
