@@ -18,9 +18,15 @@ export interface JoinChatRoom {
 }
 
 export interface MessagePayload {
-  message?: string;
-  chatRoomNo: number;
   userNo: number;
+  chatRoomNo: number;
+  message?: string;
+  uploadedFileUrls?: string[];
+}
+
+export interface FileUrlDetail {
+  chatLogNo: number;
+  fileUrl: string;
 }
 
 export interface ChatRoom {

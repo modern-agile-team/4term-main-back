@@ -1,8 +1,5 @@
-import { type } from 'os';
 import { Boards } from 'src/boards/entity/board.entity';
-import { Meetings } from 'src/meetings/entity/meeting.entity';
 import { NoticeChats } from 'src/notices/entity/notice-chat.entity';
-import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
   Column,

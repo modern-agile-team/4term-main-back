@@ -78,7 +78,9 @@ export class ChatsGateway {
   async handelMessage(
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: MessagePayload,
-  ) {
-    await this.chatGatewayService.sendChat(socket, messagePayload);
+  ): Promise<void> {
+    messagePayload.hasOwnProperty('message')
+      ? await this.chatGatewayService.sendChat(socket, messagePayload)
+      : await this.chatGatewayService.sendFile(socket, messagePayload);
   }
 }
