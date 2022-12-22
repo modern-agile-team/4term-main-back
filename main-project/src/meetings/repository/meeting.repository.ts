@@ -8,10 +8,10 @@ import {
 import { Meetings } from '../entity/meeting.entity';
 import { InternalServerErrorException } from '@nestjs/common';
 import {
-  MeetingVacancy,
   InsertRaw,
   Meeting,
   MeetingHosts,
+  UpdatedMeeting,
 } from '../interface/meeting.interface';
 import { throws } from 'assert';
 import { UserType } from 'src/common/configs/user-type.config';
@@ -82,11 +82,14 @@ export class MeetingRepository extends Repository<Meetings> {
     }
   }
 
-  async updateMeeting(no: number, updatedMeetingInfo: object): Promise<number> {
+  async updateMeeting(
+    no: number,
+    updatedMeeting: UpdatedMeeting,
+  ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Meetings)
-        .set(updatedMeetingInfo)
+        .set(updatedMeeting)
         .where({ no })
         .execute();
 
@@ -138,40 +141,6 @@ export class MeetingRepository extends Repository<Meetings> {
       return members;
     } catch (err) {
       throw err;
-    }
-  }
-
-  async getMeetingVacancy(meetingNo: number): Promise<MeetingVacancy> {
-    try {
-      const result: MeetingVacancy = await this.createQueryBuilder('meetings')
-        .leftJoin(
-          'meetings.meetingInfo',
-          'meetingInfo',
-          'meetings.no = meetingInfo.meetingNo',
-        )
-        .leftJoin(
-          'meetings.guestMembers',
-          'guestMembers',
-          'meetings.no = guestMembers.meetingNo',
-        )
-        .leftJoin(
-          'meetings.hostMembers',
-          'hostMembers',
-          'meetings.no = hostMembers.meetingNo',
-        )
-        .select([
-          'IF(meetingInfo.guestHeadcount > COUNT(DISTINCT guestMembers.userNo),TRUE, FALSE) AS addGuestAvailable',
-          'IF(meetingInfo.hostHeadcount > COUNT(DISTINCT hostMembers.userNo), TRUE, FALSE) AS addHostAvailable',
-        ])
-        .where('meetings.no = :meetingNo', { meetingNo })
-        .groupBy('meetings.no')
-        .getRawOne();
-
-      return result;
-    } catch (err) {
-      throw new InternalServerErrorException(
-        `${err} 약속 공석 조회(getMeetingVacancy): 알 수 없는 서버 에러입니다.`,
-      );
     }
   }
 

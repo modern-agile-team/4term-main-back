@@ -66,13 +66,9 @@ export class MeetingsController {
     @Param('meetingNo') meetingNo: number,
     @Body() updateMeetingDto: UpdateMeetingDto,
   ): Promise<object> {
-    try {
-      await this.meetingsService.updateMeeting(meetingNo, updateMeetingDto);
+    await this.meetingsService.updateMeeting(meetingNo, updateMeetingDto);
 
-      return { success: true, msg: `약속이 수정되었습니다` };
-    } catch (err) {
-      throw err;
-    }
+    return { success: true, msg: `약속이 수정되었습니다` };
   }
 
   @HttpCode(HttpStatus.ACCEPTED)

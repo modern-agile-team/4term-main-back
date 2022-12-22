@@ -10,14 +10,8 @@ import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { Meetings } from './entity/meeting.entity';
-import {
-  InsertRaw,
-  MeetingHosts,
-  MeetingMemberDetail,
-} from './interface/meeting.interface';
+import { InsertRaw, MeetingHosts } from './interface/meeting.interface';
 import { Connection, QueryRunner } from 'typeorm';
-import { MeetingInfo } from './interface/meeting-info.interface';
-import { throws } from 'assert';
 import { ChatListRepository } from 'src/chats/repository/chat-list.repository';
 import { ChatList } from 'src/chats/entity/chat-list.entity';
 
@@ -56,9 +50,25 @@ export class MeetingsService {
 
   async deleteMeeting(meetingNo: number, userNo: number): Promise<void> {
     await this.findMeetingById(meetingNo);
-    await this.validateDeleteAuthority(meetingNo, userNo);
+    await this.validateHostAuthority(meetingNo, userNo);
 
     await this.meetingRepository.deleteMeeting(meetingNo);
+  }
+
+  async updateMeeting(
+    meetingNo,
+    { userNo, time, location }: UpdateMeetingDto,
+  ): Promise<void> {
+    await this.validateHostAuthority(meetingNo, userNo);
+
+    const affected: number = await this.meetingRepository.updateMeeting(
+      meetingNo,
+      { time, location },
+    );
+
+    if (!affected) {
+      throw new InternalServerErrorException(`약속 수정 관련 오류입니다.`);
+    }
   }
 
   private async validateChatRoom(chatRoomNo: number): Promise<void> {
@@ -82,33 +92,14 @@ export class MeetingsService {
     }
   }
 
-  private async validateDeleteAuthority(meetingNo: number, userNo: number) {
+  private async validateHostAuthority(meetingNo: number, userNo: number) {
     const { hosts }: MeetingHosts =
       await this.meetingRepository.getMeetingHosts(meetingNo);
 
     const haveDeleteAuthority = JSON.parse(hosts).includes(userNo);
 
     if (!haveDeleteAuthority) {
-      throw new BadRequestException(`약속 삭제 권한이 없는 유저입니다.`);
-    }
-  }
-
-  private async setMeetingDetail(
-    queryRunner: QueryRunner,
-    meetingDetail,
-  ): Promise<number> {
-    try {
-      const { affectedRows, insertId }: InsertRaw = await queryRunner.manager
-        .getCustomRepository(MeetingRepository)
-        .createMeeting(meetingDetail);
-
-      if (!(affectedRows && insertId)) {
-        throw new InternalServerErrorException(`약속 detail 생성 오류입니다.`);
-      }
-
-      return insertId;
-    } catch (err) {
-      throw err;
+      throw new BadRequestException(`호스트가 아닌 유저입니다.`);
     }
   }
 
@@ -124,55 +115,6 @@ export class MeetingsService {
     }
 
     return meeting;
-  }
-
-  private async checkIsAccepted(meetingNo: number): Promise<void> {
-    try {
-      const { isAccepted }: Meetings = await this.findMeetingById(meetingNo);
-
-      if (isAccepted) {
-        throw new BadRequestException(`이미 수락된 약속입니다.`);
-      }
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  // private async isAuthorized(meetingNo: number, userNo: number): Promise<any> {
-  //   try {
-  //     const { adminHost, adminGuest }: MeetingInfo =
-  //       await this.meetingInfoRepository.getMeetingInfoById(meetingNo);
-
-  //     if (userNo === adminGuest || userNo === adminHost) {
-  //       return userNo === adminGuest ? this.member.GUEST : this.member.HOST;
-  //     }
-
-  //     return 0;
-  //   } catch (err) {
-  //     throw err;
-  //   }
-  // }
-
-  async updateMeeting(
-    meetingNo,
-    { userNo, location, time }: UpdateMeetingDto,
-  ): Promise<void> {
-    // try {
-    //   await this.checkIsAccepted(meetingNo);
-    //   const authority: any = await this.isAuthorized(meetingNo, userNo);
-    //   if (authority !== this.member.HOST) {
-    //     throw new BadRequestException(`약속 수정 권한이 없는 유저입니다.`);
-    //   }
-    //   const affected: number = await this.meetingRepository.updateMeeting(
-    //     meetingNo,
-    //     { location, time },
-    //   );
-    //   if (!affected) {
-    //     throw new InternalServerErrorException(`약속 수정 관련 오류입니다.`);
-    //   }
-    // } catch (err) {
-    //   throw err;
-    // }
   }
 
   async acceptMeeting(meetingNo: number, userNo: number): Promise<void> {
