@@ -7,9 +7,14 @@ export interface InsertRaw {
   insertId?: number;
 }
 
-export interface MeetingDetail {
+export interface Meeting {
+  chatRoomNo: number;
   location: string;
   time: Date;
+}
+
+export interface MeetingHosts {
+  hosts: any;
 }
 
 export interface MeetingMemberDetail {

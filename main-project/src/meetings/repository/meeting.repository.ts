@@ -9,18 +9,21 @@ import { Meetings } from '../entity/meeting.entity';
 import { InternalServerErrorException } from '@nestjs/common';
 import {
   MeetingVacancy,
-  MeetingDetail,
   InsertRaw,
+  Meeting,
+  MeetingHosts,
 } from '../interface/meeting.interface';
+import { throws } from 'assert';
+import { UserType } from 'src/common/configs/user-type.config';
 
 @EntityRepository(Meetings)
 export class MeetingRepository extends Repository<Meetings> {
-  async createMeeting(meetingInfo: MeetingDetail): Promise<InsertRaw> {
+  async createMeeting(meeting: Meeting): Promise<InsertRaw> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('meetings')
         .insert()
         .into(Meetings)
-        .values(meetingInfo)
+        .values(meeting)
         .execute();
 
       return raw;
@@ -41,6 +44,40 @@ export class MeetingRepository extends Repository<Meetings> {
     } catch (err) {
       throw new InternalServerErrorException(
         `${err} 약속 조회 에러(findMeetingById): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async findMeetingByChatRoom(chatRoomNo: number): Promise<Meetings> {
+    try {
+      const meeting: Meetings = await this.createQueryBuilder('meetings')
+        .where('meetings.chatRoomNo = :chatRoomNo', { chatRoomNo })
+        .getOne();
+
+      return meeting;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 조회 에러(findMeetingByChatRoom): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getMeetingHosts(meetingNo: number): Promise<MeetingHosts> {
+    try {
+      const meetingHosts: MeetingHosts = await this.createQueryBuilder(
+        'meetings',
+      )
+        .leftJoin('meetings.chatRoomNo', 'chatList')
+        .leftJoin('chatList.chatUserNo', 'chatUsers')
+        .select('JSON_ARRAYAGG(chatUsers.no) AS hosts')
+        .where('meetings.no = :meetingNo', { meetingNo })
+        .andWhere(`chatUsers.userType = ${UserType.HOST}`)
+        .getRawOne();
+
+      return meetingHosts;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 호스트 조회 에러(getMeetingHosts): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
