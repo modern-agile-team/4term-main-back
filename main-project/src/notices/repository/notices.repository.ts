@@ -282,7 +282,7 @@ export class NoticesRepository extends Repository<Notices> {
     }
   }
 
-  async saveNoticeBoard(noticeBoard: Notice) {
+  async saveNoticeBoard(noticeBoard) {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('notices')
         .insert()
