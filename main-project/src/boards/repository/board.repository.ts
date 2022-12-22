@@ -1,4 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { Users } from 'src/users/entity/user.entity';
+import { UsersRepository } from 'src/users/repository/users.repository';
 import {
   DeleteResult,
   EntityRepository,
@@ -6,41 +8,37 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { CreateBoardDto } from '../dto/create-board.dto';
-import { UpdateBoardDto } from '../dto/update-board.dto';
-import { BoardBookmarks } from '../entity/board-bookmark.entity';
-import { BoardMemberInfos } from '../entity/board-member-info.entity';
+import { BoardDto } from '../dto/board.dto';
 import { Boards } from '../entity/board.entity';
-import {
-  BoardMemberDetail,
-  BoardCreateResponse,
-  BookmarkDetail,
-  BoardReadResponse,
-  BoardDetail,
-} from '../interface/boards.interface';
+import { BoardIF } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
 export class BoardRepository extends Repository<Boards> {
   // 게시글 조회 관련
-  async getBoardByNo(boardNo: number): Promise<BoardReadResponse> {
+  async getBoardByNo(boardNo: number): Promise<BoardIF> {
     try {
-      const board = this.createQueryBuilder('boards')
-        .leftJoin('boards.boardMemberInfo', 'boardMemberInfo')
-        .leftJoin('boards.userNo', 'userNo')
+      const board = await this.createQueryBuilder('boards')
+        .leftJoin('boards.userNo', 'users')
+        .leftJoin('users.userProfileNo', 'profile')
+        .leftJoin('boards.hosts', 'hosts')
+        .leftJoin('hosts.userNo', 'hostUsers')
+        .leftJoin('hostUsers.userProfileNo', 'hostProfile')
         .select([
           'boards.no AS no',
-          'boards.userNo AS user_no',
-          'boards.meetingNo AS meeting_no',
-          'userNo.nickname AS nickname',
+          'boards.userNo AS userNo',
+          'profile.nickname AS nickname',
           'boards.title AS title',
           'boards.description AS description',
           'boards.location AS location',
-          'boards.meetingTime AS meeting_time',
+          'boards.meetingTime AS meetingTime',
           'boards.isDone AS isDone',
-          'boardMemberInfo.male AS male',
-          'boardMemberInfo.female AS female',
+          'boards.male AS male',
+          'boards.female AS female',
+          'GROUP_CONCAT(hosts.userNo) AS hostUserNums',
+          'GROUP_CONCAT(hostProfile.nickname) AS hostNicknames',
         ])
         .where('boards.no = :boardNo', { boardNo })
+        .where('hosts.boardNo = :boardNo', { boardNo })
         .getRawOne();
 
       return board;
@@ -51,13 +49,12 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async getAllBoards(): Promise<BoardReadResponse[]> {
+  async getAllBoards(): Promise<BoardIF[]> {
     try {
-      const boards = this.createQueryBuilder('boards')
+      const boards = await this.createQueryBuilder('boards')
         .select([
           'boards.no AS no',
           'boards.userNo AS user_no',
-          'boards.meetingNo AS meeting_no',
           'boards.title AS title',
           'boards.description AS description',
           'boards.location AS location',
@@ -76,60 +73,18 @@ export class BoardRepository extends Repository<Boards> {
   }
 
   //게시글 생성 관련
-  async createBoard(
-    createBoardDto: CreateBoardDto,
-  ): Promise<BoardCreateResponse> {
+  async createBoard(userNo: number, newBoard: Partial<BoardDto>): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('boards')
         .insert()
         .into(Boards)
-        .values(createBoardDto)
+        .values({ userNo, ...newBoard })
         .execute();
 
-      return raw;
+      return raw.insertId;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async createBoardMember(
-    boardMemberDetail: BoardMemberDetail,
-  ): Promise<BoardCreateResponse> {
-    try {
-      const { raw }: InsertResult = await this.createQueryBuilder(
-        'board_member_infos',
-      )
-        .insert()
-        .into(BoardMemberInfos)
-        .values(boardMemberDetail)
-        .execute();
-
-      return raw;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async createBookmark(
-    bookmarkDetail: BookmarkDetail,
-  ): Promise<BoardCreateResponse> {
-    try {
-      const { raw }: InsertResult = await this.createQueryBuilder(
-        'boardBookmark',
-      )
-        .insert()
-        .into(BoardBookmarks)
-        .values(bookmarkDetail)
-        .execute();
-
-      return raw;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} createBookmark-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -137,12 +92,12 @@ export class BoardRepository extends Repository<Boards> {
   //게시글 수정 관련
   async updateBoard(
     boardNo: number,
-    boardDetail: BoardDetail,
+    newBoard: Partial<BoardDto>,
   ): Promise<number> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
+      const { affected }: UpdateResult = await this.createQueryBuilder('boards')
         .update(Boards)
-        .set(boardDetail)
+        .set(newBoard)
         .where('no = :boardNo', { boardNo })
         .execute();
 
@@ -154,44 +109,7 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async updateBoardMember(
-    boardNo: number,
-    boardMember: BoardMemberDetail,
-  ): Promise<number> {
-    try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
-        .update(BoardMemberInfos)
-        .set(boardMember)
-        .where('boardNo = :boardNo', { boardNo })
-        .execute();
-
-      return affected;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} updateBoardMember-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
   // 게시글 삭제 관련
-  async deleteBoardMember(boardNo: number): Promise<number> {
-    try {
-      const { affected }: DeleteResult = await this.createQueryBuilder(
-        'board_member_infos',
-      )
-        .delete()
-        .from(BoardMemberInfos)
-        .where('boardNo = :boardNo', { boardNo })
-        .execute();
-
-      return affected;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} deleteBoardMember-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
   async deleteBoard(boardNo: number): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder('boards')
@@ -208,39 +126,44 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async cancelBookmark(boardNo: number, userNo: number): Promise<number> {
+  async getUserListByBoardNo(boardNo: number) {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder(
-        'boardBookmark',
-      )
-        .delete()
-        .from(BoardBookmarks)
-        .where('boardNo = :boardNo', { boardNo })
-        .andWhere('userNo = :userNo', { userNo })
-        .execute();
+      const userList = await this.createQueryBuilder('boards')
+        .leftJoin('boards.hosts', 'hostList')
+        .leftJoin('boards.guests', 'guestList')
+        .leftJoin('hostList.userNo', 'hostUser')
+        .leftJoin('guestList.userNo', 'guestUser')
+        .leftJoin('hostUser.userProfileNo', 'hostProfile')
+        .leftJoin('guestUser.userProfileNo', 'guestProfile')
+        .select([
+          'GROUP_CONCAT(DISTINCT hostProfile.nickname) AS hostNickname',
+          'GROUP_CONCAT(DISTINCT guestProfile.nickname) AS guestNickname',
+          'GROUP_CONCAT(DISTINCT hostList.user_no) AS hostUserNo',
+          'GROUP_CONCAT(DISTINCT guestList.user_no) AS guestUserNo',
+        ])
+        .where('boards.no = :boardNo', { boardNo })
+        .getRawOne();
 
-      return affected;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
+      return userList;
+    } catch (error) { }
   }
+}
 
-  async deleteBookmark(boardNo: number): Promise<number> {
+// 삭제 예정
+@EntityRepository(Users)
+export class TestUserRepo extends Repository<UsersRepository> {
+  async getUserByNickname(nickname: string) {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder(
-        'boardBookmark',
-      )
-        .delete()
-        .from(BoardBookmarks)
-        .where('boardNo = :boardNo', { boardNo })
-        .execute();
+      const userNo = await this.createQueryBuilder('users')
+        .leftJoin('users.userProfileNo', 'profile')
+        .select(['users.no AS no'])
+        .where('profile.nickname = :nickname', { nickname })
+        .getRawOne();
 
-      return affected;
+      return userNo;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getUserByNickname-testRepo: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

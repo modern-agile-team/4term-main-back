@@ -1,10 +1,12 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BoardsService } from 'src/boards/boards.service';
+import { Boards } from 'src/boards/entity/board.entity';
+import { BoardRepository } from 'src/boards/repository/board.repository';
 import { CreateReportDto } from './dto/create-reports.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
 import {
@@ -18,10 +20,10 @@ import { ReportRepository } from './repository/reports.repository';
 export class ReportsService {
   constructor(
     @InjectRepository(ReportRepository)
-    @InjectRepository(BoardsService)
+    @InjectRepository(BoardRepository)
     private readonly reportRepository: ReportRepository,
-    private readonly boardsService: BoardsService,
-  ) {}
+    private readonly boardRepository: BoardRepository,
+  ) { }
   // 신고글 조회 관련
   async getAllReports(): Promise<ReportReadResponse[]> {
     try {
@@ -137,7 +139,12 @@ export class ReportsService {
     boardNo: number,
   ): Promise<number> {
     try {
-      await this.boardsService.getBoardByNo(boardNo);
+      const board: Boards = await this.boardRepository.getBoardByNo(
+        boardNo,
+      );
+      if (!board.no) {
+        throw new BadRequestException(`해당 게시글이 없습니다.`);
+      }
 
       const reportNo: number = await this.setReport(createReportDto);
 

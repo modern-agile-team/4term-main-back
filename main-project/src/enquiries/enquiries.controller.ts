@@ -11,11 +11,11 @@ import {
 import { ApiOperation } from '@nestjs/swagger';
 import { EnquiryDto } from './dto/enquiry.dto';
 import { EnquiriesService } from './enquiries.service';
-import { EnquiryReadResponse } from './interface/enquiry.interface';
+import { EnquiryIF } from './interface/enquiry.interface';
 
 @Controller('enquiries')
 export class EnquiriesController {
-  constructor(private enquiriesService: EnquiriesService) {}
+  constructor(private enquiriesService: EnquiriesService) { }
   //Get Methods
   @Get()
   @ApiOperation({
@@ -23,14 +23,11 @@ export class EnquiriesController {
     description: '문의사항 전부를 내림차순으로 조회한다.',
   })
   async getAllEnquiries(): Promise<object> {
-    const enquiries: EnquiryReadResponse[] =
+    const response: EnquiryIF[] =
       await this.enquiriesService.getAllEnquiries();
-    const response = {
-      success: true,
-      enquiries,
-    };
 
-    return response;
+
+    return { response };
   }
 
   @Get('/:enquiryNo')
@@ -41,14 +38,10 @@ export class EnquiriesController {
   async getEnquiriesByNo(
     @Param('enquiryNo') enquiryNo: number,
   ): Promise<object> {
-    const enquiry: EnquiryReadResponse =
+    const response: EnquiryIF =
       await this.enquiriesService.getEnquiriesByNo(enquiryNo);
-    const response = {
-      success: true,
-      enquiry,
-    };
 
-    return response;
+    return { response };
   }
 
   // Post Methods
@@ -61,13 +54,12 @@ export class EnquiriesController {
     @Param('userNo') userNo: number,
     @Body() enquiryDto: EnquiryDto,
   ): Promise<object> {
-    const enquiry: number = await this.enquiriesService.createEnquiry(
+    const response: number = await this.enquiriesService.createEnquiry(
       enquiryDto,
       userNo,
     );
-    const response = { success: true, enquiry };
 
-    return response;
+    return { response };
   }
 
   // Patch Methods
@@ -80,17 +72,12 @@ export class EnquiriesController {
     @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
     @Body() enquiryDto: EnquiryDto,
   ): Promise<object> {
-    const eqnuiry: string = await this.enquiriesService.updateEnquiry(
+    const response: string = await this.enquiriesService.updateEnquiry(
       enquiryNo,
       enquiryDto,
     );
 
-    const response = {
-      success: true,
-      msg: eqnuiry,
-    };
-
-    return response;
+    return { response };
   }
 
   // Delete Methods
@@ -101,9 +88,9 @@ export class EnquiriesController {
   })
   async deleteBoard(
     @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
-  ): Promise<string> {
-    const enquiry = await this.enquiriesService.deleteEnquiryByNo(enquiryNo);
+  ): Promise<object> {
+    const response = await this.enquiriesService.deleteEnquiryByNo(enquiryNo);
 
-    return enquiry;
+    return { response };
   }
 }

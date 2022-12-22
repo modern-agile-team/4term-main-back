@@ -1,6 +1,4 @@
-import { Meetings } from 'src/meetings/entity/meeting.entity';
 import { BoardBookmarks } from './board-bookmark.entity';
-import { BoardMemberInfos } from './board-member-info.entity';
 import {
   BaseEntity,
   Column,
@@ -16,6 +14,10 @@ import {
 } from 'typeorm';
 import { Users } from 'src/users/entity/user.entity';
 import { Reportedboards } from 'src/reports/entity/reported-board.entity';
+import { NoticeBoards } from 'src/notices/entity/notice-board.entity';
+import { BoardHosts } from './board-host.entity';
+import { BoardGuests } from './board-guest.entity';
+import { ChatList } from 'src/chats/entity/chat-list.entity';
 
 @Entity('boards')
 export class Boards extends BaseEntity {
@@ -42,6 +44,12 @@ export class Boards extends BaseEntity {
   @Column({ type: 'datetime', name: 'meeting_time', nullable: true })
   meetingTime: Date;
 
+  @Column({ type: 'int', nullable: false })
+  male: number;
+
+  @Column({ type: 'int', nullable: false })
+  female: number;
+
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
 
@@ -51,28 +59,32 @@ export class Boards extends BaseEntity {
   @DeleteDateColumn({ name: 'deleted_date' })
   deletedDate: Date;
 
-  @OneToOne(
-    (type) => BoardMemberInfos,
-    (boardMemberInfo) => boardMemberInfo.boardNo,
-  )
-  boardMemberInfo: BoardMemberInfos;
-
   @OneToOne((type) => BoardBookmarks, (boardBookmark) => boardBookmark.boardNo)
   boardBookmark: BoardBookmarks;
-
-  @OneToOne((type) => Meetings, (meeting) => meeting.board, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'meeting_no' })
-  meetingNo: number;
 
   @ManyToOne((type) => Users, (user) => user.board, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_no' })
   userNo: number;
+
+  @OneToMany((type) => NoticeBoards, (noticeBoards) => noticeBoards.boardNo)
+  @JoinColumn()
+  noticeBoard: NoticeBoards;
+
+  @OneToMany((type) => BoardHosts, (boardHosts) => boardHosts.boardNo, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
+  hosts: BoardHosts;
+
+  @OneToMany((type) => BoardGuests, (boardGuests) => boardGuests.boardNo)
+  guests: BoardGuests;
 
   @OneToMany(
     (type) => Reportedboards,
     (reportedboards) => reportedboards.targetBoardNo,
   )
   reportedBoard: Reportedboards[];
+
+  @OneToMany((type) => ChatList, (chat) => chat.boardNo)
+  chatBoard: ChatList[];
 }
