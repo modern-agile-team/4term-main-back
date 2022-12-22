@@ -62,6 +62,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
         .select([
           'chat_users.user_no AS userNo',
           'chat_users.chat_room_no AS chatRoomNo',
+          'chat_users.user_type AS userType',
         ])
         .where('user_no = :userNo AND chat_room_no = :chatRoomNo', chatUserInfo)
         .getRawOne();
@@ -88,5 +89,16 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
         `${error} 유처 초대(inviteUserByUserNo): 알 수 없는 서버 에러입니다.`,
       );
     }
+  }
+
+  async getChatRoomUsers(chatRoomNo: number) {
+    try {
+      const users = await this.createQueryBuilder('chat_users')
+        .select('JSON_ARRAYAGG(chat_users.userNo) AS users')
+        .where('chat_users.chatRoomNo = :chatRoomNo', { chatRoomNo })
+        .getRawOne();
+
+      return users;
+    } catch (error) {}
   }
 }

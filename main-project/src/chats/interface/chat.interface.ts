@@ -1,11 +1,14 @@
+import { IsNumber } from 'class-validator';
+
 export interface MeetingMembersList {
   hostUserNo: number[];
   guestUserNo: number[];
 }
 
-export interface CreateChat {
+export class CreateChat {
   userNo?: number;
-  meetingNo: number;
+  @IsNumber()
+  boardNo: number;
   roomName?: string;
 }
 
@@ -15,18 +18,24 @@ export interface JoinChatRoom {
 }
 
 export interface MessagePayload {
-  message?: string;
-  chatRoomNo: number;
   userNo: number;
+  chatRoomNo: number;
+  message?: string;
+  uploadedFileUrls?: string[];
+}
+
+export interface FileUrlDetail {
+  chatLogNo: number;
+  fileUrl: string;
 }
 
 export interface ChatRoom {
-  guestUserNickname: string;
-  hostUserNickname: string;
+  guestNickname?: string;
+  hostNickname?: string;
   roomName?: string;
   userNo?: string;
-  guestUserNo?: number;
-  hostUserNo?: number;
+  guestUserNo?: string;
+  hostUserNo?: string;
 }
 
 export interface ChatRoomUsers {
@@ -51,6 +60,8 @@ export interface PreviousChatLog {
 }
 
 export interface ChatUserInfo {
-  userNo: number;
+  userNo?: number;
   chatRoomNo: number;
+  userType?: number;
+  type?: number;
 }

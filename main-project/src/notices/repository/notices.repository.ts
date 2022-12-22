@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ChatUserInfo } from 'src/chats/interface/chat.interface';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import {
   InsertRaw,
@@ -261,35 +262,22 @@ export class NoticesRepository extends Repository<Notices> {
     }
   }
 
-  async getNoticeChatRoomNo(noticeNo, userNo): Promise<number> {
+  async getNoticeChatRoomNo(noticeNo, userNo): Promise<ChatUserInfo> {
     try {
       const notice = await this.createQueryBuilder('notices')
         .leftJoin('notices.noticeChats', 'noticeChats')
-        .select(['noticeChats.chatRoomNo AS chatRoomNo'])
+        .select([
+          'noticeChats.chatRoomNo AS chatRoomNo',
+          'notices.type AS type',
+        ])
         .where('notices.no = :noticeNo', { noticeNo })
         .andWhere('notices.targetUserNo = :userNo', { userNo })
         .getRawOne();
 
-      return notice.chatRoomNo;
+      return notice;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error}: 채팅 알람 조회 에러(checkNoticeChatByUserNo): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async saveNoticeFriend(noticeFriend: NoticeDetail) {
-    try {
-      const { raw }: InsertResult = await this.createQueryBuilder('notices')
-        .insert()
-        .into(Notices)
-        .values(noticeFriend)
-        .execute();
-
-      return raw.insertId;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} 알람 생성 에러(saveNoticeChats): 알 수 없는 서버 오류입니다.`,
       );
     }
   }

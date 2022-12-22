@@ -6,10 +6,10 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { BoardGuestTeams } from './board-guest-team.entity';
+import { Boards } from './board.entity';
 
-@Entity('board_guest_members')
-export class BoardGuestMembers extends BaseEntity {
+@Entity('board_guests')
+export class BoardGuests extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
@@ -20,12 +20,12 @@ export class BoardGuestMembers extends BaseEntity {
   userNo: number;
 
   @ManyToOne(
-    (type) => BoardGuestTeams,
-    (boardGuestTeams) => boardGuestTeams.userNo,
+    (type) => Boards,
+    (boards) => boards.guests,
     {
       onDelete: 'CASCADE',
     },
   )
-  @JoinColumn({ name: 'team_no' })
-  teamNo: number;
+  @JoinColumn({ name: 'board_no' })
+  boardNo: number;
 }

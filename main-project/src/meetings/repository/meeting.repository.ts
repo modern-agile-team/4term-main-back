@@ -8,19 +8,22 @@ import {
 import { Meetings } from '../entity/meeting.entity';
 import { InternalServerErrorException } from '@nestjs/common';
 import {
-  MeetingVacancy,
-  MeetingDetail,
   InsertRaw,
+  Meeting,
+  MeetingGuests,
+  MeetingHosts,
+  UpdatedMeeting,
 } from '../interface/meeting.interface';
+import { UserType } from 'src/common/configs/user-type.config';
 
 @EntityRepository(Meetings)
 export class MeetingRepository extends Repository<Meetings> {
-  async createMeeting(meetingInfo: MeetingDetail): Promise<InsertRaw> {
+  async createMeeting(meeting: Meeting): Promise<InsertRaw> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('meetings')
         .insert()
         .into(Meetings)
-        .values(meetingInfo)
+        .values(meeting)
         .execute();
 
       return raw;
@@ -45,11 +48,68 @@ export class MeetingRepository extends Repository<Meetings> {
     }
   }
 
-  async updateMeeting(no: number, updatedMeetingInfo: object): Promise<number> {
+  async findMeetingByChatRoom(chatRoomNo: number): Promise<Meetings> {
+    try {
+      const meeting: Meetings = await this.createQueryBuilder('meetings')
+        .where('meetings.chatRoomNo = :chatRoomNo', { chatRoomNo })
+        .getOne();
+
+      return meeting;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 조회 에러(findMeetingByChatRoom): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getMeetingHosts(meetingNo: number): Promise<MeetingHosts> {
+    try {
+      const meetingHosts: MeetingHosts = await this.createQueryBuilder(
+        'meetings',
+      )
+        .leftJoin('meetings.chatRoomNo', 'chatList')
+        .leftJoin('chatList.chatUserNo', 'chatUsers')
+        .select('JSON_ARRAYAGG(chatUsers.no) AS hosts')
+        .where('meetings.no = :meetingNo', { meetingNo })
+        .andWhere(`chatUsers.userType = ${UserType.HOST}`)
+        .getRawOne();
+
+      return meetingHosts;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 호스트 조회 에러(getMeetingHosts): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getMeetingGuests(meetingNo: number): Promise<MeetingGuests> {
+    try {
+      const meetingGuests: MeetingGuests = await this.createQueryBuilder(
+        'meetings',
+      )
+        .leftJoin('meetings.chatRoomNo', 'chatList')
+        .leftJoin('chatList.chatUserNo', 'chatUsers')
+        .select('JSON_ARRAYAGG(chatUsers.no) AS guests')
+        .where('meetings.no = :meetingNo', { meetingNo })
+        .andWhere(`chatUsers.userType = ${UserType.GUEST}`)
+        .getRawOne();
+
+      return meetingGuests;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 약속 호스트 조회 에러(getMeetingHosts): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async updateMeeting(
+    no: number,
+    updatedMeeting: UpdatedMeeting,
+  ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Meetings)
-        .set(updatedMeetingInfo)
+        .set(updatedMeeting)
         .where({ no })
         .execute();
 
@@ -73,67 +133,6 @@ export class MeetingRepository extends Repository<Meetings> {
     } catch (err) {
       throw new InternalServerErrorException(
         `${err} 약속 수락 에러(acceptMeeting): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async getMeetingMembers(meetingNo: number): Promise<any> {
-    try {
-      const members: object = await this.createQueryBuilder('meetings')
-        .leftJoin(
-          'meetings.guestMembers',
-          'guestMembers',
-          'meetings.no = guestMembers.meetingNo',
-        )
-        .leftJoin(
-          'meetings.hostMembers',
-          'hostMembers',
-          'meetings.no = hostMembers.meetingNo',
-        )
-        .select([
-          `CONCAT(GROUP_CONCAT(DISTINCT hostMembers.userNo),
-          IF(COUNT(guestMembers.userNo),CONCAT(",", GROUP_CONCAT(DISTINCT guestMembers.userNo)), ""))
-          AS members`,
-        ])
-        .where('meetings.no = :meetingNo', { meetingNo })
-        .getRawOne();
-
-      return members;
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  async getMeetingVacancy(meetingNo: number): Promise<MeetingVacancy> {
-    try {
-      const result: MeetingVacancy = await this.createQueryBuilder('meetings')
-        .leftJoin(
-          'meetings.meetingInfo',
-          'meetingInfo',
-          'meetings.no = meetingInfo.meetingNo',
-        )
-        .leftJoin(
-          'meetings.guestMembers',
-          'guestMembers',
-          'meetings.no = guestMembers.meetingNo',
-        )
-        .leftJoin(
-          'meetings.hostMembers',
-          'hostMembers',
-          'meetings.no = hostMembers.meetingNo',
-        )
-        .select([
-          'IF(meetingInfo.guestHeadcount > COUNT(DISTINCT guestMembers.userNo),TRUE, FALSE) AS addGuestAvailable',
-          'IF(meetingInfo.hostHeadcount > COUNT(DISTINCT hostMembers.userNo), TRUE, FALSE) AS addHostAvailable',
-        ])
-        .where('meetings.no = :meetingNo', { meetingNo })
-        .groupBy('meetings.no')
-        .getRawOne();
-
-      return result;
-    } catch (err) {
-      throw new InternalServerErrorException(
-        `${err} 약속 공석 조회(getMeetingVacancy): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

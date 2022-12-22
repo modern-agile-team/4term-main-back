@@ -1,15 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NoticeType } from 'src/common/configs/notice-type.config';
-import { Notices } from 'src/notices/entity/notices.entity';
+import { UserType } from 'src/common/configs/user-type.config';
 import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
+import { GetChatLogDTO } from './dto/get-chat-log.dto';
+import { InviteUserDTO } from './dto/invite-user.dto';
 import { ChatLog } from './entity/chat-log.entity';
-import {
-  ChatRoomList,
-  ChatUserInfo,
-  PreviousChatLog,
-} from './interface/chat.interface';
+import { ChatRoomList, PreviousChatLog } from './interface/chat.interface';
 import { ChatListRepository } from './repository/chat-list.repository';
 import { ChatLogRepository } from './repository/chat-log.repository';
 import { ChatUsersRepository } from './repository/chat-users.repository';
@@ -43,17 +41,22 @@ export class ChatsControllerService {
     return chatList;
   }
 
-  async getChatLog({
-    userNo,
-    chatRoomNo,
-    currentChatLogNo,
-  }: PreviousChatLog): Promise<ChatLog[]> {
-    const chatRoom = await this.checkChatRoom({ userNo, chatRoomNo });
+  async getChatLog(
+    getChatLogDto: GetChatLogDTO,
+    chatRoomNo: number,
+  ): Promise<ChatLog[]> {
+    const { userNo, currentChatLogNo }: GetChatLogDTO = getChatLogDto;
+    const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
+      chatRoomNo,
+    );
     if (!chatRoom) {
       throw new BadRequestException('존재하지 않는 채팅방입니다.');
     }
 
-    const user = await this.checkUserInChatRoom({ userNo, chatRoomNo });
+    const user = await this.chatUsersRepository.checkUserInChatRoom({
+      userNo,
+      chatRoomNo,
+    });
     if (!user) {
       throw new BadRequestException('채팅방에 존재하지 않는 유저입니다.');
     }
@@ -67,12 +70,17 @@ export class ChatsControllerService {
   }
 
   async getRecentChatLog({ userNo, chatRoomNo }: PreviousChatLog) {
-    const chatRoom = await this.checkChatRoom({ userNo, chatRoomNo });
+    const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
+      chatRoomNo,
+    );
     if (!chatRoom) {
       throw new BadRequestException('존재하지 않는 채팅방입니다.');
     }
 
-    const user = await this.checkUserInChatRoom({ userNo, chatRoomNo });
+    const user = await this.chatUsersRepository.checkUserInChatRoom({
+      userNo,
+      chatRoomNo,
+    });
     if (!user) {
       throw new BadRequestException('채팅방에 존재하지 않는 유저입니다.');
     }
@@ -82,9 +90,12 @@ export class ChatsControllerService {
     return chatLog;
   }
 
-  async inviteUser(userNo, targetUserNo, chatRoomNo): Promise<void> {
-    const type = NoticeType.INVITE_HOST;
-    const user = await this.checkUserInChatRoom({
+  async inviteUser(
+    inviteUser: InviteUserDTO,
+    chatRoomNo: number,
+  ): Promise<void> {
+    const { userNo, targetUserNo }: InviteUserDTO = inviteUser;
+    const user = await this.chatUsersRepository.checkUserInChatRoom({
       userNo: targetUserNo,
       chatRoomNo,
     });
@@ -92,7 +103,13 @@ export class ChatsControllerService {
       throw new BadRequestException('이미 채팅방에 존재하는 유저입니다.');
     }
 
-    const noticeChat = await this.checkNoticeChat(
+    const { userType } = await this.chatUsersRepository.checkUserInChatRoom({
+      userNo,
+      chatRoomNo,
+    });
+    const type = userType ? NoticeType.INVITE_HOST : NoticeType.INVITE_GUEST;
+
+    const noticeChat = await this.noticesRepository.checkNoticeChat(
       targetUserNo,
       chatRoomNo,
       type,
@@ -119,82 +136,40 @@ export class ChatsControllerService {
     }
   }
 
-  private async checkNoticeChat(
-    targetUserNo,
-    chatRoomNo,
-    type,
-  ): Promise<Notices> {
-    const noticeChat = await this.noticesRepository.checkNoticeChat(
-      targetUserNo,
-      chatRoomNo,
-      type,
-    );
-
-    return noticeChat;
-  }
-
   async acceptInvitation(noticeNo, userNo): Promise<void> {
-    const chatRoomNo = await this.getNoticeChatRoomNo(noticeNo, userNo);
-    if (!chatRoomNo) {
+    const notice = await this.noticesRepository.getNoticeChatRoomNo(
+      noticeNo,
+      userNo,
+    );
+    if (!notice) {
       throw new BadRequestException('초대 정보가 존재하지 않습니다.');
     }
+    const chatRoomNo = notice.chatRoomNo;
+    const userType =
+      notice.type == NoticeType.INVITE_HOST ? UserType.HOST : UserType.GUEST;
 
-    const chatRoom = await this.checkChatRoom({ chatRoomNo, userNo });
+    const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
+      chatRoomNo,
+    );
     if (!chatRoom) {
       throw new BadRequestException('존재하지 않는 채팅방입니다.');
     }
 
-    const user = await this.checkUserInChatRoom({ chatRoomNo, userNo });
+    const user = await this.chatUsersRepository.checkUserInChatRoom({
+      chatRoomNo,
+      userNo,
+    });
     if (user) {
       throw new BadRequestException('이미 참여중인 채팅방 입니다.');
     }
 
-    const result = await this.setChatRoomUser({ chatRoomNo, userNo });
+    const result = await this.chatUsersRepository.setChatRoomUser({
+      chatRoomNo,
+      userNo,
+      userType,
+    });
     if (!result) {
       throw new BadRequestException('채팅방 초대 수락 오류입니다.');
     }
-  }
-
-  // async createChatRoom(meetingNo, hostNo, meetingMembersList) {
-  //   console.log(meetingNo, hostNo, meetingMembersList);
-  //   console.log(Object.keys(meetingMembersList));
-  // }
-
-  private async setChatRoomUser(chatUserInfo: ChatUserInfo): Promise<number> {
-    const affectedRows = await this.chatUsersRepository.setChatRoomUser(
-      chatUserInfo,
-    );
-    return affectedRows;
-  }
-
-  private async getNoticeChatRoomNo(
-    noticeNo: number,
-    userNo: number,
-  ): Promise<number> {
-    const chatRoomNo = await this.noticesRepository.getNoticeChatRoomNo(
-      noticeNo,
-      userNo,
-    );
-
-    return chatRoomNo;
-  }
-
-  private async checkChatRoom(chatUserInfo: ChatUserInfo): Promise<any> {
-    const { chatRoomNo } = chatUserInfo;
-    const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
-      chatRoomNo,
-    );
-
-    return chatRoom;
-  }
-
-  private async checkUserInChatRoom(
-    chatUserInfo: ChatUserInfo,
-  ): Promise<ChatUserInfo> {
-    const chatUser = await this.chatUsersRepository.checkUserInChatRoom(
-      chatUserInfo,
-    );
-
-    return chatUser;
   }
 }

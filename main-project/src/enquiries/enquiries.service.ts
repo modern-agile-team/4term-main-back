@@ -4,12 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UsersRepository } from 'src/users/repository/users.repository';
+import { CreateResponse } from 'src/boards/interface/boards.interface';
+import { Connection, QueryRunner } from 'typeorm';
 import { EnquiryDto } from './dto/enquiry.dto';
 import {
-  EnquiryCreateResponse,
-  EnquiryDetail,
-  EnquiryReadResponse,
+  EnquiryIF,
 } from './interface/enquiry.interface';
 import { EnquiryRepository } from './repository/enquiry.repository';
 
@@ -18,62 +17,66 @@ export class EnquiriesService {
   constructor(
     @InjectRepository(EnquiryRepository)
     private readonly enquiryRepository: EnquiryRepository,
-  ) {}
+
+    private readonly connection: Connection,
+  ) { }
   // 문의사항 조회 관련
-  async getAllEnquiries(): Promise<EnquiryReadResponse[]> {
-    try {
-      const enquiries: EnquiryReadResponse[] =
-        await this.enquiryRepository.getAllEnquiries();
+  async getAllEnquiries(): Promise<EnquiryIF[]> {
+    const enquiries: EnquiryIF[] =
+      await this.enquiryRepository.getAllEnquiries();
 
-      if (!enquiries) {
-        throw new NotFoundException(
-          `전체 문의사항 조회 오류 getAllEnquiries-service.`,
-        );
-      }
-
-      return enquiries;
-    } catch (error) {
-      throw error;
+    if (!enquiries) {
+      throw new NotFoundException(
+        `문의 전체 조회(getAllEnquiries): 문의 사항이 없습니다.`,
+      );
     }
+
+    return enquiries;
   }
 
-  async getEnquiriesByNo(enquiryNo: number): Promise<EnquiryReadResponse> {
-    try {
-      const enquiry: EnquiryReadResponse =
-        await this.enquiryRepository.getEnquiriesByNo(enquiryNo);
+  async getEnquiriesByNo(enquiryNo: number): Promise<EnquiryIF> {
+    const enquiry: EnquiryIF =
+      await this.enquiryRepository.getEnquiriesByNo(enquiryNo);
 
-      if (!enquiry) {
-        throw new NotFoundException(
-          `${enquiryNo}번 문의사항 조회 오류 getEnquiriesByNo-service.`,
-        );
-      }
-
-      return enquiry;
-    } catch (error) {
-      throw error;
+    if (!enquiry) {
+      throw new NotFoundException(
+        `문의 상세 조회(getEnquiriesByNo): ${enquiryNo}번 문의 사항이 없습니다.`,
+      );
     }
+
+    return enquiry;
   }
 
   // 문의사항 생성 관련
-  async createEnquiry(enquiryDto: EnquiryDto, userNo: number): Promise<number> {
+  async createEnquiry(enquiry: EnquiryDto, userNo: number): Promise<number> {
+    const queryRunner: QueryRunner = this.connection.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
     try {
-      const enquiryDetail: EnquiryDetail = {
-        ...enquiryDto,
+      const enquiryDetail: EnquiryIF = {
+        ...enquiry,
         userNo,
       };
 
-      const { affectedRows, insertId }: EnquiryCreateResponse =
-        await this.enquiryRepository.createEnquiry(enquiryDetail);
+      const { affectedRows, insertId }: CreateResponse =
+        await queryRunner.manager.getCustomRepository(EnquiryRepository).createEnquiry(enquiryDetail);
 
       if (!(affectedRows && insertId)) {
         throw new InternalServerErrorException(
-          `문의사항 생성 오류 createEnquiry-service.`,
+          `문의 사항 생성(createEnquiry): 알 수 없는 서버 에러입니다.`,
         );
       }
 
+      await queryRunner.commitTransaction();
+
       return insertId;
     } catch (error) {
+      await queryRunner?.rollbackTransaction();
+
       throw error;
+    } finally {
+      await queryRunner?.release();
     }
   }
 
