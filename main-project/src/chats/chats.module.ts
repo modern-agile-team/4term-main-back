@@ -13,14 +13,16 @@ import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repo
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { BoardRepository } from 'src/boards/repository/board.repository';
 import { AwsService } from 'src/aws/aws.service';
+import { ChatFileUrlsRepository } from './repository/chat-file-urls.repository';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       ChatListRepository,
       ChatUsersRepository,
+      ChatLogRepository,
+      ChatFileUrlsRepository,
       MeetingRepository,
       MeetingInfoRepository,
-      ChatLogRepository,
       NoticeChatsRepository,
       NoticesRepository,
       BoardRepository,

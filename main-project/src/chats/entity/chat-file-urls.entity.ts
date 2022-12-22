@@ -13,10 +13,12 @@ export class ChatFileUrls extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @ManyToOne((type) => ChatLog, (chatLog) => chatLog.chatFileUrl)
+  @ManyToOne((type) => ChatLog, (chatLog) => chatLog.chatFileUrl, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'chat_log_no' })
-  chatListNo: number;
+  chatLogNo: number;
 
-  @Column({ name: 'image_url', type: 'varchar', length: 255, nullable: true })
-  imageUrl: string;
+  @Column({ name: 'file_url', type: 'varchar', length: 255, nullable: false })
+  fileUrl: string;
 }

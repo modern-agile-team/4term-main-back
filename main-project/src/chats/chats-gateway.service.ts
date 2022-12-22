@@ -1,15 +1,15 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { send } from 'process';
 import { Socket } from 'socket.io';
 import { BoardRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
-import { MeetingInfoRepository } from 'src/meetings/repository/meeting-info.repository';
-import { InsertResult } from 'typeorm';
+import { InsertRaw } from 'src/meetings/interface/meeting.interface';
+import { Connection, getConnection, InsertResult } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
 import {
   ChatRoom,
@@ -17,9 +17,11 @@ import {
   ChatRoomUsers,
   ChatUserInfo,
   CreateChat,
+  FileUrlDetail,
   JoinChatRoom,
   MessagePayload,
 } from './interface/chat.interface';
+import { ChatFileUrlsRepository } from './repository/chat-file-urls.repository';
 import { ChatListRepository } from './repository/chat-list.repository';
 import { ChatLogRepository } from './repository/chat-log.repository';
 import { ChatUsersRepository } from './repository/chat-users.repository';
@@ -36,12 +38,15 @@ export class ChatsGatewayService {
     @InjectRepository(ChatLogRepository)
     private readonly chatLogRepository: ChatLogRepository,
 
-    @InjectRepository(MeetingInfoRepository)
-    private readonly meetingInfoRepository: MeetingInfoRepository,
-
     @InjectRepository(BoardRepository)
     private readonly boardRepository: BoardRepository,
+
+    @InjectRepository(ChatFileUrlsRepository)
+    private readonly chatFileUrlsRepository: ChatFileUrlsRepository,
   ) {}
+  log(text) {
+    console.log(text);
+  }
 
   async initSocket(socket, userNo: number): Promise<void> {
     const chatRoomList = await this.getChatRoomListByUserNo(
@@ -70,12 +75,9 @@ export class ChatsGatewayService {
       throw new BadRequestException('이미 생성된 채팅방 입니다.');
     }
 
-    const { roomName, hostUserNo, guestUserNo } = await this.getUserByBoardNo(
+    const { roomName, hostUserNo, guestUserNo } = await this.getUsersByBoardNo(
       boardNo,
     );
-    if (!roomName) {
-      throw new NotFoundException('유저 조회 오류입니다.');
-    }
 
     const chatRoomNo: number = await this.createRoomByBoardNo({
       boardNo,
@@ -150,8 +152,6 @@ export class ChatsGatewayService {
   }
 
   async sendChat(socket, messagePayload: MessagePayload): Promise<void> {
-    console.log(messagePayload);
-
     const { userNo, chatRoomNo, message }: MessagePayload = messagePayload;
 
     await this.checkChatRoom(chatRoomNo, userNo);
@@ -165,24 +165,76 @@ export class ChatsGatewayService {
     });
   }
 
-  async sendFile(socket, messagePayload: MessagePayload): Promise<void> {
-    const files = JSON.stringify(messagePayload.uploadedFileUrlList);
-    console.log(files.length);
+  async sendFile(
+    socket: Socket,
+    messagePayload: MessagePayload,
+  ): Promise<void> {
+    const connection: Connection = getConnection();
+    const queryRunner = connection.createQueryRunner();
 
-    messagePayload.message = files;
-    console.log(messagePayload);
-    await this.sendChat(socket, messagePayload);
-    // const { userNo, chatRoomNo, message }: MessagePayload = messagePayload;
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    // await this.checkChatRoom(chatRoomNo, userNo);
+    try {
+      const { userNo, chatRoomNo, uploadedFileUrls }: MessagePayload =
+        messagePayload;
 
-    // await this.saveMessage(messagePayload);
+      const chatLogNo = await this.saveMessageByQueryRunner(
+        queryRunner,
+        messagePayload,
+      );
 
-    // socket.broadcast.to(`${chatRoomNo}`).emit('message', {
-    //   message,
-    //   userNo,
-    //   chatRoomNo,
-    // });
+      await this.saveFileUrls(queryRunner, messagePayload, chatLogNo);
+
+      await queryRunner.commitTransaction();
+
+      socket.broadcast.to(`${chatRoomNo}`).emit('message', {
+        message: uploadedFileUrls,
+        userNo,
+        chatRoomNo,
+      });
+    } catch (error) {
+      console.log(error);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
+  }
+
+  private async saveMessageByQueryRunner(
+    queryRunner,
+    messagePayload,
+  ): Promise<InsertResult> {
+    const insertId: InsertResult = await queryRunner.manager
+      .getCustomRepository(ChatLogRepository)
+      .saveMessage(messagePayload);
+    if (!insertId) {
+      throw new InternalServerErrorException('메세지 저장에 실패하였습니다.');
+    }
+    return insertId;
+  }
+
+  private async saveFileUrls(
+    queryRunner,
+    messagePayload,
+    chatLogNo,
+  ): Promise<void> {
+    const { uploadedFileUrls }: MessagePayload = messagePayload;
+    const fileUrlDetail: FileUrlDetail[] = uploadedFileUrls.reduce(
+      (values, fileUrl) => {
+        values.push({ chatLogNo, fileUrl });
+
+        return values;
+      },
+      [],
+    );
+
+    const { affectedRows }: InsertRaw = await queryRunner.manager
+      .getCustomRepository(ChatFileUrlsRepository)
+      .saveFileUrl(fileUrlDetail);
+    if (affectedRows !== fileUrlDetail.length) {
+      throw new InternalServerErrorException('파일 url 저장에 실패하였습니다.');
+    }
   }
 
   private async saveMessage(messagePayload: MessagePayload): Promise<void> {
@@ -192,10 +244,14 @@ export class ChatsGatewayService {
     }
   }
 
-  private async getUserByBoardNo(boardNo: number): Promise<ChatRoom> {
+  private async getUsersByBoardNo(boardNo: number): Promise<ChatRoom> {
     const chatInfo: ChatRoom = await this.boardRepository.getUserListByBoardNo(
       boardNo,
     );
+
+    if (!chatInfo) {
+      throw new NotFoundException('유저 조회 오류입니다.');
+    }
     const chatRoom = this.setChatRoom(chatInfo);
 
     return chatRoom;
@@ -231,7 +287,7 @@ export class ChatsGatewayService {
     const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
       chatRoomNo,
     );
-    if (!chatRoomNo) {
+    if (!chatRoom) {
       throw new NotFoundException(`해당 채팅방이 존재하지 않습니다.`);
     }
 
