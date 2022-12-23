@@ -8,7 +8,7 @@ import { Enquiries } from 'src/enquiries/entity/enquiry.entity';
 import { Friends } from 'src/friends/entity/friend.entity';
 import { Notices } from 'src/notices/entity/notices.entity';
 import { Reports } from 'src/reports/entity/reports.entity';
-import { ReportUser } from 'src/reports/entity/user-reports.entity';
+import { ReportUsers } from 'src/reports/entity/user-reports.entity';
 import {
   BaseEntity,
   Column,
@@ -59,8 +59,8 @@ export class Users extends BaseEntity {
   @OneToMany((type) => Reports, (report) => report.userNo)
   report: Reports[];
 
-  @OneToMany((type) => ReportUser, (reportUser) => reportUser.targetUserNo)
-  reportUser: ReportUser[];
+  @OneToMany((type) => ReportUsers, (reportUser) => reportUser.targetUserNo)
+  reportUser: ReportUsers[];
 
   @OneToMany((type) => Notices, (notices) => notices.userNo)
   noticeUser: Notices[];

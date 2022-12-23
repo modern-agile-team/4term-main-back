@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 import { ReportImages } from './report-images.entity';
 import { ReportBoards } from './board-reports.entity';
-import { ReportUser } from './user-reports.entity';
+import { ReportUsers } from './user-reports.entity';
 
 @Entity('reports')
 export class Reports extends BaseEntity {
@@ -34,7 +34,7 @@ export class Reports extends BaseEntity {
   @OneToOne((type) => ReportBoards, (reportBoards) => reportBoards.reportNo)
   reportBoard: number;
 
-  @OneToOne((type) => ReportUser, (reportUser) => reportUser.reportNo)
+  @OneToOne((type) => ReportUsers, (reportUser) => reportUser.reportNo)
   reportUser: number;
 
   @ManyToOne((type) => Users, (user) => user.report, { onDelete: 'CASCADE' })

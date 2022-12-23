@@ -10,7 +10,7 @@ import {
 import { Reports } from './reports.entity';
 
 @Entity('report_users')
-export class ReportUser extends BaseEntity {
+export class ReportUsers extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 

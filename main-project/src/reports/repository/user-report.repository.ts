@@ -1,11 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { CreateResponse } from 'src/boards/interface/boards.interface';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
-import { ReportUser } from '../entity/user-reports.entity';
+import { ReportUsers } from '../entity/user-reports.entity';
 import { ReportIF } from '../interface/reports.interface';
 
-@EntityRepository(ReportUser)
-export class UserReportRepository extends Repository<ReportUser> {
+@EntityRepository(ReportUsers)
+export class UserReportRepository extends Repository<ReportUsers> {
   //신고글 조회 관련
   async getAllUserReports(): Promise<ReportIF[]> {
     try {
@@ -37,7 +37,7 @@ export class UserReportRepository extends Repository<ReportUser> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
-        .into(ReportUser)
+        .into(ReportUsers)
         .values({ reportNo, targetUserNo: userNo })
         .execute();
       return raw;
