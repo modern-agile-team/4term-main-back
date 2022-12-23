@@ -6,17 +6,26 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChatsControllerService } from './chats-controller.service';
 import { GetChatLogDTO } from './dto/get-chat-log.dto';
 import { InviteUserDTO } from './dto/invite-user.dto';
+import { AwsService } from 'src/aws/aws.service';
 import { ChatLog } from './entity/chat-log.entity';
+import { ConnectedSocket } from '@nestjs/websockets/decorators';
+import { Socket } from 'dgram';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
 export class ChatsController {
-  constructor(private readonly chatControllerService: ChatsControllerService) {}
+  constructor(
+    private readonly chatControllerService: ChatsControllerService,
+    private readonly awsService: AwsService,
+  ) {}
 
   @Get('/:userNo')
   @ApiOperation({
@@ -95,6 +104,23 @@ export class ChatsController {
 
     return {
       msg: '채팅방 참여 성공',
+    };
+  }
+
+  @Post('/:chatRoomNo/images')
+  @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
+  async uploadFile(
+    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    const uploadedFileUrlList =
+      files.length === 0
+        ? false
+        : await this.awsService.uploadImage(files, chatRoomNo);
+
+    return {
+      msg: `이미지 업로드 성공`,
+      response: { uploadedFileUrlList },
     };
   }
 

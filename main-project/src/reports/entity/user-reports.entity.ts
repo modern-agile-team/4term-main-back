@@ -20,7 +20,7 @@ export class ReportUser extends BaseEntity {
   @JoinColumn({ name: 'report_no' })
   reportNo: number;
 
-  @ManyToOne((type) => Users, (users) => users.reportedUser, {
+  @ManyToOne((type) => Users, (users) => users.reportUser, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'target_user_no' })

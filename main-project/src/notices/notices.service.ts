@@ -9,6 +9,18 @@ export class NoticesService {
     @InjectRepository(NoticesRepository)
     private readonly noticeRepository: NoticesRepository,
   ) {}
+  async getNoticeByUserNo(userNo: number) {
+    const notices: Notice[] = await this.noticeRepository.getNoticeByUserNo(
+      userNo,
+    );
+
+    return notices.map((notice) => {
+      notice = { ...notice, ...JSON.parse(notice.value) };
+      delete notice.value;
+      return notice;
+    });
+  }
+
   async getNoticeByConditions(
     noticeConditions: NoticeConditions,
   ): Promise<Notice[]> {

@@ -6,12 +6,9 @@ import { ChatLog } from 'src/chats/entity/chat-log.entity';
 import { ChatUsers } from 'src/chats/entity/chat-users.entity';
 import { Enquiries } from 'src/enquiries/entity/enquiry.entity';
 import { Friends } from 'src/friends/entity/friend.entity';
-import { MeetingInfo } from 'src/meetings/entity/meeting-info.entity';
-import { GuestMembers } from 'src/members/entity/guest-members.entity';
-import { HostMembers } from 'src/members/entity/host-members.entity';
 import { Notices } from 'src/notices/entity/notices.entity';
-import { ReportUser } from 'src/reports/entity/user-reports.entity';
 import { Reports } from 'src/reports/entity/reports.entity';
+import { ReportUser } from 'src/reports/entity/user-reports.entity';
 import {
   BaseEntity,
   Column,
@@ -47,19 +44,11 @@ export class Users extends BaseEntity {
   @DeleteDateColumn({ name: 'deleted_date', nullable: true })
   deletedDate: Date;
 
-  @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.userNo, {
-    nullable: false,
-  })
-  guestMembers: GuestMembers[];
+  @OneToMany((type) => BoardGuests, (boardGuests) => boardGuests.userNo)
+  guestMembers: BoardGuests[];
 
-  @OneToMany((type) => HostMembers, (hostMembers) => hostMembers.userNo)
-  hostMembers: HostMembers[];
-
-  @OneToMany((type) => MeetingInfo, (meetingInfo) => meetingInfo.guest)
-  meetingGuest: MeetingInfo[];
-
-  @OneToMany((type) => MeetingInfo, (meetingInfo) => meetingInfo.host)
-  meetingHost: MeetingInfo[];
+  @OneToMany((type) => BoardHosts, (boardHosts) => boardHosts.userNo)
+  hostMembers: BoardHosts[];
 
   @OneToMany((type) => BoardBookmarks, (boardBookmark) => boardBookmark.userNo)
   boardBookmark: BoardBookmarks;
@@ -70,11 +59,8 @@ export class Users extends BaseEntity {
   @OneToMany((type) => Reports, (report) => report.userNo)
   report: Reports[];
 
-  @OneToMany(
-    (type) => ReportUser,
-    (reportedUsers) => reportedUsers.targetUserNo,
-  )
-  reportedUser: ReportUser[];
+  @OneToMany((type) => ReportUser, (reportUser) => reportUser.targetUserNo)
+  reportUser: ReportUser[];
 
   @OneToMany((type) => Notices, (notices) => notices.userNo)
   noticeUser: Notices[];
