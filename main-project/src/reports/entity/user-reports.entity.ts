@@ -9,12 +9,12 @@ import {
 } from 'typeorm';
 import { Reports } from './reports.entity';
 
-@Entity('reported_users')
-export class ReportedUsers extends BaseEntity {
+@Entity('report_users')
+export class ReportUser extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @OneToOne((type) => Reports, (reports) => reports.reportedBoard, {
+  @OneToOne((type) => Reports, (reports) => reports.reportBoard, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'report_no' })

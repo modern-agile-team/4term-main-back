@@ -10,7 +10,7 @@ import { MeetingInfo } from 'src/meetings/entity/meeting-info.entity';
 import { GuestMembers } from 'src/members/entity/guest-members.entity';
 import { HostMembers } from 'src/members/entity/host-members.entity';
 import { Notices } from 'src/notices/entity/notices.entity';
-import { ReportedUsers } from 'src/reports/entity/reported-user.entity';
+import { ReportUser } from 'src/reports/entity/user-reports.entity';
 import { Reports } from 'src/reports/entity/reports.entity';
 import {
   BaseEntity,
@@ -47,7 +47,9 @@ export class Users extends BaseEntity {
   @DeleteDateColumn({ name: 'deleted_date', nullable: true })
   deletedDate: Date;
 
-  @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.userNo)
+  @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.userNo, {
+    nullable: false,
+  })
   guestMembers: GuestMembers[];
 
   @OneToMany((type) => HostMembers, (hostMembers) => hostMembers.userNo)
@@ -69,10 +71,10 @@ export class Users extends BaseEntity {
   report: Reports[];
 
   @OneToMany(
-    (type) => ReportedUsers,
+    (type) => ReportUser,
     (reportedUsers) => reportedUsers.targetUserNo,
   )
-  reportedUser: ReportedUsers[];
+  reportedUser: ReportUser[];
 
   @OneToMany((type) => Notices, (notices) => notices.userNo)
   noticeUser: Notices[];
