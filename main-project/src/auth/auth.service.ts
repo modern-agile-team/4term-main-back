@@ -36,4 +36,20 @@ export class AuthService {
 
     const { email } = googleUser.data;
   }
+
+  async naverLogin(token: string) {
+    const naverUserInfoUrl = 'https://openapi.naver.com/v1/nid/me';
+    const headers = {
+      Authorization: 'Bearer ' + token,
+    };
+
+    const { data } = await axios({
+      method: 'GET',
+      url: naverUserInfoUrl,
+      timeout: 30000,
+      headers,
+    });
+
+    const { email } = data.response;
+  }
 }

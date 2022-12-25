@@ -19,4 +19,11 @@ export class AuthController {
 
     return { success: true };
   }
+
+  @Post('/login/naver')
+  async naverLogin(@Body('token') token: string) {
+    await this.authService.naverLogin(token);
+
+    return { success: true };
+  }
 }
