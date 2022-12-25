@@ -9,6 +9,14 @@ export class AuthController {
   @Post('/login/kakao')
   async kakaoLogin(@Body('token') token: string) {
     await this.authService.kakaoLogin(token);
+
+    return { success: true };
+  }
+
+  @Post('/login/google')
+  async googleLogin(@Body('token') token: string) {
+    await this.authService.googleLogin(token);
+
     return { success: true };
   }
 }

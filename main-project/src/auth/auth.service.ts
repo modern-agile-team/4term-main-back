@@ -16,6 +16,24 @@ export class AuthService {
       timeout: 30000,
       headers,
     });
-    const { email, gender } = data.kakao_account;
+
+    const { email } = data.kakao_account;
+  }
+
+  async googleLogin(token: string) {
+    const googleUserInfoUrl =
+      'https://openidconnect.googleapis.com/v1/userinfo';
+    const headers = {
+      Authorization: 'Bearer ' + token,
+    };
+
+    const googleUser = await axios({
+      method: 'GET',
+      url: googleUserInfoUrl,
+      timeout: 30000,
+      headers,
+    });
+
+    const { email } = googleUser.data;
   }
 }
