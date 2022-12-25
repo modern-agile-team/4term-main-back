@@ -29,9 +29,6 @@ export class Users extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   email: string;
 
-  @Column({ default: false })
-  gender: boolean;
-
   @Column({ type: 'tinyint', width: 1, default: false })
   isAdmin: boolean;
 
