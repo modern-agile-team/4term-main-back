@@ -6,8 +6,10 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { ChatFileUrls } from './chat-file-urls.entity';
 import { ChatList } from './chat-list.entity';
 
 @Entity('chat_log')
@@ -15,7 +17,9 @@ export class ChatLog extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @ManyToOne((type) => ChatList, (chatList) => chatList.chatLogNo)
+  @ManyToOne((type) => ChatList, (chatList) => chatList.chatLogNo, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'chat_room_no' })
   chatRoomNo: number;
 
@@ -23,9 +27,12 @@ export class ChatLog extends BaseEntity {
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 
-  @Column()
+  @Column({ nullable: true })
   message: string;
 
   @CreateDateColumn({ name: 'sended_time' })
   sendedTime: Date;
+
+  @OneToMany((type) => ChatFileUrls, (chatFileUrls) => chatFileUrls.chatLogNo)
+  chatFileUrl: ChatFileUrls[];
 }

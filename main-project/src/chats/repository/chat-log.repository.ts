@@ -14,9 +14,9 @@ export class ChatLogRepository extends Repository<ChatLog> {
         .execute();
 
       return raw.insertId;
-    } catch (err) {
+    } catch (error) {
       throw new InternalServerErrorException(
-        `${err}: 메세지 저장(saveMessage): 알 수 없는 서버 에러입니다.`,
+        `${error}: 메세지 저장(saveMessage): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -35,9 +35,9 @@ export class ChatLogRepository extends Repository<ChatLog> {
         .getRawMany();
 
       return previousChatLog;
-    } catch (err) {
+    } catch (error) {
       throw new InternalServerErrorException(
-        `${err}: 채팅로그 불러오기(getPreviousChatLog): 알 수 없는 서버 에러입니다.`,
+        `${error}: 채팅로그 불러오기(getPreviousChatLog): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -52,9 +52,9 @@ export class ChatLogRepository extends Repository<ChatLog> {
         .getRawMany();
 
       return recentChatLog;
-    } catch (err) {
+    } catch (error) {
       throw new InternalServerErrorException(
-        `${err}: 채팅로그 불러오기(getRecentChatLog): 알 수 없는 서버 에러입니다.`,
+        `${error}: 채팅로그 불러오기(getRecentChatLog): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

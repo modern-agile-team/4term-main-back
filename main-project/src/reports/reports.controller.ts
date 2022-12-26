@@ -11,7 +11,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateReportDto } from './dto/create-reports.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
-import { ReportReadResponse } from './interface/reports.interface';
+import { ReportIF } from './interface/reports.interface';
 import { ReportsService } from './reports.service';
 
 @Controller('reports')
@@ -25,14 +25,9 @@ export class ReportsController {
     description: '신고내역을 전부 조회한다.',
   })
   async getAllReports(): Promise<object> {
-    const reports: ReportReadResponse[] =
-      await this.reportsService.getAllReports();
-    const response = {
-      success: true,
-      reports,
-    };
+    const response: ReportIF[] = await this.reportsService.getAllReports();
 
-    return response;
+    return { response };
   }
 
   @Get('/:reportNo')
@@ -43,15 +38,11 @@ export class ReportsController {
   async getReportByNo(
     @Param('reportNo', ParseIntPipe) reportNo: number,
   ): Promise<object> {
-    const report: ReportReadResponse = await this.reportsService.getReportByNo(
+    const response: ReportIF = await this.reportsService.getReportByNo(
       reportNo,
     );
-    const response = {
-      success: true,
-      report,
-    };
 
-    return response;
+    return { response };
   }
 
   // Post
@@ -64,13 +55,12 @@ export class ReportsController {
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body() createReportDto: CreateReportDto,
   ): Promise<object> {
-    const report: number = await this.reportsService.createBoardReport(
+    const response: number = await this.reportsService.createBoardReport(
       createReportDto,
       boardNo,
     );
-    const response = { success: true, report };
 
-    return response;
+    return { response };
   }
 
   @Post('/users/:userNo')
@@ -82,13 +72,12 @@ export class ReportsController {
     @Param('userNo', ParseIntPipe) userNo: number,
     @Body() createReportDto: CreateReportDto,
   ): Promise<object> {
-    const report: number = await this.reportsService.createUserReport(
+    const response: number = await this.reportsService.createUserReport(
       createReportDto,
       userNo,
     );
-    const response = { success: true, report };
 
-    return response;
+    return { response };
   }
 
   // Patch Methods
@@ -101,17 +90,12 @@ export class ReportsController {
     @Param('reportNo', ParseIntPipe) reportNo: number,
     @Body() updateReportDto: UpdateReportDto,
   ): Promise<object> {
-    const report: string = await this.reportsService.updateReport(
+    const response: string = await this.reportsService.updateReport(
       reportNo,
       updateReportDto,
     );
 
-    const response = {
-      success: true,
-      msg: report,
-    };
-
-    return response;
+    return { response };
   }
 
   // Delete Methods
@@ -122,9 +106,9 @@ export class ReportsController {
   })
   async deleteReportByNo(
     @Param('reportNo', ParseIntPipe) reportNo: number,
-  ): Promise<string> {
-    const report = await this.reportsService.deleteReportByNo(reportNo);
+  ): Promise<object> {
+    const response = await this.reportsService.deleteReportByNo(reportNo);
 
-    return report;
+    return { response };
   }
 }

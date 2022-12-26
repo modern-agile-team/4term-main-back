@@ -9,18 +9,18 @@ import {
 } from 'typeorm';
 import { Reports } from './reports.entity';
 
-@Entity('reported_users')
-export class ReportedUsers extends BaseEntity {
+@Entity('report_users')
+export class ReportUsers extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @OneToOne((type) => Reports, (reports) => reports.reportedBoard, {
+  @OneToOne((type) => Reports, (reports) => reports.reportBoard, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'report_no' })
   reportNo: number;
 
-  @ManyToOne((type) => Users, (users) => users.reportedUser, {
+  @ManyToOne((type) => Users, (users) => users.reportUser, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'target_user_no' })

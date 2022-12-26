@@ -90,4 +90,15 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
       );
     }
   }
+
+  async getChatRoomUsers(chatRoomNo: number) {
+    try {
+      const users = await this.createQueryBuilder('chat_users')
+        .select('JSON_ARRAYAGG(chat_users.userNo) AS users')
+        .where('chat_users.chatRoomNo = :chatRoomNo', { chatRoomNo })
+        .getRawOne();
+
+      return users;
+    } catch (error) {}
+  }
 }

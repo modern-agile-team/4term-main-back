@@ -1,8 +1,6 @@
-import { type } from 'os';
 import { Boards } from 'src/boards/entity/board.entity';
 import { Meetings } from 'src/meetings/entity/meeting.entity';
 import { NoticeChats } from 'src/notices/entity/notice-chat.entity';
-import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
   Column,
@@ -11,6 +9,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { ChatLog } from './chat-log.entity';
 import { ChatUsers } from './chat-users.entity';
@@ -35,4 +34,7 @@ export class ChatList extends BaseEntity {
 
   @OneToMany((type) => NoticeChats, (noticeChats) => noticeChats.chatRoomNo)
   noticeChat: NoticeChats[];
+
+  @OneToOne(() => Meetings, (meeting) => meeting.chatRoomNo)
+  meetingNo: number;
 }
