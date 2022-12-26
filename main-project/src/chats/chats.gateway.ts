@@ -9,7 +9,11 @@ import {
 import { Namespace, Socket } from 'socket.io';
 import { ChatsGatewayService } from './chats-gateway.service';
 import { CreateChatDto } from './dto/create-chat.dto';
-import { JoinChatRoom, MessagePayload } from './interface/chat.interface';
+import {
+  ChatRoomList,
+  JoinChatRoom,
+  MessagePayload,
+} from './interface/chat.interface';
 
 @WebSocketGateway(4000, { namespace: 'chat' })
 export class ChatsGateway {
@@ -47,35 +51,39 @@ export class ChatsGateway {
   }
 
   @SubscribeMessage('init-socket')
-  async handelInitSocket(
+  async handleInitSocket(
     @ConnectedSocket() socket: Socket,
     @MessageBody() userNo: number,
   ) {
-    await this.chatGatewayService.initSocket(socket, userNo);
+    const chatRoomList: ChatRoomList[] =
+      await this.chatGatewayService.initSocket(socket, userNo);
+
+    return { response: { chatRoomList } };
   }
 
   @SubscribeMessage('create-room')
-  async handelCreateRoom(
+  async handleCreateRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: CreateChatDto,
   ) {
     await this.chatGatewayService.createRoom(socket, messagePayload);
-
-    return { success: true };
   }
 
   @SubscribeMessage('join-room')
-  async handelJoinRoom(
+  async handleJoinRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: JoinChatRoom,
   ) {
-    await this.chatGatewayService.joinRoom(socket, messagePayload);
+    const recentChatLog = await this.chatGatewayService.joinRoom(
+      socket,
+      messagePayload,
+    );
 
-    return { success: true };
+    return { response: { recentChatLog } };
   }
 
   @SubscribeMessage('message')
-  async handelMessage(
+  async handleMessage(
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: MessagePayload,
   ): Promise<void> {
