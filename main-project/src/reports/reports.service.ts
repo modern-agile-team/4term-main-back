@@ -11,7 +11,7 @@ import { BoardRepository } from 'src/boards/repository/board.repository';
 import { Connection, QueryRunner } from 'typeorm';
 import { CreateReportDto } from './dto/create-reports.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
-import { ReportIF } from './interface/reports.interface';
+import { Report } from './interface/reports.interface';
 import { ReportBoardRepository } from './repository/report-board.repository';
 import { ReportRepository } from './repository/reports.repository';
 import { ReportUserRepository } from './repository/report-user.repository';
@@ -34,8 +34,8 @@ export class ReportsService {
     private readonly connection: Connection,
   ) {}
   // 조회 관련
-  async getAllReports(): Promise<ReportIF[]> {
-    const reports: ReportIF[] = await this.reportRepository.getAllReports();
+  async getAllReports(): Promise<Report[]> {
+    const reports: Report[] = await this.reportRepository.getAllReports();
 
     if (!reports) {
       throw new NotFoundException(
@@ -46,8 +46,8 @@ export class ReportsService {
     return reports;
   }
 
-  async getAllBoardReports(): Promise<ReportIF[]> {
-    const reportedBoards: ReportIF[] =
+  async getAllBoardReports(): Promise<Report[]> {
+    const reportedBoards: Report[] =
       await this.boardReportRepository.getAllBoardReports();
 
     if (!reportedBoards) {
@@ -59,8 +59,8 @@ export class ReportsService {
     return reportedBoards;
   }
 
-  async getAllUserReports(): Promise<ReportIF[]> {
-    const reportedUsers: ReportIF[] =
+  async getAllUserReports(): Promise<Report[]> {
+    const reportedUsers: Report[] =
       await this.userReportRepository.getAllUserReports();
 
     if (!reportedUsers) {
@@ -72,10 +72,8 @@ export class ReportsService {
     return reportedUsers;
   }
 
-  async getReportByNo(reportNo: number): Promise<ReportIF> {
-    const report: ReportIF = await this.reportRepository.getReportByNo(
-      reportNo,
-    );
+  async getReportByNo(reportNo: number): Promise<Report> {
+    const report: Report = await this.reportRepository.getReportByNo(reportNo);
 
     if (!report) {
       throw new NotFoundException(

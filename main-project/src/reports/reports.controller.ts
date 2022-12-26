@@ -11,7 +11,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CreateReportDto } from './dto/create-reports.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
-import { ReportIF } from './interface/reports.interface';
+import { Report } from './interface/reports.interface';
 import { ReportsService } from './reports.service';
 
 @Controller('reports')
@@ -25,7 +25,7 @@ export class ReportsController {
     description: '신고내역을 전부 조회한다.',
   })
   async getAllReports(): Promise<object> {
-    const response: ReportIF[] = await this.reportsService.getAllReports();
+    const response: Report[] = await this.reportsService.getAllReports();
 
     return { response };
   }
@@ -38,9 +38,7 @@ export class ReportsController {
   async getReportByNo(
     @Param('reportNo', ParseIntPipe) reportNo: number,
   ): Promise<object> {
-    const response: ReportIF = await this.reportsService.getReportByNo(
-      reportNo,
-    );
+    const response: Report = await this.reportsService.getReportByNo(reportNo);
 
     return { response };
   }

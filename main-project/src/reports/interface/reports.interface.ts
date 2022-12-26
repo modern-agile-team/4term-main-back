@@ -1,5 +1,5 @@
-import { OmitType } from "@nestjs/swagger";
-import { Reports } from "../entity/reports.entity";
+import { OmitType } from '@nestjs/swagger';
+import { Reports } from '../entity/reports.entity';
 
 export interface ReportDetail {
   reportNo: number;
@@ -7,7 +7,7 @@ export interface ReportDetail {
   targetUserNo?: number;
 }
 
-export interface ReportIF {
+export interface Report {
   no: number;
   title: string;
   description: string;
