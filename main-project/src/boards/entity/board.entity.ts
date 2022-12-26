@@ -13,7 +13,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Users } from 'src/users/entity/user.entity';
-import { ReportBoards } from 'src/reports/entity/board-reports.entity';
+import { ReportBoards } from 'src/reports/entity/report-board.entity';
 import { NoticeBoards } from 'src/notices/entity/notice-board.entity';
 import { BoardHosts } from './board-host.entity';
 import { BoardGuests } from './board-guest.entity';

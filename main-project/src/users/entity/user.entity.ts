@@ -8,7 +8,7 @@ import { Enquiries } from 'src/enquiries/entity/enquiry.entity';
 import { Friends } from 'src/friends/entity/friend.entity';
 import { Notices } from 'src/notices/entity/notices.entity';
 import { Reports } from 'src/reports/entity/reports.entity';
-import { ReportUsers } from 'src/reports/entity/user-reports.entity';
+import { ReportUsers } from 'src/reports/entity/report-user.entity';
 import {
   BaseEntity,
   Column,

@@ -14,7 +14,7 @@ export class ReportBoards extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @OneToOne((type) => Reports, (reports) => reports.reportBoard, {
+  @OneToOne((type) => Reports, (reports) => reports.reportedBoard, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'report_no' })

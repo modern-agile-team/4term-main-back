@@ -12,9 +12,9 @@ import { Connection, QueryRunner } from 'typeorm';
 import { CreateReportDto } from './dto/create-reports.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
 import { ReportIF } from './interface/reports.interface';
-import { BoardReportRepository } from './repository/board-report.repository';
+import { ReportBoardRepository } from './repository/report-board.repository';
 import { ReportRepository } from './repository/reports.repository';
-import { UserReportRepository } from './repository/user-report.repository';
+import { ReportUserRepository } from './repository/report-user.repository';
 
 @Injectable()
 export class ReportsService {
@@ -25,11 +25,11 @@ export class ReportsService {
     @InjectRepository(BoardRepository)
     private readonly boardRepository: BoardRepository,
 
-    @InjectRepository(BoardReportRepository)
-    private readonly boardReportRepository: BoardReportRepository,
+    @InjectRepository(ReportBoardRepository)
+    private readonly boardReportRepository: ReportBoardRepository,
 
-    @InjectRepository(UserReportRepository)
-    private readonly userReportRepository: UserReportRepository,
+    @InjectRepository(ReportUserRepository)
+    private readonly userReportRepository: ReportUserRepository,
 
     private readonly connection: Connection,
   ) {}
@@ -113,7 +113,7 @@ export class ReportsService {
       );
 
       const { insertId }: CreateResponse = await queryRunner.manager
-        .getCustomRepository(BoardReportRepository)
+        .getCustomRepository(ReportBoardRepository)
         .createBoardReport(reportNo, boardNo);
 
       if (!insertId) {
@@ -151,7 +151,7 @@ export class ReportsService {
       );
 
       const { insertId }: CreateResponse = await queryRunner.manager
-        .getCustomRepository(UserReportRepository)
+        .getCustomRepository(ReportUserRepository)
         .createUserReport(reportNo, userNo);
 
       if (!insertId) {

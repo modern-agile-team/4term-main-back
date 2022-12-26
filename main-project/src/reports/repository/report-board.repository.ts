@@ -1,25 +1,25 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { CreateResponse } from 'src/boards/interface/boards.interface';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
-import { ReportBoards } from '../entity/board-reports.entity';
+import { ReportBoards } from '../entity/report-board.entity';
 import { ReportIF } from '../interface/reports.interface';
 
 @EntityRepository(ReportBoards)
-export class BoardReportRepository extends Repository<ReportBoards> {
+export class ReportBoardRepository extends Repository<ReportBoards> {
   //신고글 조회 관련
 
   async getAllBoardReports(): Promise<ReportIF[]> {
     try {
-      const reportedBoards = this.createQueryBuilder('boardReports')
-        .leftJoin('boardReports.reportNo', 'reports')
+      const reportedBoards = this.createQueryBuilder('ReportBoards')
+        .leftJoin('ReportBoards.reportNo', 'reports')
         .select([
           'reports.no AS no',
           'reports.userNo AS userNo',
           'reports.title AS title',
           'reports.description AS description',
-          'boardReports.targetBoardNo as targetBoardNo',
+          'ReportBoards.targetBoardNo as targetBoardNo',
         ])
-        .where('boardReports.reportNo > 0')
+        .where('ReportBoards.reportNo > 0')
         .getRawMany();
 
       return reportedBoards;

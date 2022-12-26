@@ -18,15 +18,15 @@ export class ReportRepository extends Repository<Reports> {
   async getAllReports(): Promise<ReportIF[]> {
     try {
       const reports = this.createQueryBuilder('reports')
-        .leftJoin('reports.reportBoard', 'reportBoard')
-        .leftJoin('reports.reportUser', 'reportUser')
+        .leftJoin('reports.reportedBoard', 'reportedBoard')
+        .leftJoin('reports.reportedUser', 'reportedUser')
         .select([
           'reports.no AS no',
           'reports.userNo AS userNo',
           'reports.title AS title',
           'reports.description AS description',
-          'reportBoard.targetBoardNo as tagetBoardNo',
-          'reportUser.targetUserNo as tagetUserNo',
+          'reportedBoard.targetBoardNo as tagetBoardNo',
+          'reportedUser.targetUserNo as tagetUserNo',
         ])
         .orderBy('reports.no', 'DESC')
         .getRawMany();
@@ -43,15 +43,15 @@ export class ReportRepository extends Repository<Reports> {
   async getReportByNo(reportNo: number): Promise<ReportIF> {
     try {
       const report = this.createQueryBuilder('reports')
-        .leftJoin('reports.reportBoard', 'reportBoard')
-        .leftJoin('reports.reportUser', 'reportUser')
+        .leftJoin('reports.reportedBoard', 'reportedBoard')
+        .leftJoin('reports.reportedUser', 'reportedUser')
         .select([
           'reports.no AS no',
           'reports.userNo AS userNo',
           'reports.title AS title',
           'reports.description AS description',
-          'reportBoard.targetBoardNo as targetBoardNo',
-          'reportUser.targetUserNo as targetUserNo',
+          'reportedBoard.targetBoardNo as targetBoardNo',
+          'reportedUser.targetUserNo as targetUserNo',
         ])
         .where('reports.no=:reportNo', { reportNo })
         .getRawOne();
