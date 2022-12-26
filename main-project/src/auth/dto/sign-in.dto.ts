@@ -9,10 +9,4 @@ export class SignInDto {
     example: '123@naver.com',
   })
   email: string;
-
-  @IsNotEmpty()
-  @ApiProperty({
-    description: '비밀번호',
-  })
-  password: string;
 }

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { randomBytes } from 'crypto';
 import {
   BadRequestException,
   CACHE_MANAGER,
@@ -67,8 +68,10 @@ export class AuthService {
   }
 
   async signIn(signInDto: SignInDto) {
-    const { password, email }: SignInDto = signInDto;
+    const { email }: SignInDto = signInDto;
     await this.validateUserNotCreated(email);
+    const validationKey = randomBytes(7).toString('base64url');
+    await this.cacheManager.set(email, validationKey, 360);
   }
 
   private async validateUserNotCreated(email: string) {
