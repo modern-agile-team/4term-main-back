@@ -9,14 +9,13 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { BoardDto } from '../dto/board.dto';
-import { BoardHosts } from '../entity/board-host.entity';
 import { Boards } from '../entity/board.entity';
-import { BoardIF } from '../interface/boards.interface';
+import { Board } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
 export class BoardRepository extends Repository<Boards> {
   // 게시글 조회 관련
-  async getBoardByNo(boardNo: number): Promise<BoardIF> {
+  async getBoardByNo(boardNo: number): Promise<Board> {
     try {
       const board = await this.createQueryBuilder('boards')
         .leftJoin('boards.userNo', 'users')
@@ -50,7 +49,7 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async getAllBoards(): Promise<BoardIF[]> {
+  async getAllBoards(): Promise<Board[]> {
     try {
       const boards = await this.createQueryBuilder('boards')
         .select([
@@ -74,7 +73,10 @@ export class BoardRepository extends Repository<Boards> {
   }
 
   //게시글 생성 관련
-  async createBoard(userNo: number, newBoard: Partial<BoardDto>): Promise<number> {
+  async createBoard(
+    userNo: number,
+    newBoard: Partial<BoardDto>,
+  ): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('boards')
         .insert()
@@ -146,7 +148,7 @@ export class BoardRepository extends Repository<Boards> {
         .getRawOne();
 
       return userList;
-    } catch (error) { }
+    } catch (error) {}
   }
 }
 

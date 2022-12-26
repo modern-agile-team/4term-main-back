@@ -13,7 +13,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Users } from 'src/users/entity/user.entity';
-import { Reportedboards } from 'src/reports/entity/reported-board.entity';
+import { ReportBoards } from 'src/reports/entity/report-board.entity';
 import { NoticeBoards } from 'src/notices/entity/notice-board.entity';
 import { BoardHosts } from './board-host.entity';
 import { BoardGuests } from './board-guest.entity';
@@ -79,11 +79,8 @@ export class Boards extends BaseEntity {
   @OneToMany((type) => BoardGuests, (boardGuests) => boardGuests.boardNo)
   guests: BoardGuests;
 
-  @OneToMany(
-    (type) => Reportedboards,
-    (reportedboards) => reportedboards.targetBoardNo,
-  )
-  reportedBoard: Reportedboards[];
+  @OneToMany((type) => ReportBoards, (boardReport) => boardReport.targetBoardNo)
+  boardReport: ReportBoards[];
 
   @OneToMany((type) => ChatList, (chat) => chat.boardNo)
   chatBoard: ChatList[];
