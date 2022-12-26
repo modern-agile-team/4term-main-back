@@ -1,8 +1,16 @@
-import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { SignInDto } from './dto/sign-in.dto';
+import { UsersRepository } from 'src/users/repository/users.repository';
 
 @Injectable()
 export class AuthService {
+  constructor(
+    @InjectRepository(UsersRepository)
+    private readonly userRepository: UsersRepository,
+  ) {}
+
   async kakaoLogin(token: string) {
     const kakaoUserInfoUrl = 'https://kapi.kakao.com/v2/user/me';
     const headers = {
@@ -51,5 +59,19 @@ export class AuthService {
     });
 
     const { email } = data.response;
+  }
+
+  async signIn(signInDto: SignInDto) {
+    const { password, email }: SignInDto = signInDto;
+    await this.validateUserNotCreated(email);
+  }
+
+  private async validateUserNotCreated(email: string) {
+    const user = this.userRepository.getUserByEmail(email);
+    if (user) {
+      throw new BadRequestException(
+        `이미 가입된 회원입니다. 로그인을 이용해 주세요.`,
+      );
+    }
   }
 }
