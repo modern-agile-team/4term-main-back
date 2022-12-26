@@ -6,17 +6,26 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  UploadedFiles,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChatsControllerService } from './chats-controller.service';
 import { GetChatLogDTO } from './dto/get-chat-log.dto';
 import { InviteUserDTO } from './dto/invite-user.dto';
+import { AwsService } from 'src/aws/aws.service';
 import { ChatLog } from './entity/chat-log.entity';
+import { ConnectedSocket } from '@nestjs/websockets/decorators';
+import { Socket } from 'dgram';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
 export class ChatsController {
-  constructor(private readonly chatControllerService: ChatsControllerService) {}
+  constructor(
+    private readonly chatControllerService: ChatsControllerService,
+    private readonly awsService: AwsService,
+  ) {}
 
   @Get('/:userNo')
   @ApiOperation({
@@ -32,38 +41,21 @@ export class ChatsController {
     };
   }
 
-  @Get('/join/:chatRoomNo')
-  @ApiOperation({
-    summary: '채팅방 입장시 대화내역 API',
-    description: '채팅방 입장 시 가장 최신 대화내역 출력',
-  })
-  async getRecentChatLog(
-    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body('userNo', ParseIntPipe) userNo: number,
-  ): Promise<object> {
-    const response = await this.chatControllerService.getRecentChatLog({
-      userNo,
-      chatRoomNo,
-    });
-
-    return { response };
-  }
-
   @Get('/:chatRoomNo/log')
   @ApiOperation({
-    summary: '채팅 내역 API',
-    description: ' 채팅 내역 조회',
+    summary: '이전 채팅 내역 API',
+    description: '이전 채팅 내역 조회',
   })
   async getChatLog(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() getChatLogDto: GetChatLogDTO,
   ): Promise<object> {
-    const response = await this.chatControllerService.getChatLog(
+    const previousChatLog = await this.chatControllerService.getPreviousChatLog(
       getChatLogDto,
       chatRoomNo,
     );
 
-    return { response };
+    return { response: { previousChatLog } };
   }
 
   @Post('/:chatRoomNo/invite')
@@ -74,7 +66,7 @@ export class ChatsController {
   async inviteUser(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() inviteUser: InviteUserDTO,
-  ): Promise<{ msg: string }> {
+  ): Promise<object> {
     await this.chatControllerService.inviteUser(inviteUser, chatRoomNo);
 
     return {
@@ -95,6 +87,23 @@ export class ChatsController {
 
     return {
       msg: '채팅방 참여 성공',
+    };
+  }
+
+  @Post('/:chatRoomNo/images')
+  @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
+  async uploadFile(
+    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    const uploadedFileUrlList =
+      files.length === 0
+        ? false
+        : await this.awsService.uploadImage(files, chatRoomNo);
+
+    return {
+      msg: `이미지 업로드 성공`,
+      response: { uploadedFileUrlList },
     };
   }
 

@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { CreateResponse } from 'src/boards/interface/boards.interface';
 import {
   DeleteResult,
   EntityRepository,
@@ -9,24 +10,23 @@ import {
 import { EnquiryDto } from '../dto/enquiry.dto';
 import { Enquiries } from '../entity/enquiry.entity';
 import {
-  EnquiryCreateResponse,
-  EnquiryDetail,
-  EnquiryReadResponse,
+  EnquiryIF,
 } from '../interface/enquiry.interface';
 
 @EntityRepository(Enquiries)
 export class EnquiryRepository extends Repository<Enquiries> {
   // 문의사항 조회 관련
-  async getAllEnquiries(): Promise<EnquiryReadResponse[]> {
+  async getAllEnquiries(): Promise<EnquiryIF[]> {
     try {
       const enquiries = this.createQueryBuilder('enquiries')
+        .leftJoin('enquiries.userNo', 'users')
         .select([
           'enquiries.no AS no',
-          'enquiries.userNo AS user_no',
+          'users.no AS userNo',
           'enquiries.title AS title',
           'enquiries.description AS description',
         ])
-        .orderBy('enquiries.no', 'DESC')
+        .orderBy('no', 'DESC')
         .getRawMany();
 
       return enquiries;
@@ -37,16 +37,17 @@ export class EnquiryRepository extends Repository<Enquiries> {
     }
   }
 
-  async getEnquiriesByNo(enquiryNo: number): Promise<EnquiryReadResponse> {
+  async getEnquiriesByNo(enquiryNo: number): Promise<EnquiryIF> {
     try {
       const enquiry = this.createQueryBuilder('enquiries')
+        .leftJoin('enquiries.userNo', 'users')
         .select([
           'enquiries.no AS no',
-          'enquiries.userNo AS user_no',
+          'users.no AS userNo',
           'enquiries.title AS title',
           'enquiries.description AS description',
         ])
-        .where('no = :enquiryNo', { enquiryNo })
+        .where('enquiries.no = :enquiryNo', { enquiryNo })
         .getRawOne();
 
       return enquiry;
@@ -59,13 +60,13 @@ export class EnquiryRepository extends Repository<Enquiries> {
 
   //문의사항 생성 관련
   async createEnquiry(
-    enquiryDetail: EnquiryDetail,
-  ): Promise<EnquiryCreateResponse> {
+    enquiry: EnquiryIF,
+  ): Promise<CreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('eqnuiries')
         .insert()
         .into(Enquiries)
-        .values(enquiryDetail)
+        .values(enquiry)
         .execute();
 
       return raw;
@@ -79,12 +80,12 @@ export class EnquiryRepository extends Repository<Enquiries> {
   //문의사항 수정 관련
   async updateEnquiry(
     enquiryNo: number,
-    enquiryDto: EnquiryDto,
+    enquiry: EnquiryDto,
   ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Enquiries)
-        .set(enquiryDto)
+        .set(enquiry)
         .where('no = :enquiryNo', { enquiryNo })
         .execute();
 

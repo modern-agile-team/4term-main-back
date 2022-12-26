@@ -20,7 +20,7 @@ export class ChatListRepository extends Repository<ChatList> {
     }
   }
 
-  async createRoom(createChat: CreateChat): Promise<number> {
+  async createRoom(createChat: CreateChat): Promise<InsertResult> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('chat_list')
         .insert()

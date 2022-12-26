@@ -1,19 +1,14 @@
-import { Boards } from 'src/boards/entity/board.entity';
 import { ChatList } from 'src/chats/entity/chat-list.entity';
-import { GuestMembers } from 'src/members/entity/guest-members.entity';
-import { HostMembers } from 'src/members/entity/host-members.entity';
 import {
   BaseEntity,
   Column,
   CreateDateColumn,
-  DeleteDateColumn,
   Entity,
-  OneToMany,
+  JoinColumn,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { MeetingInfo } from './meeting-info.entity';
 
 @Entity('meetings')
 export class Meetings extends BaseEntity {
@@ -35,17 +30,10 @@ export class Meetings extends BaseEntity {
   @UpdateDateColumn({ name: 'updated_date' })
   updatedDate: Date;
 
-  @DeleteDateColumn({ nullable: true, name: 'deleted_date' })
-  deletedDate: Date;
-
-  @OneToOne((type) => MeetingInfo, (meetingInfo) => meetingInfo.meetingNo, {
+  @OneToOne(() => ChatList, (chatList) => chatList.meetingNo, {
+    nullable: false,
     onDelete: 'CASCADE',
   })
-  meetingInfo: MeetingInfo;
-
-  @OneToMany((type) => HostMembers, (hostMembers) => hostMembers.meetingNo)
-  hostMembers: HostMembers[];
-
-  @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.meetingNo)
-  guestMembers: GuestMembers[];
+  @JoinColumn({ name: 'chat_room_no' })
+  chatRoomNo: number;
 }

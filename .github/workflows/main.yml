@@ -8,7 +8,7 @@ on:
     push:
         branches: ["develop"]
 env:
-    DOCKER_IMAGE: ghcr.io/${{ github.actor }}/summer-auto-deploy
+    DOCKER_IMAGE: ghcr.io/klaus9267/summer-auto-deploy
     VERSION: ${{ github.sha }}
     NAME: docker_cicd
 jobs:
@@ -27,7 +27,7 @@ jobs:
               uses: docker/login-action@v1
               with:
                   registry: ghcr.io
-                  username: ${{ github.actor }}
+                  username: klaus9267
                   password: ${{ secrets.MAIN_TOKEN }}
             # # docker image push
             - name: Build and push
@@ -47,7 +47,7 @@ jobs:
               uses: docker/login-action@v1
               with:
                   registry: ghcr.io
-                  username: ${{ github.actor }}
+                  username: klaus9267
                   password: ${{ secrets.MAIN_TOKEN }}
             - name: Docker run
               run: |
