@@ -41,7 +41,7 @@ export class ChatsControllerService {
     return chatList;
   }
 
-  async getChatLog(
+  async getPreviousChatLog(
     getChatLogDto: GetChatLogDTO,
     chatRoomNo: number,
   ): Promise<ChatLog[]> {
@@ -61,33 +61,12 @@ export class ChatsControllerService {
       throw new BadRequestException('채팅방에 존재하지 않는 유저입니다.');
     }
 
-    const chatLog = await this.chatLogRepository.getPreviousChatLog(
+    const previousChatLog = await this.chatLogRepository.getPreviousChatLog(
       chatRoomNo,
       currentChatLogNo,
     );
 
-    return chatLog;
-  }
-
-  async getRecentChatLog({ userNo, chatRoomNo }: PreviousChatLog) {
-    const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
-      chatRoomNo,
-    );
-    if (!chatRoom) {
-      throw new BadRequestException('존재하지 않는 채팅방입니다.');
-    }
-
-    const user = await this.chatUsersRepository.checkUserInChatRoom({
-      userNo,
-      chatRoomNo,
-    });
-    if (!user) {
-      throw new BadRequestException('채팅방에 존재하지 않는 유저입니다.');
-    }
-
-    const chatLog = await this.chatLogRepository.getRecentChatLog(chatRoomNo);
-
-    return chatLog;
+    return previousChatLog;
   }
 
   async inviteUser(

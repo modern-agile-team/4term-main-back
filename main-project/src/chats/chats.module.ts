@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MeetingInfoRepository } from 'src/meetings/repository/meeting-info.repository';
 import { MeetingRepository } from 'src/meetings/repository/meeting.repository';
 import { ChatsGateway } from './chats.gateway';
 import { ChatsGatewayService } from './chats-gateway.service';
@@ -22,7 +21,7 @@ import { ChatFileUrlsRepository } from './repository/chat-file-urls.repository';
       ChatLogRepository,
       ChatFileUrlsRepository,
       MeetingRepository,
-      MeetingInfoRepository,
+      ChatLogRepository,
       NoticeChatsRepository,
       NoticesRepository,
       BoardRepository,

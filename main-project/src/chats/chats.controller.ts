@@ -41,38 +41,21 @@ export class ChatsController {
     };
   }
 
-  @Get('/join/:chatRoomNo')
-  @ApiOperation({
-    summary: '채팅방 입장시 대화내역 API',
-    description: '채팅방 입장 시 가장 최신 대화내역 출력',
-  })
-  async getRecentChatLog(
-    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body('userNo', ParseIntPipe) userNo: number,
-  ): Promise<object> {
-    const response = await this.chatControllerService.getRecentChatLog({
-      userNo,
-      chatRoomNo,
-    });
-
-    return { response };
-  }
-
   @Get('/:chatRoomNo/log')
   @ApiOperation({
-    summary: '채팅 내역 API',
-    description: ' 채팅 내역 조회',
+    summary: '이전 채팅 내역 API',
+    description: '이전 채팅 내역 조회',
   })
   async getChatLog(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() getChatLogDto: GetChatLogDTO,
   ): Promise<object> {
-    const response = await this.chatControllerService.getChatLog(
+    const previousChatLog = await this.chatControllerService.getPreviousChatLog(
       getChatLogDto,
       chatRoomNo,
     );
 
-    return { response };
+    return { response: { previousChatLog } };
   }
 
   @Post('/:chatRoomNo/invite')
@@ -83,7 +66,7 @@ export class ChatsController {
   async inviteUser(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() inviteUser: InviteUserDTO,
-  ): Promise<{ msg: string }> {
+  ): Promise<object> {
     await this.chatControllerService.inviteUser(inviteUser, chatRoomNo);
 
     return {
