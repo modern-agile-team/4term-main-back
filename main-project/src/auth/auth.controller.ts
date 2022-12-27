@@ -2,6 +2,7 @@ import { Controller } from '@nestjs/common';
 import { Body, Post } from '@nestjs/common/decorators';
 import { AuthService } from './auth.service';
 import { SignInDto } from './dto/sign-in.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -31,6 +32,13 @@ export class AuthController {
   @Post('/signIn')
   async signIn(@Body() signInDto: SignInDto) {
     await this.authService.signIn(signInDto);
+
+    return { success: true };
+  }
+
+  @Post('/verify')
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+    await this.authService.verifyEmail(verifyEmailDto);
 
     return { success: true };
   }

@@ -9,6 +9,7 @@ import {
 import { SignInDto } from './dto/sign-in.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { MailerService } from '@nestjs-modules/mailer';
+import { VerifyEmailDto } from './dto/verify-email.dto';
 
 @Injectable()
 export class AuthService {
@@ -73,13 +74,20 @@ export class AuthService {
     const { email }: SignInDto = signInDto;
     await this.validateUserNotCreated(email);
     const validationKey = randomBytes(7).toString('base64url');
-    await this.cacheManager.set(email, validationKey, 360);
+    await this.cacheManager.set(email, validationKey, 315);
 
     await this.mailerService.sendMail({
       to: email,
       subject: '이메일 인증 코드(ModernAgileFourth)',
       html: `<b>${validationKey}</b>`,
     });
+  }
+
+  async verifyEmail(verifyEmailDto: VerifyEmailDto) {
+    const { email, code }: VerifyEmailDto = verifyEmailDto;
+
+    await this.validateUserNotCreated(email);
+    await this.validateEmail(email, code);
   }
 
   private async validateUserNotCreated(email: string) {
@@ -89,6 +97,20 @@ export class AuthService {
       throw new BadRequestException(
         `이미 가입된 회원입니다. 로그인을 이용해 주세요.`,
       );
+    }
+  }
+
+  private async validateEmail(email: string, code: string) {
+    const validCode = await this.cacheManager.get(email);
+
+    if (!validCode) {
+      throw new BadRequestException(
+        `인증 코드가 만료된 이메일입니다. 코드를 다시 요청해 주세요.`,
+      );
+    }
+
+    if (validCode !== code) {
+      throw new BadRequestException(`올바르지 않은 인증 코드입니다.`);
     }
   }
 }

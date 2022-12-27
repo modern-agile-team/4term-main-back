@@ -8,7 +8,6 @@ export const cacheModule = CacheModule.registerAsync({
     store: redisStore,
     host: configService.get<string>('REDIS_HOST'),
     port: configService.get<number>('REDIS_PORT'),
-    ttl: 0,
     auth_pass: configService.get<string>('REDIS_PASSWORD'),
   }),
 });
