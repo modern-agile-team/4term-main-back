@@ -1,5 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { EntityRepository, Repository } from 'typeorm';
+import { ResultSetHeader } from 'mysql2';
+import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { Users } from '../entity/user.entity';
 
 @EntityRepository(Users)
@@ -15,6 +16,22 @@ export class UsersRepository extends Repository<Users> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 유저 이메일 조회 에러(getUserByEmail): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async createUser(email: string): Promise<ResultSetHeader> {
+    try {
+      const { raw }: InsertResult = await this.createQueryBuilder('users')
+        .insert()
+        .into(Users)
+        .values({ email })
+        .execute();
+
+      return raw;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 유저 생성(createUser): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

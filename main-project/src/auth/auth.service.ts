@@ -5,11 +5,14 @@ import {
   CACHE_MANAGER,
   Inject,
   Injectable,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { MailerService } from '@nestjs-modules/mailer';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResultSetHeader } from 'mysql2/promise';
+import { User } from 'src/users/interface/user.interface';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +22,24 @@ export class AuthService {
     private readonly userRepository: UsersRepository,
     private readonly mailerService: MailerService,
   ) {}
+
+  private userStatus = {
+    NO_PROFILE: 0,
+    SHCOOL_NOT_AUTHENTICATED: 1,
+    CONFIRMED: 2,
+  };
+
+  private async createUser(email: string): Promise<User> {
+    const { insertId }: ResultSetHeader = await this.userRepository.createUser(
+      email,
+    );
+
+    if (!insertId) {
+      throw new InternalServerErrorException(`유저 생성 오류(createUser)`);
+    }
+
+    return { userNo: insertId, status: this.userStatus.NO_PROFILE };
+  }
 
   async kakaoLogin(token: string) {
     const kakaoUserInfoUrl = 'https://kapi.kakao.com/v2/user/me';
@@ -88,6 +109,7 @@ export class AuthService {
 
     await this.validateUserNotCreated(email);
     await this.validateEmail(email, code);
+    const user: User = await this.createUser(email);
   }
 
   private async validateUserNotCreated(email: string) {
