@@ -1,5 +1,5 @@
 import { BoardBookmarks } from 'src/boards/entity/board-bookmark.entity';
-import { BoardParticipation } from 'src/boards/entity/board-participation.entity';
+import { BoardGuests } from 'src/boards/entity/board-guest.entity';
 import { BoardHosts } from 'src/boards/entity/board-host.entity';
 import { Boards } from 'src/boards/entity/board.entity';
 import { ChatLog } from 'src/chats/entity/chat-log.entity';
@@ -44,8 +44,8 @@ export class Users extends BaseEntity {
   @DeleteDateColumn({ name: 'deleted_date', nullable: true })
   deletedDate: Date;
 
-  @OneToMany((type) => BoardParticipation, (boardGuests) => boardGuests.userNo)
-  guestMembers: BoardParticipation[];
+  @OneToMany((type) => BoardGuests, (boardGuests) => boardGuests.userNo)
+  guestMembers: BoardGuests[];
 
   @OneToMany((type) => BoardHosts, (boardHosts) => boardHosts.userNo)
   hostMembers: BoardHosts[];
@@ -90,10 +90,10 @@ export class Users extends BaseEntity {
   hostMember: BoardHosts;
 
   @OneToMany(
-    (type) => BoardParticipation,
+    (type) => BoardGuests,
     (boardHostMembers) => boardHostMembers.userNo,
   )
-  guestMember: BoardParticipation;
+  guestMember: BoardGuests;
 
   @OneToMany((type) => ChatLog, (chatLog) => chatLog.userNo)
   chatLogUserNo: ChatLog[];
