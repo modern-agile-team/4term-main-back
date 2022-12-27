@@ -12,6 +12,12 @@ export class CreateChat {
   roomName?: string;
 }
 
+export interface ChatRoomUsers {
+  users: string;
+  userType: number;
+  chatRoomNo: number;
+}
+
 export interface JoinChatRoom {
   userNo: number;
   chatRoomNo: number;
@@ -38,7 +44,7 @@ export interface ChatRoom {
   hostUserNo?: string;
 }
 
-export interface ChatRoomUsers {
+export interface ChatRoomUser {
   chatRoomNo: number;
   nickname: string;
   roomName: string;
