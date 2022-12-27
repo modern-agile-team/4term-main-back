@@ -21,22 +21,6 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
-  async setChatRoomUser(roomUsers: ChatUserInfo): Promise<number> {
-    try {
-      const { raw }: InsertResult = await this.createQueryBuilder('chat_users')
-        .insert()
-        .into(ChatUsers)
-        .values(roomUsers)
-        .execute();
-
-      return raw.affectedRows;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error}: 채팅방 유저 정보 설정(setRoomUsers): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
   async getChatRoomList(userNo: number): Promise<ChatRoomList[]> {
     try {
       const chatRoomList = await this.createQueryBuilder('chat_users')
@@ -66,7 +50,6 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
         ])
         .where('user_no = :userNo AND chat_room_no = :chatRoomNo', chatUserInfo)
         .getRawOne();
-
       return user;
     } catch (error) {
       throw new InternalServerErrorException(

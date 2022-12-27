@@ -9,7 +9,6 @@ import { Socket } from 'socket.io';
 import { BoardRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
-import { Users } from 'src/users/entity/user.entity';
 import { Connection, getConnection, InsertResult, QueryRunner } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { ChatLog } from './entity/chat-log.entity';
@@ -48,14 +47,10 @@ export class ChatsGatewayService {
     private readonly chatFileUrlsRepository: ChatFileUrlsRepository,
   ) {}
 
-  host = UserType.HOST;
-  guest = UserType.GUEST;
-
   async initSocket(socket, userNo: number): Promise<ChatRoomList[]> {
     const chatRoomList = await this.getChatRoomListByUserNo(
       Object.values(userNo),
     );
-
     if (chatRoomList) {
       chatRoomList.forEach((el) => {
         socket.join(`${el.chatRoomNo}`);
@@ -66,21 +61,20 @@ export class ChatsGatewayService {
   }
 
   async createRoom(socket: Socket, chat: CreateChatDto): Promise<void> {
-    const { boardNo } = chat;
-
-    await this.checkChatRoomExists(boardNo);
-
-    const { roomName, hostUserNo, guestUserNo } = await this.getUsersByBoardNo(
-      boardNo,
-    );
-
     const connection: Connection = getConnection();
     const queryRunner: QueryRunner = connection.createQueryRunner();
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
+    const { boardNo } = chat;
+
     try {
+      await this.checkChatRoomExists(boardNo);
+
+      const { roomName, hostUserNo, guestUserNo } =
+        await this.getUsersByBoardNo(boardNo);
+
       const chatRoomNo: number = await this.createRoomByBoardNo(queryRunner, {
         boardNo,
         roomName,
@@ -88,13 +82,13 @@ export class ChatsGatewayService {
 
       await this.setChatRoom(queryRunner, {
         users: hostUserNo,
-        userType: this.host,
+        userType: UserType.HOST,
         chatRoomNo,
       });
 
       await this.setChatRoom(queryRunner, {
         users: guestUserNo,
-        userType: this.guest,
+        userType: UserType.GUEST,
         chatRoomNo,
       });
 
@@ -103,6 +97,7 @@ export class ChatsGatewayService {
       socket.join(`${chatRoomNo}`);
     } catch (error) {
       await queryRunner?.rollbackTransaction();
+
       throw error;
     } finally {
       await queryRunner?.release();
@@ -219,6 +214,7 @@ export class ChatsGatewayService {
       });
     } catch (error) {
       await queryRunner?.rollbackTransaction();
+
       throw error;
     } finally {
       await queryRunner?.release();
@@ -312,6 +308,7 @@ export class ChatsGatewayService {
     if (!insertId) {
       throw new InternalServerErrorException(`채팅방 생성 오류입니다.`);
     }
+
     return insertId;
   }
 
@@ -319,7 +316,7 @@ export class ChatsGatewayService {
     chatRoomNo: number,
     userNo: number,
   ): Promise<void> {
-    const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
+    const chatRoom = await this.chatListRepository.checkRoomExistsByChatNo(
       chatRoomNo,
     );
     if (!chatRoom) {
