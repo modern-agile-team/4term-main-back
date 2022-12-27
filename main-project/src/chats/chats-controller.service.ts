@@ -7,7 +7,11 @@ import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { GetChatLogDTO } from './dto/get-chat-log.dto';
 import { InviteUserDTO } from './dto/invite-user.dto';
 import { ChatLog } from './entity/chat-log.entity';
-import { ChatRoomList, PreviousChatLog } from './interface/chat.interface';
+import {
+  ChatRoomList,
+  ChatUserInfo,
+  PreviousChatLog,
+} from './interface/chat.interface';
 import { ChatListRepository } from './repository/chat-list.repository';
 import { ChatLogRepository } from './repository/chat-log.repository';
 import { ChatUsersRepository } from './repository/chat-users.repository';
@@ -46,7 +50,7 @@ export class ChatsControllerService {
     chatRoomNo: number,
   ): Promise<ChatLog[]> {
     const { userNo, currentChatLogNo }: GetChatLogDTO = getChatLogDto;
-    const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
+    const chatRoom = await this.chatListRepository.checkRoomExistsByChatNo(
       chatRoomNo,
     );
     if (!chatRoom) {
@@ -74,11 +78,11 @@ export class ChatsControllerService {
     chatRoomNo: number,
   ): Promise<void> {
     const { userNo, targetUserNo }: InviteUserDTO = inviteUser;
-    const user = await this.chatUsersRepository.checkUserInChatRoom({
+    const targetUser = await this.chatUsersRepository.checkUserInChatRoom({
       userNo: targetUserNo,
       chatRoomNo,
     });
-    if (user) {
+    if (targetUser) {
       throw new BadRequestException('이미 채팅방에 존재하는 유저입니다.');
     }
 
@@ -86,9 +90,10 @@ export class ChatsControllerService {
       userNo,
       chatRoomNo,
     });
+
     const type = userType ? NoticeType.INVITE_HOST : NoticeType.INVITE_GUEST;
 
-    const noticeChat = await this.noticesRepository.checkNoticeChat(
+    const noticeChat = await this.noticeChatsRepository.checkNoticeChat(
       targetUserNo,
       chatRoomNo,
       type,
@@ -97,58 +102,21 @@ export class ChatsControllerService {
       throw new BadRequestException('이미 초대를 보낸 상태입니다.');
     }
 
-    const noticeNo = await this.noticesRepository.saveNoticeChatInvite({
+    const { insertId } = await this.noticesRepository.saveNotice({
       userNo,
       targetUserNo,
       type,
     });
-    if (!noticeNo) {
-      throw new BadRequestException('채팅방 초대에 실패했습니다.');
-    }
-
-    const insertId = await this.noticeChatsRepository.saveNoticeChat({
-      chatRoomNo,
-      noticeNo,
-    });
     if (!insertId) {
-      throw new BadRequestException('알람 정보 저장 오류입니다.');
+      throw new BadRequestException('Notice 저장에 실패했습니다.');
     }
-  }
 
-  async acceptInvitation(noticeNo, userNo): Promise<void> {
-    const notice = await this.noticesRepository.getNoticeChatRoomNo(
-      noticeNo,
-      userNo,
-    );
-    if (!notice) {
-      throw new BadRequestException('초대 정보가 존재하지 않습니다.');
-    }
-    const chatRoomNo = notice.chatRoomNo;
-    const userType =
-      notice.type == NoticeType.INVITE_HOST ? UserType.HOST : UserType.GUEST;
-
-    const chatRoom = await this.chatListRepository.checkRoomExistByChatNo(
+    const affectedRows = await this.noticeChatsRepository.saveNoticeChat({
       chatRoomNo,
-    );
-    if (!chatRoom) {
-      throw new BadRequestException('존재하지 않는 채팅방입니다.');
-    }
-
-    const user = await this.chatUsersRepository.checkUserInChatRoom({
-      chatRoomNo,
-      userNo,
+      noticeNo: insertId,
     });
-    if (user) {
-      throw new BadRequestException('이미 참여중인 채팅방 입니다.');
-    }
-
-    const result = await this.chatUsersRepository.setChatRoomUser({
-      chatRoomNo,
-      userNo,
-      userType,
-    });
-    if (!result) {
-      throw new BadRequestException('채팅방 초대 수락 오류입니다.');
+    if (!affectedRows) {
+      throw new BadRequestException('Notice Chat 저장에 실패했습니다.');
     }
   }
 }

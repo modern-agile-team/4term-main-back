@@ -74,22 +74,6 @@ export class ChatsController {
     };
   }
 
-  @Post('/accept/:noticeNo')
-  @ApiOperation({
-    summary: '채팅방 초대 수락 API',
-    description: 'notice 번호를 통한 초대 수락',
-  })
-  async acceptInvitation(
-    @Param('noticeNo', ParseIntPipe) noticeNo: number,
-    @Body('userNo', ParseIntPipe) userNo: number,
-  ): Promise<{ msg: string }> {
-    await this.chatControllerService.acceptInvitation(noticeNo, userNo);
-
-    return {
-      msg: '채팅방 참여 성공',
-    };
-  }
-
   @Post('/:chatRoomNo/images')
   @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
   async uploadFile(
