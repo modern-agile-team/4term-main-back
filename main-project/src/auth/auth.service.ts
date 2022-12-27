@@ -1,13 +1,19 @@
 import axios from 'axios';
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { randomBytes } from 'crypto';
+import {
+  BadRequestException,
+  CACHE_MANAGER,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(UsersRepository)
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager,
     private readonly userRepository: UsersRepository,
   ) {}
 
@@ -62,12 +68,15 @@ export class AuthService {
   }
 
   async signIn(signInDto: SignInDto) {
-    const { password, email }: SignInDto = signInDto;
+    const { email }: SignInDto = signInDto;
     await this.validateUserNotCreated(email);
+    const validationKey = randomBytes(7).toString('base64url');
+    await this.cacheManager.set(email, validationKey, 360);
   }
 
   private async validateUserNotCreated(email: string) {
-    const user = this.userRepository.getUserByEmail(email);
+    const user = await this.userRepository.getUserByEmail(email);
+
     if (user) {
       throw new BadRequestException(
         `이미 가입된 회원입니다. 로그인을 이용해 주세요.`,

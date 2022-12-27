@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { CacheModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -17,9 +17,11 @@ import { ChatsModule } from './chats/chats.module';
 import { MannersModule } from './manners/manners.module';
 import { AwsModule } from './aws/aws.module';
 import { AuthModule } from './auth/auth.module';
+import { cacheModule } from './common/configs/redis.config';
 
 @Module({
   imports: [
+    CacheModule.register(),
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRootAsync(typeOrmConfig),
     MeetingsModule,
@@ -35,6 +37,7 @@ import { AuthModule } from './auth/auth.module';
     MannersModule,
     AwsModule,
     AuthModule,
+    cacheModule,
   ],
   controllers: [AppController],
   providers: [AppService],
