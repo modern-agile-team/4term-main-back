@@ -20,7 +20,9 @@ export class BoardBookmarks extends BaseEntity {
   @JoinColumn({ name: 'board_no' })
   boardNo: number;
 
-  @ManyToOne((type) => Users, (user) => user.boardBookmark)
+  @ManyToOne((type) => Users, (user) => user.boardBookmark, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 }
