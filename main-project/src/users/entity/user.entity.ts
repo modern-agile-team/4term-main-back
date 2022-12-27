@@ -20,6 +20,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { UserProfile } from './user-profile.entity';
+import { Authentication } from 'src/auth/entity/authentication.entity';
 
 @Entity('users')
 export class Users extends BaseEntity {
@@ -94,4 +95,7 @@ export class Users extends BaseEntity {
 
   @OneToMany((type) => ChatLog, (chatLog) => chatLog.userNo)
   chatLogUserNo: ChatLog[];
+
+  @OneToOne(() => Authentication, (authentication) => authentication.userNo)
+  authentication: Authentication;
 }
