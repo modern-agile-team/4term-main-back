@@ -12,12 +12,12 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { ApplicationDto } from './dto/application.dto';
 import { BoardDto } from './dto/board.dto';
-import { BoardIF } from './interface/boards.interface';
+import { Board } from './interface/boards.interface';
 
 @Controller('boards')
 @ApiTags('게시글 API')
 export class BoardsController {
-  constructor(private boardService: BoardsService) { }
+  constructor(private boardService: BoardsService) {}
   //Get Methods
   @Get()
   @ApiOperation({
@@ -25,9 +25,9 @@ export class BoardsController {
     description: '게시글 전부를 내림차순으로 조회한다.',
   })
   async getAllBoards(): Promise<object> {
-    const response: BoardIF[] = await this.boardService.getAllBoards();
+    const boards: Board[] = await this.boardService.getAllBoards();
 
-    return { response };
+    return { response: { boards } };
   }
 
   @Get('/:boardNo')
@@ -36,11 +36,9 @@ export class BoardsController {
     description: '게시글 번호를 사용해 상세조회한다.',
   })
   async getBoardByNo(@Param('boardNo') boardNo: number): Promise<object> {
-    const response: BoardIF = await this.boardService.getBoardByNo(
-      boardNo,
-    );
+    const board: Board = await this.boardService.getBoardByNo(boardNo);
 
-    return { response };
+    return { response: { board } };
   }
 
   // Post Methods
@@ -51,9 +49,9 @@ export class BoardsController {
   })
   async createBoard(@Body() createBoarddto: BoardDto): Promise<object> {
     // TODO: userNo -> jwt
-    const response: number = await this.boardService.createBoard(createBoarddto);
+    const board: number = await this.boardService.createBoard(createBoarddto);
 
-    return { response };
+    return { response: { board } };
   }
 
   @Post('/:boardNo/:userNo/bookmark')
@@ -66,12 +64,12 @@ export class BoardsController {
   ): Promise<object> {
     // TODO: userNo -> jwt
     const { boardNo, userNo } = params;
-    const response: string = await this.boardService.createBookmark(
+    const bookmark: string = await this.boardService.createBookmark(
       boardNo,
       userNo,
     );
 
-    return { response };
+    return { response: { bookmark } };
   }
 
   @Post('/:boardNo/application')
@@ -80,13 +78,15 @@ export class BoardsController {
     description: '',
   })
   async createAplication(
-    @Param('boardNo') boardNo: number, @Body() applicationDto: ApplicationDto
+    @Param('boardNo') boardNo: number,
+    @Body() applicationDto: ApplicationDto,
   ): Promise<object> {
-    const response: string = await this.boardService.createAplication(
-      boardNo, applicationDto
+    const application: string = await this.boardService.createAplication(
+      boardNo,
+      applicationDto,
     );
 
-    return { response };
+    return { response: { application } };
   }
 
   // Patch Methods
@@ -100,10 +100,14 @@ export class BoardsController {
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body() boardDto: BoardDto,
   ): Promise<object> {
-    const { userNo, ...board }: BoardDto = boardDto
-    const response: string = await this.boardService.editBoard(boardNo, userNo, board);
+    const { userNo, ...board }: BoardDto = boardDto;
+    const newBoard: string = await this.boardService.editBoard(
+      boardNo,
+      userNo,
+      board,
+    );
 
-    return { response };
+    return { response: { newBoard } };
   }
 
   // Delete Methods
@@ -116,9 +120,9 @@ export class BoardsController {
     @Param('boardNo', ParseIntPipe) boardNo: number,
   ): Promise<object> {
     // TODO: userNo -> jwt
-    const response: string = await this.boardService.deleteBoardByNo(boardNo);
+    const board: string = await this.boardService.deleteBoardByNo(boardNo);
 
-    return { response };
+    return { response: { board } };
   }
 
   @Delete('/:boardNo/:userNo/bookmark')
@@ -131,8 +135,8 @@ export class BoardsController {
   ): Promise<object> {
     const { boardNo, userNo } = params;
     // TODO: userNo -> jwt
-    const response = await this.boardService.cancelBookmark(boardNo, userNo);
+    const board = await this.boardService.cancelBookmark(boardNo, userNo);
 
-    return { response };
+    return { response: { board } };
   }
 }
