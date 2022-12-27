@@ -1,7 +1,7 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { ChatList } from '../entity/chat-list.entity';
-import { ChatRoomUsers, CreateChat } from '../interface/chat.interface';
+import { ChatRoomUser, CreateChat } from '../interface/chat.interface';
 
 @EntityRepository(ChatList)
 export class ChatListRepository extends Repository<ChatList> {
@@ -20,7 +20,7 @@ export class ChatListRepository extends Repository<ChatList> {
     }
   }
 
-  async createRoom(createChat: CreateChat): Promise<number> {
+  async createChatRoom(createChat: CreateChat): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('chat_list')
         .insert()
@@ -39,7 +39,7 @@ export class ChatListRepository extends Repository<ChatList> {
   async isUserInChatRoom(
     chatRoomNo: number,
     userNo: number,
-  ): Promise<ChatRoomUsers> {
+  ): Promise<ChatRoomUser> {
     try {
       const result = await this.createQueryBuilder('chat_list')
         .leftJoin('chat_list.chatUserNo', 'chatUser')
