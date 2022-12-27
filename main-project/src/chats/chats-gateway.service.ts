@@ -9,12 +9,14 @@ import { Socket } from 'socket.io';
 import { BoardRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
-import { Connection, getConnection, InsertResult } from 'typeorm';
+import { Users } from 'src/users/entity/user.entity';
+import { Connection, getConnection, InsertResult, QueryRunner } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { ChatLog } from './entity/chat-log.entity';
 import {
   ChatRoom,
   ChatRoomList,
+  ChatRoomUser,
   ChatRoomUsers,
   ChatUserInfo,
   CreateChat,
@@ -66,65 +68,83 @@ export class ChatsGatewayService {
   async createRoom(socket: Socket, chat: CreateChatDto): Promise<void> {
     const { boardNo } = chat;
 
-    const boardExist = await this.boardRepository.getBoardByNo(boardNo);
-    if (!boardExist.no) {
-      throw new NotFoundException(`게시물을 찾지 못했습니다.`);
-    }
-
-    const roomExist = await this.chatListRepository.checkRoomExistByBoardNo(
-      boardNo,
-    );
-    if (roomExist) {
-      throw new BadRequestException('이미 생성된 채팅방 입니다.');
-    }
+    await this.checkChatRoomExists(boardNo);
 
     const { roomName, hostUserNo, guestUserNo } = await this.getUsersByBoardNo(
       boardNo,
     );
 
-    const chatRoomNo: InsertResult = await this.createRoomByBoardNo({
+    const connection: Connection = getConnection();
+    const queryRunner: QueryRunner = connection.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const chatRoomNo: number = await this.createRoomByBoardNo(queryRunner, {
+        boardNo,
+        roomName,
+      });
+
+      await this.setChatRoom(queryRunner, {
+        users: hostUserNo,
+        userType: this.host,
+        chatRoomNo,
+      });
+
+      await this.setChatRoom(queryRunner, {
+        users: guestUserNo,
+        userType: this.guest,
+        chatRoomNo,
+      });
+
+      await queryRunner.commitTransaction();
+
+      socket.join(`${chatRoomNo}`);
+    } catch (error) {
+      await queryRunner?.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner?.release();
+    }
+  }
+
+  private async setChatRoom(
+    queryRunner: QueryRunner,
+    chatRoomUsers: ChatRoomUsers,
+  ): Promise<void> {
+    const { users, userType, chatRoomNo }: ChatRoomUsers = chatRoomUsers;
+
+    const userList: number[] = users.split(',').map((item) => {
+      return parseInt(item);
+    });
+
+    const chatUserList: ChatUserInfo[] = userList.reduce((values, userNo) => {
+      values.push({ chatRoomNo, userNo, userType });
+
+      return values;
+    }, []);
+
+    await this.setChatRoomUsers(queryRunner, chatUserList);
+  }
+
+  private async checkChatRoomExists(boardNo): Promise<void> {
+    const boardExists = await this.boardRepository.getBoardByNo(boardNo);
+    if (!boardExists.no) {
+      throw new NotFoundException(`게시물을 찾지 못했습니다.`);
+    }
+
+    const roomExists = await this.chatListRepository.checkRoomExistByBoardNo(
       boardNo,
-      roomName,
-    });
-
-    const hostUserNoList: number[] = hostUserNo.split(',').map((item) => {
-      return parseInt(item);
-    });
-    const roomHostUsers: ChatUserInfo[] = hostUserNoList.reduce(
-      (values, userNo) => {
-        values.push({ chatRoomNo, userNo, userType: this.host });
-        return values;
-      },
-      [],
     );
-
-    const guestUserNoList: number[] = guestUserNo.split(',').map((item) => {
-      return parseInt(item);
-    });
-    const roomGuestUsers: ChatUserInfo[] = guestUserNoList.reduce(
-      (values, userNo) => {
-        values.push({ chatRoomNo, userNo, userType: this.guest });
-        return values;
-      },
-      [],
-    );
-
-    const saveHostUsers = await this.setChatRoomUsers(roomHostUsers);
-    if (!saveHostUsers) {
-      throw new BadRequestException('채팅방 유저정보 생성 오류입니다.');
+    if (roomExists) {
+      throw new BadRequestException('이미 생성된 채팅방 입니다.');
     }
-
-    const saveGuestUsers = await this.setChatRoomUsers(roomGuestUsers);
-    if (!saveGuestUsers) {
-      throw new BadRequestException('채팅방 유저정보 생성 오류입니다.');
-    }
-
-    socket.join(`${chatRoomNo}`);
   }
 
   async joinRoom(socket, chat: JoinChatRoom): Promise<ChatLog[]> {
     const { userNo, chatRoomNo } = chat;
-    const user: ChatRoomUsers = await this.chatListRepository.isUserInChatRoom(
+    const user: ChatRoomUser = await this.chatListRepository.isUserInChatRoom(
       chatRoomNo,
       userNo,
     );
@@ -174,7 +194,7 @@ export class ChatsGatewayService {
     messagePayload: MessagePayload,
   ): Promise<void> {
     const connection: Connection = getConnection();
-    const queryRunner = connection.createQueryRunner();
+    const queryRunner: QueryRunner = connection.createQueryRunner();
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -198,10 +218,10 @@ export class ChatsGatewayService {
         chatRoomNo,
       });
     } catch (error) {
-      console.log(error);
-      await queryRunner.rollbackTransaction();
+      await queryRunner?.rollbackTransaction();
+      throw error;
     } finally {
-      await queryRunner.release();
+      await queryRunner?.release();
     }
   }
 
@@ -215,6 +235,7 @@ export class ChatsGatewayService {
     if (!insertId) {
       throw new InternalServerErrorException('메세지 저장에 실패하였습니다.');
     }
+
     return insertId;
   }
 
@@ -256,34 +277,40 @@ export class ChatsGatewayService {
     if (!chatInfo) {
       throw new NotFoundException('유저 조회 오류입니다.');
     }
-    const chatRoom = this.setChatRoom(chatInfo);
+    const chatRoom = this.setChatRoomName(chatInfo);
 
     return chatRoom;
   }
 
-  private setChatRoom(chatRoom: ChatRoom): ChatRoom {
+  private setChatRoomName(chatRoom: ChatRoom): ChatRoom {
     chatRoom.roomName = chatRoom.guestNickname + ',' + chatRoom.hostNickname;
 
     return chatRoom;
   }
 
   private async setChatRoomUsers(
+    queryRunner: QueryRunner,
     roomUsers: ChatUserInfo[],
-  ): Promise<InsertResult> {
-    const affectedRows: InsertResult =
-      await this.chatUsersRepository.setChatRoomUsers(roomUsers);
+  ): Promise<number> {
+    const affectedRows: number = await queryRunner.manager
+      .getCustomRepository(ChatUsersRepository)
+      .setChatRoomUsers(roomUsers);
+    if (!affectedRows) {
+      throw new BadRequestException('채팅방 유저정보 생성 오류입니다.');
+    }
 
     return affectedRows;
   }
 
   private async createRoomByBoardNo(
+    queryRunner: QueryRunner,
     createChat: CreateChat,
-  ): Promise<InsertResult> {
-    const insertId: InsertResult = await this.chatListRepository.createRoom(
-      createChat,
-    );
+  ): Promise<number> {
+    const insertId: number = await queryRunner.manager
+      .getCustomRepository(ChatListRepository)
+      .createChatRoom(createChat);
     if (!insertId) {
-      throw new InternalServerErrorException(`채티방 생성 오류입니다.`);
+      throw new InternalServerErrorException(`채팅방 생성 오류입니다.`);
     }
     return insertId;
   }
@@ -299,7 +326,7 @@ export class ChatsGatewayService {
       throw new NotFoundException(`해당 채팅방이 존재하지 않습니다.`);
     }
 
-    const user: ChatRoomUsers = await this.chatListRepository.isUserInChatRoom(
+    const user: ChatRoomUser = await this.chatListRepository.isUserInChatRoom(
       chatRoomNo,
       userNo,
     );
