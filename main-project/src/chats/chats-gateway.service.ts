@@ -11,6 +11,7 @@ import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { Connection, getConnection, InsertResult } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
+import { ChatLog } from './entity/chat-log.entity';
 import {
   ChatRoom,
   ChatRoomList,
@@ -44,25 +45,27 @@ export class ChatsGatewayService {
     @InjectRepository(ChatFileUrlsRepository)
     private readonly chatFileUrlsRepository: ChatFileUrlsRepository,
   ) {}
-  log(text) {
-    console.log(text);
-  }
 
-  async initSocket(socket, userNo: number): Promise<void> {
+  host = UserType.HOST;
+  guest = UserType.GUEST;
+
+  async initSocket(socket, userNo: number): Promise<ChatRoomList[]> {
     const chatRoomList = await this.getChatRoomListByUserNo(
       Object.values(userNo),
     );
+
     if (chatRoomList) {
       chatRoomList.forEach((el) => {
         socket.join(`${el.chatRoomNo}`);
       });
     }
+
+    return chatRoomList;
   }
 
   async createRoom(socket: Socket, chat: CreateChatDto): Promise<void> {
     const { boardNo } = chat;
-    const host = UserType.HOST;
-    const guest = UserType.GUEST;
+
     const boardExist = await this.boardRepository.getBoardByNo(boardNo);
     if (!boardExist.no) {
       throw new NotFoundException(`게시물을 찾지 못했습니다.`);
@@ -79,20 +82,17 @@ export class ChatsGatewayService {
       boardNo,
     );
 
-    const chatRoomNo: number = await this.createRoomByBoardNo({
+    const chatRoomNo: InsertResult = await this.createRoomByBoardNo({
       boardNo,
       roomName,
     });
-    if (!chatRoomNo) {
-      throw new BadRequestException('채팅방 생성 오류입니다.');
-    }
 
     const hostUserNoList: number[] = hostUserNo.split(',').map((item) => {
       return parseInt(item);
     });
     const roomHostUsers: ChatUserInfo[] = hostUserNoList.reduce(
       (values, userNo) => {
-        values.push({ chatRoomNo, userNo, userType: host });
+        values.push({ chatRoomNo, userNo, userType: this.host });
         return values;
       },
       [],
@@ -103,7 +103,7 @@ export class ChatsGatewayService {
     });
     const roomGuestUsers: ChatUserInfo[] = guestUserNoList.reduce(
       (values, userNo) => {
-        values.push({ chatRoomNo, userNo, userType: guest });
+        values.push({ chatRoomNo, userNo, userType: this.guest });
         return values;
       },
       [],
@@ -122,7 +122,7 @@ export class ChatsGatewayService {
     socket.join(`${chatRoomNo}`);
   }
 
-  async joinRoom(socket, chat: JoinChatRoom): Promise<void> {
+  async joinRoom(socket, chat: JoinChatRoom): Promise<ChatLog[]> {
     const { userNo, chatRoomNo } = chat;
     const user: ChatRoomUsers = await this.chatListRepository.isUserInChatRoom(
       chatRoomNo,
@@ -139,6 +139,10 @@ export class ChatsGatewayService {
       username: user.nickname,
       msg: `${user.nickname}님이 접속하셨습니다.`,
     });
+
+    const recentChatLog = this.chatLogRepository.getRecentChatLog(chatRoomNo);
+
+    return recentChatLog;
   }
 
   async getChatRoomListByUserNo(userNo): Promise<ChatRoomList[]> {
@@ -272,11 +276,15 @@ export class ChatsGatewayService {
     return affectedRows;
   }
 
-  private async createRoomByBoardNo(createChat: CreateChat): Promise<number> {
-    const insertId: number = await this.chatListRepository.createRoom(
+  private async createRoomByBoardNo(
+    createChat: CreateChat,
+  ): Promise<InsertResult> {
+    const insertId: InsertResult = await this.chatListRepository.createRoom(
       createChat,
     );
-
+    if (!insertId) {
+      throw new InternalServerErrorException(`채티방 생성 오류입니다.`);
+    }
     return insertId;
   }
 
