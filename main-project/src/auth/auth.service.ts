@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class AuthService {
@@ -15,6 +16,7 @@ export class AuthService {
     @Inject(CACHE_MANAGER)
     private readonly cacheManager,
     private readonly userRepository: UsersRepository,
+    private readonly mailerService: MailerService,
   ) {}
 
   async kakaoLogin(token: string) {
@@ -72,6 +74,12 @@ export class AuthService {
     await this.validateUserNotCreated(email);
     const validationKey = randomBytes(7).toString('base64url');
     await this.cacheManager.set(email, validationKey, 360);
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: '이메일 인증 코드(ModernAgileFourth)',
+      html: `<b>${validationKey}</b>`,
+    });
   }
 
   private async validateUserNotCreated(email: string) {

@@ -18,6 +18,7 @@ import { MannersModule } from './manners/manners.module';
 import { AwsModule } from './aws/aws.module';
 import { AuthModule } from './auth/auth.module';
 import { cacheModule } from './common/configs/redis.config';
+import { mailModule } from './common/configs/email.config';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { cacheModule } from './common/configs/redis.config';
     AwsModule,
     AuthModule,
     cacheModule,
+    mailModule,
   ],
   controllers: [AppController],
   providers: [AppService],
