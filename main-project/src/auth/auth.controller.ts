@@ -38,8 +38,8 @@ export class AuthController {
 
   @Post('/verify')
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
-    await this.authService.verifyEmail(verifyEmailDto);
+    const user = await this.authService.verifyEmail(verifyEmailDto);
 
-    return { success: true };
+    return { success: true, response: { user } };
   }
 }

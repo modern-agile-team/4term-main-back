@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { randomBytes } from 'crypto';
+import * as bcrypt from 'bcryptjs';
 import {
   BadRequestException,
   CACHE_MANAGER,
@@ -13,6 +14,8 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResultSetHeader } from 'mysql2/promise';
 import { User } from 'src/users/interface/user.interface';
+import { AuthRepository } from './repository/authentication.repository';
+import { UserAuth } from './interface/auth.interface';
 
 @Injectable()
 export class AuthService {
@@ -21,6 +24,7 @@ export class AuthService {
     private readonly cacheManager,
     private readonly userRepository: UsersRepository,
     private readonly mailerService: MailerService,
+    private readonly authRepository: AuthRepository,
   ) {}
 
   private userStatus = {
@@ -95,7 +99,7 @@ export class AuthService {
     const { email }: SignInDto = signInDto;
     await this.validateUserNotCreated(email);
     const validationKey = randomBytes(7).toString('base64url');
-    await this.cacheManager.set(email, validationKey, 315);
+    await this.cacheManager.set(email, validationKey, { ttl: 310 });
 
     await this.mailerService.sendMail({
       to: email,
@@ -109,7 +113,30 @@ export class AuthService {
 
     await this.validateUserNotCreated(email);
     await this.validateEmail(email, code);
+
     const user: User = await this.createUser(email);
+    const userAuth: UserAuth = await this.createAuthentication(
+      verifyEmailDto.password,
+      user.userNo,
+    );
+    const { affectedRows }: ResultSetHeader =
+      await this.authRepository.createAuth(userAuth);
+
+    if (!affectedRows) {
+      throw new InternalServerErrorException(`비밀번호 생성 오류입니다.`);
+    }
+
+    return user;
+  }
+
+  private async createAuthentication(
+    password: string,
+    userNo: number,
+  ): Promise<UserAuth> {
+    const salt = await bcrypt.genSalt();
+    const saltedPassword = await bcrypt.hash(password, salt);
+
+    return { password: await bcrypt.hash(saltedPassword), salt, userNo };
   }
 
   private async validateUserNotCreated(email: string) {

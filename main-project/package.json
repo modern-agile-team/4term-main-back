@@ -35,6 +35,7 @@
     "@types/passport-kakao": "^1.0.0",
     "aws-sdk": "^2.1270.0",
     "axios": "^1.2.1",
+    "bcryptjs": "^2.4.3",
     "cache-manager": "^4.0.0",
     "cache-manager-ioredis": "^2.1.0",
     "class-transformer": "^0.5.1",
