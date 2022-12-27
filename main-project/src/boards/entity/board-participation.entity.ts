@@ -5,8 +5,10 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { BoardGuests } from './board-guest.entity';
 import { Boards } from './board.entity';
 
 @Entity('board_participation')
@@ -21,12 +23,18 @@ export class BoardParticipation extends BaseEntity {
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 
-  @ManyToOne((type) => Boards, (boards) => boards.guests, {
+  @ManyToOne((type) => Boards, (boards) => boards.teamNo, {
     onDelete: 'CASCADE',
     nullable: false,
   })
   @JoinColumn({ name: 'board_no' })
   boardNo: number;
+
+  @OneToMany((type) => BoardGuests, (boardGuests) => boardGuests.teamNo, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
+  boardGuest: BoardGuests;
 
   @Column({ type: 'varchar', length: 255 })
   title: string;

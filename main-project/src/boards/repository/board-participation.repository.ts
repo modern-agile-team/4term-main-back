@@ -1,11 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
-import { BoardParticipation } from '../entity/board-participation.entity';
+import { BoardGuests } from '../entity/board-guest.entity';
 import { Boards } from '../entity/board.entity';
 import { CreateResponse } from '../interface/boards.interface';
 
-@EntityRepository(BoardParticipation)
-export class BoardParticipationRepository extends Repository<BoardParticipation> {
+@EntityRepository(BoardGuests)
+export class BoardParticipationRepository extends Repository<BoardGuests> {
   // 조회
   async getAllGuestsByBoardNo(
     boardNo: number,
@@ -31,7 +31,7 @@ export class BoardParticipationRepository extends Repository<BoardParticipation>
         'board_guests',
       )
         .insert()
-        .into(BoardParticipation)
+        .into(BoardGuests)
         .values(guests)
         .execute();
 
