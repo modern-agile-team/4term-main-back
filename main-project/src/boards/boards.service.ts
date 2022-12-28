@@ -12,7 +12,6 @@ import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { Connection, QueryRunner, UpdateResult } from 'typeorm';
 import { ParticipationDto } from './dto/participation.dto';
 import { BoardDto } from './dto/board.dto';
-import { BoardHosts } from './entity/board-host.entity';
 import { Boards } from './entity/board.entity';
 import {
   Board,
