@@ -5,6 +5,7 @@ import {
   IsDate,
   IsNotEmpty,
   IsNumber,
+  IsOptional,
   IsString,
 } from 'class-validator';
 export class BoardDto {
@@ -26,16 +27,18 @@ export class BoardDto {
 
   @ApiProperty({
     example: 0,
-    description: '약속 성사 표시, 진행 중 : 0, 성사완료 : 1',
+    description: '약속 성사 표시, 진행 중 : 0, 성사완료 : 1, optional 변수',
   })
   @IsBoolean()
+  @IsOptional()
   isDone: boolean;
 
   @ApiProperty({
     example: 0,
-    description: '번개 : 0, 일반 과팅 : 1',
+    description: '번개 : 0, 일반 과팅 : 1, optional 변수',
   })
   @IsBoolean()
+  @IsOptional()
   thunder: boolean;
 
   @ApiProperty({ example: '노원 술먹구 가', description: '약속 장소' })

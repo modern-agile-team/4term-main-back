@@ -41,7 +41,7 @@ export class Boards extends BaseEntity {
     default: false,
     nullable: true,
   })
-  thunder: boolean;
+  isThunder: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;

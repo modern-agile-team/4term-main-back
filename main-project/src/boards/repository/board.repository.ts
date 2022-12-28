@@ -34,6 +34,7 @@ export class BoardRepository extends Repository<Boards> {
           'boards.isDone AS isDone',
           'boards.male AS male',
           'boards.female AS female',
+          'boards.isThunder AS isThunder',
           'GROUP_CONCAT(hosts.userNo) AS hostUserNums',
           'GROUP_CONCAT(hostProfile.nickname) AS hostNicknames',
         ])
@@ -60,6 +61,7 @@ export class BoardRepository extends Repository<Boards> {
           'boards.location AS location',
           'boards.meetingTime AS meeting_time',
           'boards.isDone AS isDone',
+          'boards.isThunder AS isThunder',
         ])
         .orderBy('boards.no', 'DESC')
         .getRawMany();
