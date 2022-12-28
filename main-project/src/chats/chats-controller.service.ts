@@ -10,8 +10,10 @@ import { UserType } from 'src/common/configs/user-type.config';
 import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { Connection, getConnection, QueryRunner } from 'typeorm';
+import { AcceptInvitationDTO } from './dto/accept-invitation.dto';
 import { GetChatLogDTO } from './dto/get-chat-log.dto';
 import { InviteUserDTO } from './dto/invite-user.dto';
+import { ChatList } from './entity/chat-list.entity';
 import { ChatLog } from './entity/chat-log.entity';
 import {
   ChatRoomList,
@@ -56,20 +58,14 @@ export class ChatsControllerService {
     chatRoomNo: number,
   ): Promise<ChatLog[]> {
     const { userNo, currentChatLogNo }: GetChatLogDTO = getChatLogDto;
-    const chatRoom = await this.chatListRepository.checkRoomExistsByChatNo(
-      chatRoomNo,
-    );
-    if (!chatRoom) {
-      throw new NotFoundException('존재하지 않는 채팅방입니다.');
-    }
 
-    const user = await this.chatUsersRepository.checkUserInChatRoom({
+    await this.checkChatRoomExists(chatRoomNo);
+
+    await this.checkUserInChatRoom({
       userNo,
       chatRoomNo,
+      isShouldBeExists: true,
     });
-    if (!user) {
-      throw new NotFoundException('채팅방에 존재하지 않는 유저입니다.');
-    }
 
     const previousChatLog = await this.chatLogRepository.getPreviousChatLog(
       chatRoomNo,
@@ -79,10 +75,42 @@ export class ChatsControllerService {
     return previousChatLog;
   }
 
-  /**
-   * @todo 요청을 보낸 사람이 채팅방에 존재하는지 확인 후 초대 전송
-   * @todo 트랜잭션 적용
-   */
+  private async checkChatRoomExists(chatRoomNo: number): Promise<void> {
+    const chatRoom: ChatList =
+      await this.chatListRepository.checkRoomExistsByChatRoomNo(chatRoomNo);
+    if (!chatRoom) {
+      throw new NotFoundException('존재하지 않는 채팅방입니다.');
+    }
+  }
+
+  private async checkUserInChatRoom(chatUserInfo: ChatUserInfo): Promise<void> {
+    const { userNo, chatRoomNo, isShouldBeExists }: ChatUserInfo = chatUserInfo;
+
+    const chatRoom: ChatList =
+      await this.chatListRepository.checkRoomExistsByChatRoomNo(chatRoomNo);
+    if (!chatRoom) {
+      throw new NotFoundException('존재하지 않는 채팅방입니다.');
+    }
+
+    const user = await this.chatUsersRepository.checkUserInChatRoom({
+      userNo,
+      chatRoomNo,
+    });
+
+    if (isShouldBeExists === true) {
+      if (isShouldBeExists === !!user) {
+        return;
+      }
+      throw new NotFoundException(`유저 정보를 찾을 수 없습니다.`);
+    }
+    if (isShouldBeExists === false) {
+      if (isShouldBeExists === !!user) {
+        return;
+      }
+      throw new BadRequestException(`채팅방에 해당 유저가 존재합니다.`);
+    }
+  }
+
   async inviteUser(
     inviteUser: InviteUserDTO,
     chatRoomNo: number,
@@ -96,17 +124,19 @@ export class ChatsControllerService {
     const { userNo, targetUserNo }: InviteUserDTO = inviteUser;
 
     try {
-      const targetUser = await this.chatUsersRepository.checkUserInChatRoom({
-        userNo: targetUserNo,
-        chatRoomNo,
-      });
+      const targetUser: ChatUserInfo =
+        await this.chatUsersRepository.checkUserInChatRoom({
+          userNo: targetUserNo,
+          chatRoomNo,
+        });
       if (targetUser) {
         throw new BadRequestException('초대 대상이 이미 채팅방에 존재합니다.');
       }
-      const user = await this.chatUsersRepository.checkUserInChatRoom({
-        userNo,
-        chatRoomNo,
-      });
+      const user: ChatUserInfo =
+        await this.chatUsersRepository.checkUserInChatRoom({
+          userNo,
+          chatRoomNo,
+        });
       if (!user) {
         throw new NotFoundException(`유저 정보를 찾지 못했습니다.`);
       }
@@ -168,5 +198,17 @@ export class ChatsControllerService {
         'Notice Chat 저장에 실패했습니다.',
       );
     }
+  }
+
+  async acceptInvitation(
+    chatRoomNo: number,
+    invitationInfo: AcceptInvitationDTO,
+  ) {
+    const { userNo, targetUserNo, type }: AcceptInvitationDTO = invitationInfo;
+    await this.checkUserInChatRoom({
+      userNo: targetUserNo,
+      chatRoomNo,
+      isShouldBeExists: false,
+    });
   }
 }

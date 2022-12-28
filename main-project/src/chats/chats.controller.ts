@@ -18,6 +18,7 @@ import { AwsService } from 'src/aws/aws.service';
 import { ChatLog } from './entity/chat-log.entity';
 import { ConnectedSocket } from '@nestjs/websockets/decorators';
 import { Socket } from 'dgram';
+import { AcceptInvitationDTO } from './dto/accept-invitation.dto';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -72,6 +73,20 @@ export class ChatsController {
     return {
       msg: '초대 성공',
     };
+  }
+  @Post('/:chatRoomNo/invitation/accept')
+  @ApiOperation({
+    summary: '채팅방 초대 수락 API',
+    description: '유저 번호, 타입, 채팅방 번호를 통해 초대 수락',
+  })
+  async acceptInvitation(
+    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
+    @Body() invitationInfo: AcceptInvitationDTO,
+  ) {
+    await this.chatControllerService.acceptInvitation(
+      chatRoomNo,
+      invitationInfo,
+    );
   }
 
   @Post('/:chatRoomNo/upload/files')

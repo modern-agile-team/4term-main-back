@@ -316,7 +316,7 @@ export class ChatsGatewayService {
     chatRoomNo: number,
     userNo: number,
   ): Promise<void> {
-    const chatRoom = await this.chatListRepository.checkRoomExistsByChatNo(
+    const chatRoom = await this.chatListRepository.checkRoomExistsByChatRoomNo(
       chatRoomNo,
     );
     if (!chatRoom) {

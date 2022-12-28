@@ -71,4 +71,5 @@ export interface ChatUserInfo {
   targetUserNo?: number;
   userType?: number;
   type?: number;
+  isShouldBeExists?: boolean;
 }
