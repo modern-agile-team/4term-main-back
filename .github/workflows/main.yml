@@ -1,8 +1,8 @@
-name: CI/CD Docker
+name: Docker CI/CD
 
 on:
     push:
-        branches: ["develop"]
+        branches: ['develop']
 env:
     DOCKER_IMAGE: ghcr.io/klaus9267/summer-auto-deploy
     VERSION: ${{ github.sha }}
@@ -52,4 +52,3 @@ jobs:
                   docker rmi ghcr.io/klaus9267/summer-auto-deploy:latest
                   docker-compose pull
                   docker-compose up -d
-                  
