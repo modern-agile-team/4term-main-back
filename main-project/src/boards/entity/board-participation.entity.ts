@@ -26,7 +26,6 @@ export class BoardParticipation extends BaseEntity {
   @OneToMany((type) => BoardGuests, (boardGuests) => boardGuests.teamNo, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn()
   boardGuest: BoardGuests;
 
   @Column({ type: 'varchar', length: 255 })

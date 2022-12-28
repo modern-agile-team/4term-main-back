@@ -72,7 +72,6 @@ export class Boards extends BaseEntity {
   @OneToMany((type) => BoardHosts, (boardHosts) => boardHosts.boardNo, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn()
   hosts: BoardHosts;
 
   @OneToMany(
