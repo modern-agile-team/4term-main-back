@@ -72,7 +72,7 @@ export class BoardsController {
     return { response: { bookmark } };
   }
 
-  @Post('/:boardNo/application')
+  @Post('/:boardNo/participation')
   @ApiOperation({
     summary: '게스트 참가 신청 API',
     description: '',

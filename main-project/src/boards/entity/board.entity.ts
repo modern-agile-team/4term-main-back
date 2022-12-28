@@ -16,7 +16,6 @@ import { Users } from 'src/users/entity/user.entity';
 import { ReportBoards } from 'src/reports/entity/report-board.entity';
 import { NoticeBoards } from 'src/notices/entity/notice-board.entity';
 import { BoardHosts } from './board-host.entity';
-import { BoardGuests } from './board-guest.entity';
 import { ChatList } from 'src/chats/entity/chat-list.entity';
 import { BoardParticipation } from './board-participation.entity';
 
@@ -68,7 +67,6 @@ export class Boards extends BaseEntity {
   userNo: number;
 
   @OneToMany((type) => NoticeBoards, (noticeBoards) => noticeBoards.boardNo)
-  @JoinColumn()
   noticeBoard: NoticeBoards;
 
   @OneToMany((type) => BoardHosts, (boardHosts) => boardHosts.boardNo, {

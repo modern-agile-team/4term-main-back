@@ -16,13 +16,6 @@ export class BoardParticipation extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @ManyToOne((type) => Users, (users) => users.guestMembers, {
-    onDelete: 'CASCADE',
-    nullable: false,
-  })
-  @JoinColumn({ name: 'user_no' })
-  userNo: number;
-
   @ManyToOne((type) => Boards, (boards) => boards.teamNo, {
     onDelete: 'CASCADE',
     nullable: false,

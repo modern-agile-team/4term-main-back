@@ -14,11 +14,16 @@ import { ParticipationDto } from './dto/participation.dto';
 import { BoardDto } from './dto/board.dto';
 import { BoardHosts } from './entity/board-host.entity';
 import { Boards } from './entity/board.entity';
-import { Board, CreateResponse } from './interface/boards.interface';
+import {
+  Board,
+  CreateResponse,
+  Participation,
+} from './interface/boards.interface';
 import { BoardBookmarkRepository } from './repository/board-bookmark.repository';
-import { BoardParticipationRepository } from './repository/board-participation.repository';
+import { BoardGuestRepository } from './repository/board-guest.repository';
 import { BoardHostRepository } from './repository/board-host.repository';
 import { BoardRepository, TestUserRepo } from './repository/board.repository';
+import { BoardParticipationRepository } from './repository/board-participation.repository';
 
 @Injectable()
 export class BoardsService {
@@ -26,8 +31,8 @@ export class BoardsService {
     @InjectRepository(BoardBookmarkRepository)
     private readonly boardBookmarkRepository: BoardBookmarkRepository,
 
-    @InjectRepository(BoardParticipationRepository)
-    private readonly boardGuestRepository: BoardParticipationRepository,
+    @InjectRepository(BoardGuestRepository)
+    private readonly boardGuestRepository: BoardGuestRepository,
 
     @InjectRepository(BoardHostRepository)
     private readonly boardHostRepository: BoardHostRepository,
@@ -113,7 +118,7 @@ export class BoardsService {
 
   async createParticipation(
     boardNo: number,
-    { guests }: ParticipationDto,
+    participationDto: ParticipationDto,
   ): Promise<string> {
     const queryRunner: QueryRunner = this.connection.createQueryRunner();
 
@@ -122,21 +127,24 @@ export class BoardsService {
     try {
       const board: Board = await this.getBoardByNo(boardNo);
       // TODO: newGuest user 확인 로직 추가
-      const recruits: number = board.female + board.male;
 
-      if (recruits != guests.length) {
+      const { guests, ...participation }: ParticipationDto = participationDto;
+      const { male, female }: Board = board;
+
+      if (female + male != guests.length) {
         throw new BadRequestException(
           `참가 신청(createAplication): 신청 인원과 모집인원이 맞지 않습니다.`,
         );
       }
 
-      const guestArr: object[] = await this.validateGuests(boardNo, guests);
+      await this.validateGuests(board, guests);
+      const teamNo: number = await this.setParticipation(queryRunner, {
+        ...participation,
+        boardNo,
+      });
+      await this.setGuests(queryRunner, teamNo, guests);
 
-      await queryRunner.manager
-        .getCustomRepository(BoardParticipationRepository)
-        .createGuestMembers(guestArr);
-
-      await this.saveNoticeApplication(
+      await this.saveNoticeParticipation(
         boardNo,
         guests[0],
         board.userNo,
@@ -156,12 +164,11 @@ export class BoardsService {
   }
 
   private async validateGuests(
-    boardNo: number,
+    board: Board,
     newGuests: number[],
-  ): Promise<object[]> {
+  ): Promise<void> {
     const preGuests: Pick<Boards, 'userNo'>[] =
-      await this.boardGuestRepository.getAllGuestsByBoardNo(boardNo);
-    const board: Board = await this.getBoardByNo(boardNo);
+      await this.boardGuestRepository.getAllGuestsByBoardNo(board.no);
 
     const hosts = board.hostUserNums.split(',').map(Number);
     const guests = preGuests.map((el) => el.userNo);
@@ -173,12 +180,45 @@ export class BoardsService {
         );
       }
     }
+  }
 
-    const guestArr: object[] = newGuests.map((el: number) => {
-      return { boardNo, userNo: el };
+  private async setParticipation(
+    queryRunner: QueryRunner,
+    participation: Participation,
+  ): Promise<number> {
+    const { affectedRows, insertId }: CreateResponse = await queryRunner.manager
+      .getCustomRepository(BoardParticipationRepository)
+      .createParticipation(participation);
+
+    if (!affectedRows) {
+      throw new InternalServerErrorException(
+        `board-participation 생성(setParticipation): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+
+    return insertId;
+  }
+
+  private async setGuests(
+    queryRunner: QueryRunner,
+    teamNo: number,
+    guests: number[],
+  ): Promise<number> {
+    const guestArr: object[] = guests.map((el: number) => {
+      return { teamNo, userNo: el };
     });
 
-    return guestArr;
+    const { affectedRows, insertId }: CreateResponse = await queryRunner.manager
+      .getCustomRepository(BoardGuestRepository)
+      .createGuests(guestArr);
+
+    if (!affectedRows) {
+      throw new InternalServerErrorException(
+        `board-guests 생성(setGuests): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+
+    return insertId;
   }
 
   async createBookmark(boardNo: number, userNo: number): Promise<string> {
@@ -311,8 +351,8 @@ export class BoardsService {
   }
 
   // 알람 생성
-  private async saveNoticeApplication(
-    no: number,
+  private async saveNoticeParticipation(
+    boardNo: number,
     userNo: number,
     targetUserNo: number,
     queryRunner: QueryRunner,
@@ -325,6 +365,6 @@ export class BoardsService {
 
     await queryRunner.manager
       .getCustomRepository(NoticeBoardsRepository)
-      .saveNoticeBoard(insertId, no);
+      .saveNoticeBoard(insertId, boardNo);
   }
 }
