@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
-import { ApplicationDto } from './dto/application.dto';
+import { ParticipationDto } from './dto/participation.dto';
 import { BoardDto } from './dto/board.dto';
 import { Board } from './interface/boards.interface';
 
@@ -77,16 +77,16 @@ export class BoardsController {
     summary: '게스트 참가 신청 API',
     description: '',
   })
-  async createAplication(
+  async createParticipation(
     @Param('boardNo') boardNo: number,
-    @Body() applicationDto: ApplicationDto,
+    @Body() participationDto: ParticipationDto,
   ): Promise<object> {
-    const application: string = await this.boardService.createAplication(
+    const participation: string = await this.boardService.createParticipation(
       boardNo,
-      applicationDto,
+      participationDto,
     );
 
-    return { response: { application } };
+    return { response: { participation } };
   }
 
   // Patch Methods

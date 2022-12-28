@@ -18,6 +18,7 @@ import { NoticeBoards } from 'src/notices/entity/notice-board.entity';
 import { BoardHosts } from './board-host.entity';
 import { BoardGuests } from './board-guest.entity';
 import { ChatList } from 'src/chats/entity/chat-list.entity';
+import { BoardParticipation } from './board-participation.entity';
 
 @Entity('boards')
 export class Boards extends BaseEntity {
@@ -76,8 +77,11 @@ export class Boards extends BaseEntity {
   @JoinColumn()
   hosts: BoardHosts;
 
-  @OneToMany((type) => BoardGuests, (boardGuests) => boardGuests.boardNo)
-  guests: BoardGuests;
+  @OneToMany(
+    (type) => BoardParticipation,
+    (boardParticipation) => boardParticipation.boardNo,
+  )
+  teamNo: BoardParticipation;
 
   @OneToMany((type) => ReportBoards, (boardReport) => boardReport.targetBoardNo)
   boardReport: ReportBoards[];
