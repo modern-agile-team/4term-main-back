@@ -1,6 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { ToBoolean } from 'src/common/decorator/validateValue.decorator';
+import { json } from 'stream/consumers';
+import { isModuleNamespaceObject } from 'util/types';
 
 export class BoardFilterDto {
   @ApiProperty({
@@ -24,15 +27,17 @@ export class BoardFilterDto {
     example: '0',
     description: '모집 성별 필터/ 0:남 1:여',
   })
-  @IsString()
+  @IsBoolean()
+  @ToBoolean()
   @IsOptional()
-  isDone: string;
+  isDone: boolean;
 
   @ApiProperty({
     example: '0',
     description: '번개글 :1, 일반 과팅이면 작성 X',
   })
-  @IsString()
+  @IsBoolean()
+  @Type(() => Boolean)
   @IsOptional()
-  isThunder: string;
+  isThunder: boolean;
 }
