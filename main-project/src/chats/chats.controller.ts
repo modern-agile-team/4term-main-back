@@ -58,7 +58,7 @@ export class ChatsController {
     return { response: { previousChatLog } };
   }
 
-  @Post('/:chatRoomNo/invite')
+  @Post('/:chatRoomNo/invitation')
   @ApiOperation({
     summary: '채팅방 초대 API',
     description: '알람을 통해 채팅방 초대',
@@ -74,19 +74,24 @@ export class ChatsController {
     };
   }
 
-  @Post('/:chatRoomNo/images')
+  @Post('/:chatRoomNo/upload/files')
+  @ApiOperation({
+    summary: '파일 전송 API',
+    description:
+      'files에 담긴 최대 10개의 파일을 전달받아 s3업로드 후 url배열 반환',
+  })
   @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
   async uploadFile(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    const uploadedFileUrlList =
-      files.length === 0
-        ? false
-        : await this.awsService.uploadImage(files, chatRoomNo);
+    const uploadedFileUrlList = await this.awsService.uploadFiles(
+      files,
+      chatRoomNo,
+    );
 
     return {
-      msg: `이미지 업로드 성공`,
+      msg: `파일 업로드 성공`,
       response: { uploadedFileUrlList },
     };
   }
