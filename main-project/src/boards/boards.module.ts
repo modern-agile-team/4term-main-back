@@ -6,7 +6,7 @@ import { UsersRepository } from 'src/users/repository/users.repository';
 import { BoardsController } from './boards.controller';
 import { BoardsService } from './boards.service';
 import { BoardBookmarkRepository } from './repository/board-bookmark.repository';
-import { BoardParticipationRepository } from './repository/board-participation.repository';
+import { BoardGuestRepository } from './repository/board-guest.repository';
 import { BoardHostRepository } from './repository/board-host.repository';
 import { BoardRepository, TestUserRepo } from './repository/board.repository';
 
@@ -14,7 +14,7 @@ import { BoardRepository, TestUserRepo } from './repository/board.repository';
   imports: [
     TypeOrmModule.forFeature([
       BoardRepository,
-      BoardParticipationRepository,
+      BoardGuestRepository,
       BoardHostRepository,
       BoardBookmarkRepository,
       UsersRepository,

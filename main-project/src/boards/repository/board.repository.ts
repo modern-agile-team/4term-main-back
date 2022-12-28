@@ -8,6 +8,7 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
+import { BoardFilterDto } from '../dto/board-filter.dto';
 import { BoardDto } from '../dto/board.dto';
 import { Boards } from '../entity/board.entity';
 import { Board } from '../interface/boards.interface';
@@ -34,6 +35,7 @@ export class BoardRepository extends Repository<Boards> {
           'boards.isDone AS isDone',
           'boards.male AS male',
           'boards.female AS female',
+          'boards.isThunder AS isThunder',
           'GROUP_CONCAT(hosts.userNo) AS hostUserNums',
           'GROUP_CONCAT(hostProfile.nickname) AS hostNicknames',
         ])
@@ -49,9 +51,10 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async getAllBoards(): Promise<Board[]> {
+  async getBoards(filters: BoardFilterDto): Promise<Board[]> {
     try {
       const boards = await this.createQueryBuilder('boards')
+        .leftJoin('boards.userNo', 'users')
         .select([
           'boards.no AS no',
           'boards.userNo AS user_no',
@@ -60,11 +63,46 @@ export class BoardRepository extends Repository<Boards> {
           'boards.location AS location',
           'boards.meetingTime AS meeting_time',
           'boards.isDone AS isDone',
+          'boards.isThunder AS isThunder',
+          'boards.male AS male',
+          'boards.female AS female',
         ])
-        .orderBy('boards.no', 'DESC')
-        .getRawMany();
+        .orderBy('boards.no', 'DESC');
 
-      return boards;
+      if (filters) {
+        for (let el in filters) {
+          switch (el) {
+            case 'gender':
+              boards.andWhere(`boards.${filters[el]} = :${filters[el]}`, {
+                [filters[el]]: 0,
+              });
+
+              break;
+
+            case 'people':
+              boards.andWhere('boards.male + boards.female = :people', {
+                people: filters[el],
+              });
+
+              break;
+
+            case 'isDone':
+              boards.andWhere(`boards.${el} = :${el}`, { [el]: filters[el] });
+
+              break;
+
+            case 'isThunder':
+              boards.andWhere(`boards.${el} = :${el}`, { [el]: filters[el] });
+
+              break;
+
+            default:
+              break;
+          }
+        }
+      }
+
+      return boards.getRawMany();
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getAllBoards-repository: 알 수 없는 서버 에러입니다.`,
