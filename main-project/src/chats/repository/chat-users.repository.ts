@@ -50,6 +50,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
         ])
         .where('user_no = :userNo AND chat_room_no = :chatRoomNo', chatUserInfo)
         .getRawOne();
+
       return user;
     } catch (error) {
       throw new InternalServerErrorException(
