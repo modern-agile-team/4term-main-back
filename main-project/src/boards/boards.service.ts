@@ -23,6 +23,7 @@ import { BoardGuestRepository } from './repository/board-guest.repository';
 import { BoardHostRepository } from './repository/board-host.repository';
 import { BoardRepository, TestUserRepo } from './repository/board.repository';
 import { BoardParticipationRepository } from './repository/board-participation.repository';
+import { BoardFilterDto } from './dto/board-filter.dto';
 
 @Injectable()
 export class BoardsService {
@@ -227,8 +228,8 @@ export class BoardsService {
   }
 
   // 조회 관련
-  async getAllBoards(): Promise<Board[]> {
-    const boards: Board[] = await this.boardRepository.getAllBoards();
+  async getBoards(filter: BoardFilterDto): Promise<Board[]> {
+    const boards: Board[] = await this.boardRepository.getBoards(filter);
 
     if (boards.length === 0) {
       throw new NotFoundException(

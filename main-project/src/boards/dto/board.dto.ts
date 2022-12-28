@@ -39,7 +39,7 @@ export class BoardDto {
   })
   @IsBoolean()
   @IsOptional()
-  thunder: boolean;
+  isThunder: boolean;
 
   @ApiProperty({ example: '노원 술먹구 가', description: '약속 장소' })
   @IsString()

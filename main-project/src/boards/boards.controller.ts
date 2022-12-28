@@ -21,26 +21,13 @@ import { BoardFilterDto } from './dto/board-filter.dto';
 export class BoardsController {
   constructor(private boardService: BoardsService) {}
   //Get Methods
-  // @Get()
-  // @ApiOperation({
-  //   summary: '게시글 조회 API',
-  //   description: '게시글 전부를 내림차순으로 조회한다.',
-  // })
-  // async getAllBoards(): Promise<object> {
-  //   const boards: Board[] = await this.boardService.getAllBoards();
-
-  //   return { response: { boards } };
-  // }
-
   @Get()
   @ApiOperation({
     summary: '게시글 필터링 API',
     description: '게시글 필터링해서 내림차순으로 조회한다.',
   })
   async getBoards(@Query() BoardFilterDto: BoardFilterDto): Promise<object> {
-    console.log(BoardFilterDto);
-
-    const boards: Board[] = await this.boardService.getAllBoards();
+    const boards: Board[] = await this.boardService.getBoards(BoardFilterDto);
 
     return { response: { boards } };
   }
