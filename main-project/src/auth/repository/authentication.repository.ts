@@ -23,4 +23,18 @@ export class AuthRepository extends Repository<Authentication> {
       );
     }
   }
+
+  async findAuthByUserNo(userNo: number): Promise<UserAuth> {
+    try {
+      const auth: UserAuth = await this.createQueryBuilder('authentication')
+        .where(`authentication.userNo = :userNo`, { userNo })
+        .getOne();
+
+      return auth;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 유저 인증 정보 조회(findAuthByUserNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
 }

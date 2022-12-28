@@ -1,6 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { Body, Post } from '@nestjs/common/decorators';
 import { AuthService } from './auth.service';
+import { LoginDto } from './dto/login.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 
@@ -40,6 +41,13 @@ export class AuthController {
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
     const user = await this.authService.verifyEmail(verifyEmailDto);
 
-    return { success: true, response: { user } };
+    return { response: { user } };
+  }
+
+  @Post('/login')
+  async login(@Body() loginDto: LoginDto) {
+    await this.authService.login(loginDto);
+
+    return { success: true };
   }
 }

@@ -1,12 +1,14 @@
 import axios from 'axios';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcryptjs';
+import * as argon2 from 'argon2';
 import {
   BadRequestException,
   CACHE_MANAGER,
   Inject,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 import { SignInDto } from './dto/sign-in.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
@@ -16,14 +18,15 @@ import { ResultSetHeader } from 'mysql2/promise';
 import { User } from 'src/users/interface/user.interface';
 import { AuthRepository } from './repository/authentication.repository';
 import { UserAuth } from './interface/auth.interface';
+import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     @Inject(CACHE_MANAGER)
     private readonly cacheManager,
-    private readonly userRepository: UsersRepository,
     private readonly mailerService: MailerService,
+    private readonly userRepository: UsersRepository,
     private readonly authRepository: AuthRepository,
   ) {}
 
@@ -95,8 +98,7 @@ export class AuthService {
     const { email } = data.response;
   }
 
-  async signIn(signInDto: SignInDto) {
-    const { email }: SignInDto = signInDto;
+  async signIn({ email }: SignInDto) {
     await this.validateUserNotCreated(email);
     const validationKey = randomBytes(7).toString('base64url');
     await this.cacheManager.set(email, validationKey, { ttl: 310 });
@@ -108,15 +110,13 @@ export class AuthService {
     });
   }
 
-  async verifyEmail(verifyEmailDto: VerifyEmailDto) {
-    const { email, code }: VerifyEmailDto = verifyEmailDto;
-
+  async verifyEmail({ email, code, password }: VerifyEmailDto) {
     await this.validateUserNotCreated(email);
     await this.validateEmail(email, code);
 
     const user: User = await this.createUser(email);
     const userAuth: UserAuth = await this.createAuthentication(
-      verifyEmailDto.password,
+      password,
       user.userNo,
     );
     const { affectedRows }: ResultSetHeader =
@@ -129,6 +129,34 @@ export class AuthService {
     return user;
   }
 
+  async login({ password, email }: LoginDto) {
+    const user: User = await this.userRepository.getUserByEmail(email);
+
+    if (!user) {
+      throw new NotFoundException(`회원가입을 하지 않은 이메일입니다.`);
+    }
+
+    const userAuth: UserAuth = await this.authRepository.findAuthByUserNo(
+      user.userNo,
+    );
+
+    if (!userAuth) {
+      throw new NotFoundException(
+        `인증 정보가 존재하지 않는 유저입니다. 소셜 로그인을 이용해 주세요.`,
+      );
+    }
+
+    await this.validatePassword(password, userAuth);
+  }
+
+  private async validatePassword(password: string, userAuth: UserAuth) {
+    const saltedPassword = await bcrypt.hash(password, userAuth.salt);
+
+    if (!argon2.verify(userAuth.password, saltedPassword)) {
+      throw new BadRequestException(`올바르지 않은 비밀번호입니다.`);
+    }
+  }
+
   private async createAuthentication(
     password: string,
     userNo: number,
@@ -136,7 +164,11 @@ export class AuthService {
     const salt = await bcrypt.genSalt();
     const saltedPassword = await bcrypt.hash(password, salt);
 
-    return { password: await bcrypt.hash(saltedPassword), salt, userNo };
+    return {
+      password: await argon2.hash(saltedPassword),
+      salt,
+      userNo,
+    };
   }
 
   private async validateUserNotCreated(email: string) {
@@ -154,7 +186,7 @@ export class AuthService {
 
     if (!validCode) {
       throw new BadRequestException(
-        `인증 코드가 만료된 이메일입니다. 코드를 다시 요청해 주세요.`,
+        `인증 코드가 만료됐거나 발급 이력이 없는 이메일입니다. 코드를 요청해 주세요.`,
       );
     }
 

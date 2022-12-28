@@ -33,6 +33,7 @@
     "@nestjs/typeorm": "^8.0.3",
     "@nestjs/websockets": "^9.1.4",
     "@types/passport-kakao": "^1.0.0",
+    "argon2": "^0.30.2",
     "aws-sdk": "^2.1270.0",
     "axios": "^1.2.1",
     "bcryptjs": "^2.4.3",
