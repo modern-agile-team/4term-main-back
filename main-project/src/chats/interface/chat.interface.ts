@@ -71,5 +71,11 @@ export interface ChatUserInfo {
   targetUserNo?: number;
   userType?: number;
   type?: number;
-  isShouldBeExists?: boolean;
+}
+
+export interface UserValidation {
+  userNo: number;
+  chatRoomNo: number;
+  isUserNeeded: boolean;
+  target: string;
 }

@@ -34,11 +34,11 @@ export class ChatsController {
     description: ' 채팅 목록 조회',
   })
   async getChatRoomList(@Param('userNo') userNo: number): Promise<object> {
-    const response = await this.chatControllerService.getChatRoomListByUserNo(
+    const chatRoom = await this.chatControllerService.getChatRoomListByUserNo(
       userNo,
     );
     return {
-      response,
+      response: { chatRoom },
     };
   }
 
@@ -51,10 +51,11 @@ export class ChatsController {
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() getChatLogDto: GetChatLogDTO,
   ): Promise<object> {
-    const previousChatLog = await this.chatControllerService.getPreviousChatLog(
-      getChatLogDto,
-      chatRoomNo,
-    );
+    const previousChatLog: ChatLog[] =
+      await this.chatControllerService.getPreviousChatLog(
+        getChatLogDto,
+        chatRoomNo,
+      );
 
     return { response: { previousChatLog } };
   }
@@ -71,9 +72,10 @@ export class ChatsController {
     await this.chatControllerService.inviteUser(inviteUser, chatRoomNo);
 
     return {
-      msg: '초대 성공',
+      msg: '채팅방 초대 성공',
     };
   }
+
   @Post('/:chatRoomNo/invitation/accept')
   @ApiOperation({
     summary: '채팅방 초대 수락 API',
@@ -82,11 +84,15 @@ export class ChatsController {
   async acceptInvitation(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() invitationInfo: AcceptInvitationDTO,
-  ) {
+  ): Promise<object> {
     await this.chatControllerService.acceptInvitation(
       chatRoomNo,
       invitationInfo,
     );
+
+    return {
+      msg: '채팅방 초대 수락 성공',
+    };
   }
 
   @Post('/:chatRoomNo/upload/files')
@@ -99,7 +105,7 @@ export class ChatsController {
   async uploadFile(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @UploadedFiles() files: Express.Multer.File[],
-  ) {
+  ): Promise<object> {
     const uploadedFileUrlList = await this.awsService.uploadFiles(
       files,
       chatRoomNo,
@@ -109,10 +115,5 @@ export class ChatsController {
       msg: `파일 업로드 성공`,
       response: { uploadedFileUrlList },
     };
-  }
-
-  @Post('/error')
-  err(@Body('no') no: number) {
-    throw new BadRequestException('에러');
   }
 }
