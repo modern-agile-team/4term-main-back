@@ -1,4 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { userInfo } from 'os';
+import { ChatUserInfo } from 'src/chats/interface/chat.interface';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { NoticeChats } from '../entity/notice-chat.entity';
 import { NoticeChatsInfo } from '../interface/notice.interface';
@@ -7,8 +9,6 @@ import { NoticeChatsInfo } from '../interface/notice.interface';
 export class NoticeChatsRepository extends Repository<NoticeChats> {
   async saveNoticeChat(noticeChatInfo: NoticeChatsInfo): Promise<number> {
     try {
-      console.log(noticeChatInfo);
-
       const { raw }: InsertResult = await this.createQueryBuilder(
         'notice_chats',
       )
@@ -25,18 +25,15 @@ export class NoticeChatsRepository extends Repository<NoticeChats> {
     }
   }
 
-  async checkNoticeChat(
-    targetUserNo: number,
-    chatRoomNo: number,
-    type: number,
-  ): Promise<NoticeChats> {
+  async checkNoticeChat(chatUserInfo: ChatUserInfo): Promise<NoticeChats> {
     try {
       const noticeChat = await this.createQueryBuilder('notice_chats')
         .leftJoin('notice_chats.noticeNo', 'notices')
         .select(['notices.* '])
-        .where('notices.type = :type', { type })
-        .andWhere('notices.target_user_no = :targetUserNo', { targetUserNo })
-        .andWhere('notice_chats.chat_room_no = :chatRoomNo', { chatRoomNo })
+        .where(
+          'notice_chats.chatRoomNo = :chatRoomNo AND notices.userNo = :userNo AND notices.type = :type AND notices.targetUserNo = :targetUserNo',
+          chatUserInfo,
+        )
         .getRawOne();
 
       return noticeChat;

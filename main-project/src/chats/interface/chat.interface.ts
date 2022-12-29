@@ -66,9 +66,16 @@ export interface PreviousChatLog {
 }
 
 export interface ChatUserInfo {
-  userNo: number;
-  chatRoomNo: number;
+  userNo?: number;
+  chatRoomNo?: number;
   targetUserNo?: number;
   userType?: number;
   type?: number;
+}
+
+export interface UserValidation {
+  userNo: number;
+  chatRoomNo: number;
+  isUserNeeded: boolean;
+  target: string;
 }

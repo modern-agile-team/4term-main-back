@@ -7,6 +7,7 @@ import { ChatRoomList, ChatUserInfo } from '../interface/chat.interface';
 export class ChatUsersRepository extends Repository<ChatUsers> {
   async setChatRoomUsers(roomUsers: ChatUserInfo[]): Promise<number> {
     try {
+      console.log(roomUsers);
       const { raw }: InsertResult = await this.createQueryBuilder('chat_users')
         .insert()
         .into(ChatUsers)
@@ -50,6 +51,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
         ])
         .where('user_no = :userNo AND chat_room_no = :chatRoomNo', chatUserInfo)
         .getRawOne();
+
       return user;
     } catch (error) {
       throw new InternalServerErrorException(
@@ -82,6 +84,10 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
         .getRawOne();
 
       return users;
-    } catch (error) {}
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 유저 조회(getChatRoomUsers): 알 수 없는 서버 에러입니다.`,
+      );
+    }
   }
 }

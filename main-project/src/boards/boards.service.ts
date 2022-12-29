@@ -10,13 +10,13 @@ import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { Connection, QueryRunner, UpdateResult } from 'typeorm';
-import { ApplicationDto } from './dto/application.dto';
+import { ParticipationDto } from './dto/participation.dto';
 import { BoardDto } from './dto/board.dto';
 import { BoardHosts } from './entity/board-host.entity';
 import { Boards } from './entity/board.entity';
 import { Board, CreateResponse } from './interface/boards.interface';
 import { BoardBookmarkRepository } from './repository/board-bookmark.repository';
-import { BoardGuestRepository } from './repository/board-guest.repository';
+import { BoardParticipationRepository } from './repository/board-participation.repository';
 import { BoardHostRepository } from './repository/board-host.repository';
 import { BoardRepository, TestUserRepo } from './repository/board.repository';
 
@@ -26,8 +26,8 @@ export class BoardsService {
     @InjectRepository(BoardBookmarkRepository)
     private readonly boardBookmarkRepository: BoardBookmarkRepository,
 
-    @InjectRepository(BoardGuestRepository)
-    private readonly boardGuestRepository: BoardGuestRepository,
+    @InjectRepository(BoardParticipationRepository)
+    private readonly boardGuestRepository: BoardParticipationRepository,
 
     @InjectRepository(BoardHostRepository)
     private readonly boardHostRepository: BoardHostRepository,
@@ -111,9 +111,9 @@ export class BoardsService {
     return hostArr;
   }
 
-  async createAplication(
+  async createParticipation(
     boardNo: number,
-    { guests }: ApplicationDto,
+    { guests }: ParticipationDto,
   ): Promise<string> {
     const queryRunner: QueryRunner = this.connection.createQueryRunner();
 
@@ -133,7 +133,7 @@ export class BoardsService {
       const guestArr: object[] = await this.validateGuests(boardNo, guests);
 
       await queryRunner.manager
-        .getCustomRepository(BoardGuestRepository)
+        .getCustomRepository(BoardParticipationRepository)
         .createGuestMembers(guestArr);
 
       await this.saveNoticeApplication(

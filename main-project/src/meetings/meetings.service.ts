@@ -85,7 +85,7 @@ export class MeetingsService {
 
   private async validateChatRoom(chatRoomNo: number): Promise<void> {
     const chatRoom: ChatList =
-      await this.chacListRepository.checkRoomExistsByChatNo(chatRoomNo);
+      await this.chacListRepository.checkRoomExistsByChatRoomNo(chatRoomNo);
 
     if (!chatRoom) {
       throw new NotFoundException(

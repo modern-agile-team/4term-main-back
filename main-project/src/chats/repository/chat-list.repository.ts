@@ -62,7 +62,7 @@ export class ChatListRepository extends Repository<ChatList> {
       );
     }
   }
-  async checkRoomExistsByChatNo(chatRoomNo: number): Promise<ChatList> {
+  async checkRoomExistsByChatRoomNo(chatRoomNo: number): Promise<ChatList> {
     try {
       const result = await this.createQueryBuilder('chat_list')
         .select(['chat_list.no AS chatRoomNo'])
