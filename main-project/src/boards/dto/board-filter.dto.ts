@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
-import { ToGender } from 'src/common/decorator/validateGender.decorator';
+import { ValidateGender } from 'src/common/decorator/validateGender.decorator';
 import { ToBoolean } from 'src/common/decorator/validateValue.decorator';
 
 export class BoardFilterDto {
@@ -9,7 +9,7 @@ export class BoardFilterDto {
     example: '0',
     description: '모집 성별 필터/ M:남 F:여',
   })
-  @ToGender()
+  @ValidateGender()
   @IsString()
   @IsOptional()
   gender: string;
