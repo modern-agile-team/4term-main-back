@@ -1,12 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { BoardGuests } from '../entity/board-guest.entity';
-import { BoardParticipation } from '../entity/board-participation.entity';
 import { Boards } from '../entity/board.entity';
-import { CreateResponse, Participation } from '../interface/boards.interface';
+import { CreateResponse } from '../interface/boards.interface';
 
-@EntityRepository(BoardParticipation)
-export class BoardParticipationRepository extends Repository<BoardParticipation> {
+@EntityRepository(BoardGuests)
+export class BoardGuestRepository extends Repository<BoardGuests> {
   // 조회
   async getAllGuestsByBoardNo(
     boardNo: number,
@@ -27,16 +26,14 @@ export class BoardParticipationRepository extends Repository<BoardParticipation>
   }
 
   // 생성
-  async createParticipation(
-    participation: Participation,
-  ): Promise<CreateResponse> {
+  async createGuests(guests: object[]): Promise<CreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
-        'board_participation',
+        'board_guests',
       )
         .insert()
-        .into(BoardParticipation)
-        .values(participation)
+        .into(BoardGuests)
+        .values(guests)
         .execute();
 
       return raw;
