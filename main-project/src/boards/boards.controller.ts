@@ -15,11 +15,19 @@ import { ParticipationDto } from './dto/participation.dto';
 import { BoardDto } from './dto/board.dto';
 import { Board } from './interface/boards.interface';
 import { BoardFilterDto } from './dto/board-filter.dto';
+import { Cron, CronExpression } from '@nestjs/schedule/dist';
 
 @Controller('boards')
 @ApiTags('게시글 API')
 export class BoardsController {
   constructor(private boardService: BoardsService) {}
+  //Cron
+  @Cron(CronExpression.EVERY_HOUR)
+  @Patch()
+  async closingThunder(): Promise<void> {
+    await this.boardService.closeThunder();
+  }
+
   //Get Methods
   @Get()
   @ApiOperation({
