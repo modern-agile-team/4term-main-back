@@ -22,6 +22,9 @@ export class Announcements extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
+  @Column({ type: 'int' })
+  type: string;
+
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
 

@@ -27,6 +27,8 @@ export class BoardsController {
     description: '게시글 필터링해서 내림차순으로 조회한다.',
   })
   async getBoards(@Query() BoardFilterDto: BoardFilterDto): Promise<object> {
+    console.log(BoardFilterDto);
+
     const boards: Board[] = await this.boardService.getBoards(BoardFilterDto);
 
     return { response: { boards } };

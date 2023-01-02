@@ -1,28 +1,26 @@
-import {
-  Controller,
-  Get,
-  Param,
-  ParseIntPipe,
-} from '@nestjs/common';
+import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AnnouncementsService } from './announcements.service';
 import { AnnouncementDto } from './dto/announcement.dto';
+import { AnnouncementFilterDto } from './dto/announcement-filter.dto';
 
 @Controller('announcements')
 @ApiTags('공지사항 API')
 export class AnnouncementsController {
-  constructor(private announcementsService: AnnouncementsService) { }
+  constructor(private announcementsService: AnnouncementsService) {}
   //Get Methods
   @Get()
   @ApiOperation({
-    summary: '공지사항 전체 조회 API',
-    description: '공지사항 전부를 내림차순으로 조회한다.',
+    summary: '공지사항 필터링 API',
+    description: '공지사항을 필터링을 통해 내림차순으로 조회한다.',
   })
-  async getAllAnnouncements(): Promise<object> {
-    const response: AnnouncementDto[] =
-      await this.announcementsService.getAllAnnouncements();
+  async getAllAnnouncements(
+    @Query() filter: AnnouncementFilterDto,
+  ): Promise<object> {
+    const announcements: AnnouncementDto[] =
+      await this.announcementsService.getAnnouncements(filter);
 
-    return { response };
+    return { response: announcements };
   }
 
   @Get('/:announcementNo')
@@ -33,9 +31,9 @@ export class AnnouncementsController {
   async getAnnouncementByNo(
     @Param('announcementNo', ParseIntPipe) announcementNo: number,
   ): Promise<object> {
-    const response: object =
+    const announcement: object =
       await this.announcementsService.getAnnouncementByNo(announcementNo);
 
-    return { response };
+    return { response: announcement };
   }
 }
