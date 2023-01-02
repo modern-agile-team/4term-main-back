@@ -10,9 +10,7 @@ import {
 import { Friends } from '../entity/friend.entity';
 import {
   Friend,
-  FriendDetail,
   FriendInfo,
-  FriendList,
   FriendRequestResponse,
   FriendRequestStatus,
   FriendToSearch,
@@ -20,7 +18,7 @@ import {
 
 @EntityRepository(Friends)
 export class FriendsRepository extends Repository<Friends> {
-  async getAllFriendList(userNo: number): Promise<FriendList[]> {
+  async getAllFriendList(userNo: number): Promise<Friend[]> {
     try {
       const result = await this.createQueryBuilder('friends')
         .leftJoin('friends.receiverNo', 'receiverUser')
@@ -85,7 +83,7 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async checkFriend(friendDetail: FriendDetail): Promise<FriendRequestStatus> {
+  async checkFriend(friendDetail: Friend): Promise<FriendRequestStatus> {
     try {
       const result: FriendRequestStatus = await this.createQueryBuilder(
         'friends',
@@ -109,14 +107,14 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async checkRequest(friendDetail: FriendDetail): Promise<FriendRequestStatus> {
+  async checkRequest(friendDetail: Friend): Promise<FriendRequestStatus> {
     try {
       const result: FriendRequestStatus = await this.createQueryBuilder(
         'friends',
       )
         .select(['friends.is_accept AS isAccept'])
         .where(
-          'receiver_no = :receiverNo AND sender_no = :senderNo',
+          'no = :friendNo AND receiver_no = :receiverNo AND sender_no = :senderNo',
           friendDetail,
         )
         .getRawOne();
@@ -147,7 +145,7 @@ export class FriendsRepository extends Repository<Friends> {
   }
 
   async createFriendRequest(
-    friendDetail: FriendDetail,
+    friendDetail: Friend,
   ): Promise<FriendRequestResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
@@ -225,7 +223,7 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async refuseRequestByNo(refuseFriendNo: FriendDetail): Promise<number> {
+  async refuseRequestByNo(refuseFriendNo: Friend): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()
