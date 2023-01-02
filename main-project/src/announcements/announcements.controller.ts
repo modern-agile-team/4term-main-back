@@ -1,8 +1,17 @@
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AnnouncementsService } from './announcements.service';
 import { AnnouncementDto } from './dto/announcement.dto';
 import { AnnouncementFilterDto } from './dto/announcement-filter.dto';
+import { Announcements } from './entity/announcement.entity';
 
 @Controller('announcements')
 @ApiTags('공지사항 API')
@@ -17,7 +26,7 @@ export class AnnouncementsController {
   async getAllAnnouncements(
     @Query() filter: AnnouncementFilterDto,
   ): Promise<object> {
-    const announcements: AnnouncementDto[] =
+    const announcements: Announcements[] =
       await this.announcementsService.getAnnouncements(filter);
 
     return { response: announcements };
@@ -31,9 +40,22 @@ export class AnnouncementsController {
   async getAnnouncementByNo(
     @Param('announcementNo', ParseIntPipe) announcementNo: number,
   ): Promise<object> {
-    const announcement: object =
+    const announcement: Announcements =
       await this.announcementsService.getAnnouncementByNo(announcementNo);
 
     return { response: announcement };
+  }
+
+  // Post Methods
+  @Post()
+  @ApiOperation({
+    summary: '공지사항 생성 API',
+    description: '입력한 정보로 공지사항을 생성한다.',
+  })
+  async createBoard(@Body() announcementDto: AnnouncementDto): Promise<object> {
+    const announcement: string =
+      await this.announcementsService.createAnnouncement(announcementDto);
+
+    return { response: { announcement } };
   }
 }
