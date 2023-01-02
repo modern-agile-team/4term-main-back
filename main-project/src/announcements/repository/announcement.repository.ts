@@ -1,28 +1,26 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import {
-  EntityRepository,
-  Repository,
-} from 'typeorm';
+import { EntityRepository, Repository } from 'typeorm';
 import { Announcements } from '../entity/announcement.entity';
-import {
-  AnnouncementIF,
-} from '../interface/announcement.interface';
+import { AnnouncementIF } from '../interface/announcement.interface';
 
 @EntityRepository(Announcements)
 export class AnnouncementsRepository extends Repository<Announcements> {
   // 공지사항 조회 관련
-  async getAllAnnouncements(): Promise<AnnouncementIF[]> {
+  async getAnnouncements(type: number): Promise<AnnouncementIF[]> {
     try {
       const announcements = this.createQueryBuilder('announcements')
         .select([
           'announcements.no AS no',
           'announcements.title AS title',
           'announcements.description AS description',
+          'announcements.type AS type',
         ])
-        .orderBy('no', 'DESC')
-        .getRawMany();
+        .orderBy('no', 'DESC');
+      if (type) {
+        announcements.where('type = :type', { type });
+      }
 
-      return announcements;
+      return announcements.getRawMany();
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getAllAnnouncements-repository: 알 수 없는 서버 에러입니다.`,
@@ -30,9 +28,7 @@ export class AnnouncementsRepository extends Repository<Announcements> {
     }
   }
 
-  async getAnnouncementByNo(
-    announcementNo: number,
-  ): Promise<AnnouncementIF> {
+  async getAnnouncementByNo(announcementNo: number): Promise<AnnouncementIF> {
     try {
       const announcements = this.createQueryBuilder('announcements')
         .select([

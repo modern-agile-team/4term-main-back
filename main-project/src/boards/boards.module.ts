@@ -11,8 +11,19 @@ import { BoardHostRepository } from './repository/board-host.repository';
 import { BoardRepository, TestUserRepo } from './repository/board.repository';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([BoardRepository, BoardGuestRepository, BoardHostRepository, BoardBookmarkRepository, UsersRepository, NoticesRepository, NoticeBoardsRepository, TestUserRepo])],
+  imports: [
+    TypeOrmModule.forFeature([
+      BoardRepository,
+      BoardGuestRepository,
+      BoardHostRepository,
+      BoardBookmarkRepository,
+      UsersRepository,
+      NoticesRepository,
+      NoticeBoardsRepository,
+      TestUserRepo,
+    ]),
+  ],
   providers: [BoardsService],
   controllers: [BoardsController],
 })
-export class BoardsModule { }
+export class BoardsModule {}

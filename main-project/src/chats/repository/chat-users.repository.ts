@@ -5,24 +5,9 @@ import { ChatRoomList, ChatUserInfo } from '../interface/chat.interface';
 
 @EntityRepository(ChatUsers)
 export class ChatUsersRepository extends Repository<ChatUsers> {
-  async setChatRoomUsers(roomUsers: ChatUserInfo[]): Promise<InsertResult> {
+  async setChatRoomUsers(roomUsers: ChatUserInfo[]): Promise<number> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder('chat_users')
-        .insert()
-        .into(ChatUsers)
-        .values(roomUsers)
-        .execute();
-
-      return raw.affectedRows;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error}: 채팅방 유저 정보 설정(setRoomUsers): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async setChatRoomUser(roomUsers: ChatUserInfo): Promise<number> {
-    try {
+      console.log(roomUsers);
       const { raw }: InsertResult = await this.createQueryBuilder('chat_users')
         .insert()
         .into(ChatUsers)
@@ -87,6 +72,21 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 유처 초대(inviteUserByUserNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getChatRoomUsers(chatRoomNo: number) {
+    try {
+      const users = await this.createQueryBuilder('chat_users')
+        .select('JSON_ARRAYAGG(chat_users.userNo) AS users')
+        .where('chat_users.chatRoomNo = :chatRoomNo', { chatRoomNo })
+        .getRawOne();
+
+      return users;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 유저 조회(getChatRoomUsers): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
