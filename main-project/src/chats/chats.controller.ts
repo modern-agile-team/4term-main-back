@@ -16,9 +16,8 @@ import { GetChatLogDTO } from './dto/get-chat-log.dto';
 import { InviteUserDTO } from './dto/invite-user.dto';
 import { AwsService } from 'src/aws/aws.service';
 import { ChatLog } from './entity/chat-log.entity';
-import { ConnectedSocket } from '@nestjs/websockets/decorators';
-import { Socket } from 'dgram';
 import { AcceptInvitationDTO } from './dto/accept-invitation.dto';
+import { APIResponse } from 'src/common/interface/interface';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -33,7 +32,7 @@ export class ChatsController {
     summary: '채팅 목록 API',
     description: ' 채팅 목록 조회',
   })
-  async getChatRoomList(@Param('userNo') userNo: number): Promise<object> {
+  async getChatRoomList(@Param('userNo') userNo: number): Promise<APIResponse> {
     const chatRoom = await this.chatControllerService.getChatRoomListByUserNo(
       userNo,
     );
@@ -50,7 +49,7 @@ export class ChatsController {
   async getChatLog(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() getChatLogDto: GetChatLogDTO,
-  ): Promise<object> {
+  ): Promise<APIResponse> {
     const previousChatLog: ChatLog[] =
       await this.chatControllerService.getPreviousChatLog(
         getChatLogDto,
@@ -68,7 +67,7 @@ export class ChatsController {
   async inviteUser(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() inviteUser: InviteUserDTO,
-  ): Promise<object> {
+  ): Promise<APIResponse> {
     await this.chatControllerService.inviteUser(inviteUser, chatRoomNo);
 
     return {
@@ -84,7 +83,7 @@ export class ChatsController {
   async acceptInvitation(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() invitationInfo: AcceptInvitationDTO,
-  ): Promise<object> {
+  ): Promise<APIResponse> {
     await this.chatControllerService.acceptInvitation(
       chatRoomNo,
       invitationInfo,
@@ -105,7 +104,7 @@ export class ChatsController {
   async uploadFile(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @UploadedFiles() files: Express.Multer.File[],
-  ): Promise<object> {
+  ): Promise<APIResponse> {
     const uploadedFileUrlList = await this.awsService.uploadFiles(
       files,
       chatRoomNo,
