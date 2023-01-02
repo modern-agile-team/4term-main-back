@@ -107,20 +107,23 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async checkRequest(friendDetail: Friend): Promise<FriendRequestStatus> {
+  async checkRequestByUsersNo(
+    friendDetail: Friend,
+  ): Promise<FriendRequestStatus> {
     try {
-      const result: FriendRequestStatus = await this.createQueryBuilder(
+      const request: FriendRequestStatus = await this.createQueryBuilder(
         'friends',
       )
         .select(['friends.is_accept AS isAccept'])
         .where(
-          'no = :friendNo AND receiver_no = :receiverNo AND sender_no = :senderNo',
+          'receiver_no = :receiverNo AND sender_no = :senderNo',
           friendDetail,
         )
         .getRawOne();
 
-      return result;
+      return request;
     } catch (error) {
+      console.log(error);
       throw new InternalServerErrorException(
         `${error}: 특정 친구 신청 목록 조회(checkRequest): 알 수 없는 서버 에러입니다.`,
       );

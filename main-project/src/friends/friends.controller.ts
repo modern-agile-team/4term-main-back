@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { APIResponse } from 'src/common/interface/interface';
-import { CreateFriendDto } from './dto/create-friend.dto';
+import { CreateFriendRequestDto } from './dto/create-friend.dto';
 import { DeleteFriendDto } from './dto/delete-friend.dto';
 import { FriendsService } from './friends.service';
 
@@ -38,7 +38,7 @@ export class FriendsController {
     description: '친구 신청 API',
   })
   async createFriendRequest(
-    @Body() createFriendDto: CreateFriendDto,
+    @Body() createFriendDto: CreateFriendRequestDto,
   ): Promise<APIResponse> {
     await this.friendsService.createFriendRequest(createFriendDto);
 
@@ -103,7 +103,7 @@ export class FriendsController {
   })
   async refuseRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
-    @Body('friendNo', ParseIntPipe) senderNo: number,
+    @Body('senderNo', ParseIntPipe) senderNo: number,
   ) {
     await this.friendsService.refuseRequest({ receiverNo, senderNo });
 

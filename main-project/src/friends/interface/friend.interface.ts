@@ -1,7 +1,9 @@
-export interface FriendRequest {
+export interface FriendRequestValidation {
   userNo?: number;
+  receiverNo?: number;
   senderNo?: number;
   friendNo?: number;
+  isFriend?: boolean;
 }
 export interface FriendRequestStatus {
   isAccept?: boolean;
