@@ -23,7 +23,7 @@ export class Announcements extends BaseEntity {
   description: string;
 
   @Column({ type: 'int' })
-  type: string;
+  type: number;
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;

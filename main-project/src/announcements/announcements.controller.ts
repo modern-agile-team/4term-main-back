@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -52,9 +53,30 @@ export class AnnouncementsController {
     summary: '공지사항 생성 API',
     description: '입력한 정보로 공지사항을 생성한다.',
   })
-  async createBoard(@Body() announcementDto: AnnouncementDto): Promise<object> {
+  async createAnnouncement(
+    @Body() announcementDto: AnnouncementDto,
+  ): Promise<object> {
     const announcement: string =
       await this.announcementsService.createAnnouncement(announcementDto);
+
+    return { response: { announcement } };
+  }
+
+  // Patch Methods
+  @Patch('/:announcementNo')
+  @ApiOperation({
+    summary: '공지사항 수정 API',
+    description: '입력한 정보로 공지사항을 수정한다.',
+  })
+  async updateAnnouncement(
+    @Param('announcementNo', ParseIntPipe) announcementNo: number,
+    @Body() announcementDto: AnnouncementDto,
+  ): Promise<object> {
+    const announcement: string =
+      await this.announcementsService.updateAnnouncement(
+        announcementNo,
+        announcementDto,
+      );
 
     return { response: { announcement } };
   }

@@ -24,5 +24,5 @@ export class AnnouncementDto {
   })
   @IsNumber()
   @IsNotEmpty()
-  type: string;
+  type: number;
 }

@@ -1,6 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { CreateResponse } from 'src/boards/interface/boards.interface';
-import { EntityRepository, InsertResult, Repository } from 'typeorm';
+import {
+  EntityRepository,
+  InsertResult,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
 import { AnnouncementDto } from '../dto/announcement.dto';
 import { Announcements } from '../entity/announcement.entity';
 import { AnnouncementIF } from '../interface/announcement.interface';
@@ -62,10 +67,30 @@ export class AnnouncementsRepository extends Repository<Announcements> {
         .values(announcementDto)
         .execute();
 
-      return raw.insertId;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createAnnouncement-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  //공지사항 수정 관련
+  async updateAnnouncement(
+    announcementNo: number,
+    announcementDto: AnnouncementDto,
+  ): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder('boards')
+        .update(Announcements)
+        .set(announcementDto)
+        .where('no = :announcementNo', { announcementNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} updateAnnouncement-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
