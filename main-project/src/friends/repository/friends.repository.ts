@@ -249,21 +249,23 @@ export class FriendsRepository extends Repository<Friends> {
   }: FriendToSearch): Promise<FriendInfo[]> {
     try {
       const friend = await this.createQueryBuilder('friends')
-        .leftJoin('friends.receiverNo', 'receiverNo')
-        .leftJoin('friends.senderNo', 'senderNo')
+        .leftJoin('friends.receiverNo', 'receiverUser')
+        .leftJoin('receiverUser.userProfileNo', 'receiverUserProfile')
+        .leftJoin('friends.senderNo', 'senderUser')
+        .leftJoin('senderUser.userProfileNo', 'senderUserProfile')
         .select([
-          `IF(friends.receiver_no = ${userNo} , friends.sender_no, friends.receiver_no) AS friendNo`,
-          `IF(friends.receiver_no = ${userNo} , senderNo.nickname, receiverNo.nickname) AS friendNickname`,
+          `IF(friends.receiverNo = ${userNo} , friends.senderNo, friends.receiverNo) AS friendNo`,
+          `IF(friends.receiverNo = ${userNo} , senderUserProfile.nickname, receiverUserProfile.nickname) AS friendNickname`,
         ])
         .where(
-          `friends.receiver_no = :userNo AND senderNo.nickname LIKE :nickname`,
+          `friends.receiverNo = :userNo AND senderUserProfile.nickname LIKE :nickname AND friends.isAccept = 1`,
           {
             nickname: `%${nickname}%`,
             userNo,
           },
         )
         .orWhere(
-          `friends.senderNo = :userNo AND receiverNo.nickname LIKE :nickname`,
+          `friends.senderNo = :userNo AND receiverUserProfile.nickname LIKE :nickname AND friends.isAccept = 1`,
           {
             nickname: `%${nickname}%`,
             userNo,

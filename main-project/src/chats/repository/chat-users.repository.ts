@@ -1,5 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { UserNo, UserType } from 'src/manners/interface/manner.interface';
+import { UserType } from 'src/common/configs/user-type.config';
+import { UserInfo, UserNo } from 'src/manners/interface/manner.interface';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { ChatUsers } from '../entity/chat-users.entity';
 import { ChatRoomList, ChatUserInfo } from '../interface/chat.interface';
@@ -92,6 +93,16 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
+  async getChatRoomUsers(chatRoomNo: number) {
+    try {
+      const users = await this.createQueryBuilder('chat_users')
+        .select('JSON_ARRAYAGG(chat_users.userNo) AS users')
+        .where('chat_users.chatRoomNo = :chatRoomNo', { chatRoomNo })
+        .getRawOne();
+
+      return users;
+    } catch (error) {}
+  }
   async getTargetUserByChatRoomNo(
     chatRoomNo: number,
     userType: number,
@@ -118,20 +129,21 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
-  async getUserTypeByUserNo({ chatRoomNo, userNo }): Promise<UserType> {
+  async userInfoByChatRoomNo(chatRoomNo: number): Promise<any[]> {
     try {
-      const userType: UserType = await this.createQueryBuilder('chat_users')
-        .select('chat_users.user_type AS userType')
-        .where(
-          'chat_users.chat_room_no = :chatRoomNo AND chat_users.user_no = :userNo',
-          { chatRoomNo, userNo },
-        )
-        .getRawOne();
+      const result = await this.createQueryBuilder('chat_users')
+        .select([
+          `GROUP_CONCAT(DISTINCT chat_users.userNo) AS userNo`,
+          `chat_users.user_type AS userType`,
+        ])
+        .where('chat_users.chat_room_no = :chatRoomNo', { chatRoomNo })
+        .groupBy('chat_users.userType')
+        .getRawMany();
 
-      return userType;
+      return result;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} 유저 타입 검색(getUserTypeByUserNo): 알 수 없는 서버 에러입니다.`,
+        `${error}: 채팅방 유저정보 확인(guestUserInfoByChatRoomNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

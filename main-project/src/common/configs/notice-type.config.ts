@@ -6,4 +6,5 @@ export const NoticeType = {
   FRIEND_REQUEST: 5,
   GUEST_APPLICATION: 7,
   FRIEND_REQUEST_ACCEPTED: 6,
+  GIVE_SCORE: 8,
 };

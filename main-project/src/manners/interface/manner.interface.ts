@@ -18,6 +18,14 @@ export interface UserNo {
 export interface UserGrade {
   grade: number;
 }
-// export interface UserList {
-//   newUserList: number;
-// }
+export interface UserInfo {
+  userType: number;
+  userNo: number;
+}
+
+export interface Manner {
+  chatUserNo: number;
+  chatRoomNo: number;
+  chatTargetUserNo: number;
+  grade: number;
+}

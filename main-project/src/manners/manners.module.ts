@@ -7,6 +7,8 @@ import { BoardRepository } from 'src/boards/repository/board.repository';
 import { MannersLogRepository } from './repository/mannersLog.repository';
 import { ChatListRepository } from 'src/chats/repository/chat-list.repository';
 import { ChatUsersRepository } from 'src/chats/repository/chat-users.repository';
+import { MeetingRepository } from 'src/meetings/repository/meeting.repository';
+import { NoticesRepository } from 'src/notices/repository/notices.repository';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { ChatUsersRepository } from 'src/chats/repository/chat-users.repository'
       BoardRepository,
       ChatListRepository,
       ChatUsersRepository,
+      MeetingRepository,
+      NoticesRepository,
     ]),
   ],
   providers: [MannersService],

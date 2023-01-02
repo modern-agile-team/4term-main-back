@@ -8,11 +8,8 @@ import {
 } from '@nestjs/websockets';
 import { Namespace, Socket } from 'socket.io';
 import { ChatsGatewayService } from './chats-gateway.service';
-import {
-  CreateChat,
-  JoinChatRoom,
-  MessagePayload,
-} from './interface/chat.interface';
+import { CreateChatDto } from './dto/create-chat.dto';
+import { JoinChatRoom, MessagePayload } from './interface/chat.interface';
 
 @WebSocketGateway(4000, { namespace: 'chat' })
 export class ChatsGateway {
@@ -60,7 +57,7 @@ export class ChatsGateway {
   @SubscribeMessage('create-room')
   async handelCreateRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() messagePayload: CreateChat,
+    @MessageBody() messagePayload: CreateChatDto,
   ) {
     await this.chatGatewayService.createRoom(socket, messagePayload);
 
@@ -81,7 +78,9 @@ export class ChatsGateway {
   async handelMessage(
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: MessagePayload,
-  ) {
-    await this.chatGatewayService.sendChat(socket, messagePayload);
+  ): Promise<void> {
+    messagePayload.hasOwnProperty('message')
+      ? await this.chatGatewayService.sendChat(socket, messagePayload)
+      : await this.chatGatewayService.sendFile(socket, messagePayload);
   }
 }

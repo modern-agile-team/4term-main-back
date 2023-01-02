@@ -16,12 +16,14 @@ export interface NoticeConditions {
 }
 
 export interface Notice {
-  noticeNo?: number;
-  userNo?: number;
+  noticeNo: number;
+  userNo: number;
   targetUserNo: number;
-  type?: number;
-  meetingNo?: number;
-  guest?: any;
+  type: number;
+  value?: any;
+  chatRoomNo?: number;
+  boardNo?: number;
+  friendNo?: number;
   createdDate?: Date;
   isRead?: boolean;
 }

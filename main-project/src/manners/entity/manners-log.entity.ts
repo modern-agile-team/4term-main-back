@@ -1,4 +1,3 @@
-import { LargeNumberLike } from 'crypto';
 import { ChatList } from 'src/chats/entity/chat-list.entity';
 import { ChatUsers } from 'src/chats/entity/chat-users.entity';
 import {
@@ -7,10 +6,10 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Manners } from './manners.entity';
 
 @Entity('manner_log')
 export class MannerLog extends BaseEntity {
@@ -20,10 +19,6 @@ export class MannerLog extends BaseEntity {
   @Column({ name: 'is_checked' })
   isChecked: number;
 
-  @ManyToOne((type) => ChatList, (chatList) => chatList.mannerLogNo)
-  @JoinColumn({ name: 'chat_list_no' })
-  chatListNo: number;
-
   @ManyToOne((type) => ChatUsers, (chatUserNo) => chatUserNo.mannerUserNo)
   @JoinColumn({ name: 'chat_user_no' })
   chatUserNo: number;
@@ -32,6 +27,12 @@ export class MannerLog extends BaseEntity {
   @JoinColumn({ name: 'chat_target_user_no' })
   chatTargetUserNo: number;
 
-  @Column({ name: 'grade' })
-  giveGrade: number;
+  @Column()
+  grade: number;
+
+  @ManyToOne((type) => ChatList, (chatList) => chatList.mannerLogNo, {
+    eager: true,
+  })
+  @JoinColumn({ name: 'chat_room_no' })
+  chatRoomNo: number;
 }

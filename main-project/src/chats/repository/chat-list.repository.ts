@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { catchError } from 'rxjs';
 import {
   ChatRoomNo,
   MannerChatUserInfo,
@@ -9,7 +10,7 @@ import { ChatRoomUsers, CreateChat } from '../interface/chat.interface';
 
 @EntityRepository(ChatList)
 export class ChatListRepository extends Repository<ChatList> {
-  async checkRoomExistByBoardNo(boardNo): Promise<ChatList> {
+  async checkRoomExistByBoardNo(boardNo: number): Promise<ChatList> {
     try {
       const result = await this.createQueryBuilder('chat_list')
         .select(['chat_list.board_no AS boardNo'])
@@ -40,7 +41,10 @@ export class ChatListRepository extends Repository<ChatList> {
     }
   }
 
-  async isUserInChatRoom(chatRoomNo, userNo): Promise<ChatRoomUsers> {
+  async isUserInChatRoom(
+    chatRoomNo: number,
+    userNo: number,
+  ): Promise<ChatRoomUsers> {
     try {
       const result = await this.createQueryBuilder('chat_list')
         .leftJoin('chat_list.chatUserNo', 'chatUser')
@@ -63,7 +67,7 @@ export class ChatListRepository extends Repository<ChatList> {
       );
     }
   }
-  async checkRoomExistByChatNo(chatRoomNo): Promise<ChatList> {
+  async checkRoomExistByChatNo(chatRoomNo: number): Promise<ChatList> {
     try {
       const result = await this.createQueryBuilder('chat_list')
         .select(['chat_list.no AS chatRoomNo'])
@@ -74,22 +78,6 @@ export class ChatListRepository extends Repository<ChatList> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error}: 채팅방 중복 확인 (checkRoomExist): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async getChatRoomNoByBoardNo(boardNo: number): Promise<ChatRoomNo> {
-    try {
-      //게시판 있는지 확인 후 채팅방 있는지 확인해주는 ~~
-      const chatRoomNo = await this.createQueryBuilder('chat_list')
-        .select('chat_list.no AS chatRoomNo')
-        .where(`chat_list.board_no = :boardNo`, { boardNo })
-        .getRawOne();
-
-      return chatRoomNo;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error}: 채팅방 확인(getChatRoomNoByBoardNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

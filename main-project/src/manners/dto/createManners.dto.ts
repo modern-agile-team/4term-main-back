@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class MannerDto {
   @IsNumber()
@@ -9,7 +9,7 @@ export class MannerDto {
   @IsNumber()
   @IsNotEmpty()
   @ApiProperty({ example: 1, description: '채팅방 번호' })
-  chatListNo: number;
+  chatRoomNo: number;
 
   @IsNumber()
   @IsNotEmpty()
@@ -17,7 +17,6 @@ export class MannerDto {
   chatTargetUserNo: number;
 
   @IsNumber()
-  @IsNotEmpty()
   @ApiProperty({ example: 'A+', description: '매너 평점' })
   grade: number;
 }
