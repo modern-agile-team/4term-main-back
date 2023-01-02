@@ -1,7 +1,7 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { Transform } from 'class-transformer';
 
-const ToGender = () => {
+const ValidateGender = () => {
   const toPlain = Transform(
     ({ value }) => {
       return value;
@@ -13,7 +13,7 @@ const ToGender = () => {
   const toClass = (target: any, key: string) => {
     return Transform(
       ({ obj }) => {
-        return valueToBoolean(obj[key]);
+        return valueToGender(obj[key]);
       },
       {
         toClassOnly: true,
@@ -26,7 +26,7 @@ const ToGender = () => {
   };
 };
 
-const valueToBoolean = (value: any) => {
+const valueToGender = (value: any) => {
   if (value === null || value === undefined) {
     return undefined;
   }
@@ -42,4 +42,4 @@ const valueToBoolean = (value: any) => {
   throw new InternalServerErrorException(`성별을 잘못 입력하셨습니다.`);
 };
 
-export { ToGender };
+export { ValidateGender };

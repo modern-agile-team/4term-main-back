@@ -21,7 +21,7 @@ import {
 import { BoardBookmarkRepository } from './repository/board-bookmark.repository';
 import { BoardGuestRepository } from './repository/board-guest.repository';
 import { BoardHostRepository } from './repository/board-host.repository';
-import { BoardRepository, TestUserRepo } from './repository/board.repository';
+import { BoardRepository } from './repository/board.repository';
 import { BoardParticipationRepository } from './repository/board-participation.repository';
 import { BoardFilterDto } from './dto/board-filter.dto';
 
@@ -47,11 +47,15 @@ export class BoardsService {
     private readonly noticeBoardsRepository: NoticeBoardsRepository,
 
     private readonly connection: Connection,
-
-    // TODO: user module 작업 되면 삭제
-    @InjectRepository(TestUserRepo)
-    private readonly testUserRepo: TestUserRepo,
   ) {}
+  //cron
+  async closeThunder(): Promise<void> {
+    const thunders: { no: string } = await this.boardRepository.checkDeadline();
+
+    const no: number[] = JSON.parse(thunders.no);
+
+    await this.boardRepository.closeBoard(no);
+  }
 
   // 생성 관련
   async createBoard({

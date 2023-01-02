@@ -16,10 +16,12 @@ import { EnquiriesModule } from './enquiries/enquiries.module';
 import { ChatsModule } from './chats/chats.module';
 import { MannersModule } from './manners/manners.module';
 import { AwsModule } from './aws/aws.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync(typeOrmConfig),
     MeetingsModule,
     BoardsModule,
