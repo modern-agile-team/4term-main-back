@@ -37,7 +37,7 @@ export class UserProfile extends BaseEntity {
   @OneToOne((type) => Manners, (Manners) => Manners.userProfileNo)
   mannerNo: Manners;
 
-  @ManyToOne((type) => University, (university) => university.usersUniversity)
+  @ManyToOne((type) => University, (university) => university.userProfile)
   @JoinColumn({ name: 'university_no' })
   universityNo: number;
 
