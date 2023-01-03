@@ -36,12 +36,6 @@ export class AuthService {
     private readonly userProfileRepository: UserProfilesRepository,
   ) {}
 
-  // private UserStatus = {
-  //   NO_PROFILE: 0,
-  //   SHCOOL_NOT_AUTHENTICATED: 1,
-  //   CONFIRMED: 2,
-  // };
-
   async kakaoLogin(token: string): Promise<User> {
     const kakaoUserInfoUrl = 'https://kapi.kakao.com/v2/user/me';
     const headers = {
