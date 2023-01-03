@@ -27,12 +27,6 @@ export class CreateProfileDto {
   description: string;
 
   @IsNotEmpty()
-  @Type(() => Number)
-  @IsNumber()
-  majorNo: number;
-
-  @IsNotEmpty()
-  @Type(() => Number)
-  @IsNumber()
-  universityNo: number;
+  @IsString()
+  major: string;
 }

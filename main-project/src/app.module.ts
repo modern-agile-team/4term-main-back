@@ -11,7 +11,6 @@ import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { FriendsModule } from './friends/friends.module';
-import { UniversitiesModule } from './universities/universities.module';
 import { EnquiriesModule } from './enquiries/enquiries.module';
 import { ChatsModule } from './chats/chats.module';
 import { MannersModule } from './manners/manners.module';
@@ -32,7 +31,6 @@ import { mailModule } from './common/configs/email.config';
     ReportsModule,
     AnnouncementsModule,
     FriendsModule,
-    UniversitiesModule,
     EnquiriesModule,
     ChatsModule,
     MannersModule,

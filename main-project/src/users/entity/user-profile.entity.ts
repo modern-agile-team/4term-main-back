@@ -1,6 +1,4 @@
 import { Manners } from 'src/manners/entity/manners.entity';
-import { Majors } from 'src/universities/entity/majors.entity';
-import { University } from 'src/universities/entity/university.entity';
 import {
   BaseEntity,
   Column,
@@ -34,18 +32,11 @@ export class UserProfile extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
+  @Column({ type: 'varchar', length: 45 })
+  major: string;
+
   @OneToOne((type) => Manners, (Manners) => Manners.userProfileNo)
   mannerNo: Manners;
-
-  @ManyToOne((type) => University, (university) => university.userProfile)
-  @JoinColumn({ name: 'university_no' })
-  universityNo: number;
-
-  @ManyToOne((type) => Majors, (majors) => majors.userProfile, {
-    nullable: false,
-  })
-  @JoinColumn({ name: 'major_no' })
-  majorNo: number;
 
   @OneToOne(
     (type) => ProfileImages,
