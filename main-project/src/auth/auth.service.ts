@@ -21,6 +21,7 @@ import { UserAuth } from './interface/auth.interface';
 import { LoginDto } from './dto/login.dto';
 import { UserProfilesRepository } from 'src/users/repository/user-profiles.repository';
 import { ConfigService } from '@nestjs/config';
+import { UserStatus } from 'src/common/configs/user-status.config';
 
 @Injectable()
 export class AuthService {
@@ -35,11 +36,11 @@ export class AuthService {
     private readonly userProfileRepository: UserProfilesRepository,
   ) {}
 
-  private userStatus = {
-    NO_PROFILE: 0,
-    SHCOOL_NOT_AUTHENTICATED: 1,
-    CONFIRMED: 2,
-  };
+  // private UserStatus = {
+  //   NO_PROFILE: 0,
+  //   SHCOOL_NOT_AUTHENTICATED: 1,
+  //   CONFIRMED: 2,
+  // };
 
   async kakaoLogin(token: string): Promise<User> {
     const kakaoUserInfoUrl = 'https://kapi.kakao.com/v2/user/me';
@@ -201,7 +202,7 @@ export class AuthService {
       throw new InternalServerErrorException(`유저 생성 오류(createUser)`);
     }
 
-    return { userNo: insertId, status: this.userStatus.NO_PROFILE };
+    return { userNo: insertId, status: UserStatus.NO_PROFILE };
   }
 
   private async createOrGetUser(email: string): Promise<User> {
@@ -215,7 +216,7 @@ export class AuthService {
   }
 
   private async issueToken(user: User): Promise<User> {
-    if (user.status != this.userStatus.CONFIRMED) {
+    if (user.status != UserStatus.CONFIRMED) {
       return user;
     }
 
