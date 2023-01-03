@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { randomBytes } from 'crypto';
-import * as bcrypt from 'bcryptjs';
-import * as argon2 from 'argon2';
+import * as bcrypt from 'bcrypt';
+import { JwtService } from '@nestjs/jwt';
 import {
   BadRequestException,
   CACHE_MANAGER,
@@ -15,19 +15,24 @@ import { UsersRepository } from 'src/users/repository/users.repository';
 import { MailerService } from '@nestjs-modules/mailer';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResultSetHeader } from 'mysql2/promise';
-import { User } from 'src/users/interface/user.interface';
+import { Profile, User } from 'src/users/interface/user.interface';
 import { AuthRepository } from './repository/authentication.repository';
 import { UserAuth } from './interface/auth.interface';
 import { LoginDto } from './dto/login.dto';
+import { UserProfilesRepository } from 'src/users/repository/user-profiles.repository';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
   constructor(
     @Inject(CACHE_MANAGER)
     private readonly cacheManager,
+    private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
     private readonly mailerService: MailerService,
     private readonly userRepository: UsersRepository,
     private readonly authRepository: AuthRepository,
+    private readonly userProfileRepository: UserProfilesRepository,
   ) {}
 
   private userStatus = {
@@ -36,19 +41,7 @@ export class AuthService {
     CONFIRMED: 2,
   };
 
-  private async createUser(email: string): Promise<User> {
-    const { insertId }: ResultSetHeader = await this.userRepository.createUser(
-      email,
-    );
-
-    if (!insertId) {
-      throw new InternalServerErrorException(`유저 생성 오류(createUser)`);
-    }
-
-    return { userNo: insertId, status: this.userStatus.NO_PROFILE };
-  }
-
-  async kakaoLogin(token: string) {
+  async kakaoLogin(token: string): Promise<User> {
     const kakaoUserInfoUrl = 'https://kapi.kakao.com/v2/user/me';
     const headers = {
       'Content-Type': 'application/x-www-form-urlencoded=utf-8',
@@ -63,9 +56,12 @@ export class AuthService {
     });
 
     const { email } = data.kakao_account;
+    const user = await this.createOrGetUser(email);
+
+    return await this.issueToken(user);
   }
 
-  async googleLogin(token: string) {
+  async googleLogin(token: string): Promise<User> {
     const googleUserInfoUrl =
       'https://openidconnect.googleapis.com/v1/userinfo';
     const headers = {
@@ -80,9 +76,12 @@ export class AuthService {
     });
 
     const { email } = googleUser.data;
+    const user = await this.createOrGetUser(email);
+
+    return await this.issueToken(user);
   }
 
-  async naverLogin(token: string) {
+  async naverLogin(token: string): Promise<User> {
     const naverUserInfoUrl = 'https://openapi.naver.com/v1/nid/me';
     const headers = {
       Authorization: 'Bearer ' + token,
@@ -96,11 +95,15 @@ export class AuthService {
     });
 
     const { email } = data.response;
+    const user = await this.createOrGetUser(email);
+
+    return await this.issueToken(user);
   }
 
-  async signIn({ email }: SignInDto) {
+  async signIn({ email }: SignInDto): Promise<void> {
     await this.validateUserNotCreated(email);
     const validationKey = randomBytes(7).toString('base64url');
+
     await this.cacheManager.set(email, validationKey, { ttl: 310 });
 
     await this.mailerService.sendMail({
@@ -110,11 +113,11 @@ export class AuthService {
     });
   }
 
-  async verifyEmail({ email, code, password }: VerifyEmailDto) {
+  async verifyEmail({ email, code, password }: VerifyEmailDto): Promise<User> {
     await this.validateUserNotCreated(email);
     await this.validateEmail(email, code);
 
-    const user: User = await this.createUser(email);
+    const user: User = await this.createUserByEmail(email);
     const userAuth: UserAuth = await this.createAuthentication(
       password,
       user.userNo,
@@ -129,7 +132,7 @@ export class AuthService {
     return user;
   }
 
-  async login({ password, email }: LoginDto) {
+  async login({ password, email }: LoginDto): Promise<User> {
     const user: User = await this.userRepository.getUserByEmail(email);
 
     if (!user) {
@@ -146,27 +149,21 @@ export class AuthService {
       );
     }
 
-    await this.validatePassword(password, userAuth);
-  }
-
-  private async validatePassword(password: string, userAuth: UserAuth) {
-    const saltedPassword = await bcrypt.hash(password, userAuth.salt);
-
-    if (!argon2.verify(userAuth.password, saltedPassword)) {
+    if (!bcrypt.compareSync(password, userAuth.password)) {
       throw new BadRequestException(`올바르지 않은 비밀번호입니다.`);
     }
+
+    return await this.issueToken(user);
   }
 
   private async createAuthentication(
     password: string,
     userNo: number,
   ): Promise<UserAuth> {
-    const salt = await bcrypt.genSalt();
-    const saltedPassword = await bcrypt.hash(password, salt);
+    const saltedPassword = bcrypt.hashSync(password, 3);
 
     return {
-      password: await argon2.hash(saltedPassword),
-      salt,
+      password: saltedPassword,
       userNo,
     };
   }
@@ -193,5 +190,47 @@ export class AuthService {
     if (validCode !== code) {
       throw new BadRequestException(`올바르지 않은 인증 코드입니다.`);
     }
+  }
+
+  private async createUserByEmail(email: string): Promise<User> {
+    const { insertId }: ResultSetHeader = await this.userRepository.createUser(
+      email,
+    );
+
+    if (!insertId) {
+      throw new InternalServerErrorException(`유저 생성 오류(createUser)`);
+    }
+
+    return { userNo: insertId, status: this.userStatus.NO_PROFILE };
+  }
+
+  private async createOrGetUser(email: string): Promise<User> {
+    const user: User = await this.userRepository.getUserByEmail(email);
+
+    if (!user) {
+      return await this.createUserByEmail(email);
+    }
+
+    return user;
+  }
+
+  private async issueToken(user: User): Promise<User> {
+    if (user.status != this.userStatus.CONFIRMED) {
+      return user;
+    }
+
+    const accessPayload: Profile =
+      await this.userProfileRepository.getUserProfile(user.userNo);
+    user.accessToken = this.jwtService.sign(accessPayload, {
+      secret: this.configService.get<string>('JWT_SECRET_KEY'),
+      expiresIn: this.configService.get<number>('ACCESS_TOKEN_EXPIRATION'),
+    });
+
+    const { iat }: any = this.jwtService.decode(user.accessToken);
+    await this.cacheManager.set(user.userNo, iat, {
+      ttl: this.configService.get<number>('REFRESH_TOKEN_EXPIRATION'),
+    });
+
+    return user;
   }
 }

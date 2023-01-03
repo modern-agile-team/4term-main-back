@@ -1,5 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { Body, Post } from '@nestjs/common/decorators';
+import { User } from 'src/users/interface/user.interface';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { SignInDto } from './dto/sign-in.dto';
@@ -11,43 +12,43 @@ export class AuthController {
 
   @Post('/login/kakao')
   async kakaoLogin(@Body('token') token: string) {
-    await this.authService.kakaoLogin(token);
+    const user: User = await this.authService.kakaoLogin(token);
 
-    return { success: true };
+    return { response: { user } };
   }
 
   @Post('/login/google')
   async googleLogin(@Body('token') token: string) {
-    await this.authService.googleLogin(token);
+    const user: User = await this.authService.googleLogin(token);
 
-    return { success: true };
+    return { response: { user } };
   }
 
   @Post('/login/naver')
   async naverLogin(@Body('token') token: string) {
-    await this.authService.naverLogin(token);
+    const user: User = await this.authService.naverLogin(token);
 
-    return { success: true };
+    return { response: { user } };
   }
 
   @Post('/signIn')
   async signIn(@Body() signInDto: SignInDto) {
     await this.authService.signIn(signInDto);
 
-    return { success: true };
+    return;
   }
 
   @Post('/verify')
   async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
-    const user = await this.authService.verifyEmail(verifyEmailDto);
+    const user: User = await this.authService.verifyEmail(verifyEmailDto);
 
     return { response: { user } };
   }
 
   @Post('/login')
   async login(@Body() loginDto: LoginDto) {
-    await this.authService.login(loginDto);
+    const user: User = await this.authService.login(loginDto);
 
-    return { success: true };
+    return { response: { user } };
   }
 }

@@ -22,7 +22,4 @@ export class Authentication extends BaseEntity {
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   password: string;
-
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  salt: string;
 }
