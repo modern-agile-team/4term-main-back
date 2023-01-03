@@ -1,7 +1,8 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { EntityRepository, Repository } from 'typeorm';
+import { ResultSetHeader } from 'mysql2';
+import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { UserProfile } from '../entity/user-profile.entity';
-import { Profile } from '../interface/user.interface';
+import { Profile, ProfileDetail } from '../interface/user.interface';
 
 @EntityRepository(UserProfile)
 export class UserProfilesRepository extends Repository<UserProfile> {
@@ -24,6 +25,25 @@ export class UserProfilesRepository extends Repository<UserProfile> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 유저 프로필 조회 오류(getUserProfile): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async createUserProfile(userProfile: ProfileDetail): Promise<number> {
+    try {
+      const { raw }: InsertResult = await this.createQueryBuilder(
+        'user_profiles',
+      )
+        .insert()
+        .into(UserProfile)
+        .values(userProfile)
+        .execute();
+      const { insertId }: ResultSetHeader = raw;
+
+      return insertId;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 유저 프로필 생성 오류(createUserProfile): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

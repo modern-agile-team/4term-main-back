@@ -10,3 +10,11 @@ export interface Profile {
   nickname: string;
   profileImage: string;
 }
+
+export interface ProfileDetail {
+  userNo: number;
+  nickname: string;
+  gender: boolean;
+  description?: string;
+  major: string;
+}
