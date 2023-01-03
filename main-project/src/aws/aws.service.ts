@@ -42,4 +42,28 @@ export class AwsService {
 
     return imageUrlList;
   }
+
+  async uploadProfileImage(image, userNo: number) {
+    const imageKey = `user/${userNo}/${Date.now()}_${
+      image.originalname
+    }`.replace(/ /g, '');
+    const profileImage = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      ACL: 'public-read',
+      Key: imageKey,
+      Body: image.buffer,
+    };
+
+    this.s3.upload(profileImage, (err, data) => {
+      if (err) {
+        console.log(err);
+
+        throw new InternalServerErrorException(
+          '이미지 업로드에 실패하였습니다.',
+        );
+      }
+    });
+
+    return process.env.AWS_BUCKET_LINK + imageKey;
+  }
 }
