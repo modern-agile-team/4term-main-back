@@ -5,11 +5,18 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { cacheModule } from 'src/common/configs/redis.config';
 import { AuthRepository } from './repository/authentication.repository';
+import { UserProfilesRepository } from 'src/users/repository/user-profiles.repository';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
     cacheModule,
-    TypeOrmModule.forFeature([UsersRepository, AuthRepository]),
+    JwtModule,
+    TypeOrmModule.forFeature([
+      UsersRepository,
+      AuthRepository,
+      UserProfilesRepository,
+    ]),
   ],
   controllers: [AuthController],
   providers: [AuthService],
