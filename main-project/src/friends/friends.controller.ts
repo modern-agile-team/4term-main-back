@@ -37,7 +37,7 @@ export class FriendsController {
     summary: '친구 신청 API',
     description: '친구 신청 API',
   })
-  async createFriendRequest(
+  async sendFriendRequest(
     @Body() createFriendDto: CreateFriendRequestDto,
   ): Promise<APIResponse> {
     await this.friendsService.createFriendRequest(createFriendDto);

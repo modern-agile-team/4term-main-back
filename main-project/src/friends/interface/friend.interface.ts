@@ -3,7 +3,7 @@ export interface FriendRequestValidation {
   receiverNo?: number;
   senderNo?: number;
   friendNo?: number;
-  isFriend?: boolean;
+  friendReqStatus?: boolean;
 }
 export interface FriendRequestStatus {
   isAccept?: boolean;
@@ -16,8 +16,8 @@ export interface Friend {
   senderNo?: number;
 }
 
-export interface FriendRequestResponse {
-  affectedRows: number;
+export interface FriendInsertResult {
+  affectedRows?: number;
   insertId?: number;
 }
 
@@ -32,8 +32,9 @@ export interface FriendInfo {
 }
 
 export interface NoticeFriend {
+  noticeNo?: number;
   receiverNo?: number;
-  userNo?: number;
+  senderNo?: number;
   friendNo?: number;
 }
 

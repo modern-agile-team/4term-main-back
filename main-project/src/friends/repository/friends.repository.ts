@@ -11,7 +11,7 @@ import { Friends } from '../entity/friend.entity';
 import {
   Friend,
   FriendInfo,
-  FriendRequestResponse,
+  FriendInsertResult,
   FriendRequestStatus,
   FriendToSearch,
 } from '../interface/friend.interface';
@@ -147,9 +147,7 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async createFriendRequest(
-    friendDetail: Friend,
-  ): Promise<FriendRequestResponse> {
+  async createFriendRequest(friendDetail: Friend): Promise<FriendInsertResult> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
