@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { ToBoolean } from 'src/common/decorator/validateValue.decorator';
 
 export class CreateProfileDto {
   @IsNotEmpty()
@@ -18,7 +19,7 @@ export class CreateProfileDto {
   nickname: string;
 
   @IsNotEmpty()
-  @Type(() => Boolean)
+  @ToBoolean()
   @IsBoolean()
   gender: boolean;
 
