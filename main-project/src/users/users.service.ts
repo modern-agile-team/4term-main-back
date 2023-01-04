@@ -8,6 +8,8 @@ import { InternalServerErrorException } from '@nestjs/common/exceptions';
 import { ProfileImagesRepository } from './repository/profile-images.repository';
 import { UserStatus } from 'src/common/configs/user-status.config';
 import { Users } from './entity/user.entity';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { User } from './interface/user.interface';
 @Injectable()
 export class UsersService {
   constructor(
@@ -21,7 +23,7 @@ export class UsersService {
   async createUserProfile(
     createProfileDto: CreateProfileDto,
     profileImage: Express.Multer.File,
-  ) {
+  ): Promise<User> {
     const { userNo } = createProfileDto;
     const user = await this.getUserByNo(userNo);
     if (user.status != UserStatus.NO_PROFILE) {
@@ -32,6 +34,17 @@ export class UsersService {
     const imageUrl = await this.getProfileImageUrl(profileImage, userNo);
     await this.saveProfileImage(userProfileNo, imageUrl);
     await this.updateUserStatus(userNo, UserStatus.SHCOOL_NOT_AUTHENTICATED);
+
+    return { userNo, status: UserStatus.SHCOOL_NOT_AUTHENTICATED };
+  }
+
+  async updateUserProfile(updateProfileDto: UpdateProfileDto): Promise<void> {
+    const isProfileUpdated: number =
+      await this.userProfileRepository.updateUserProfile(updateProfileDto);
+
+    if (!isProfileUpdated) {
+      throw new InternalServerErrorException(`유저 프로필 수정 오류입니다.`);
+    }
   }
 
   private async getProfileImageUrl(image: Express.Multer.File, userNo: number) {

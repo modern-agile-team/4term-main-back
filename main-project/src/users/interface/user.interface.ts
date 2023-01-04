@@ -18,3 +18,9 @@ export interface ProfileDetail {
   description?: string;
   major: string;
 }
+
+export interface UpdatedProfile {
+  userNo: number;
+  nickname?: string;
+  description?: string;
+}
