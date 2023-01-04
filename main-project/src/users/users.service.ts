@@ -1,5 +1,9 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import {
+  Injectable,
+  BadRequestException,
+  CACHE_MANAGER,
+  Inject,
+} from '@nestjs/common';
 import { AwsService } from 'src/aws/aws.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UserProfilesRepository } from './repository/user-profiles.repository';
@@ -10,14 +14,20 @@ import { UserStatus } from 'src/common/configs/user-status.config';
 import { Users } from './entity/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { User } from './interface/user.interface';
+import { JwtService } from '@nestjs/jwt';
+import { Payload } from 'src/auth/interface/auth.interface';
+import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(UsersRepository)
+    @Inject(CACHE_MANAGER)
+    private readonly cacheManager,
     private userRepository: UsersRepository,
     private readonly userProfileRepository: UserProfilesRepository,
     private readonly profileImageRepository: ProfileImagesRepository,
     private readonly awsService: AwsService,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async createUserProfile(
@@ -38,13 +48,42 @@ export class UsersService {
     return { userNo, status: UserStatus.SHCOOL_NOT_AUTHENTICATED };
   }
 
-  async updateUserProfile(updateProfileDto: UpdateProfileDto): Promise<void> {
+  async updateUserProfile(updateProfileDto: UpdateProfileDto): Promise<User> {
+    const user: User = {
+      userNo: updateProfileDto.userNo,
+      status: UserStatus.CONFIRMED,
+    };
+
     const isProfileUpdated: number =
       await this.userProfileRepository.updateUserProfile(updateProfileDto);
 
     if (!isProfileUpdated) {
       throw new InternalServerErrorException(`유저 프로필 수정 오류입니다.`);
     }
+
+    if (updateProfileDto.nickname) {
+      user.accessToken = await this.updateAccessToken(updateProfileDto.userNo);
+    }
+
+    return user;
+  }
+
+  private async updateAccessToken(userNo: number) {
+    const accessPayload: Payload =
+      await this.userProfileRepository.getUserPayload(userNo);
+
+    const accessToken = this.jwtService.sign(accessPayload);
+    const { iat }: any = this.jwtService.decode(accessToken);
+    const remainedTime = await this.cacheManager.ttl(userNo);
+
+    await this.cacheManager.set(userNo, iat, {
+      ttl:
+        remainedTime === -2
+          ? this.configService.get('ACCESS_TOKEN_EXPIRATION')
+          : remainedTime,
+    });
+
+    return accessToken;
   }
 
   private async getProfileImageUrl(image: Express.Multer.File, userNo: number) {

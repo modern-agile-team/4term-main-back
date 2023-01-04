@@ -31,8 +31,10 @@ export class UsersController {
   @Patch('/profile')
   @UseGuards(JwtAuthGuard)
   async updateProfile(@BodyAndUser() updateProfielDto: UpdateProfileDto) {
-    await this.usersService.updateUserProfile(updateProfielDto);
+    const user: User = await this.usersService.updateUserProfile(
+      updateProfielDto,
+    );
 
-    return { msg: '프로필이 수정되었습니다' };
+    return { response: { user } };
   }
 }
