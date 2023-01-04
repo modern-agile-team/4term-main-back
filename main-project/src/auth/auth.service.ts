@@ -168,12 +168,12 @@ export class AuthService {
   }
 
   async refreshAccessToken(payload: Payload): Promise<string> {
-    delete payload.exp;
-    delete payload.iat;
-
     const accessToken = this.jwtService.sign(payload);
     const { iat }: any = this.jwtService.decode(accessToken);
-    await this.cacheManager.set(payload.userNo, iat);
+
+    await this.cacheManager.set(payload.userNo, iat, {
+      ttl: await this.cacheManager.ttl(payload.userNo),
+    });
 
     return accessToken;
   }
@@ -241,8 +241,8 @@ export class AuthService {
       return user;
     }
 
-    const accessPayload: Profile =
-      await this.userProfileRepository.getUserProfile(user.userNo);
+    const accessPayload: Payload =
+      await this.userProfileRepository.getUserPayload(user.userNo);
     user.accessToken = this.jwtService.sign(accessPayload);
 
     const { iat }: any = this.jwtService.decode(user.accessToken);

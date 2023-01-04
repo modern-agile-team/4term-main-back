@@ -1,20 +1,20 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
+import { Payload } from 'src/auth/interface/auth.interface';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { UserProfile } from '../entity/user-profile.entity';
-import { Profile, ProfileDetail } from '../interface/user.interface';
+import { ProfileDetail } from '../interface/user.interface';
 
 @EntityRepository(UserProfile)
 export class UserProfilesRepository extends Repository<UserProfile> {
-  async getUserProfile(userNo: number): Promise<Profile> {
+  async getUserPayload(userNo: number): Promise<Payload> {
     try {
-      const userProfile: Profile = await this.createQueryBuilder(
+      const userProfile: Payload = await this.createQueryBuilder(
         'user_profiles',
       )
         .leftJoin('user_profiles.profileImage', 'profileImages')
         .select([
           'user_profiles.userNo AS userNo',
-          'user_profiles.gender AS gender',
           'user_profiles.nickname AS nickname',
           'profileImages.imageUrl AS profileImage',
         ])
@@ -24,7 +24,7 @@ export class UserProfilesRepository extends Repository<UserProfile> {
       return userProfile;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} 유저 프로필 조회 오류(getUserProfile): 알 수 없는 서버 에러입니다.`,
+        `${error} 유저 페이로드 조회 오류(getUserPayload): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

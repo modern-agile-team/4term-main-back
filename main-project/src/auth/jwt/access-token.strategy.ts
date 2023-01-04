@@ -25,9 +25,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     );
 
     if (!isTokenAvailable) {
-      const accessToken: string = await this.authService.refreshAccessToken(
-        tokenPayload,
-      );
+      const accessToken: string = await this.authService.refreshAccessToken({
+        userNo: tokenPayload.userNo,
+        nickname: tokenPayload.nickname,
+        profileImage: tokenPayload.profileImage,
+      });
 
       throw new UnauthorizedException({
         message: '토큰이 만료되었습니다.',
