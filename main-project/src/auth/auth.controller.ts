@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { Body, Delete, Post, UseGuards } from '@nestjs/common/decorators';
-import { UserNo } from 'src/common/decorator/get-user.decorator';
+import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { User } from 'src/users/interface/user.interface';
 import { AuthService } from './auth.service';
@@ -56,7 +56,7 @@ export class AuthController {
 
   @Delete('/logout')
   @UseGuards(JwtAuthGuard)
-  async logout(@UserNo() userNo) {
+  async logout(@GetUser() userNo) {
     await this.authService.logout(userNo);
 
     return { msg: '로그아웃 성공' };
