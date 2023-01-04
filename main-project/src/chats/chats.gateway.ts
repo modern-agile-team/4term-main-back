@@ -7,6 +7,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Namespace, Socket } from 'socket.io';
+import { APIResponse } from 'src/common/interface/interface';
 import { ChatsGatewayService } from './chats-gateway.service';
 import { CreateChatDto } from './dto/create-chat.dto';
 import {
@@ -54,7 +55,7 @@ export class ChatsGateway {
   async handleInitSocket(
     @ConnectedSocket() socket: Socket,
     @MessageBody() userNo: number,
-  ) {
+  ): Promise<APIResponse> {
     const chatRoomList: ChatRoomList[] =
       await this.chatGatewayService.initSocket(socket, userNo);
 
@@ -65,7 +66,7 @@ export class ChatsGateway {
   async handleCreateRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: CreateChatDto,
-  ) {
+  ): Promise<void> {
     await this.chatGatewayService.createRoom(socket, messagePayload);
   }
 
@@ -73,7 +74,7 @@ export class ChatsGateway {
   async handleJoinRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: JoinChatRoom,
-  ) {
+  ): Promise<APIResponse> {
     const recentChatLog = await this.chatGatewayService.joinRoom(
       socket,
       messagePayload,

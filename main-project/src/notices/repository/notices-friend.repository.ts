@@ -1,7 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import {
-  FriendInfo,
-  FriendNo,
+  Friend,
   NoticeFriend,
   NoticeUser,
 } from 'src/friends/interface/friend.interface';
@@ -29,7 +28,7 @@ export class NoticeFriendsRepository extends Repository<NoticeFriends> {
   }
   async getFriendNoByNoticeNo(noticeUser: NoticeUser): Promise<number> {
     try {
-      const { friendNo }: FriendNo = await this.createQueryBuilder(
+      const { friendNo }: Friend = await this.createQueryBuilder(
         'notice_friends',
       )
         .leftJoin('notice_friends.noticeNo', 'notice')
