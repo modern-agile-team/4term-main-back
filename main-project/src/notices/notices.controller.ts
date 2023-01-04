@@ -10,11 +10,8 @@ export class NoticesController {
   @ApiOperation({ summary: '특정 유저의 모든 알림 조회' })
   @Get('/user')
   async getNoticeByUser(@Body('userNo') userNo: number) {
-    try {
-      await this.noticesService.getNoticeByConditions({ userNo });
-    } catch (err) {
-      throw err;
-    }
+    const notices = await this.noticesService.getNoticeByUserNo(userNo);
+    return { response: { notices }, msg: `유저 알림 조회 성공` };
   }
 
   @ApiOperation({ summary: '알림 읽음 처리' })

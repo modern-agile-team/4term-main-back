@@ -1,279 +1,374 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NoticeType } from 'src/common/configs/notice-type.config';
+import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
-import { UsersRepository } from 'src/users/repository/users.repository';
-import { ApplicationDto } from './dto/application.dto';
+import { Connection, QueryRunner, UpdateResult } from 'typeorm';
+import { ParticipationDto } from './dto/participation.dto';
 import { BoardDto } from './dto/board.dto';
+import { Boards } from './entity/board.entity';
 import {
-  BoardMemberDetail,
+  Board,
   CreateResponse,
-  BookmarkDetail,
-  BoardReadResponse,
-  BoardDetail,
-  CreateHostMembers,
-  GuestApplication,
-  NoticeBoard,
+  Participation,
 } from './interface/boards.interface';
-import { BoardRepository, TestUserRepo } from './repository/board.repository';
+import { BoardBookmarkRepository } from './repository/board-bookmark.repository';
+import { BoardGuestRepository } from './repository/board-guest.repository';
+import { BoardHostRepository } from './repository/board-host.repository';
+import { BoardRepository } from './repository/board.repository';
+import { BoardParticipationRepository } from './repository/board-participation.repository';
+import { BoardFilterDto } from './dto/board-filter.dto';
 
 @Injectable()
 export class BoardsService {
   constructor(
+    @InjectRepository(BoardBookmarkRepository)
+    private readonly boardBookmarkRepository: BoardBookmarkRepository,
+
+    @InjectRepository(BoardGuestRepository)
+    private readonly boardGuestRepository: BoardGuestRepository,
+
+    @InjectRepository(BoardHostRepository)
+    private readonly boardHostRepository: BoardHostRepository,
+
     @InjectRepository(BoardRepository)
     private readonly boardRepository: BoardRepository,
-    @InjectRepository(UsersRepository)
-    private readonly usersRepository: UsersRepository,
+
     @InjectRepository(NoticesRepository)
     private readonly noticeRepository: NoticesRepository,
+
     @InjectRepository(NoticeBoardsRepository)
     private readonly noticeBoardsRepository: NoticeBoardsRepository,
-    // test repo 삭제 예정
-    @InjectRepository(TestUserRepo)
-    private readonly testUserRepo: TestUserRepo,
-  ) { }
 
-  // 게시글 생성 관련
-  private async setBoard(boardInfo: BoardDetail): Promise<number> {
-    const { affectedRows, insertId }: CreateResponse =
-      await this.boardRepository.createBoard(boardInfo);
+    private readonly connection: Connection,
+  ) {}
+  //cron
+  async closeThunder(): Promise<void> {
+    const thunders: { no: string } = await this.boardRepository.checkDeadline();
 
-    if (!(affectedRows && insertId)) {
-      throw new InternalServerErrorException(`board 생성 오류입니다.`);
-    }
+    const no: number[] = JSON.parse(thunders.no);
 
-    return insertId;
+    await this.boardRepository.closeBoard(no);
   }
 
-  private async setHostMembers(
-    boardNo: number,
-    host: string,
-    hostMembers: string[],
-  ): Promise<void> {
-    hostMembers.push(host)
+  // 생성 관련
+  async createBoard({
+    hostMembers,
+    userNo,
+    ...newboard
+  }: BoardDto): Promise<number> {
+    const queryRunner: QueryRunner = this.connection.createQueryRunner();
 
-    for (let el in hostMembers) {
-      const user = await this.testUserRepo.getUserByNickname(
-        hostMembers[el],
-      );
-
-      // 수정 예정
-      if (!user) {
-        throw new NotFoundException(`해당 유저가 없습니다.`);
-      }
-
-      const hostMember: CreateHostMembers = { boardNo, userNo: user.no };
-
-      const { affectedRows, insertId }: CreateResponse =
-        await this.boardRepository.createHostMember(hostMember);
-
-      if (!(affectedRows && insertId)) {
-        throw new InternalServerErrorException(`host-member 생성 오류입니다.`);
-      }
-    }
-  }
-
-  private async setBoardMember(
-    boardMemberDetail: BoardMemberDetail,
-  ): Promise<void> {
-    const { affectedRows, insertId }: CreateResponse =
-      await this.boardRepository.createBoardMember(boardMemberDetail);
-
-    if (!(affectedRows && insertId)) {
-      throw new InternalServerErrorException(`board-member 생성 오류입니다.`);
-    }
-  }
-
-  async createBoard({ hostMembers, host, ...boardInfo }: BoardDto): Promise<number> {
-    const boardNo: number = await this.setBoard(boardInfo);
-    await this.setHostMembers(boardNo, host, hostMembers); // transaction
-
-    const boardMemberDetail: BoardMemberDetail = {
-      ...boardInfo,
-      boardNo,
-    };
-
-    await this.setBoardMember(boardMemberDetail);
-
-    return boardNo;
-  }
-
-  async createBookmark(bookmarkDetail: BookmarkDetail): Promise<number> {
-    const { affectedRows, insertId }: CreateResponse =
-      await this.boardRepository.createBookmark(bookmarkDetail);
-
-    if (!(affectedRows && insertId)) {
-      throw new InternalServerErrorException(`bookmark 생성 오류입니다.`);
-    }
-
-    return insertId;
-  }
-
-  async createAplication({ boardNo, guests }: GuestApplication): Promise<number> {
-    const guestMembers: void = await this.createGuestMembers(boardNo, guests);
-    const notice = await this.saveNoticeApplication(boardNo);
-
-    return notice;
-  }
-
-  private async createGuestMembers(boardNo: number, guests: []): Promise<void> {
-    for (let index in guests) {
-      const user = await this.testUserRepo.getUserByNickname(guests[index])
-      if (!user) {
-        throw new NotFoundException(`${guests[index]} 사용자가 없습니다.`)
-      }
-
-      const { affectedRows, insertId }: CreateResponse =
-        await this.boardRepository.createGuestMembers(boardNo, user.no);
-      if (!(affectedRows && insertId)) {
-        throw new InternalServerErrorException(`guest-application 생성 오류입니다.`);
-      }
-    }
-  }
-
-  // 게시글 조회 관련
-  async getAllBoards(): Promise<BoardReadResponse[]> {
-    const boards: BoardReadResponse[] =
-      await this.boardRepository.getAllBoards();
-
-    if (!boards) {
-      throw new NotFoundException(`전체 게시글의 조회를 실패 했습니다.`);
-    }
-
-    return boards;
-  }
-
-  async getBoardByNo(boardNo: number): Promise<BoardReadResponse> {
-    const board: BoardReadResponse = await this.boardRepository.getBoardByNo(
-      boardNo,
-    );
-
-    if (!board) {
-      throw new NotFoundException(`${boardNo}번 게시글을 찾을 수 없습니다.`);
-    }
-
-    return board;
-  }
-
-  //게시글 수정 관련
-  async editBoard(
-    boardNo: number,
-    { male, female, hostMembers, ...boardDetail }: BoardDto,
-  ): Promise<string> {
-    await this.getBoardByNo(boardNo);
-
-    const boardMember: BoardMemberDetail = {
-      male,
-      female,
-    };
-
-    await this.updateBoard(boardNo, boardDetail);
-    await this.updateBoardMember(boardNo, boardMember);
-    await this.updateHostMember(boardNo, hostMembers);
-    return `${boardNo}번 게시글이 수정되었습니다.`;
-  }
-
-  private async updateBoard(
-    boardNo: number,
-    boardDetail: BoardDetail,
-  ): Promise<void> {
-    const updateBoard = await this.boardRepository.updateBoard(
-      boardNo,
-      boardDetail,
-    );
-
-    if (!updateBoard) {
-      throw new NotFoundException(
-        `${boardNo}번 게시글 수정 에러 updateBoard-service`,
-      );
-    }
-  }
-
-  private async updateBoardMember(
-    boardNo: number,
-    boardMember: BoardMemberDetail,
-  ): Promise<void> {
-    const updateBoardMember = await this.boardRepository.updateBoardMember(
-      boardNo,
-      boardMember,
-    );
-
-    if (!updateBoardMember) {
-      throw new NotFoundException(
-        `${boardNo}번 게시글 수정 에러 updateBoardMember-service`,
-      );
-    }
-  }
-
-  private async updateHostMember(
-    boardNo: number,
-    hostMembers: [],
-  ): Promise<void> {
-    for (let member in hostMembers) {
-      const userNo: number = await this.testUserRepo.getUserByNickname(
-        hostMembers[member],
-      );
-      const updateHostMember = await this.boardRepository.updateHostMember(
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const boardNo: number = await queryRunner.manager
+        .getCustomRepository(BoardRepository)
+        .createBoard(userNo, newboard);
+      const hostArr: object[] = await this.validateHosts(
         boardNo,
         userNo,
+        hostMembers,
       );
 
-      if (!updateHostMember) {
-        throw new NotFoundException(
-          `${boardNo}번 게시글 수정 에러 updateBoardMember-service`,
+      await this.setHosts(queryRunner, hostArr);
+
+      await queryRunner.commitTransaction();
+
+      return boardNo;
+    } catch (error) {
+      await queryRunner?.rollbackTransaction();
+
+      throw error;
+    } finally {
+      await queryRunner?.release();
+    }
+  }
+
+  private async setHosts(
+    queryRunner: QueryRunner,
+    hostArr: object[],
+  ): Promise<void> {
+    const { affectedRows }: CreateResponse = await queryRunner.manager
+      .getCustomRepository(BoardHostRepository)
+      .createHosts(hostArr);
+
+    if (!affectedRows) {
+      throw new InternalServerErrorException(
+        `board-host-members 생성(setHosts): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  private async validateHosts(
+    boardNo: number,
+    userNo: number,
+    hosts: number[],
+  ): Promise<object[]> {
+    hosts.unshift(userNo);
+    // TODO: user 확인 로직 추가
+    const hostArr: object[] = hosts.map((el: number) => {
+      return { boardNo, userNo: el };
+    });
+
+    return hostArr;
+  }
+
+  async createParticipation(
+    boardNo: number,
+    participationDto: ParticipationDto,
+  ): Promise<string> {
+    const queryRunner: QueryRunner = this.connection.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const board: Board = await this.getBoardByNo(boardNo);
+      // TODO: newGuest user 확인 로직 추가
+
+      const { guests, ...participation }: ParticipationDto = participationDto;
+      const { male, female }: Board = board;
+
+      if (female + male != guests.length) {
+        throw new BadRequestException(
+          `참가 신청(createAplication): 신청 인원과 모집인원이 맞지 않습니다.`,
+        );
+      }
+
+      await this.validateGuests(board, guests);
+      const teamNo: number = await this.setParticipation(queryRunner, {
+        ...participation,
+        boardNo,
+      });
+      await this.setGuests(queryRunner, teamNo, guests);
+
+      await this.saveNoticeParticipation(
+        boardNo,
+        guests[0],
+        board.userNo,
+        queryRunner,
+      );
+
+      await queryRunner.commitTransaction();
+
+      return `${boardNo}번 게시글 참가 신청 완료`;
+    } catch (error) {
+      await queryRunner?.rollbackTransaction();
+
+      throw error;
+    } finally {
+      await queryRunner?.release();
+    }
+  }
+
+  private async validateGuests(
+    board: Board,
+    newGuests: number[],
+  ): Promise<void> {
+    const preGuests: Pick<Boards, 'userNo'>[] =
+      await this.boardGuestRepository.getAllGuestsByBoardNo(board.no);
+
+    const hosts = board.hostUserNums.split(',').map(Number);
+    const guests = preGuests.map((el) => el.userNo);
+
+    for (let no in newGuests) {
+      if (hosts.includes(newGuests[no]) || guests.includes(newGuests[no])) {
+        throw new BadRequestException(
+          `참가자 확인(validateGuests): ${newGuests[no]}번 참가자의 잘못된 신청.`,
         );
       }
     }
   }
 
-  //게시글 삭제 관련
+  private async setParticipation(
+    queryRunner: QueryRunner,
+    participation: Participation,
+  ): Promise<number> {
+    const { affectedRows, insertId }: CreateResponse = await queryRunner.manager
+      .getCustomRepository(BoardParticipationRepository)
+      .createParticipation(participation);
+
+    if (!affectedRows) {
+      throw new InternalServerErrorException(
+        `board-participation 생성(setParticipation): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+
+    return insertId;
+  }
+
+  private async setGuests(
+    queryRunner: QueryRunner,
+    teamNo: number,
+    guests: number[],
+  ): Promise<number> {
+    const guestArr: object[] = guests.map((el: number) => {
+      return { teamNo, userNo: el };
+    });
+
+    const { affectedRows, insertId }: CreateResponse = await queryRunner.manager
+      .getCustomRepository(BoardGuestRepository)
+      .createGuests(guestArr);
+
+    if (!affectedRows) {
+      throw new InternalServerErrorException(
+        `board-guests 생성(setGuests): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+
+    return insertId;
+  }
+
+  async createBookmark(boardNo: number, userNo: number): Promise<string> {
+    await this.boardBookmarkRepository.createBookmark(boardNo, userNo);
+
+    return '북마크 생성 성공';
+  }
+
+  // 조회 관련
+  async getBoards(filter: BoardFilterDto): Promise<Board[]> {
+    const boards: Board[] = await this.boardRepository.getBoards(filter);
+
+    if (boards.length === 0) {
+      throw new NotFoundException(
+        `게시글 전체 조회(getAllBoards): 게시글이 없습니다.`,
+      );
+    }
+
+    return boards;
+  }
+
+  async getBoardByNo(boardNo: number): Promise<Board> {
+    const board: Board = await this.boardRepository.getBoardByNo(boardNo);
+
+    if (!board.no) {
+      throw new NotFoundException(
+        `게시글 상세 조회(getBoardByNo): ${boardNo}번 게시글이 없습니다.`,
+      );
+    }
+
+    return board;
+  }
+
+  // 수정 관련
+  async editBoard(
+    boardNo: number,
+    userNo: number,
+    // TODO: userNo -> jwt로 빠질 예정
+    { hostMembers, ...newBoard }: Omit<BoardDto, 'userNo'>,
+  ): Promise<string> {
+    const queryRunner: QueryRunner = this.connection.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      await this.getBoardByNo(boardNo);
+      const hosts: object[] = await this.validateHosts(
+        boardNo,
+        userNo,
+        hostMembers,
+      );
+
+      await this.updateBoard(queryRunner, boardNo, newBoard);
+      await this.deleteHosts(queryRunner, boardNo);
+      await this.setHosts(queryRunner, hosts);
+
+      await queryRunner.commitTransaction();
+
+      return `${boardNo}번 게시글이 수정되었습니다.`;
+    } catch (error) {
+      await queryRunner?.rollbackTransaction();
+
+      throw error;
+    } finally {
+      await queryRunner?.release();
+    }
+  }
+
+  private async updateBoard(
+    queryRunner: QueryRunner,
+    boardNo: number,
+    newBoard: Partial<BoardDto>,
+  ): Promise<void> {
+    const affected: number = await queryRunner.manager
+      .getCustomRepository(BoardRepository)
+      .updateBoard(boardNo, newBoard);
+
+    if (!affected) {
+      throw new InternalServerErrorException(
+        `게시글 수정(updateBoard): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  private async deleteHosts(
+    queryRunner: QueryRunner,
+    boardNo: number,
+  ): Promise<void> {
+    const affected: number = await queryRunner.manager
+      .getCustomRepository(BoardHostRepository)
+      .deleteHosts(boardNo);
+
+    if (!affected) {
+      throw new InternalServerErrorException(
+        `게시글 수정(deleteHosts): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  // 삭제 관련
   async deleteBoardByNo(boardNo: number): Promise<string> {
     await this.getBoardByNo(boardNo);
 
     const board: number = await this.boardRepository.deleteBoard(boardNo);
 
     if (!board) {
-      throw new NotFoundException(
-        `${boardNo}번 게시글 삭제 에러 deleteBoardByNo-service`,
+      throw new BadRequestException(
+        `게시글 삭제(deleteBoardByNo): 알 수 없는 서버 에러입니다.`,
       );
     }
+
     return `${boardNo}번 게시글 삭제 성공`;
   }
 
   async cancelBookmark(boardNo: number, userNo: number): Promise<string> {
     await this.getBoardByNo(boardNo);
-    await this.boardRepository.cancelBookmark(boardNo, userNo);
+    // TODO: user확인 메서드
+    const bookMark: number = await this.boardBookmarkRepository.cancelBookmark(
+      boardNo,
+      userNo,
+    );
+
+    if (!bookMark) {
+      throw new BadRequestException(
+        `북마크 삭제(cancelBookmark): 알 수 없는 서버 에러입니다.`,
+      );
+    }
 
     return `${boardNo}번 게시글 ${userNo}번 user 북마크 삭제 성공 :)`;
   }
 
   // 알람 생성
-  private async saveNoticeApplication(boardNo: number): Promise<number> {
+  private async saveNoticeParticipation(
+    boardNo: number,
+    userNo: number,
+    targetUserNo: number,
+    queryRunner: QueryRunner,
+  ): Promise<void> {
     const type = NoticeType.GUEST_APPLICATION;
-    const board = await this.getBoardByNo(boardNo)
 
-    const noticeNo = await this.noticeRepository.saveNoticeBoard({
-      type,
-      targetUserNo: board.hostUserNo,
-    });
+    const { insertId }: InsertRaw = await queryRunner.manager
+      .getCustomRepository(NoticesRepository)
+      .saveNotice({ userNo, type, targetUserNo });
 
-    if (!noticeNo) {
-      throw new InternalServerErrorException('notice-데이터 생성에 실패하였습니다.');
-    }
-
-    const result = await this.noticeBoardsRepository.saveNoticeBoard({
-      noticeNo,
-      boardNo,
-    });
-    if (!result) {
-      throw new InternalServerErrorException('saveNoticeApplication-알람 생성에 실패하였습니다.');
-    }
-
-    return result;
+    await queryRunner.manager
+      .getCustomRepository(NoticeBoardsRepository)
+      .saveNoticeBoard(insertId, boardNo);
   }
 }

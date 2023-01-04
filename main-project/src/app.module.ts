@@ -6,7 +6,6 @@ import { AppService } from './app.service';
 import { typeOrmConfig } from './common/configs/typeorm.config';
 import { MeetingsModule } from './meetings/meetings.module';
 import { BoardsModule } from './boards/boards.module';
-import { MembersModule } from './members/members.module';
 import { NoticesModule } from './notices/notices.module';
 import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
@@ -16,14 +15,16 @@ import { UniversitiesModule } from './universities/universities.module';
 import { EnquiriesModule } from './enquiries/enquiries.module';
 import { ChatsModule } from './chats/chats.module';
 import { MannersModule } from './manners/manners.module';
+import { AwsModule } from './aws/aws.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     TypeOrmModule.forRootAsync(typeOrmConfig),
     MeetingsModule,
     BoardsModule,
-    MembersModule,
     NoticesModule,
     UsersModule,
     ReportsModule,
@@ -33,6 +34,7 @@ import { MannersModule } from './manners/manners.module';
     EnquiriesModule,
     ChatsModule,
     MannersModule,
+    AwsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

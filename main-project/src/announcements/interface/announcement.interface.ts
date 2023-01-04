@@ -1,10 +1,5 @@
-export interface AnnouncementCreateResponse {
-  affectedRows: number;
-  insertId?: number;
-}
+import { AnnouncementDto } from "../dto/announcement.dto";
 
-export interface AnnouncementReadResponse {
+export class AnnouncementIF extends AnnouncementDto {
   no: number;
-  title: string;
-  description: string;
 }

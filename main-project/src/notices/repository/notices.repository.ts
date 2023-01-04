@@ -221,75 +221,42 @@ export class NoticesRepository extends Repository<Notices> {
     }
   }
 
-  async saveNoticeChatInvite(
-    inviteChatRoomDetail: NoticeDetail,
-  ): Promise<number> {
+  async getNoticeByUserNo(userNo: number) {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder('notices')
-        .insert()
-        .into(Notices)
-        .values(inviteChatRoomDetail)
-        .execute();
-
-      return raw.insertId;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} 알람 생성 에러(saveNoticeChats): 알 수 없는 서버 오류입니다.`,
-      );
-    }
-  }
-
-  async checkNoticeChat(
-    targetUserNo: number,
-    chatRoomNo: number,
-    type: number,
-  ): Promise<Notices> {
-    try {
-      const noticeChat = await this.createQueryBuilder('notices')
+      const boardNotices = await this.createQueryBuilder('notices')
+        .leftJoin('notices.targetUserNo', 'users')
+        .leftJoin('users.userProfileNo', 'userProfiles')
+        .leftJoin('userProfiles.profileImage', 'profileImages')
+        .leftJoin('notices.noticeBoards', 'noticeBoards')
         .leftJoin('notices.noticeChats', 'noticeChats')
-        .select(['notices.* '])
-        .where('notices.type = :type', { type })
-        .andWhere('notices.target_user_no = :targetUserNo', { targetUserNo })
-        .andWhere('noticeChats.chat_room_no = :chatRoomNo', { chatRoomNo })
-        .getRawOne();
+        .leftJoin('notices.noticeFriends', 'noticeFriends')
+        .select([
+          'notices.no AS noticeNo',
+          'notices.targetUserNo AS senderUserNo',
+          'userProfiles.nickname AS senderNickname',
+          'profileImages.imageUrl AS senderProfileImage',
+          'notices.type AS type',
+          `CASE 
+            WHEN notices.type = ${NoticeType.APPLY_FOR_MEETING} 
+              THEN JSON_OBJECT("boardNo", noticeBoards.boardNo)
+            WHEN notices.type = ${NoticeType.APPLICATION_ACCEPTED} 
+              THEN JSON_OBJECT("chatNo", noticeChats.chatRoomNo, "boardNo", noticeBoards.boardNo)
+            WHEN notices.type =${NoticeType.INVITE_GUEST} 
+            OR notices.type = ${NoticeType.INVITE_HOST} 
+              THEN JSON_OBJECT("chatRoomNo", noticeChats.chatRoomNo)
+            WHEN notices.type = ${NoticeType.FRIEND_REQUEST}
+            OR notices.type = ${NoticeType.FRIEND_REQUEST_ACCEPTED}
+              THEN JSON_OBJECT("friendNo", noticeFriends.friendNo)
+          END AS value`,
+          'IF(notices.readDatetime, TRUE, FALSE) AS isRead',
+        ])
+        .where('notices.userNo = :userNo', { userNo })
+        .getRawMany();
 
-      return noticeChat;
-    } catch (error) {
+      return boardNotices;
+    } catch (err) {
       throw new InternalServerErrorException(
-        `${error} 채팅 알람 확인 에러(checkNoticeChat): 알 수 없는 서버 오류입니다.`,
-      );
-    }
-  }
-
-  async getNoticeChatRoomNo(noticeNo, userNo): Promise<number> {
-    try {
-      const notice = await this.createQueryBuilder('notices')
-        .leftJoin('notices.noticeChats', 'noticeChats')
-        .select(['noticeChats.chatRoomNo AS chatRoomNo'])
-        .where('notices.no = :noticeNo', { noticeNo })
-        .andWhere('notices.targetUserNo = :userNo', { userNo })
-        .getRawOne();
-
-      return notice.chatRoomNo;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error}: 채팅 알람 조회 에러(checkNoticeChatByUserNo): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async saveNoticeBoard(noticeBoard: Notice) {
-    try {
-      const { raw }: InsertResult = await this.createQueryBuilder('notices')
-        .insert()
-        .into(Notices)
-        .values(noticeBoard)
-        .execute();
-
-      return raw.insertId;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} 알람 생성 에러(saveNoticeBoard): 알 수 없는 서버 오류입니다.`,
+        `${err} 유저 번호로 알림 조회(getNoticeByUserNo): 알 수 없는 서버 오류입니다.`,
       );
     }
   }
