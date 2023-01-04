@@ -8,7 +8,7 @@ import { BoardsService } from './boards.service';
 import { BoardBookmarkRepository } from './repository/board-bookmark.repository';
 import { BoardGuestRepository } from './repository/board-guest.repository';
 import { BoardHostRepository } from './repository/board-host.repository';
-import { BoardRepository, TestUserRepo } from './repository/board.repository';
+import { BoardRepository } from './repository/board.repository';
 
 @Module({
   imports: [
@@ -20,7 +20,6 @@ import { BoardRepository, TestUserRepo } from './repository/board.repository';
       UsersRepository,
       NoticesRepository,
       NoticeBoardsRepository,
-      TestUserRepo,
     ]),
   ],
   providers: [BoardsService],

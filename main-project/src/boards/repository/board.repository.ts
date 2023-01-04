@@ -4,6 +4,7 @@ import { UsersRepository } from 'src/users/repository/users.repository';
 import {
   DeleteResult,
   EntityRepository,
+  In,
   InsertResult,
   Repository,
   UpdateResult,
@@ -16,6 +17,23 @@ import { Board } from '../interface/boards.interface';
 @EntityRepository(Boards)
 export class BoardRepository extends Repository<Boards> {
   // 게시글 조회 관련
+  async checkDeadline(): Promise<{ no: string }> {
+    try {
+      const thunders = await this.createQueryBuilder('boards')
+        .select(['JSON_ARRAYAGG(no) AS no'])
+        .where('isDone = :isDone', { isDone: false })
+        .andWhere('isThunder = :isThunder', { isThunder: true })
+        .andWhere('TIMESTAMPDIFF(hour, boards.createdDate, NOW()) >= 24')
+        .getRawOne();
+
+      return thunders;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} checkDeadline-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async getBoardByNo(boardNo: number): Promise<Board> {
     try {
       const board = await this.createQueryBuilder('boards')
@@ -51,7 +69,7 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async getBoards(filters: BoardFilterDto): Promise<Board[]> {
+  async getBoards(filters?: BoardFilterDto): Promise<Board[]> {
     try {
       const boards = await this.createQueryBuilder('boards')
         .leftJoin('boards.userNo', 'users')
@@ -150,6 +168,21 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
+  async closeBoard(no: number[]): Promise<UpdateResult> {
+    try {
+      const deadline = await this.createQueryBuilder('boards')
+        .update(Boards)
+        .set({ isDone: true })
+        .where('no IN (:no)', { no });
+
+      return deadline.execute();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   // 게시글 삭제 관련
   async deleteBoard(boardNo: number): Promise<number> {
     try {
@@ -187,25 +220,5 @@ export class BoardRepository extends Repository<Boards> {
 
       return userList;
     } catch (error) {}
-  }
-}
-
-// 삭제 예정
-@EntityRepository(Users)
-export class TestUserRepo extends Repository<UsersRepository> {
-  async getUserByNickname(nickname: string) {
-    try {
-      const userNo = await this.createQueryBuilder('users')
-        .leftJoin('users.userProfileNo', 'profile')
-        .select(['users.no AS no'])
-        .where('profile.nickname = :nickname', { nickname })
-        .getRawOne();
-
-      return userNo;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} getUserByNickname-testRepo: 알 수 없는 서버 에러입니다.`,
-      );
-    }
   }
 }
