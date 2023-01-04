@@ -17,11 +17,12 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResultSetHeader } from 'mysql2/promise';
 import { Profile, User } from 'src/users/interface/user.interface';
 import { AuthRepository } from './repository/authentication.repository';
-import { UserAuth } from './interface/auth.interface';
+import { Payload, UserAuth } from './interface/auth.interface';
 import { LoginDto } from './dto/login.dto';
 import { UserProfilesRepository } from 'src/users/repository/user-profiles.repository';
 import { ConfigService } from '@nestjs/config';
 import { UserStatus } from 'src/common/configs/user-status.config';
+import { UnauthorizedException } from '@nestjs/common/exceptions';
 
 @Injectable()
 export class AuthService {
@@ -216,10 +217,7 @@ export class AuthService {
 
     const accessPayload: Profile =
       await this.userProfileRepository.getUserProfile(user.userNo);
-    user.accessToken = this.jwtService.sign(accessPayload, {
-      secret: this.configService.get<string>('JWT_SECRET_KEY'),
-      expiresIn: this.configService.get<number>('ACCESS_TOKEN_EXPIRATION'),
-    });
+    user.accessToken = this.jwtService.sign(accessPayload);
 
     const { iat }: any = this.jwtService.decode(user.accessToken);
     await this.cacheManager.set(user.userNo, iat, {
