@@ -157,7 +157,7 @@ export class AuthService {
     const validIssuedDate = await this.cacheManager.get(userNo);
 
     if (!validIssuedDate) {
-      throw new UnauthorizedException(`리프레시 토큰이 만료되었습니다.`);
+      throw new UnauthorizedException(`현재 로그인 정보가 없는 유저입니다.`);
     }
 
     if (iat !== validIssuedDate) {
@@ -176,6 +176,10 @@ export class AuthService {
     });
 
     return accessToken;
+  }
+
+  async logout(userNo: number): Promise<void> {
+    await this.cacheManager.del(userNo);
   }
 
   private async createAuthentication(

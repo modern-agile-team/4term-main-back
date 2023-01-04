@@ -1,5 +1,7 @@
 import { Controller } from '@nestjs/common';
-import { Body, Post } from '@nestjs/common/decorators';
+import { Body, Delete, Post, UseGuards } from '@nestjs/common/decorators';
+import { UserNo } from 'src/common/decorator/get-user.decorator';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { User } from 'src/users/interface/user.interface';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -35,7 +37,7 @@ export class AuthController {
   async signIn(@Body() signInDto: SignInDto) {
     await this.authService.signIn(signInDto);
 
-    return;
+    return { msg: '이메일 인증 코드가 전송되었습니다' };
   }
 
   @Post('/verify')
@@ -50,5 +52,13 @@ export class AuthController {
     const user: User = await this.authService.login(loginDto);
 
     return { response: { user } };
+  }
+
+  @Delete('/logout')
+  @UseGuards(JwtAuthGuard)
+  async logout(@UserNo() userNo) {
+    await this.authService.logout(userNo);
+
+    return { msg: '로그아웃 성공' };
   }
 }
