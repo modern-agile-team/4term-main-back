@@ -79,7 +79,7 @@ export class UsersService {
     await this.cacheManager.set(userNo, iat, {
       ttl:
         remainedTime === -2
-          ? this.configService.get('ACCESS_TOKEN_EXPIRATION')
+          ? this.configService.get('TOKEN_EXPIRATION')
           : remainedTime,
     });
 
