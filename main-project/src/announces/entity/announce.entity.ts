@@ -9,10 +9,10 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { AnnouncementImages } from './announcement-images.entity';
+import { AnnouncesImages } from './announce-images.entity';
 
-@Entity('announcements')
-export class Announcements extends BaseEntity {
+@Entity('announces')
+export class Announces extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
@@ -23,7 +23,7 @@ export class Announcements extends BaseEntity {
   description: string;
 
   @Column({ type: 'int' })
-  type: string;
+  type: number;
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
@@ -35,9 +35,9 @@ export class Announcements extends BaseEntity {
   deletedDate: Date;
 
   @OneToOne(
-    (type) => AnnouncementImages,
-    (announcementImages) => announcementImages.announcementNo,
+    (type) => AnnouncesImages,
+    (announcesImages) => announcesImages.announcesNo,
   )
-  @JoinColumn({ name: 'announcement_images' })
-  announcementImages: AnnouncementImages;
+  @JoinColumn({ name: 'announces_images' })
+  announcesImages: AnnouncesImages;
 }
