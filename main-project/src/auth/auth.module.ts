@@ -6,22 +6,13 @@ import { AuthService } from './auth.service';
 import { cacheModule } from 'src/common/configs/redis.config';
 import { AuthRepository } from './repository/authentication.repository';
 import { UserProfilesRepository } from 'src/users/repository/user-profiles.repository';
-import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt/access-token.strategy';
-import { ConfigService } from '@nestjs/config';
+import { jwtModule } from 'src/common/configs/jwt-module.config';
 
 @Module({
   imports: [
     cacheModule,
-    JwtModule.registerAsync({
-      useFactory: (configService: ConfigService) => ({
-        signOptions: {
-          expiresIn: configService.get<string>('ACCESS_TOKEN_EXPIRATION'),
-        },
-        secret: configService.get<string>('JWT_SECRET_KEY'),
-      }),
-      inject: [ConfigService],
-    }),
+    jwtModule,
     TypeOrmModule.forFeature([
       UsersRepository,
       AuthRepository,
