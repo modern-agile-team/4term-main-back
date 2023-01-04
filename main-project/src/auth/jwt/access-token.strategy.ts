@@ -20,13 +20,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(tokenPayload: Payload) {
+    const { userNo } = tokenPayload;
     const isTokenAvailable: boolean = await this.authService.validateToken(
       tokenPayload,
     );
 
     if (!isTokenAvailable) {
       const accessToken: string = await this.authService.refreshAccessToken({
-        userNo: tokenPayload.userNo,
+        userNo,
         nickname: tokenPayload.nickname,
         profileImage: tokenPayload.profileImage,
       });
@@ -37,6 +38,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       });
     }
 
-    return tokenPayload;
+    return userNo;
   }
 }
