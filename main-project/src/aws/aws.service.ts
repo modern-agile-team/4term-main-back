@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import * as AWS from 'aws-sdk';
 
 @Injectable()
@@ -14,8 +18,11 @@ export class AwsService {
     this.s3 = new AWS.S3();
   }
 
-  async uploadImage(files: any, chatRoomNo: number) {
-    const uploadImageList: object[] = files.map((file) => {
+  async uploadFiles(files: any, chatRoomNo: number) {
+    if (!files.length) {
+      throw new BadRequestException(`업로드 할 파일이 존재하지 않습니다.`);
+    }
+    const uploadFileList: object[] = files.map((file) => {
       const key = `chat/${chatRoomNo}/${Date.now()}_${file.originalname}`;
 
       return {
@@ -26,21 +33,21 @@ export class AwsService {
       };
     });
 
-    await uploadImageList.map((uploadFile: any) => {
+    await uploadFileList.map((uploadFile: any) => {
       this.s3.upload(uploadFile, (err, data) => {
         if (err) {
           throw new InternalServerErrorException(
-            '이미지 업로드에 실패하였습니다.',
+            '파일 업로드에 실패하였습니다.',
           );
         }
       });
     });
 
-    const imageUrlList: string[] = uploadImageList.map((file: any) => {
+    const fileUrlList: string[] = uploadFileList.map((file: any) => {
       return process.env.AWS_BUCKET_LINK + file.Key;
     });
 
-    return imageUrlList;
+    return fileUrlList;
   }
 
   async uploadProfileImage(image, userNo: number) {

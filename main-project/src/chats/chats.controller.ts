@@ -18,6 +18,7 @@ import { AwsService } from 'src/aws/aws.service';
 import { ChatLog } from './entity/chat-log.entity';
 import { ConnectedSocket } from '@nestjs/websockets/decorators';
 import { Socket } from 'dgram';
+import { AcceptInvitationDTO } from './dto/accept-invitation.dto';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -33,11 +34,11 @@ export class ChatsController {
     description: ' 채팅 목록 조회',
   })
   async getChatRoomList(@Param('userNo') userNo: number): Promise<object> {
-    const response = await this.chatControllerService.getChatRoomListByUserNo(
+    const chatRoom = await this.chatControllerService.getChatRoomListByUserNo(
       userNo,
     );
     return {
-      response,
+      response: { chatRoom },
     };
   }
 
@@ -50,15 +51,16 @@ export class ChatsController {
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() getChatLogDto: GetChatLogDTO,
   ): Promise<object> {
-    const previousChatLog = await this.chatControllerService.getPreviousChatLog(
-      getChatLogDto,
-      chatRoomNo,
-    );
+    const previousChatLog: ChatLog[] =
+      await this.chatControllerService.getPreviousChatLog(
+        getChatLogDto,
+        chatRoomNo,
+      );
 
     return { response: { previousChatLog } };
   }
 
-  @Post('/:chatRoomNo/invite')
+  @Post('/:chatRoomNo/invitation')
   @ApiOperation({
     summary: '채팅방 초대 API',
     description: '알람을 통해 채팅방 초대',
@@ -70,45 +72,48 @@ export class ChatsController {
     await this.chatControllerService.inviteUser(inviteUser, chatRoomNo);
 
     return {
-      msg: '초대 성공',
+      msg: '채팅방 초대 성공',
     };
   }
 
-  @Post('/accept/:noticeNo')
+  @Post('/:chatRoomNo/invitation/accept')
   @ApiOperation({
     summary: '채팅방 초대 수락 API',
-    description: 'notice 번호를 통한 초대 수락',
+    description: '유저 번호, 타입, 채팅방 번호를 통해 초대 수락',
   })
   async acceptInvitation(
-    @Param('noticeNo', ParseIntPipe) noticeNo: number,
-    @Body('userNo', ParseIntPipe) userNo: number,
-  ): Promise<{ msg: string }> {
-    await this.chatControllerService.acceptInvitation(noticeNo, userNo);
+    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
+    @Body() invitationInfo: AcceptInvitationDTO,
+  ): Promise<object> {
+    await this.chatControllerService.acceptInvitation(
+      chatRoomNo,
+      invitationInfo,
+    );
 
     return {
-      msg: '채팅방 참여 성공',
+      msg: '채팅방 초대 수락 성공',
     };
   }
 
-  @Post('/:chatRoomNo/images')
+  @Post('/:chatRoomNo/upload/files')
+  @ApiOperation({
+    summary: '파일 전송 API',
+    description:
+      'files에 담긴 최대 10개의 파일을 전달받아 s3업로드 후 url배열 반환',
+  })
   @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
   async uploadFile(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @UploadedFiles() files: Express.Multer.File[],
-  ) {
-    const uploadedFileUrlList =
-      files.length === 0
-        ? false
-        : await this.awsService.uploadImage(files, chatRoomNo);
+  ): Promise<object> {
+    const uploadedFileUrlList = await this.awsService.uploadFiles(
+      files,
+      chatRoomNo,
+    );
 
     return {
-      msg: `이미지 업로드 성공`,
+      msg: `파일 업로드 성공`,
       response: { uploadedFileUrlList },
     };
-  }
-
-  @Post('/error')
-  err(@Body('no') no: number) {
-    throw new BadRequestException('에러');
   }
 }
