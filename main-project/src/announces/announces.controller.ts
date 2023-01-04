@@ -9,15 +9,15 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AnnouncementsService } from './announcements.service';
-import { AnnouncementDto } from './dto/announcement.dto';
-import { AnnouncementFilterDto } from './dto/announcement-filter.dto';
-import { Announcements } from './entity/announcement.entity';
+import { AnnouncesService } from './announces.service';
+import { AnnouncesDto } from './dto/announce.dto';
+import { AnnouncesFilterDto } from './dto/announce-filter.dto';
+import { Announces } from './entity/announce.entity';
 
 @Controller('announcements')
 @ApiTags('공지사항 API')
-export class AnnouncementsController {
-  constructor(private announcementsService: AnnouncementsService) {}
+export class AnnouncesController {
+  constructor(private announcesService: AnnouncesService) {}
   //Get Methods
   @Get()
   @ApiOperation({
@@ -25,10 +25,10 @@ export class AnnouncementsController {
     description: '공지사항을 필터링을 통해 내림차순으로 조회한다.',
   })
   async getAllAnnouncements(
-    @Query() filter: AnnouncementFilterDto,
+    @Query() filter: AnnouncesFilterDto,
   ): Promise<object> {
-    const announcements: Announcements[] =
-      await this.announcementsService.getAnnouncements(filter);
+    const announcements: Announces[] =
+      await this.announcesService.getAnnouncements(filter);
 
     return { response: announcements };
   }
@@ -41,8 +41,8 @@ export class AnnouncementsController {
   async getAnnouncementByNo(
     @Param('announcementNo', ParseIntPipe) announcementNo: number,
   ): Promise<object> {
-    const announcement: Announcements =
-      await this.announcementsService.getAnnouncementByNo(announcementNo);
+    const announcement: Announces =
+      await this.announcesService.getAnnouncementByNo(announcementNo);
 
     return { response: announcement };
   }
@@ -54,10 +54,11 @@ export class AnnouncementsController {
     description: '입력한 정보로 공지사항을 생성한다.',
   })
   async createAnnouncement(
-    @Body() announcementDto: AnnouncementDto,
+    @Body() announcementDto: AnnouncesDto,
   ): Promise<object> {
-    const announcement: string =
-      await this.announcementsService.createAnnouncement(announcementDto);
+    const announcement: string = await this.announcesService.createAnnouncement(
+      announcementDto,
+    );
 
     return { response: { announcement } };
   }
@@ -70,13 +71,12 @@ export class AnnouncementsController {
   })
   async updateAnnouncement(
     @Param('announcementNo', ParseIntPipe) announcementNo: number,
-    @Body() announcementDto: AnnouncementDto,
+    @Body() announcementDto: AnnouncesDto,
   ): Promise<object> {
-    const announcement: string =
-      await this.announcementsService.updateAnnouncement(
-        announcementNo,
-        announcementDto,
-      );
+    const announcement: string = await this.announcesService.updateAnnouncement(
+      announcementNo,
+      announcementDto,
+    );
 
     return { response: { announcement } };
   }

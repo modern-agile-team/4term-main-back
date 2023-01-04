@@ -6,14 +6,13 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { AnnouncementDto } from '../dto/announcement.dto';
-import { Announcements } from '../entity/announcement.entity';
-import { AnnouncementIF } from '../interface/announcement.interface';
+import { AnnouncesDto } from '../dto/announce.dto';
+import { Announces } from '../entity/announce.entity';
 
-@EntityRepository(Announcements)
-export class AnnouncementsRepository extends Repository<Announcements> {
+@EntityRepository(Announces)
+export class AnnouncesRepository extends Repository<Announces> {
   // 공지사항 조회 관련
-  async getAnnouncements(type: number): Promise<Announcements[]> {
+  async getAnnouncements(type: number): Promise<Announces[]> {
     try {
       const announcements = this.createQueryBuilder('announcements')
         .select([
@@ -35,7 +34,7 @@ export class AnnouncementsRepository extends Repository<Announcements> {
     }
   }
 
-  async getAnnouncementByNo(announcementNo: number): Promise<Announcements> {
+  async getAnnouncementByNo(announcementNo: number): Promise<Announces> {
     try {
       const announcements = this.createQueryBuilder('announcements')
         .select([
@@ -56,14 +55,14 @@ export class AnnouncementsRepository extends Repository<Announcements> {
 
   //공지사항 생성 관련
   async createAnnouncement(
-    announcementDto: AnnouncementDto,
+    announcementDto: AnnouncesDto,
   ): Promise<CreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
         'announcements',
       )
         .insert()
-        .into(Announcements)
+        .into(Announces)
         .values(announcementDto)
         .execute();
 
@@ -78,11 +77,11 @@ export class AnnouncementsRepository extends Repository<Announcements> {
   //공지사항 수정 관련
   async updateAnnouncement(
     announcementNo: number,
-    announcementDto: AnnouncementDto,
+    announcementDto: AnnouncesDto,
   ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder('boards')
-        .update(Announcements)
+        .update(Announces)
         .set(announcementDto)
         .where('no = :announcementNo', { announcementNo })
         .execute();

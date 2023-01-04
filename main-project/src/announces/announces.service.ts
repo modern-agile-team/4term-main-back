@@ -6,28 +6,28 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateResponse } from 'src/boards/interface/boards.interface';
 import { Connection, QueryRunner } from 'typeorm';
-import { AnnouncementFilterDto } from './dto/announcement-filter.dto';
-import { AnnouncementDto } from './dto/announcement.dto';
-import { Announcements } from './entity/announcement.entity';
-import { AnnouncementsRepository } from './repository/announcement.repository';
+import { AnnouncesFilterDto } from './dto/announce-filter.dto';
+import { AnnouncesDto } from './dto/announce.dto';
+import { Announces } from './entity/announce.entity';
+import { AnnouncesRepository } from './repository/announce.repository';
 
 @Injectable()
-export class AnnouncementsService {
+export class AnnouncesService {
   constructor(
-    @InjectRepository(AnnouncementsRepository)
-    private readonly announcementsRepository: AnnouncementsRepository,
+    @InjectRepository(AnnouncesRepository)
+    private readonly announcesRepository: AnnouncesRepository,
 
     private readonly connection: Connection,
   ) {}
   // 공지사항 생성 관련
-  async createAnnouncement(announcementDto: AnnouncementDto): Promise<string> {
+  async createAnnouncement(announcementDto: AnnouncesDto): Promise<string> {
     const queryRunner: QueryRunner = this.connection.createQueryRunner();
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
       const { insertId }: CreateResponse = await queryRunner.manager
-        .getCustomRepository(AnnouncementsRepository)
+        .getCustomRepository(AnnouncesRepository)
         .createAnnouncement(announcementDto);
 
       if (!insertId) {
@@ -49,11 +49,9 @@ export class AnnouncementsService {
   }
 
   // 공지사항 조회 관련
-  async getAnnouncements({
-    type,
-  }: AnnouncementFilterDto): Promise<Announcements[]> {
-    const announcements: Announcements[] =
-      await this.announcementsRepository.getAnnouncements(type);
+  async getAnnouncements({ type }: AnnouncesFilterDto): Promise<Announces[]> {
+    const announcements: Announces[] =
+      await this.announcesRepository.getAnnouncements(type);
 
     if (announcements.length === 0) {
       throw new NotFoundException(
@@ -64,9 +62,9 @@ export class AnnouncementsService {
     return announcements;
   }
 
-  async getAnnouncementByNo(announcementNo: number): Promise<Announcements> {
-    const announcement: Announcements =
-      await this.announcementsRepository.getAnnouncementByNo(announcementNo);
+  async getAnnouncementByNo(announcementNo: number): Promise<Announces> {
+    const announcement: Announces =
+      await this.announcesRepository.getAnnouncementByNo(announcementNo);
 
     if (!announcement) {
       throw new NotFoundException(
@@ -80,7 +78,7 @@ export class AnnouncementsService {
   // 공지사항 수정 관련
   async updateAnnouncement(
     announcementNo: number,
-    announcementDto: AnnouncementDto,
+    announcementDto: AnnouncesDto,
   ): Promise<string> {
     const queryRunner: QueryRunner = this.connection.createQueryRunner();
 
@@ -90,7 +88,7 @@ export class AnnouncementsService {
       await this.getAnnouncementByNo(announcementNo);
 
       const affectedRows: number = await queryRunner.manager
-        .getCustomRepository(AnnouncementsRepository)
+        .getCustomRepository(AnnouncesRepository)
         .updateAnnouncement(announcementNo, announcementDto);
 
       if (!affectedRows) {

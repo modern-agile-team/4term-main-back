@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-export class AnnouncementDto {
+export class AnnouncesDto {
   @ApiProperty({
     example: '김민호 취업 공지 :)',
     description: '공지사항 제목',
