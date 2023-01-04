@@ -47,6 +47,7 @@
     "mysql2": "^2.3.3",
     "npm": "^8.18.0",
     "passport": "^0.6.0",
+    "passport-jwt": "^4.0.1",
     "passport-kakao": "^1.0.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",

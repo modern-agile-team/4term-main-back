@@ -152,6 +152,32 @@ export class AuthService {
     return await this.issueToken(user);
   }
 
+  async validateToken(tokenPayload: Payload): Promise<boolean> {
+    const { userNo, iat, exp }: Payload = tokenPayload;
+    const validIssuedDate = await this.cacheManager.get(userNo);
+
+    if (!validIssuedDate) {
+      throw new UnauthorizedException(`리프레시 토큰이 만료되었습니다.`);
+    }
+
+    if (iat !== validIssuedDate) {
+      throw new UnauthorizedException(`다른 곳에서의 로그인 감지.`);
+    }
+
+    return exp >= Date.now() / 1000;
+  }
+
+  async refreshAccessToken(payload: Payload): Promise<string> {
+    delete payload.exp;
+    delete payload.iat;
+
+    const accessToken = this.jwtService.sign(payload);
+    const { iat }: any = this.jwtService.decode(accessToken);
+    await this.cacheManager.set(payload.userNo, iat);
+
+    return accessToken;
+  }
+
   private async createAuthentication(
     password: string,
     userNo: number,
