@@ -1,16 +1,6 @@
-export interface EnquiryCreateResponse {
-  affectedRows: number;
-  insertId?: number;
-}
+import { EnquiryDto } from "../dto/enquiry.dto";
 
-export interface EnquiryDetail {
-  userNo: number;
-  title: string;
-  description: string;
-}
-export interface EnquiryReadResponse {
-  no: number;
-  userNo: number;
-  title: string;
-  description: string;
+export class EnquiryIF extends EnquiryDto {
+  no?: number
+  userNo?: number;
 }

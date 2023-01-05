@@ -6,11 +6,12 @@ export class CreateFriendDto {
   @ApiProperty({
     example: 1,
   })
-  receiverNo: number;
+  senderNo: number;
 
   @IsNotEmpty()
   @ApiProperty({
     example: 2,
+    description: '친구 신청을 보낼 유저의 no => receiverNo',
   })
-  senderNo: number;
+  receiverNo: number;
 }

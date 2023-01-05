@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
 import {
   ConnectedSocket,
   MessageBody,
@@ -7,9 +8,11 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { Namespace, Socket } from 'socket.io';
+import { APIResponse } from 'src/common/interface/interface';
 import { ChatsGatewayService } from './chats-gateway.service';
+import { CreateChatDto } from './dto/create-chat.dto';
 import {
-  CreateChat,
+  ChatRoomList,
   JoinChatRoom,
   MessagePayload,
 } from './interface/chat.interface';
@@ -50,38 +53,48 @@ export class ChatsGateway {
   }
 
   @SubscribeMessage('init-socket')
-  async handelInitSocket(
+  async handleInitSocket(
     @ConnectedSocket() socket: Socket,
     @MessageBody() userNo: number,
-  ) {
-    await this.chatGatewayService.initSocket(socket, userNo);
+  ): Promise<APIResponse> {
+    const chatRoomList: ChatRoomList[] =
+      await this.chatGatewayService.initSocket(socket, userNo);
+
+    return { response: { chatRoomList } };
   }
 
+  @ApiOperation({
+    summary: '소켓 채팅방 생성',
+    description: '닉네임의 조합으로 생성',
+  })
   @SubscribeMessage('create-room')
-  async handelCreateRoom(
+  async handleCreateRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() messagePayload: CreateChat,
-  ) {
+    @MessageBody() messagePayload: CreateChatDto,
+  ): Promise<void> {
     await this.chatGatewayService.createRoom(socket, messagePayload);
-
-    return { success: true };
   }
 
   @SubscribeMessage('join-room')
-  async handelJoinRoom(
+  async handleJoinRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: JoinChatRoom,
-  ) {
-    await this.chatGatewayService.joinRoom(socket, messagePayload);
+  ): Promise<APIResponse> {
+    const recentChatLog = await this.chatGatewayService.joinRoom(
+      socket,
+      messagePayload,
+    );
 
-    return { success: true };
+    return { response: { recentChatLog } };
   }
 
   @SubscribeMessage('message')
-  async handelMessage(
+  async handleMessage(
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: MessagePayload,
-  ) {
-    await this.chatGatewayService.sendChat(socket, messagePayload);
+  ): Promise<void> {
+    messagePayload.hasOwnProperty('message')
+      ? await this.chatGatewayService.sendChat(socket, messagePayload)
+      : await this.chatGatewayService.sendFile(socket, messagePayload);
   }
 }

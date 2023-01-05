@@ -1,7 +1,6 @@
-import { type } from 'os';
+import { Boards } from 'src/boards/entity/board.entity';
 import { Meetings } from 'src/meetings/entity/meeting.entity';
 import { NoticeChats } from 'src/notices/entity/notice-chat.entity';
-import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
   Column,
@@ -10,6 +9,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
 import { ChatLog } from './chat-log.entity';
 import { ChatUsers } from './chat-users.entity';
@@ -22,11 +22,9 @@ export class ChatList extends BaseEntity {
   @Column({ name: 'room_name', type: 'varchar', length: 255, nullable: false })
   roomName: string;
 
-  @ManyToOne((type) => Meetings, (meeting) => meeting.chatMeetingNo, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn({ name: 'meeting_no' })
-  meetingNo: number;
+  @ManyToOne((type) => Boards, (boards) => boards.chatBoard)
+  @JoinColumn({ name: 'board_no' })
+  boardNo: number;
 
   @OneToMany((type) => ChatUsers, (chatUsers) => chatUsers.chatRoomNo)
   chatUserNo: ChatUsers[];
@@ -36,4 +34,7 @@ export class ChatList extends BaseEntity {
 
   @OneToMany((type) => NoticeChats, (noticeChats) => noticeChats.chatRoomNo)
   noticeChat: NoticeChats[];
+
+  @OneToOne(() => Meetings, (meeting) => meeting.chatRoomNo)
+  meetingNo: number;
 }

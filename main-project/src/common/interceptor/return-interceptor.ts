@@ -3,10 +3,9 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
-  BadGatewayException,
 } from '@nestjs/common';
-import { Observable, throwError } from 'rxjs';
-import { catchError, map, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { map, tap } from 'rxjs/operators';
 
 @Injectable()
 export class ReturnInterceptor implements NestInterceptor {
@@ -23,7 +22,6 @@ export class ReturnInterceptor implements NestInterceptor {
           response,
         };
       }), // 클라이언트에게 반환 되는 정보(각 컨트롤러 결과 값)
-      catchError((err) => throwError(() => new BadGatewayException())), // 예외 발생시 처리
     );
   }
 }
