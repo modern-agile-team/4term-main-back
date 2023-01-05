@@ -105,7 +105,7 @@ export class ChatsController {
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
-    const uploadedFileUrlList = await this.awsService.uploadFiles(
+    const uploadedFileUrlList = await this.awsService.uploadChatFiles(
       files,
       chatRoomNo,
     );

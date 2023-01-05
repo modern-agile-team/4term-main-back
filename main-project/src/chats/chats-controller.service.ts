@@ -88,7 +88,7 @@ export class ChatsControllerService {
     const {
       userNo,
       chatRoomNo,
-      isUserNeeded: userPresence,
+      isUserNeeded,
       target: target,
     }: UserValidation = chatUserInfo;
 
@@ -102,11 +102,12 @@ export class ChatsControllerService {
       userNo,
       chatRoomNo,
     });
-    if (userPresence === !!user) {
+
+    if (isUserNeeded === Boolean(user)) {
       return;
     }
 
-    const error = userPresence
+    const error = isUserNeeded
       ? new NotFoundException(`${target}님의 정보를 찾을 수 없습니다.`)
       : new BadRequestException(`채팅방에 이미 ${target}님이 존재합니다.`);
 

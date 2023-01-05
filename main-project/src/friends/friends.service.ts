@@ -34,18 +34,22 @@ export class FriendsService {
     private readonly noticeFriendsRepository: NoticeFriendsRepository,
   ) {}
 
-  async createFriendRequest(createFriendDto: CreateFriendDto): Promise<void> {
+  async createFriendRequest(
+    manager,
+    createFriendDto: CreateFriendDto,
+  ): Promise<void> {
     const { receiverNo, senderNo }: CreateFriendDto = createFriendDto;
 
     if (receiverNo === senderNo) {
       throw new BadRequestException('동일한 유저 번호입니다.');
     }
 
-    const friendNo = await this.saveFriendRequest(createFriendDto);
-    await this.saveNoticeFriend({ receiverNo, senderNo, friendNo });
+    const friendNo = await this.saveFriendRequest(manager, createFriendDto);
+    await this.saveNoticeFriend(manager, { receiverNo, senderNo, friendNo });
   }
 
   private async saveFriendRequest(
+    manager,
     createFriendDto: CreateFriendDto,
   ): Promise<number> {
     const check: FriendRequestStatus = await this.friendsRepository.checkFriend(
@@ -62,8 +66,10 @@ export class FriendsService {
       }
     }
 
-    const raw: FriendRequestResponse =
-      await this.friendsRepository.createFriendRequest(createFriendDto);
+    const raw: FriendRequestResponse = await manager
+      .getCustomRepository(FriendsRepository)
+      .createFriendRequest(createFriendDto);
+
     if (!raw.affectedRows) {
       throw new InternalServerErrorException(`friend request 생성 오류입니다.`);
     }
@@ -105,20 +111,27 @@ export class FriendsService {
     return friendNo;
   }
 
-  private async saveNoticeFriend(noticeFriend: NoticeFriend): Promise<void> {
+  private async saveNoticeFriend(
+    manager,
+    noticeFriend: NoticeFriend,
+  ): Promise<void> {
     const { senderNo, receiverNo, friendNo }: NoticeFriend = noticeFriend;
     const type = NoticeType.FRIEND_REQUEST;
 
-    const raw = await this.noticeRepository.saveNotice({
-      type,
-      userNo: senderNo,
-      targetUserNo: receiverNo,
-    });
+    const raw = await manager
+      .getCustomRepository(NoticesRepository)
+      .saveNotice({
+        type,
+        userNo: senderNo,
+        targetUserNo: receiverNo,
+      });
+    const result = await manager
+      .getCustomRepository(NoticeFriendsRepository)
+      .saveNoticeFriend({
+        noticeNo: raw.insertId,
+        friendNo,
+      });
 
-    const result = await this.noticeFriendsRepository.saveNoticeFriend({
-      noticeNo: raw.insertId,
-      friendNo,
-    });
     if (!result) {
       throw new BadRequestException('알람 생성에 실패하였습니다.');
     }

@@ -1,5 +1,4 @@
 import { Logger } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   ConnectedSocket,
   MessageBody,
@@ -18,7 +17,6 @@ import {
 } from './interface/chat.interface';
 
 @WebSocketGateway(4000, { namespace: 'chat' })
-@ApiTags('채팅 소켓 API')
 export class ChatsGateway {
   constructor(private readonly chatGatewayService: ChatsGatewayService) {}
 
@@ -65,10 +63,6 @@ export class ChatsGateway {
   }
 
   @SubscribeMessage('create-room')
-  @ApiOperation({
-    summary: '채팅방 생성',
-    description: 'board를 통해 채팅방 생성',
-  })
   async handleCreateRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: CreateChatDto,
