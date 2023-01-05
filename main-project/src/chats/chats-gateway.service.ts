@@ -11,6 +11,9 @@ import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { Connection, getConnection, InsertResult, QueryRunner } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
+import { InitSocketDto } from './dto/init-socket.dto';
+import { JoinChatRoomDto } from './dto/join-chat.dto';
+import { MessagePayloadDto } from './dto/message-payload.dto';
 import { ChatLog } from './entity/chat-log.entity';
 import {
   ChatRoom,
@@ -20,8 +23,6 @@ import {
   ChatUserInfo,
   CreateChat,
   FileUrlDetail,
-  JoinChatRoom,
-  MessagePayload,
 } from './interface/chat.interface';
 import { ChatFileUrlsRepository } from './repository/chat-file-urls.repository';
 import { ChatListRepository } from './repository/chat-list.repository';
@@ -47,7 +48,11 @@ export class ChatsGatewayService {
     private readonly chatFileUrlsRepository: ChatFileUrlsRepository,
   ) {}
 
-  async initSocket(socket, userNo: number): Promise<ChatRoomList[]> {
+  async initSocket(
+    socket,
+    messagePayload: InitSocketDto,
+  ): Promise<ChatRoomList[]> {
+    const { userNo } = messagePayload;
     const chatRoomList = await this.getChatRoomListByUserNo(
       Object.values(userNo),
     );
@@ -60,14 +65,17 @@ export class ChatsGatewayService {
     return chatRoomList;
   }
 
-  async createRoom(socket: Socket, chat: CreateChatDto): Promise<void> {
+  async createRoom(
+    socket: Socket,
+    messagePayload: CreateChatDto,
+  ): Promise<number> {
     const connection: Connection = getConnection();
     const queryRunner: QueryRunner = connection.createQueryRunner();
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    const { boardNo } = chat;
+    const { boardNo } = messagePayload;
 
     try {
       await this.checkChatRoomExists(boardNo);
@@ -95,6 +103,7 @@ export class ChatsGatewayService {
       await queryRunner.commitTransaction();
 
       socket.join(`${chatRoomNo}`);
+      return chatRoomNo;
     } catch (error) {
       await queryRunner?.rollbackTransaction();
 
@@ -137,7 +146,7 @@ export class ChatsGatewayService {
     }
   }
 
-  async joinRoom(socket, chat: JoinChatRoom): Promise<ChatLog[]> {
+  async joinRoom(socket, chat: JoinChatRoomDto): Promise<ChatLog[]> {
     const { userNo, chatRoomNo } = chat;
     const user: ChatRoomUser = await this.chatListRepository.isUserInChatRoom(
       chatRoomNo,
@@ -170,8 +179,8 @@ export class ChatsGatewayService {
     return chatList;
   }
 
-  async sendChat(socket, messagePayload: MessagePayload): Promise<void> {
-    const { userNo, chatRoomNo, message }: MessagePayload = messagePayload;
+  async sendChat(socket, messagePayload: MessagePayloadDto): Promise<void> {
+    const { userNo, chatRoomNo, message }: MessagePayloadDto = messagePayload;
 
     await this.checkChatRoom(chatRoomNo, userNo);
 
@@ -186,7 +195,7 @@ export class ChatsGatewayService {
 
   async sendFile(
     socket: Socket,
-    messagePayload: MessagePayload,
+    messagePayload: MessagePayloadDto,
   ): Promise<void> {
     const connection: Connection = getConnection();
     const queryRunner: QueryRunner = connection.createQueryRunner();
@@ -195,7 +204,7 @@ export class ChatsGatewayService {
     await queryRunner.startTransaction();
 
     try {
-      const { userNo, chatRoomNo, uploadedFileUrls }: MessagePayload =
+      const { userNo, chatRoomNo, uploadedFileUrls }: MessagePayloadDto =
         messagePayload;
 
       const chatLogNo = await this.saveMessageByQueryRunner(
@@ -240,7 +249,7 @@ export class ChatsGatewayService {
     messagePayload,
     chatLogNo,
   ): Promise<void> {
-    const { uploadedFileUrls }: MessagePayload = messagePayload;
+    const { uploadedFileUrls }: MessagePayloadDto = messagePayload;
     const fileUrlDetail: FileUrlDetail[] = uploadedFileUrls.reduce(
       (values, fileUrl) => {
         values.push({ chatLogNo, fileUrl });
@@ -258,7 +267,7 @@ export class ChatsGatewayService {
     }
   }
 
-  private async saveMessage(messagePayload: MessagePayload): Promise<void> {
+  private async saveMessage(messagePayload: MessagePayloadDto): Promise<void> {
     const insertId = await this.chatLogRepository.saveMessage(messagePayload);
     if (!insertId) {
       throw new BadRequestException('매세지 저장 오류 입니다.');

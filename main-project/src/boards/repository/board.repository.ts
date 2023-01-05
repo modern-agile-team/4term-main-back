@@ -204,7 +204,8 @@ export class BoardRepository extends Repository<Boards> {
     try {
       const userList = await this.createQueryBuilder('boards')
         .leftJoin('boards.hosts', 'hostList')
-        .leftJoin('boards.guests', 'guestList')
+        .leftJoin('boards.teamNo', 'guestParticipation')
+        .leftJoin('guestParticipation.boardGuest', 'guestList')
         .leftJoin('hostList.userNo', 'hostUser')
         .leftJoin('guestList.userNo', 'guestUser')
         .leftJoin('hostUser.userProfileNo', 'hostProfile')
