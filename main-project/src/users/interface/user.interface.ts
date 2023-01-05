@@ -24,3 +24,8 @@ export interface UpdatedProfile {
   nickname?: string;
   description?: string;
 }
+
+export interface UserImage {
+  profileNo: number;
+  imageUrl: string;
+}

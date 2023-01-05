@@ -50,8 +50,8 @@ export class AwsService {
     return fileUrlList;
   }
 
-  async uploadProfileImage(image, userNo: number) {
-    const imageKey = `user/${userNo}/${Date.now()}_${
+  async uploadProfileImage(userNo: number, image: Express.Multer.File) {
+    const imageKey = `user_profile/${userNo}/${Date.now()}_${
       image.originalname
     }`.replace(/ /g, '');
     const profileImage = {
@@ -63,8 +63,6 @@ export class AwsService {
 
     this.s3.upload(profileImage, (err, data) => {
       if (err) {
-        console.log(err);
-
         throw new InternalServerErrorException(
           '이미지 업로드에 실패하였습니다.',
         );
@@ -72,5 +70,18 @@ export class AwsService {
     });
 
     return process.env.AWS_BUCKET_LINK + imageKey;
+  }
+
+  async deleteProfileImage(imageUrl: string) {
+    const profileImage = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: imageUrl.replace(process.env.AWS_BUCKET_LINK, ''),
+    };
+
+    this.s3.deleteObject(profileImage, (err) => {
+      if (err) {
+        throw new InternalServerErrorException('이미지 삭제에 실패하였습니다.');
+      }
+    });
   }
 }

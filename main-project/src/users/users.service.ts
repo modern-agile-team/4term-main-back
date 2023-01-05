@@ -13,7 +13,7 @@ import { ProfileImagesRepository } from './repository/profile-images.repository'
 import { UserStatus } from 'src/common/configs/user-status.config';
 import { Users } from './entity/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { User } from './interface/user.interface';
+import { User, UserImage } from './interface/user.interface';
 import { JwtService } from '@nestjs/jwt';
 import { Payload } from 'src/auth/interface/auth.interface';
 import { ConfigService } from '@nestjs/config';
@@ -68,6 +68,37 @@ export class UsersService {
     return user;
   }
 
+  async updateProfileImage(
+    userNo: number,
+    profileImage: Express.Multer.File,
+  ): Promise<string> {
+    const { imageUrl, profileNo }: UserImage =
+      await this.profileImageRepository.getProfileImage(userNo);
+    if (imageUrl) {
+      this.awsService.deleteProfileImage(imageUrl);
+    }
+
+    const newImageUrl: string = await this.awsService.uploadProfileImage(
+      userNo,
+      profileImage,
+    );
+    await this.updateProfileImageByProfileNo(profileNo, newImageUrl);
+
+    return await this.updateAccessToken(userNo);
+  }
+
+  private async updateProfileImageByProfileNo(
+    profileNo: number,
+    imageUrl: string,
+  ) {
+    const isProfileImageUpdated: number =
+      await this.profileImageRepository.updateProfileImage(profileNo, imageUrl);
+
+    if (!isProfileImageUpdated) {
+      throw new InternalServerErrorException(`프로필 이미지 수정 오류입니다.`);
+    }
+  }
+
   private async updateAccessToken(userNo: number) {
     const accessPayload: Payload =
       await this.userProfileRepository.getUserPayload(userNo);
@@ -91,7 +122,7 @@ export class UsersService {
       return null;
     }
 
-    return await this.awsService.uploadProfileImage(image, userNo);
+    return await this.awsService.uploadProfileImage(userNo, image);
   }
 
   private async saveProfileImage(userProfileNo: number, imageUrl: string) {

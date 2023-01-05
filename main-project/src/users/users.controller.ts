@@ -1,8 +1,9 @@
 import { Controller, UploadedFile, UseInterceptors } from '@nestjs/common';
-import { Body, Post, Patch, UseGuards } from '@nestjs/common/decorators';
+import { Body, Post, Patch, Put, UseGuards } from '@nestjs/common/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation } from '@nestjs/swagger';
 import { BodyAndUser } from 'src/common/decorator/body-and-user.decorator';
+import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -36,5 +37,20 @@ export class UsersController {
     );
 
     return { response: { user } };
+  }
+
+  @Put('/profile-image')
+  @UseInterceptors(FileInterceptor('image'))
+  @UseGuards(JwtAuthGuard)
+  async updateImage(
+    @GetUser() userNo: number,
+    @UploadedFile() image: Express.Multer.File,
+  ) {
+    const accessToken: string = await this.usersService.updateProfileImage(
+      userNo,
+      image,
+    );
+
+    return { response: { accessToken } };
   }
 }
