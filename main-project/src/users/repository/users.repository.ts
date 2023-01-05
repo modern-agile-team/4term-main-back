@@ -70,4 +70,20 @@ export class UsersRepository extends Repository<Users> {
       );
     }
   }
+
+  async softDeleteUser(userNo: number): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .softDelete()
+        .from(Users)
+        .where('no = :userNo', { userNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 회원 탈퇴 에러(softDeleteUser): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
 }

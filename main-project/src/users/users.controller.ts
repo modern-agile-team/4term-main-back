@@ -1,5 +1,12 @@
 import { Controller, UploadedFile, UseInterceptors } from '@nestjs/common';
-import { Body, Post, Patch, Put, UseGuards } from '@nestjs/common/decorators';
+import {
+  Body,
+  Post,
+  Patch,
+  Put,
+  UseGuards,
+  Delete,
+} from '@nestjs/common/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
@@ -32,7 +39,7 @@ export class UsersController {
     return { response: { user } };
   }
 
-  @ApiOperation({ summary: '유저 프로필 수정(status가 2인 유저만 요청 가능)' })
+  @ApiOperation({ summary: '유저 프로필 수정' })
   @UseGuards(JwtAuthGuard)
   @Patch('/profile')
   async updateProfile(
@@ -48,7 +55,7 @@ export class UsersController {
   }
 
   @ApiOperation({
-    summary: '유저 프로필 이미지 수정(status가 2인 유저만 요청 가능)',
+    summary: '유저 프로필 이미지 수정',
   })
   @UseInterceptors(FileInterceptor('image'))
   @UseGuards(JwtAuthGuard)
@@ -63,5 +70,16 @@ export class UsersController {
     );
 
     return { response: { accessToken } };
+  }
+
+  @ApiOperation({
+    summary: '회원 탈퇴',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Delete()
+  async softDeleteUser(@GetUser() userNo: number) {
+    await this.usersService.softDeleteUser(userNo);
+
+    return { msg: '유저가 삭제되었습니다.' };
   }
 }

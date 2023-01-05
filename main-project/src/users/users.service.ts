@@ -93,6 +93,17 @@ export class UsersService {
     return await this.updateAccessToken(userNo);
   }
 
+  async softDeleteUser(userNo: number) {
+    const isUserDeleted: number = await this.userRepository.softDeleteUser(
+      userNo,
+    );
+    if (!isUserDeleted) {
+      throw new InternalServerErrorException('유저 탈퇴 오류입니다.');
+    }
+
+    await this.cacheManager.del(userNo);
+  }
+
   private async updateProfileImageByProfileNo(
     profileNo: number,
     imageUrl: string,
