@@ -6,15 +6,15 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { AsyncApiPub, AsyncApiSub } from 'nestjs-asyncapi';
 import { Namespace, Socket } from 'socket.io';
 import { APIResponse } from 'src/common/interface/interface';
 import { ChatsGatewayService } from './chats-gateway.service';
 import { CreateChatDto } from './dto/create-chat.dto';
-import {
-  ChatRoomList,
-  JoinChatRoom,
-  MessagePayload,
-} from './interface/chat.interface';
+import { InitSocketDto } from './dto/init-socket.dto';
+import { JoinChatRoomDto } from './dto/join-chat.dto';
+import { MessagePayloadDto } from './dto/message-payload.dto';
+import { ChatRoomList } from './interface/chat.interface';
 
 @WebSocketGateway(4000, { namespace: 'chat' })
 export class ChatsGateway {
@@ -52,28 +52,56 @@ export class ChatsGateway {
   }
 
   @SubscribeMessage('init-socket')
+  @AsyncApiSub({
+    description: `소켓 초기화 
+    response: [{ roomName: string, chatRoomNo: number }] 반환`,
+    channel: 'init-socket',
+    message: {
+      payload: InitSocketDto,
+    },
+  })
   async handleInitSocket(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() userNo: number,
+    @MessageBody() messagePayload: InitSocketDto,
   ): Promise<APIResponse> {
     const chatRoomList: ChatRoomList[] =
-      await this.chatGatewayService.initSocket(socket, userNo);
+      await this.chatGatewayService.initSocket(socket, messagePayload);
 
     return { response: { chatRoomList } };
   }
 
   @SubscribeMessage('create-room')
+  @AsyncApiSub({
+    description: `채팅방 생성 
+    response: { chatRoomNo: number } 반환`,
+    channel: 'create-room',
+    message: {
+      payload: CreateChatDto,
+    },
+  })
   async handleCreateRoom(
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: CreateChatDto,
-  ): Promise<void> {
-    await this.chatGatewayService.createRoom(socket, messagePayload);
+  ): Promise<APIResponse> {
+    const chatRoomNo = await this.chatGatewayService.createRoom(
+      socket,
+      messagePayload,
+    );
+    return { response: { chatRoomNo } };
   }
 
   @SubscribeMessage('join-room')
+  @AsyncApiSub({
+    description: `채팅방 참여 
+    response: { chatRoomNo: number } 반환`,
+    channel: 'join-room',
+    message: {
+      payload: JoinChatRoomDto,
+    },
+  })
   async handleJoinRoom(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() messagePayload: JoinChatRoom,
+    @MessageBody() messagePayload: JoinChatRoomDto,
   ): Promise<APIResponse> {
     const recentChatLog = await this.chatGatewayService.joinRoom(
       socket,
@@ -84,12 +112,33 @@ export class ChatsGateway {
   }
 
   @SubscribeMessage('message')
+  @AsyncApiSub({
+    description: `
+    메세지 전송 채팅일때 response: 
+    { "userNo": 1,
+      "chatRoomNo": 3,
+      "message": 3,
+    }  
+    이미지일때 
+    { "userNo": 1,
+      "chatRoomNo": 3,
+      "uploadedFileUrls": [
+        "http",
+        "http"
+      ] 
+    }반환`,
+    channel: 'message',
+    message: {
+      payload: MessagePayloadDto,
+    },
+  })
   async handleMessage(
     @ConnectedSocket() socket: Socket,
-    @MessageBody() messagePayload: MessagePayload,
-  ): Promise<void> {
+    @MessageBody() messagePayload: MessagePayloadDto,
+  ): Promise<APIResponse> {
     messagePayload.hasOwnProperty('message')
       ? await this.chatGatewayService.sendChat(socket, messagePayload)
       : await this.chatGatewayService.sendFile(socket, messagePayload);
+    return { response: { messagePayload } };
   }
 }
