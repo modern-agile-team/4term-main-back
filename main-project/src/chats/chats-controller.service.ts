@@ -18,7 +18,6 @@ import { ChatLog } from './entity/chat-log.entity';
 import {
   ChatRoomList,
   ChatUserInfo,
-  PreviousChatLog,
   UserValidation,
 } from './interface/chat.interface';
 import { ChatListRepository } from './repository/chat-list.repository';

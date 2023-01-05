@@ -60,14 +60,17 @@ export class ChatsGatewayService {
     return chatRoomList;
   }
 
-  async createRoom(socket: Socket, chat: CreateChatDto): Promise<void> {
+  async createRoom(
+    socket: Socket,
+    messagePayload: CreateChatDto,
+  ): Promise<void> {
     const connection: Connection = getConnection();
     const queryRunner: QueryRunner = connection.createQueryRunner();
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
-    const { boardNo } = chat;
+    const { boardNo } = messagePayload;
 
     try {
       await this.checkChatRoomExists(boardNo);
