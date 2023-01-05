@@ -38,12 +38,14 @@ export class AnnouncesRepository extends Repository<Announces> {
   async getAnnouncesByNo(announcesNo: number): Promise<Announces> {
     try {
       const announces = this.createQueryBuilder('announces')
+        .leftJoin('announces.announcesImages', 'images')
         .select([
           'announces.no AS no',
           'announces.title AS title',
           'announces.description AS description',
+          'JSON_ARRAYAGG(images.imageUrl) AS imgs',
         ])
-        .where('no = :announcesNo', { announcesNo })
+        .where('announces.no = :announcesNo', { announcesNo })
         .getRawOne();
 
       return announces;
@@ -92,17 +94,15 @@ export class AnnouncesRepository extends Repository<Announces> {
   }
 
   // 삭제 관련
-  async deleteAnnouncesByNo(announcesNo: number): Promise<number> {
+  async deleteAnnouncesByNo(announcesNo: number): Promise<DeleteResult> {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder(
-        'announces',
-      )
+      const raw: DeleteResult = await this.createQueryBuilder('announces')
         .delete()
         .from(Announces)
         .where('no = :announcesNo', { announcesNo })
         .execute();
 
-      return affected;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteAnnouncesByNo-repository: 알 수 없는 서버 에러입니다.`,

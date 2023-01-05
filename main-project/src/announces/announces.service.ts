@@ -6,10 +6,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateResponse } from 'src/boards/interface/boards.interface';
+import { DeleteResult } from 'typeorm';
 import { AnnouncesFilterDto } from './dto/announce-filter.dto';
 import { AnnouncesDto } from './dto/announce.dto';
+import { AnnouncesImages } from './entity/announce-images.entity';
 import { Announces } from './entity/announce.entity';
 import { AnnouncesRepository } from './repository/announce.repository';
+import { AnnouncesImagesRepository } from './repository/announces-images.repository';
 
 @Injectable()
 export class AnnouncesService {
@@ -18,16 +21,14 @@ export class AnnouncesService {
   constructor(
     @InjectRepository(AnnouncesRepository)
     private readonly announcesRepository: AnnouncesRepository,
+
+    @InjectRepository(AnnouncesImagesRepository)
+    private readonly announcesImagesRepository: AnnouncesImagesRepository,
   ) {}
   // 생성 관련
-  async createAnnounces(
-    manager,
-    announcesDto: AnnouncesDto,
-    files: Express.Multer.File[],
-  ): Promise<string> {
-    const { insertId }: CreateResponse = await manager
-      .getCustomRepository(AnnouncesRepository)
-      .createAnnounces(announcesDto);
+  async createAnnounces(manager, announcesDto: AnnouncesDto): Promise<string> {
+    const { insertId }: CreateResponse =
+      await this.announcesRepository.createAnnounces(announcesDto);
 
     if (!insertId) {
       throw new InternalServerErrorException(
@@ -36,6 +37,26 @@ export class AnnouncesService {
     }
 
     return `${insertId}번 공지사항 생성 성공`;
+  }
+
+  async uploadAnnouncesimagesUrl(
+    announcesNo: number,
+    uploadedImagesUrlList: string[],
+  ): Promise<string> {
+    const images = uploadedImagesUrlList.map((url) => {
+      return { announcesNo, imageUrl: url };
+    });
+
+    const { insertId }: CreateResponse =
+      await this.announcesImagesRepository.uploadAnnouncesimagesUrl(images);
+
+    if (!insertId) {
+      throw new InternalServerErrorException(
+        `이미지 업로드(uploadimagesUrl-service): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+
+    return `이미지 업로드 성공`;
   }
 
   // 조회 관련
@@ -51,6 +72,19 @@ export class AnnouncesService {
     }
 
     return announces;
+  }
+
+  async getAnnouncesImages(announcesNo: number): Promise<string[]> {
+    const { imageUrl }: AnnouncesImages =
+      await this.announcesImagesRepository.getAnnouncesImages(announcesNo);
+
+    if (!imageUrl) {
+      throw new NotFoundException(
+        `이미지 조회(getImages-service): 이미지가 없습니다.`,
+      );
+    }
+
+    return imageUrl;
   }
 
   async getAnnouncesByNo(announcesNo: number): Promise<Announces> {
@@ -91,12 +125,27 @@ export class AnnouncesService {
   async deleteAnnouncesByNo(announcesNo: number): Promise<string> {
     await this.getAnnouncesByNo(announcesNo);
 
-    const announces: number =
+    const { affected }: DeleteResult =
       await this.announcesRepository.deleteAnnouncesByNo(announcesNo);
 
-    if (!announces) {
+    if (!affected) {
       throw new BadRequestException(
         `공지사항 삭제(deleteAnnouncesByNo-service): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+
+    return `${announcesNo}번 공지사항 삭제 성공`;
+  }
+
+  async deleteAnnouncesImages(announcesNo: number): Promise<string> {
+    await this.getAnnouncesByNo(announcesNo);
+
+    const { affected }: DeleteResult =
+      await this.announcesImagesRepository.deleteAnnouncesImages(announcesNo);
+
+    if (!affected) {
+      throw new BadRequestException(
+        `이미지 삭제(deleteAnnouncesImages-service): 알 수 없는 서버 에러입니다.`,
       );
     }
 

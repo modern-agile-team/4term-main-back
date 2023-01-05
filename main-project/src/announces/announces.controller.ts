@@ -20,6 +20,7 @@ import { APIResponse } from 'src/common/interface/interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AwsService } from 'src/aws/aws.service';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
+import { AnnouncesImages } from './entity/announce-images.entity';
 
 @Controller('announces')
 @ApiTags('공지사항 API')
@@ -58,6 +59,21 @@ export class AnnouncesController {
     return { response: announcement };
   }
 
+  @Get('/images/:announcesNo')
+  @ApiOperation({
+    summary: '특정 공지사항 이미지 조회 API',
+    description: '번호를 통해 해당 공지사항의 이미지을 조회한다.',
+  })
+  async getAnnouncesImages(
+    @Param('announcesNo', ParseIntPipe) announcesNo: number,
+  ): Promise<APIResponse> {
+    const imageUrl: string[] = await this.announcesService.getAnnouncesImages(
+      announcesNo,
+    );
+
+    return { response: { imageUrl } };
+  }
+
   // Post Methods
   @Post()
   @ApiOperation({
@@ -68,19 +84,35 @@ export class AnnouncesController {
   async createAnnounces(
     @Body() announcesDto: AnnouncesDto,
     @TransactionDecorator() manager,
-    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
-    const uploadedFileUrlList = await this.awsService.uploadAnnouncesFiles(
-      files,
-    );
-
     const Announces: string = await this.announcesService.createAnnounces(
       manager,
       announcesDto,
-      files,
     );
 
     return { response: { Announces } };
+  }
+
+  @Post('/images/:announcesNo')
+  @ApiOperation({
+    summary: '공지사항 이미지 업로드 API',
+    description: 's3에 이미지 업로드 후 DB에 image 정보 생성.',
+  })
+  @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
+  async uploadAnnouncesImages(
+    @Param('announcesNo', ParseIntPipe) announcesNo: number,
+    @UploadedFiles() files: Express.Multer.File[],
+  ): Promise<APIResponse> {
+    const uploadedImagesUrlList = await this.awsService.uploadAnnouncesFiles(
+      files,
+    );
+
+    await this.announcesService.uploadAnnouncesimagesUrl(
+      announcesNo,
+      uploadedImagesUrlList,
+    );
+
+    return { response: { uploadedImagesUrlList } };
   }
 
   // Patch Methods
@@ -117,5 +149,25 @@ export class AnnouncesController {
     );
 
     return { response: { announces } };
+  }
+
+  // Delete Methods
+  @Delete('/images/:announcesNo')
+  @ApiOperation({
+    summary: '공지사항 삭제 API',
+    description: '공지사항 번호를 사용해 공지사항을 삭제한다.',
+  })
+  async deleteAnnouncesimages(
+    @Param('announcesNo', ParseIntPipe) announcesNo: number,
+  ): Promise<APIResponse> {
+    const imagesUrlList = await this.announcesService.getAnnouncesImages(
+      announcesNo,
+    );
+
+    await this.announcesService.deleteAnnouncesImages(announcesNo);
+
+    await this.awsService.deleteFiles(imagesUrlList);
+
+    return { response: { true: true } };
   }
 }

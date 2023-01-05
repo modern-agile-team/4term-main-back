@@ -51,6 +51,9 @@ export class AwsService {
   }
 
   async uploadAnnouncesFiles(files: Express.Multer.File[]) {
+    if (!files.length) {
+      throw new BadRequestException(`업로드 할 파일이 존재하지 않습니다.`);
+    }
     const uploadFileList: object[] = files.map((file) => {
       const key = `announces/${Date.now()}_${file.originalname}`;
 
@@ -77,5 +80,23 @@ export class AwsService {
     });
 
     return fileUrlList;
+  }
+
+  async deleteFiles(imagesUrlList: string[]) {
+    // async deleteFiles(imgs: { Key: string }[]) {
+    const keys = imagesUrlList.map((url: string) => {
+      return { Key: url };
+    });
+    const params = {
+      Bucket: 'examplebucket',
+      Delete: {
+        Objects: keys,
+        Quiet: false,
+      },
+    };
+    this.s3.deleteObjects(params, function (err, data) {
+      if (err) console.log(err, err.stack);
+      else console.log(data);
+    });
   }
 }
