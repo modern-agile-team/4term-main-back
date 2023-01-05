@@ -26,7 +26,7 @@ export class UserProfile extends BaseEntity {
   @Column({ type: 'varchar', length: 45 })
   nickname: string;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', width: 1, default: false })
   gender: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })

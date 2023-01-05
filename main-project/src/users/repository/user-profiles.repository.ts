@@ -53,7 +53,10 @@ export class UserProfilesRepository extends Repository<UserProfile> {
     }
   }
 
-  async updateUserProfile(updatedProfile: UpdatedProfile): Promise<number> {
+  async updateUserProfile(
+    userNo: number,
+    updatedProfile: UpdatedProfile,
+  ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder(
         'user_profiles',
@@ -61,7 +64,7 @@ export class UserProfilesRepository extends Repository<UserProfile> {
         .update()
         .set(updatedProfile)
         .where('user_profiles.user_no = :userNo', {
-          userNo: updatedProfile.userNo,
+          userNo,
         })
         .execute();
 

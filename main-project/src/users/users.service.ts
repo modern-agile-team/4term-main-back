@@ -48,21 +48,27 @@ export class UsersService {
     return { userNo, status: UserStatus.SHCOOL_NOT_AUTHENTICATED };
   }
 
-  async updateUserProfile(updateProfileDto: UpdateProfileDto): Promise<User> {
+  async updateUserProfile(
+    userNo: number,
+    updateProfileDto: UpdateProfileDto,
+  ): Promise<User> {
     const user: User = {
-      userNo: updateProfileDto.userNo,
+      userNo,
       status: UserStatus.CONFIRMED,
     };
 
     const isProfileUpdated: number =
-      await this.userProfileRepository.updateUserProfile(updateProfileDto);
+      await this.userProfileRepository.updateUserProfile(
+        userNo,
+        updateProfileDto,
+      );
 
     if (!isProfileUpdated) {
       throw new InternalServerErrorException(`유저 프로필 수정 오류입니다.`);
     }
 
     if (updateProfileDto.nickname) {
-      user.accessToken = await this.updateAccessToken(updateProfileDto.userNo);
+      user.accessToken = await this.updateAccessToken(userNo);
     }
 
     return user;

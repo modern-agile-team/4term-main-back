@@ -1,15 +1,21 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class UpdateProfileDto {
-  @IsNotEmpty()
-  @IsNumber()
-  userNo: number;
-
-  @IsOptional()
+  @MaxLength(45)
   @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    description: '유저 닉네임, 최대 길이 45',
+    example: 'juhaa',
+  })
   nickname?: string;
 
-  @IsOptional()
+  @MaxLength(255)
   @IsString()
+  @IsOptional()
+  @ApiPropertyOptional({
+    description: '유저 프로필 메시지, 최대 길이 255',
+  })
   description?: string;
 }

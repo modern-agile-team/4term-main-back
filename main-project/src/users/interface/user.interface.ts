@@ -20,7 +20,6 @@ export interface ProfileDetail {
 }
 
 export interface UpdatedProfile {
-  userNo: number;
   nickname?: string;
   description?: string;
 }
