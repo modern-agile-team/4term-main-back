@@ -10,15 +10,17 @@ import {
 import { Friends } from '../entity/friend.entity';
 import {
   Friend,
+  FriendDetail,
   FriendInfo,
-  FriendInsertResult,
+  FriendList,
+  FriendRequestResponse,
   FriendRequestStatus,
   FriendToSearch,
 } from '../interface/friend.interface';
 
 @EntityRepository(Friends)
 export class FriendsRepository extends Repository<Friends> {
-  async getAllFriendList(userNo: number): Promise<Friend[]> {
+  async getAllFriendList(userNo: number): Promise<FriendList[]> {
     try {
       const result = await this.createQueryBuilder('friends')
         .leftJoin('friends.receiverNo', 'receiverUser')
@@ -83,7 +85,7 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async checkFriend(friendDetail: Friend): Promise<FriendRequestStatus> {
+  async checkFriend(friendDetail: FriendDetail): Promise<FriendRequestStatus> {
     try {
       const result: FriendRequestStatus = await this.createQueryBuilder(
         'friends',
@@ -107,11 +109,9 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async checkRequestByUsersNo(
-    friendDetail: Friend,
-  ): Promise<FriendRequestStatus> {
+  async checkRequest(friendDetail: FriendDetail): Promise<FriendRequestStatus> {
     try {
-      const request: FriendRequestStatus = await this.createQueryBuilder(
+      const result: FriendRequestStatus = await this.createQueryBuilder(
         'friends',
       )
         .select(['friends.is_accept AS isAccept'])
@@ -121,9 +121,8 @@ export class FriendsRepository extends Repository<Friends> {
         )
         .getRawOne();
 
-      return request;
+      return result;
     } catch (error) {
-      console.log(error);
       throw new InternalServerErrorException(
         `${error}: 특정 친구 신청 목록 조회(checkRequest): 알 수 없는 서버 에러입니다.`,
       );
@@ -147,7 +146,9 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async createFriendRequest(friendDetail: Friend): Promise<FriendInsertResult> {
+  async createFriendRequest(
+    friendDetail: FriendDetail,
+  ): Promise<FriendRequestResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
@@ -224,7 +225,7 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async refuseRequestByNo(refuseFriendNo: Friend): Promise<number> {
+  async refuseRequestByNo(refuseFriendNo: FriendDetail): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()
