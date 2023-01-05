@@ -18,6 +18,7 @@ import { Announces } from './entity/announce.entity';
 import { APIResponse } from 'src/common/interface/interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AwsService } from 'src/aws/aws.service';
+import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 
 @Controller('announces')
 @ApiTags('공지사항 API')
@@ -65,6 +66,7 @@ export class AnnouncesController {
   @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
   async createAnnounces(
     @Body() announcesDto: AnnouncesDto,
+    @TransactionDecorator() manager,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
     const uploadedFileUrlList = await this.awsService.uploadAnnouncesFiles(
@@ -72,6 +74,7 @@ export class AnnouncesController {
     );
 
     const Announces: string = await this.announcesService.createAnnounces(
+      manager,
       announcesDto,
       files,
     );
@@ -86,10 +89,12 @@ export class AnnouncesController {
     description: '입력한 정보로 공지사항을 수정한다.',
   })
   async updateAnnounces(
+    @TransactionDecorator() manager,
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
     @Body() announcesDto: AnnouncesDto,
   ): Promise<APIResponse> {
     const announces: string = await this.announcesService.updateAnnounces(
+      manager,
       announcesNo,
       announcesDto,
     );
