@@ -49,4 +49,33 @@ export class AwsService {
 
     return fileUrlList;
   }
+
+  async uploadAnnouncesFiles(files: Express.Multer.File[]) {
+    const uploadFileList: object[] = files.map((file) => {
+      const key = `announces/${Date.now()}_${file.originalname}`;
+
+      return {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        ACL: 'public-read',
+        Key: key,
+        Body: file.buffer,
+      };
+    });
+
+    await uploadFileList.map((uploadFile: any) => {
+      this.s3.upload(uploadFile, (err, data) => {
+        if (err) {
+          throw new InternalServerErrorException(
+            '파일 업로드에 실패하였습니다.',
+          );
+        }
+      });
+    });
+
+    const fileUrlList: string[] = uploadFileList.map((file: any) => {
+      return process.env.AWS_BUCKET_LINK + file.Key;
+    });
+
+    return fileUrlList;
+  }
 }

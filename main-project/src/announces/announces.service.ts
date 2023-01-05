@@ -13,6 +13,8 @@ import { AnnouncesRepository } from './repository/announce.repository';
 
 @Injectable()
 export class AnnouncesService {
+  private readonly s3: AWS.S3;
+
   constructor(
     @InjectRepository(AnnouncesRepository)
     private readonly announcesRepository: AnnouncesRepository,
@@ -20,7 +22,10 @@ export class AnnouncesService {
     private readonly connection: Connection,
   ) {}
   // 공지사항 생성 관련
-  async createAnnouncement(announcementDto: AnnouncesDto): Promise<string> {
+  async createAnnounces(
+    announcesDto: AnnouncesDto,
+    files: Express.Multer.File[],
+  ): Promise<string> {
     const queryRunner: QueryRunner = this.connection.createQueryRunner();
 
     await queryRunner.connect();
@@ -28,7 +33,7 @@ export class AnnouncesService {
     try {
       const { insertId }: CreateResponse = await queryRunner.manager
         .getCustomRepository(AnnouncesRepository)
-        .createAnnouncement(announcementDto);
+        .createAnnounces(announcesDto);
 
       if (!insertId) {
         throw new InternalServerErrorException(
@@ -48,48 +53,79 @@ export class AnnouncesService {
     }
   }
 
-  // 공지사항 조회 관련
-  async getAnnouncements({ type }: AnnouncesFilterDto): Promise<Announces[]> {
-    const announcements: Announces[] =
-      await this.announcesRepository.getAnnouncements(type);
+  private async uploadImg(files: Express.Multer.File[]) {
+    const uploadFileList: object[] = files.map((file) => {
+      const key = `announces/${Date.now()}_${file.originalname}`;
 
-    if (announcements.length === 0) {
+      return {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        ACL: 'public-read',
+        Key: key,
+        Body: file.buffer,
+      };
+    });
+
+    const upload = await uploadFileList.map((uploadFile: any) => {
+      this.s3.upload(uploadFile, (err, data) => {
+        if (err) {
+          throw new InternalServerErrorException(
+            '파일 업로드에 실패하였습니다.',
+          );
+        }
+      });
+    });
+    console.log(upload);
+
+    const fileUrlList: string[] = uploadFileList.map((file: any) => {
+      return process.env.AWS_BUCKET_LINK + file.Key;
+    });
+
+    return fileUrlList;
+  }
+
+  // 공지사항 조회 관련
+  async getAnnounces({ type }: AnnouncesFilterDto): Promise<Announces[]> {
+    const announces: Announces[] = await this.announcesRepository.getAnnounces(
+      type,
+    );
+
+    if (announces.length === 0) {
       throw new NotFoundException(
         `공지사항 조회(getAnnouncements-service): 조건에 맞는 공지사항이 없습니다.`,
       );
     }
 
-    return announcements;
+    return announces;
   }
 
-  async getAnnouncementByNo(announcementNo: number): Promise<Announces> {
-    const announcement: Announces =
-      await this.announcesRepository.getAnnouncementByNo(announcementNo);
+  async getAnnouncesByNo(announcesNo: number): Promise<Announces> {
+    const announces: Announces =
+      await this.announcesRepository.getAnnouncesByNo(announcesNo);
 
-    if (!announcement) {
+    if (!announces) {
       throw new NotFoundException(
-        `공지사항 상세 조회(getBoardByNo-service): ${announcementNo}번 공지사항이 없습니다.`,
+        `공지사항 상세 조회(getBoardByNo-service): ${announcesNo}번 공지사항이 없습니다.`,
       );
     }
 
-    return announcement;
+    return announces;
   }
 
   // 공지사항 수정 관련
-  async updateAnnouncement(
-    announcementNo: number,
-    announcementDto: AnnouncesDto,
+  async updateAnnounces(
+    announcesNo: number,
+    announcesDto: AnnouncesDto,
   ): Promise<string> {
     const queryRunner: QueryRunner = this.connection.createQueryRunner();
 
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      await this.getAnnouncementByNo(announcementNo);
+      await this.getAnnouncesByNo(announcesNo);
 
       const affectedRows: number = await queryRunner.manager
         .getCustomRepository(AnnouncesRepository)
-        .updateAnnouncement(announcementNo, announcementDto);
+        .updateAnnounces(announcesNo, announcesDto);
 
       if (!affectedRows) {
         throw new InternalServerErrorException(
@@ -99,7 +135,7 @@ export class AnnouncesService {
 
       await queryRunner.commitTransaction();
 
-      return `${announcementNo}번 공지사항이 수정되었습니다.`;
+      return `${announcesNo}번 공지사항이 수정되었습니다.`;
     } catch (error) {
       await queryRunner?.rollbackTransaction();
 

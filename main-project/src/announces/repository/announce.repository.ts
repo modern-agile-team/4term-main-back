@@ -12,84 +12,80 @@ import { Announces } from '../entity/announce.entity';
 @EntityRepository(Announces)
 export class AnnouncesRepository extends Repository<Announces> {
   // 공지사항 조회 관련
-  async getAnnouncements(type: number): Promise<Announces[]> {
+  async getAnnounces(type: number): Promise<Announces[]> {
     try {
-      const announcements = this.createQueryBuilder('announcements')
+      const announces = this.createQueryBuilder('announces')
         .select([
-          'announcements.no AS no',
-          'announcements.title AS title',
-          'announcements.description AS description',
-          'announcements.type AS type',
+          'announces.no AS no',
+          'announces.title AS title',
+          'announces.description AS description',
+          'announces.type AS type',
         ])
         .orderBy('no', 'DESC');
       if (type) {
-        announcements.where('type = :type', { type });
+        announces.where('type = :type', { type });
       }
 
-      return announcements.getRawMany();
+      return announces.getRawMany();
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getAllAnnouncements-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getAnnounces-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
-  async getAnnouncementByNo(announcementNo: number): Promise<Announces> {
+  async getAnnouncesByNo(announcesNo: number): Promise<Announces> {
     try {
-      const announcements = this.createQueryBuilder('announcements')
+      const announces = this.createQueryBuilder('announces')
         .select([
-          'announcements.no AS no',
-          'announcements.title AS title',
-          'announcements.description AS description',
+          'announces.no AS no',
+          'announces.title AS title',
+          'announces.description AS description',
         ])
-        .where('no = :announcementNo', { announcementNo })
+        .where('no = :announcesNo', { announcesNo })
         .getRawOne();
 
-      return announcements;
+      return announces;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getAnnouncementByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getAnnouncesByNo-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
   //공지사항 생성 관련
-  async createAnnouncement(
-    announcementDto: AnnouncesDto,
-  ): Promise<CreateResponse> {
+  async createAnnounces(announcesDto: AnnouncesDto): Promise<CreateResponse> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder(
-        'announcements',
-      )
+      const { raw }: InsertResult = await this.createQueryBuilder('announces')
         .insert()
         .into(Announces)
-        .values(announcementDto)
+        .values(announcesDto)
         .execute();
 
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createAnnouncement-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createAnnounces-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
   //공지사항 수정 관련
-  async updateAnnouncement(
-    announcementNo: number,
-    announcementDto: AnnouncesDto,
+  async updateAnnounces(
+    announcesNo: number,
+    announcesDto: AnnouncesDto,
   ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder('boards')
         .update(Announces)
-        .set(announcementDto)
-        .where('no = :announcementNo', { announcementNo })
+        .set(announcesDto)
+        .where('no = :announcesNo', { announcesNo })
         .execute();
 
       return affected;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} updateAnnouncement-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} updateAnnounces-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

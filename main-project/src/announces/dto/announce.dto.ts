@@ -18,11 +18,11 @@ export class AnnouncesDto {
   @IsNotEmpty()
   description: string;
 
-  @ApiProperty({
-    example: '1',
-    description: '공지사항 타입 1:이벤트, 2:공지사항 ',
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  type: number;
+  // @ApiProperty({
+  //   example: '1',
+  //   description: '공지사항 타입 1:이벤트, 2:공지사항 ',
+  // })
+  // @IsNumber()
+  // @IsNotEmpty()
+  // type: number;
 }

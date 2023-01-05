@@ -22,7 +22,7 @@ export class Announces extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   type: number;
 
   @CreateDateColumn({ name: 'created_date' })
