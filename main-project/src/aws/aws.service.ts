@@ -18,7 +18,7 @@ export class AwsService {
     this.s3 = new AWS.S3();
   }
 
-  async uploadFiles(files: any, chatRoomNo: number) {
+  async uploadChatFiles(files: Express.Multer.File[], chatRoomNo: number) {
     if (!files.length) {
       throw new BadRequestException(`업로드 할 파일이 존재하지 않습니다.`);
     }
