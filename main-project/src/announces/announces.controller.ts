@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -97,6 +98,22 @@ export class AnnouncesController {
       manager,
       announcesNo,
       announcesDto,
+    );
+
+    return { response: { announces } };
+  }
+
+  // Delete Methods
+  @Delete('/:announcesNo')
+  @ApiOperation({
+    summary: '공지사항 삭제 API',
+    description: '공지사항 번호를 사용해 공지사항을 삭제한다.',
+  })
+  async deleteAnnounces(
+    @Param('announcesNo', ParseIntPipe) announcesNo: number,
+  ): Promise<APIResponse> {
+    const announces: string = await this.announcesService.deleteAnnouncesByNo(
+      announcesNo,
     );
 
     return { response: { announces } };

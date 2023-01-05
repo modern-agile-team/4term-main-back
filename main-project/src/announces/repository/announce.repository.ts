@@ -1,6 +1,7 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { CreateResponse } from 'src/boards/interface/boards.interface';
 import {
+  DeleteResult,
   EntityRepository,
   InsertResult,
   Repository,
@@ -11,7 +12,7 @@ import { Announces } from '../entity/announce.entity';
 
 @EntityRepository(Announces)
 export class AnnouncesRepository extends Repository<Announces> {
-  // 공지사항 조회 관련
+  //  조회 관련
   async getAnnounces(type: number): Promise<Announces[]> {
     try {
       const announces = this.createQueryBuilder('announces')
@@ -53,7 +54,7 @@ export class AnnouncesRepository extends Repository<Announces> {
     }
   }
 
-  //공지사항 생성 관련
+  // 생성 관련
   async createAnnounces(announcesDto: AnnouncesDto): Promise<CreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('announces')
@@ -70,7 +71,7 @@ export class AnnouncesRepository extends Repository<Announces> {
     }
   }
 
-  //공지사항 수정 관련
+  // 수정 관련
   async updateAnnounces(
     announcesNo: number,
     announcesDto: AnnouncesDto,
@@ -86,6 +87,25 @@ export class AnnouncesRepository extends Repository<Announces> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateAnnounces-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  // 삭제 관련
+  async deleteAnnouncesByNo(announcesNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder(
+        'announces',
+      )
+        .delete()
+        .from(Announces)
+        .where('no = :announcesNo', { announcesNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteAnnouncesByNo-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

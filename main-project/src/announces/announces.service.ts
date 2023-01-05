@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -18,7 +19,7 @@ export class AnnouncesService {
     @InjectRepository(AnnouncesRepository)
     private readonly announcesRepository: AnnouncesRepository,
   ) {}
-  // 공지사항 생성 관련
+  // 생성 관련
   async createAnnounces(
     manager,
     announcesDto: AnnouncesDto,
@@ -37,7 +38,7 @@ export class AnnouncesService {
     return `${insertId}번 공지사항 생성 성공`;
   }
 
-  // 공지사항 조회 관련
+  // 조회 관련
   async getAnnounces({ type }: AnnouncesFilterDto): Promise<Announces[]> {
     const announces: Announces[] = await this.announcesRepository.getAnnounces(
       type,
@@ -65,7 +66,7 @@ export class AnnouncesService {
     return announces;
   }
 
-  // 공지사항 수정 관련
+  // 수정 관련
   async updateAnnounces(
     manager,
     announcesNo: number,
@@ -84,5 +85,21 @@ export class AnnouncesService {
     }
 
     return `${announcesNo}번 공지사항이 수정되었습니다.`;
+  }
+
+  // 삭제 관련
+  async deleteAnnouncesByNo(announcesNo: number): Promise<string> {
+    await this.getAnnouncesByNo(announcesNo);
+
+    const announces: number =
+      await this.announcesRepository.deleteAnnouncesByNo(announcesNo);
+
+    if (!announces) {
+      throw new BadRequestException(
+        `공지사항 삭제(deleteAnnouncesByNo-service): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+
+    return `${announcesNo}번 공지사항 삭제 성공`;
   }
 }
