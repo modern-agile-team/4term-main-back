@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { ApiOperation } from '@nestjs/swagger';
 import {
   ConnectedSocket,
   MessageBody,
@@ -62,6 +63,10 @@ export class ChatsGateway {
     return { response: { chatRoomList } };
   }
 
+  @ApiOperation({
+    summary: '소켓 채팅방 생성',
+    description: '닉네임의 조합으로 생성',
+  })
   @SubscribeMessage('create-room')
   async handleCreateRoom(
     @ConnectedSocket() socket: Socket,
