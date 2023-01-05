@@ -9,7 +9,6 @@ import { BoardsModule } from './boards/boards.module';
 import { NoticesModule } from './notices/notices.module';
 import { UsersModule } from './users/users.module';
 import { ReportsModule } from './reports/reports.module';
-import { AnnouncementsModule } from './announcements/announcements.module';
 import { FriendsModule } from './friends/friends.module';
 import { UniversitiesModule } from './universities/universities.module';
 import { EnquiriesModule } from './enquiries/enquiries.module';
@@ -17,6 +16,7 @@ import { ChatsModule } from './chats/chats.module';
 import { MannersModule } from './manners/manners.module';
 import { AwsModule } from './aws/aws.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { AnnouncesModule } from './announces/announces.module';
 
 @Module({
   imports: [
@@ -28,7 +28,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     NoticesModule,
     UsersModule,
     ReportsModule,
-    AnnouncementsModule,
+    AnnouncesModule,
     FriendsModule,
     UniversitiesModule,
     EnquiriesModule,

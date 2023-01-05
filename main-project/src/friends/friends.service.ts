@@ -125,13 +125,13 @@ export class FriendsService {
         userNo: senderNo,
         targetUserNo: receiverNo,
       });
-
     const result = await manager
-      .getCustomRepository(NoticesRepository)
+      .getCustomRepository(NoticeFriendsRepository)
       .saveNoticeFriend({
         noticeNo: raw.insertId,
         friendNo,
       });
+
     if (!result) {
       throw new BadRequestException('알람 생성에 실패하였습니다.');
     }
