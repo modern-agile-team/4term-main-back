@@ -128,6 +128,8 @@ export class NoticesRepository extends Repository<Notices> {
   }
 
   async saveNotice(noticeInfo: NoticeDetail): Promise<InsertRaw> {
+    console.log(noticeInfo);
+
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('notices')
         .insert()

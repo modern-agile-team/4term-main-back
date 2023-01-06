@@ -7,8 +7,12 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
+import { APIResponse } from 'src/common/interface/interface';
 import { CreateFriendDto } from './dto/create-friend.dto';
 import { DeleteFriendDto } from './dto/delete-friend.dto';
 import { FriendsService } from './friends.service';
@@ -32,14 +36,16 @@ export class FriendsController {
   }
 
   @Post('/request')
+  @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '친구 신청 API',
     description: '친구 신청 API',
   })
   async createFriendRequest(
     @Body() createFriendDto: CreateFriendDto,
-  ): Promise<object> {
-    await this.friendsService.createFriendRequest(createFriendDto);
+    @TransactionDecorator() manager,
+  ): Promise<APIResponse> {
+    await this.friendsService.createFriendRequest(manager, createFriendDto);
 
     return {
       msg: '친구 신청이 완료되었습니다.',

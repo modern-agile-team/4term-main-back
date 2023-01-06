@@ -5,6 +5,7 @@ import {
   DeleteDateColumn,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -22,7 +23,7 @@ export class Announces extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
-  @Column({ type: 'int' })
+  @Column({ type: 'int', nullable: true })
   type: number;
 
   @CreateDateColumn({ name: 'created_date' })
@@ -34,10 +35,9 @@ export class Announces extends BaseEntity {
   @DeleteDateColumn({ name: 'deleted_date' })
   deletedDate: Date;
 
-  @OneToOne(
+  @OneToMany(
     (type) => AnnouncesImages,
     (announcesImages) => announcesImages.announcesNo,
   )
-  @JoinColumn({ name: 'announces_images' })
   announcesImages: AnnouncesImages;
 }
