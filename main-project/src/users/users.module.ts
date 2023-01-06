@@ -8,6 +8,7 @@ import { AwsService } from 'src/aws/aws.service';
 import { ProfileImagesRepository } from './repository/profile-images.repository';
 import { jwtModule } from 'src/common/configs/jwt-module.config';
 import { cacheModule } from 'src/common/configs/redis.config';
+import { UserCertificatesRepository } from './repository/user-certificates.repository';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { cacheModule } from 'src/common/configs/redis.config';
       UsersRepository,
       UserProfilesRepository,
       ProfileImagesRepository,
+      UserCertificatesRepository,
     ]),
     jwtModule,
     cacheModule,
