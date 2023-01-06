@@ -1,5 +1,7 @@
 export const UserStatus = {
   NO_PROFILE: 0,
-  SHCOOL_NOT_AUTHENTICATED: 1,
-  CONFIRMED: 2,
+  NO_CERTIFICATE: 1,
+  NOT_CONFIRMED: 2,
+  CONFIRMED: 3,
+  DENIED: 4,
 } as const;

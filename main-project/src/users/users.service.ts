@@ -17,14 +17,16 @@ import { User, UserImage } from './interface/user.interface';
 import { JwtService } from '@nestjs/jwt';
 import { Payload } from 'src/auth/interface/auth.interface';
 import { ConfigService } from '@nestjs/config';
+import { UserCertificatesRepository } from './repository/user-certificates.repository';
 @Injectable()
 export class UsersService {
   constructor(
     @Inject(CACHE_MANAGER)
     private readonly cacheManager,
-    private userRepository: UsersRepository,
+    private readonly userRepository: UsersRepository,
     private readonly userProfileRepository: UserProfilesRepository,
     private readonly profileImageRepository: ProfileImagesRepository,
+    private readonly userCertificateRepository: UserCertificatesRepository,
     private readonly awsService: AwsService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -43,9 +45,9 @@ export class UsersService {
     const userProfileNo: number = await this.saveUserProfile(createProfileDto);
     const imageUrl = await this.getProfileImageUrl(profileImage, userNo);
     await this.saveProfileImage(userProfileNo, imageUrl);
-    await this.updateUserStatus(userNo, UserStatus.SHCOOL_NOT_AUTHENTICATED);
+    await this.updateUserStatus(userNo, UserStatus.NO_CERTIFICATE);
 
-    return { userNo, status: UserStatus.SHCOOL_NOT_AUTHENTICATED };
+    return { userNo, status: UserStatus.NO_CERTIFICATE };
   }
 
   async updateUserProfile(
@@ -102,6 +104,43 @@ export class UsersService {
     }
 
     await this.cacheManager.del(userNo);
+  }
+
+  async createCollegeCertificate(
+    userNo: number,
+    file: Express.Multer.File,
+  ): Promise<User> {
+    if (!file) {
+      throw new BadRequestException('학적 증명 파일을 첨부해 주세요.');
+    }
+
+    const { status }: Users = await this.getUserByNo(userNo);
+    if (status != UserStatus.NO_CERTIFICATE) {
+      throw new BadRequestException(
+        '학적 증명 파일을 추가할 수 없는 유저입니다.',
+      );
+    }
+
+    await this.saveUserCertificate(userNo, file);
+    await this.updateUserStatus(userNo, UserStatus.NOT_CONFIRMED);
+
+    return { userNo, status: UserStatus.NOT_CONFIRMED };
+  }
+
+  private async saveUserCertificate(
+    userNo: number,
+    file: Express.Multer.File,
+  ): Promise<void> {
+    const certificate = await this.awsService.uploadCertificate(userNo, file);
+    const isCertificateSaved: number =
+      await this.userCertificateRepository.createCertificate(
+        userNo,
+        certificate,
+      );
+
+    if (!isCertificateSaved) {
+      throw new InternalServerErrorException('학적 증명 파일 추가 오류입니다.');
+    }
   }
 
   private async updateProfileImageByProfileNo(

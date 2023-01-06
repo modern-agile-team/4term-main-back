@@ -6,6 +6,7 @@ import {
   Put,
   UseGuards,
   Delete,
+  Param,
 } from '@nestjs/common/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -70,6 +71,23 @@ export class UsersController {
     );
 
     return { response: { accessToken } };
+  }
+
+  @ApiOperation({
+    summary: '유저 학적 정보 추가',
+  })
+  @UseInterceptors(FileInterceptor('file'))
+  @Post('/:userNo/certificate')
+  async createCollegeRegister(
+    @Param('userNo') userNo: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const user: User = await this.usersService.createCollegeCertificate(
+      userNo,
+      file,
+    );
+
+    return { response: { user } };
   }
 
   @ApiOperation({
