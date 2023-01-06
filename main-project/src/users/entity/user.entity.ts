@@ -21,6 +21,7 @@ import {
 } from 'typeorm';
 import { UserProfile } from './user-profile.entity';
 import { Authentication } from 'src/auth/entity/authentication.entity';
+import { UserCertificates } from './user-certificate.entity';
 
 @Entity('users')
 export class Users extends BaseEntity {
@@ -98,4 +99,7 @@ export class Users extends BaseEntity {
 
   @OneToOne(() => Authentication, (authentication) => authentication.userNo)
   authentication: Authentication;
+
+  @OneToOne(() => UserCertificates, (userCertificate) => userCertificate.userNo)
+  userCertificateNo: UserCertificates;
 }
