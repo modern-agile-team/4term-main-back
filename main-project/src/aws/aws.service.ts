@@ -50,26 +50,15 @@ export class AwsService {
     return fileUrlList;
   }
 
-  async uploadProfileImage(userNo: number, image: Express.Multer.File) {
-    const imageKey = `user_profile/${userNo}/${Date.now()}_${
+  async uploadProfileImage(
+    userNo: number,
+    image: Express.Multer.File,
+  ): Promise<string> {
+    const key = `user-profile/${userNo}/${Date.now()}_${
       image.originalname
     }`.replace(/ /g, '');
-    const profileImage = {
-      Bucket: process.env.AWS_BUCKET_NAME,
-      ACL: 'public-read',
-      Key: imageKey,
-      Body: image.buffer,
-    };
 
-    this.s3.upload(profileImage, (err, data) => {
-      if (err) {
-        throw new InternalServerErrorException(
-          '이미지 업로드에 실패하였습니다.',
-        );
-      }
-    });
-
-    return process.env.AWS_BUCKET_LINK + imageKey;
+    return await this.uploadFile(image, key);
   }
 
   async deleteProfileImage(imageUrl: string) {
@@ -83,5 +72,36 @@ export class AwsService {
         throw new InternalServerErrorException('이미지 삭제에 실패하였습니다.');
       }
     });
+  }
+
+  async uploadCertificate(
+    userNo: number,
+    file: Express.Multer.File,
+  ): Promise<string> {
+    const key = `user-certificate/${userNo}/${Date.now()}_${
+      file.originalname
+    }`.replace(/ /g, '');
+
+    return await this.uploadFile(file, key);
+  }
+
+  private async uploadFile(
+    file: Express.Multer.File,
+    key: string,
+  ): Promise<string> {
+    const fileDetail = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      ACL: 'public-read',
+      Key: key,
+      Body: file.buffer,
+    };
+
+    this.s3.upload(fileDetail, (error) => {
+      if (error) {
+        throw new InternalServerErrorException('파일 업로드에 실패하였습니다.');
+      }
+    });
+
+    return process.env.AWS_BUCKET_LINK + key;
   }
 }
