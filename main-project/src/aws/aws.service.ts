@@ -4,7 +4,6 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import * as AWS from 'aws-sdk';
-import { AnnouncesImages } from 'src/announces/entity/announce-images.entity';
 
 @Injectable()
 export class AwsService {
@@ -66,7 +65,7 @@ export class AwsService {
       };
     });
 
-    await uploadFileList.map((uploadFile: any) => {
+    uploadFileList.map((uploadFile: any) => {
       this.s3
         .upload(uploadFile, (err, data) => {
           if (err) {
