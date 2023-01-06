@@ -75,7 +75,7 @@ export class AnnouncesService {
   }
 
   async getAnnouncesImages(announcesNo: number): Promise<string[]> {
-    const { imageUrl }: AnnouncesImages =
+    const { imageUrl } =
       await this.announcesImagesRepository.getAnnouncesImages(announcesNo);
 
     if (!imageUrl) {
@@ -84,7 +84,9 @@ export class AnnouncesService {
       );
     }
 
-    return imageUrl;
+    const images = JSON.parse(imageUrl);
+
+    return images;
   }
 
   async getAnnouncesByNo(announcesNo: number): Promise<Announces> {
@@ -149,6 +151,6 @@ export class AnnouncesService {
       );
     }
 
-    return `${announcesNo}번 공지사항 삭제 성공`;
+    return `이미지 삭제 성공`;
   }
 }

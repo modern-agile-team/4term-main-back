@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import * as AWS from 'aws-sdk';
+import { AnnouncesImages } from 'src/announces/entity/announce-images.entity';
 
 @Injectable()
 export class AwsService {
@@ -82,19 +83,22 @@ export class AwsService {
     return fileUrlList;
   }
 
-  async deleteFiles(imagesUrlList: string[]) {
-    // async deleteFiles(imgs: { Key: string }[]) {
-    const keys = imagesUrlList.map((url: string) => {
-      return { Key: url };
+  async deleteFiles(imagesUrlList: string[], table: string): Promise<void> {
+    const keys = imagesUrlList.map((el: string) => {
+      let url = el.split('.com/');
+
+      return { Key: url[1] };
     });
+
     const params = {
-      Bucket: 'examplebucket',
+      Bucket: process.env.AWS_BUCKET_NAME,
       Delete: {
         Objects: keys,
         Quiet: false,
       },
     };
-    this.s3.deleteObjects(params, function (err, data) {
+
+    await this.s3.deleteObjects(params, function (err, data) {
       if (err) console.log(err, err.stack);
       else console.log(data);
     });

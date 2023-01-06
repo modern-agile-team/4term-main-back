@@ -11,7 +11,7 @@ import { AnnouncesImages } from '../entity/announce-images.entity';
 @EntityRepository(AnnouncesImages)
 export class AnnouncesImagesRepository extends Repository<AnnouncesImages> {
   // 조회 관련
-  async getAnnouncesImages(announcesNo: number): Promise<string[]> {
+  async getAnnouncesImages(announcesNo: number): Promise<AnnouncesImages> {
     try {
       const images = this.createQueryBuilder('announcesImages')
         .select(['JSON_ARRAYAGG(announcesImages.imageUrl) AS imageUrl'])
@@ -54,7 +54,7 @@ export class AnnouncesImagesRepository extends Repository<AnnouncesImages> {
       )
         .delete()
         .from(AnnouncesImages)
-        .where('no = :announcesNo', { announcesNo })
+        .where('announcesNo = :announcesNo', { announcesNo })
         .execute();
 
       return affected;

@@ -166,7 +166,7 @@ export class AnnouncesController {
 
     await this.announcesService.deleteAnnouncesImages(announcesNo);
 
-    await this.awsService.deleteFiles(imagesUrlList);
+    await this.awsService.deleteFiles(imagesUrlList, 'announces');
 
     return { response: { true: true } };
   }
