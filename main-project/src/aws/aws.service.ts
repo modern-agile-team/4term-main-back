@@ -51,7 +51,7 @@ export class AwsService {
     return fileUrlList;
   }
 
-  async uploadAnnouncesFiles(files: Express.Multer.File[]) {
+  async uploadAnnouncesFiles(files: Express.Multer.File[]): Promise<string[]> {
     if (!files.length) {
       throw new BadRequestException(`업로드 할 파일이 존재하지 않습니다.`);
     }
@@ -67,13 +67,15 @@ export class AwsService {
     });
 
     await uploadFileList.map((uploadFile: any) => {
-      this.s3.upload(uploadFile, (err, data) => {
-        if (err) {
-          throw new InternalServerErrorException(
-            '파일 업로드에 실패하였습니다.',
-          );
-        }
-      });
+      this.s3
+        .upload(uploadFile, (err, data) => {
+          if (err) {
+            throw new InternalServerErrorException(
+              '파일 업로드에 실패하였습니다.',
+            );
+          }
+        })
+        .promise();
     });
 
     const fileUrlList: string[] = uploadFileList.map((file: any) => {
@@ -98,9 +100,11 @@ export class AwsService {
       },
     };
 
-    await this.s3.deleteObjects(params, function (err, data) {
-      if (err) console.log(err, err.stack);
-      else console.log(data);
-    });
+    await this.s3
+      .deleteObjects(params, function (err, data) {
+        if (err) console.log(err, err.stack);
+        else console.log(data);
+      })
+      .promise();
   }
 }
