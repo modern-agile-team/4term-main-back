@@ -43,7 +43,9 @@ export class AnnouncesService {
     uploadedImagesUrlList: string[],
   ): Promise<string> {
     await this.getAnnouncesByNo(announcesNo);
-
+    if (uploadedImagesUrlList.length === 0) {
+      throw new BadRequestException('사진이 없습니다.');
+    }
     const images = uploadedImagesUrlList.map((url) => {
       return { announcesNo, imageUrl: url };
     });
@@ -104,15 +106,15 @@ export class AnnouncesService {
 
   // 수정 관련
   async updateAnnounces(
-    manager,
     announcesNo: number,
     announcesDto: AnnouncesDto,
   ): Promise<string> {
     await this.getAnnouncesByNo(announcesNo);
 
-    const affectedRows: number = await manager
-      .getCustomRepository(AnnouncesRepository)
-      .updateAnnounces(announcesNo, announcesDto);
+    const affectedRows: number = await this.announcesRepository.updateAnnounces(
+      announcesNo,
+      announcesDto,
+    );
 
     if (!affectedRows) {
       throw new InternalServerErrorException(

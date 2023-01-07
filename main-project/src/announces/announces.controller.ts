@@ -7,7 +7,6 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  Query,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
@@ -19,7 +18,6 @@ import { APIResponse } from 'src/common/interface/interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AwsService } from 'src/aws/aws.service';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
-import { AnnouncesImages } from './entity/announce-images.entity';
 
 @Controller('announces')
 @ApiTags('공지사항 API')
@@ -118,12 +116,10 @@ export class AnnouncesController {
     description: '입력한 정보로 공지사항을 수정한다.',
   })
   async updateAnnounces(
-    @TransactionDecorator() manager,
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
     @Body() announcesDto: AnnouncesDto,
   ): Promise<APIResponse> {
     const announces: string = await this.announcesService.updateAnnounces(
-      manager,
       announcesNo,
       announcesDto,
     );
