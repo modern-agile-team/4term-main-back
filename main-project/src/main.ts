@@ -9,6 +9,7 @@ import { ReturnInterceptor } from './common/interceptor/return-interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.enableCors();
   app.useGlobalInterceptors(new ReturnInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter()); // 전역 필터 적용
 
