@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, UseInterceptors } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -8,7 +8,10 @@ import {
 } from '@nestjs/websockets';
 import { AsyncApiPub, AsyncApiSub } from 'nestjs-asyncapi';
 import { Namespace, Socket } from 'socket.io';
+import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { APIResponse } from 'src/common/interface/interface';
+import { EntityManager } from 'typeorm';
 import { ChatsGatewayService } from './chats-gateway.service';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { InitSocketDto } from './dto/init-socket.dto';
@@ -84,14 +87,18 @@ export class ChatsGateway {
       payload: CreateChatDto,
     },
   })
+  @UseInterceptors(TransactionInterceptor)
   async handleCreateRoom(
-    @ConnectedSocket() socket: Socket,
+    @ConnectedSocket() socket,
     @MessageBody() messagePayload: CreateChatDto,
   ): Promise<APIResponse> {
+    const manager = socket.manager;
     const chatRoomNo = await this.chatGatewayService.createRoom(
+      manager,
       socket,
       messagePayload,
     );
+
     return { response: { chatRoomNo } };
   }
 

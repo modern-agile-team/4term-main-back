@@ -9,7 +9,13 @@ import { Socket } from 'socket.io';
 import { BoardRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
-import { Connection, getConnection, InsertResult, QueryRunner } from 'typeorm';
+import {
+  Connection,
+  EntityManager,
+  getConnection,
+  InsertResult,
+  QueryRunner,
+} from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { InitSocketDto } from './dto/init-socket.dto';
 import { JoinChatRoomDto } from './dto/join-chat.dto';
@@ -64,59 +70,44 @@ export class ChatsGatewayService {
   }
 
   async createRoom(
+    manager: EntityManager,
     socket: Socket,
     messagePayload: CreateChatDto,
   ): Promise<number> {
-    const connection: Connection = getConnection();
-    const queryRunner: QueryRunner = connection.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
     const { boardNo } = messagePayload;
 
-    try {
-      await this.checkChatRoomExists(boardNo);
+    await this.checkChatRoomExists(boardNo);
 
-      const { roomName, hostUserNo, guestUserNo } =
-        await this.getUsersByBoardNo(boardNo);
+    const { roomName, hostUserNo, guestUserNo } = await this.getUsersByBoardNo(
+      boardNo,
+    );
+    const chatRoomNo: number = await this.createRoomByBoardNo(manager, {
+      boardNo,
+      roomName,
+    });
 
-      const chatRoomNo: number = await this.createRoomByBoardNo(queryRunner, {
-        boardNo,
-        roomName,
-      });
+    await this.setChatRoom(manager, {
+      users: hostUserNo,
+      userType: UserType.HOST,
+      chatRoomNo,
+    });
 
-      await this.setChatRoom(queryRunner, {
-        users: hostUserNo,
-        userType: UserType.HOST,
-        chatRoomNo,
-      });
+    await this.setChatRoom(manager, {
+      users: guestUserNo,
+      userType: UserType.GUEST,
+      chatRoomNo,
+    });
 
-      await this.setChatRoom(queryRunner, {
-        users: guestUserNo,
-        userType: UserType.GUEST,
-        chatRoomNo,
-      });
+    socket.join(`${chatRoomNo}`);
 
-      await queryRunner.commitTransaction();
-
-      socket.join(`${chatRoomNo}`);
-      return chatRoomNo;
-    } catch (error) {
-      await queryRunner?.rollbackTransaction();
-
-      throw error;
-    } finally {
-      await queryRunner?.release();
-    }
+    return chatRoomNo;
   }
 
   private async setChatRoom(
-    queryRunner: QueryRunner,
+    manager: EntityManager,
     chatRoomUsers: ChatRoomUsers,
   ): Promise<void> {
     const { users, userType, chatRoomNo }: ChatRoomUsers = chatRoomUsers;
-
     const userList: number[] = users.split(',').map((item) => {
       return parseInt(item);
     });
@@ -127,7 +118,7 @@ export class ChatsGatewayService {
       return values;
     }, []);
 
-    await this.setChatRoomUsers(queryRunner, chatUserList);
+    await this.setChatRoomUsers(manager, chatUserList);
   }
 
   private async checkChatRoomExists(boardNo): Promise<void> {
@@ -145,8 +136,6 @@ export class ChatsGatewayService {
   }
 
   async getChatRoomListByUserNo(userNo: number): Promise<ChatRoomList[]> {
-    console.log(userNo);
-
     const chatList: ChatRoomList[] =
       await this.chatUsersRepository.getChatRoomList(userNo);
     if (!chatList.length) {
@@ -271,12 +260,13 @@ export class ChatsGatewayService {
   }
 
   private async setChatRoomUsers(
-    queryRunner: QueryRunner,
+    manager: EntityManager,
     roomUsers: ChatUserInfo[],
   ): Promise<number> {
-    const affectedRows: number = await queryRunner.manager
+    const affectedRows: number = await manager
       .getCustomRepository(ChatUsersRepository)
       .setChatRoomUsers(roomUsers);
+
     if (!affectedRows) {
       throw new BadRequestException('채팅방 유저정보 생성 오류입니다.');
     }
@@ -285,10 +275,10 @@ export class ChatsGatewayService {
   }
 
   private async createRoomByBoardNo(
-    queryRunner: QueryRunner,
+    manager: EntityManager,
     createChat: CreateChat,
   ): Promise<number> {
-    const insertId: number = await queryRunner.manager
+    const insertId: number = await manager
       .getCustomRepository(ChatListRepository)
       .createChatRoom(createChat);
     if (!insertId) {
