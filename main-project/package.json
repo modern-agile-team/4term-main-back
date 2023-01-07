@@ -37,6 +37,7 @@
     "firebase-admin": "^11.1.0",
     "multer-s3": "^3.0.1",
     "mysql2": "^2.3.3",
+    "nestjs-asyncapi": "^1.0.4",
     "npm": "^8.18.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",

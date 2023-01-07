@@ -6,7 +6,7 @@ export class CreateFriendRequestDto {
   @ApiProperty({
     example: 1,
   })
-  userNo: number;
+  senderNo: number;
 
   @IsNotEmpty()
   @ApiProperty({

@@ -7,11 +7,13 @@ export interface FriendRequestValidation {
 }
 export interface FriendRequestStatus {
   isAccept?: boolean;
+  friendNo?: number;
 }
 export interface Friend {
   no?: number;
   userNo?: number;
   friendNo?: number;
+  friendUserNo?: number;
   receiverNo?: number;
   senderNo?: number;
 }
