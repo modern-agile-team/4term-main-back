@@ -18,6 +18,9 @@ import { AwsService } from 'src/aws/aws.service';
 import { ChatLog } from './entity/chat-log.entity';
 import { AcceptInvitationDTO } from './dto/accept-invitation.dto';
 import { APIResponse } from 'src/common/interface/interface';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
+import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
+import { EntityManager } from 'typeorm';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -64,11 +67,17 @@ export class ChatsController {
     summary: '채팅방 초대 API',
     description: '알람을 통해 채팅방 초대',
   })
+  @UseInterceptors(TransactionInterceptor)
   async inviteUser(
+    @TransactionDecorator() manager: EntityManager,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() inviteUser: InviteUserDTO,
   ): Promise<APIResponse> {
-    await this.chatControllerService.inviteUser(inviteUser, chatRoomNo);
+    await this.chatControllerService.inviteUser(
+      manager,
+      inviteUser,
+      chatRoomNo,
+    );
 
     return {
       msg: '채팅방 초대 성공',

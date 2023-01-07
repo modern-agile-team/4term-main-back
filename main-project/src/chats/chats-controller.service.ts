@@ -9,7 +9,7 @@ import { NoticeType } from 'src/common/configs/notice-type.config';
 import { UserType } from 'src/common/configs/user-type.config';
 import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
-import { Connection, getConnection, QueryRunner } from 'typeorm';
+import { Connection, EntityManager, getConnection, QueryRunner } from 'typeorm';
 import { AcceptInvitationDTO } from './dto/accept-invitation.dto';
 import { GetChatLogDTO } from './dto/get-chat-log.dto';
 import { InviteUserDTO } from './dto/invite-user.dto';
@@ -115,57 +115,39 @@ export class ChatsControllerService {
   }
 
   async inviteUser(
+    manager: EntityManager,
     inviteUser: InviteUserDTO,
     chatRoomNo: number,
   ): Promise<void> {
-    const connection: Connection = getConnection();
-    const queryRunner: QueryRunner = connection.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
     const { userNo, targetUserNo }: InviteUserDTO = inviteUser;
 
-    try {
-      const targetUser: ChatUserInfo =
-        await this.chatUsersRepository.checkUserInChatRoom({
-          userNo: targetUserNo,
-          chatRoomNo,
-        });
-      if (targetUser) {
-        throw new BadRequestException('초대 대상이 이미 채팅방에 존재합니다.');
-      }
-
-      const user: ChatUserInfo =
-        await this.chatUsersRepository.checkUserInChatRoom({
-          userNo,
-          chatRoomNo,
-        });
-      if (!user) {
-        throw new NotFoundException(`유저 정보를 찾지 못했습니다.`);
-      }
-
-      await this.saveNotice(queryRunner, {
-        userNo,
-        userType: user.userType,
-        targetUserNo,
+    const targetUser: ChatUserInfo =
+      await this.chatUsersRepository.checkUserInChatRoom({
+        userNo: targetUserNo,
         chatRoomNo,
       });
-
-      await queryRunner.commitTransaction();
-    } catch (error) {
-      await queryRunner?.rollbackTransaction();
-
-      throw error;
-    } finally {
-      await queryRunner?.release();
+    if (targetUser) {
+      throw new BadRequestException('초대 대상이 이미 채팅방에 존재합니다.');
     }
+
+    const user: ChatUserInfo =
+      await this.chatUsersRepository.checkUserInChatRoom({
+        userNo,
+        chatRoomNo,
+      });
+    if (!user) {
+      throw new NotFoundException(`유저 정보를 찾지 못했습니다.`);
+    }
+
+    await this.saveNotice(manager, {
+      userNo,
+      userType: user.userType,
+      targetUserNo,
+      chatRoomNo,
+    });
   }
 
-  private async saveNotice(
-    queryRunner: QueryRunner,
-    chatUserInfo: ChatUserInfo,
-  ) {
+  private async saveNotice(manager: EntityManager, chatUserInfo: ChatUserInfo) {
     const { userType, targetUserNo, chatRoomNo, userNo } = chatUserInfo;
     const type = userType ? NoticeType.INVITE_HOST : NoticeType.INVITE_GUEST;
 
@@ -180,7 +162,7 @@ export class ChatsControllerService {
       throw new BadRequestException('이미 초대를 보낸 상태입니다.');
     }
 
-    const { insertId } = await queryRunner.manager
+    const { insertId } = await manager
       .getCustomRepository(NoticesRepository)
       .saveNotice({
         userNo,
@@ -191,7 +173,7 @@ export class ChatsControllerService {
       throw new InternalServerErrorException('Notice 저장에 실패했습니다.');
     }
 
-    const affectedRows = await queryRunner.manager
+    const affectedRows = await manager
       .getCustomRepository(NoticeChatsRepository)
       .saveNoticeChat({
         chatRoomNo,

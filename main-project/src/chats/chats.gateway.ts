@@ -70,6 +70,10 @@ export class ChatsGateway {
     return { response: { chatRoomList } };
   }
 
+  /**
+   *
+   * @todo: 채팅방 생성시 softdelete 구분
+   */
   @SubscribeMessage('create-room')
   @AsyncApiSub({
     description: `채팅방 생성 
