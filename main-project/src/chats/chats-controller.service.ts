@@ -190,15 +190,16 @@ export class ChatsControllerService {
     chatRoomNo: number,
     invitationInfo: AcceptInvitationDTO,
   ): Promise<void> {
-    const { userNo, targetUserNo, type }: AcceptInvitationDTO = invitationInfo;
+    const { inviterNo, targetUserNo, type }: AcceptInvitationDTO =
+      invitationInfo;
     const userType =
       type === NoticeType.INVITE_HOST ? UserType.HOST : UserType.GUEST;
 
     await this.checkUserInChatRoom({
-      userNo,
+      userNo: inviterNo,
       chatRoomNo,
       isUserNeeded: true,
-      target: `초대하신 ${userNo}`,
+      target: `초대하신 ${targetUserNo}`,
     });
 
     await this.checkUserInChatRoom({
