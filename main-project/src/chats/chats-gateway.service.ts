@@ -53,9 +53,7 @@ export class ChatsGatewayService {
     messagePayload: InitSocketDto,
   ): Promise<ChatRoomList[]> {
     const { userNo } = messagePayload;
-    const chatRoomList = await this.getChatRoomListByUserNo(
-      Object.values(userNo),
-    );
+    const chatRoomList = await this.getChatRoomListByUserNo(userNo);
     if (chatRoomList) {
       chatRoomList.forEach((el) => {
         socket.join(`${el.chatRoomNo}`);
@@ -146,30 +144,9 @@ export class ChatsGatewayService {
     }
   }
 
-  async joinRoom(socket, chat: JoinChatRoomDto): Promise<ChatLog[]> {
-    const { userNo, chatRoomNo } = chat;
-    const user: ChatRoomUser = await this.chatListRepository.isUserInChatRoom(
-      chatRoomNo,
-      userNo,
-    );
-    if (!user) {
-      throw new BadRequestException('채팅방에 유저의 정보가 없습니다.');
-    }
+  async getChatRoomListByUserNo(userNo: number): Promise<ChatRoomList[]> {
+    console.log(userNo);
 
-    socket.join(`${user.chatRoomNo}`);
-
-    //추후 로그 또는 삭제
-    socket.broadcast.to(`${user.chatRoomNo}`).emit('join-room', {
-      username: user.nickname,
-      msg: `${user.nickname}님이 접속하셨습니다.`,
-    });
-
-    const recentChatLog = this.chatLogRepository.getRecentChatLog(chatRoomNo);
-
-    return recentChatLog;
-  }
-
-  async getChatRoomListByUserNo(userNo): Promise<ChatRoomList[]> {
     const chatList: ChatRoomList[] =
       await this.chatUsersRepository.getChatRoomList(userNo);
     if (!chatList.length) {

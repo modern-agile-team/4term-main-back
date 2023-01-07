@@ -42,6 +42,23 @@ export class ChatLogRepository extends Repository<ChatLog> {
     }
   }
 
+  async getCurrentChatLog(chatRoomNo: number): Promise<ChatLog[]> {
+    try {
+      const previousChatLog = await this.createQueryBuilder('chat_log')
+        .select(['chat_log.*'])
+        .where('chat_log.chat_room_no = :chatRoomNo', { chatRoomNo })
+        .orderBy('no', 'DESC')
+        .limit(30)
+        .getRawMany();
+
+      return previousChatLog;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error}: 채팅로그 불러오기(getPreviousChatLog): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async getRecentChatLog(chatRoomNo: number): Promise<ChatLog[]> {
     try {
       const recentChatLog = await this.createQueryBuilder('chat_log')

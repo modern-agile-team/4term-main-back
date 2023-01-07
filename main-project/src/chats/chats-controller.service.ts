@@ -74,6 +74,27 @@ export class ChatsControllerService {
     return previousChatLog;
   }
 
+  async getCurrentChatLog(
+    getChatLogDto: GetChatLogDTO,
+    chatRoomNo: number,
+  ): Promise<ChatLog[]> {
+    const { userNo, currentChatLogNo }: GetChatLogDTO = getChatLogDto;
+
+    await this.checkChatRoomExists(chatRoomNo);
+
+    await this.checkUserInChatRoom({
+      userNo,
+      chatRoomNo,
+      isUserNeeded: true,
+      target: `${userNo}`,
+    });
+
+    const currentChatLog: ChatLog[] =
+      await this.chatLogRepository.getCurrentChatLog(chatRoomNo);
+
+    return currentChatLog;
+  }
+
   private async checkChatRoomExists(chatRoomNo: number): Promise<void> {
     const chatRoom: ChatList =
       await this.chatListRepository.checkRoomExistsByChatRoomNo(chatRoomNo);

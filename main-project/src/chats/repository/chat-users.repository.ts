@@ -23,6 +23,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
 
   async getChatRoomList(userNo: number): Promise<ChatRoomList[]> {
     try {
+      console.log(userNo);
       const chatRoomList = await this.createQueryBuilder('chat_users')
         .leftJoin('chat_users.chatRoomNo', 'chatRoomNo')
         .select([

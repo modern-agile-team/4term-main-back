@@ -14,6 +14,7 @@ import { CreateChatDto } from './dto/create-chat.dto';
 import { InitSocketDto } from './dto/init-socket.dto';
 import { JoinChatRoomDto } from './dto/join-chat.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
+import { ChatLog } from './entity/chat-log.entity';
 import { ChatRoomList } from './interface/chat.interface';
 
 @WebSocketGateway(4000, { namespace: 'chat' })
@@ -72,7 +73,7 @@ export class ChatsGateway {
 
   /**
    *
-   * @todo: 채팅방 생성시 softdelete 구분
+   * @todo: 채팅방 생성시 soft delete 구분
    */
   @SubscribeMessage('create-room')
   @AsyncApiSub({
@@ -92,27 +93,6 @@ export class ChatsGateway {
       messagePayload,
     );
     return { response: { chatRoomNo } };
-  }
-
-  @SubscribeMessage('join-room')
-  @AsyncApiSub({
-    description: `채팅방 참여 
-    response: { chatRoomNo: number } 반환`,
-    channel: 'join-room',
-    message: {
-      payload: JoinChatRoomDto,
-    },
-  })
-  async handleJoinRoom(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() messagePayload: JoinChatRoomDto,
-  ): Promise<APIResponse> {
-    const recentChatLog = await this.chatGatewayService.joinRoom(
-      socket,
-      messagePayload,
-    );
-
-    return { response: { recentChatLog } };
   }
 
   @SubscribeMessage('message')

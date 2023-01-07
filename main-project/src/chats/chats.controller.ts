@@ -32,8 +32,8 @@ export class ChatsController {
 
   @Get('/:userNo')
   @ApiOperation({
-    summary: '채팅 목록 API',
-    description: ' 채팅 목록 조회',
+    summary: '채팅방 목록 API',
+    description: '채팅방 목록 조회',
   })
   async getChatRoomList(@Param('userNo') userNo: number): Promise<APIResponse> {
     const chatRoom = await this.chatControllerService.getChatRoomListByUserNo(
@@ -44,12 +44,12 @@ export class ChatsController {
     };
   }
 
-  @Get('/:chatRoomNo/log')
+  @Get('/:chatRoomNo/previous-chat-log')
   @ApiOperation({
     summary: '이전 채팅 내역 API',
     description: '이전 채팅 내역 조회',
   })
-  async getChatLog(
+  async getPreviousChatLog(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() getChatLogDto: GetChatLogDTO,
   ): Promise<APIResponse> {
@@ -60,6 +60,24 @@ export class ChatsController {
       );
 
     return { response: { previousChatLog } };
+  }
+
+  @Get('/:chatRoomNo/current-chat-log')
+  @ApiOperation({
+    summary: '현재 채팅 내역 API',
+    description: '채팅방에 들어갔을때 가장 최신 채팅 내역 조회',
+  })
+  async getCurrentChatLog(
+    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
+    @Body() getChatLogDto: GetChatLogDTO,
+  ): Promise<APIResponse> {
+    const currentChatLog: ChatLog[] =
+      await this.chatControllerService.getCurrentChatLog(
+        getChatLogDto,
+        chatRoomNo,
+      );
+
+    return { response: { currentChatLog } };
   }
 
   @Post('/:chatRoomNo/invitation')
