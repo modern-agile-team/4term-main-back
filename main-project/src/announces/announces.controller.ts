@@ -97,8 +97,9 @@ export class AnnouncesController {
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
-    const uploadedImagesUrlList = await this.awsService.uploadAnnouncesFiles(
+    const uploadedImagesUrlList = await this.awsService.uploadImages(
       files,
+      'announces',
     );
 
     await this.announcesService.uploadAnnouncesimagesUrl(
@@ -146,7 +147,7 @@ export class AnnouncesController {
       announcesNo,
     );
 
-    await this.awsService.deleteFiles(imagesUrlList, 'announces');
+    await this.awsService.deleteFiles(imagesUrlList);
 
     return { response: { announces } };
   }
@@ -166,7 +167,7 @@ export class AnnouncesController {
 
     await this.announcesService.deleteAnnouncesImages(announcesNo);
 
-    await this.awsService.deleteFiles(imagesUrlList, 'announces');
+    await this.awsService.deleteFiles(imagesUrlList);
 
     return { response: { true: true } };
   }

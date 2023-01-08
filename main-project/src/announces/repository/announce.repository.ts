@@ -20,7 +20,6 @@ export class AnnouncesRepository extends Repository<Announces> {
           'announces.no AS no',
           'announces.title AS title',
           'announces.description AS description',
-          'announces.type AS type',
         ])
         .orderBy('no', 'DESC');
 
@@ -40,7 +39,7 @@ export class AnnouncesRepository extends Repository<Announces> {
           'announces.no AS no',
           'announces.title AS title',
           'announces.description AS description',
-          'JSON_ARRAYAGG(images.imageUrl) AS imgs',
+          'JSON_ARRAYAGG(images.imageUrl) AS images',
         ])
         .where('announces.no = :announcesNo', { announcesNo })
         .getRawOne();

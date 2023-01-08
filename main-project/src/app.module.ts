@@ -17,6 +17,7 @@ import { MannersModule } from './manners/manners.module';
 import { AwsModule } from './aws/aws.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AnnouncesModule } from './announces/announces.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { AnnouncesModule } from './announces/announces.module';
     ChatsModule,
     MannersModule,
     AwsModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
