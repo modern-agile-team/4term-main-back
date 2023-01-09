@@ -47,10 +47,11 @@ export class AnnouncesController {
   async getAnnouncesByNo(
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
   ): Promise<APIResponse> {
-    const announcement: Announces =
-      await this.announcesService.getAnnouncesByNo(announcesNo);
+    const announces: Announces = await this.announcesService.getAnnouncesByNo(
+      announcesNo,
+    );
 
-    return { response: announcement };
+    return { response: announces };
   }
 
   @Get('/images/:announcesNo')
@@ -61,11 +62,11 @@ export class AnnouncesController {
   async getAnnouncesImages(
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
   ): Promise<APIResponse> {
-    const imageUrl: string[] = await this.announcesService.getAnnouncesImages(
+    const images: string[] = await this.announcesService.getAnnouncesImages(
       announcesNo,
     );
 
-    return { response: { imageUrl } };
+    return { response: { images } };
   }
 
   // Post Methods
@@ -77,14 +78,10 @@ export class AnnouncesController {
   @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
   async createAnnounces(
     @Body() announcesDto: AnnouncesDto,
-    @TransactionDecorator() manager,
   ): Promise<APIResponse> {
-    const Announces: string = await this.announcesService.createAnnounces(
-      manager,
-      announcesDto,
-    );
+    await this.announcesService.createAnnounces(announcesDto);
 
-    return { response: { Announces } };
+    return { response: { msg: '공지사항 생성 성공' } };
   }
 
   @Post('/images/:announcesNo')
@@ -97,17 +94,14 @@ export class AnnouncesController {
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
-    const uploadedImagesUrlList = await this.awsService.uploadImages(
-      files,
-      'announces',
-    );
+    const imageURLs = await this.awsService.uploadImages(files, 'announces');
 
     await this.announcesService.uploadAnnouncesimagesUrl(
       announcesNo,
-      uploadedImagesUrlList,
+      imageURLs,
     );
 
-    return { response: { uploadedImagesUrlList } };
+    return { response: { msg: '이미지 업로드 성공' } };
   }
 
   // Patch Methods
@@ -120,12 +114,9 @@ export class AnnouncesController {
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
     @Body() announcesDto: AnnouncesDto,
   ): Promise<APIResponse> {
-    const announces: string = await this.announcesService.updateAnnounces(
-      announcesNo,
-      announcesDto,
-    );
+    await this.announcesService.updateAnnounces(announcesNo, announcesDto);
 
-    return { response: { announces } };
+    return { response: { msg: '공지사항 수정 성공' } };
   }
 
   // Delete Methods
@@ -149,7 +140,7 @@ export class AnnouncesController {
 
     await this.awsService.deleteFiles(imagesUrlList);
 
-    return { response: { announces } };
+    return { response: { msg: '공지사항 삭제 성공' } };
   }
 
   // Delete Methods
@@ -169,6 +160,6 @@ export class AnnouncesController {
 
     await this.awsService.deleteFiles(imagesUrlList);
 
-    return { response: { true: true } };
+    return { response: { msg: '이미지 삯제 성공' } };
   }
 }
