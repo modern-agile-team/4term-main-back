@@ -46,6 +46,7 @@
     "firebase-admin": "^11.1.0",
     "multer-s3": "^3.0.1",
     "mysql2": "^2.3.3",
+    "nestjs-asyncapi": "^1.0.4",
     "npm": "^8.18.0",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",

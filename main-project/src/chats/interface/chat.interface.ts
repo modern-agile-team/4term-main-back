@@ -23,12 +23,12 @@ export interface JoinChatRoom {
   chatRoomNo: number;
 }
 
-export interface MessagePayload {
-  userNo: number;
-  chatRoomNo: number;
-  message?: string;
-  uploadedFileUrls?: string[];
-}
+// export interface MessagePayload{
+//   userNo: number;
+//   chatRoomNo: number;
+//   message?: string;
+//   uploadedFileUrls?: string[];
+// }
 
 export interface FileUrlDetail {
   chatLogNo: number;
