@@ -7,7 +7,6 @@ import { ChatRoomList, ChatUserInfo } from '../interface/chat.interface';
 export class ChatUsersRepository extends Repository<ChatUsers> {
   async setChatRoomUsers(roomUsers: ChatUserInfo[]): Promise<number> {
     try {
-      console.log(roomUsers);
       const { raw }: InsertResult = await this.createQueryBuilder('chat_users')
         .insert()
         .into(ChatUsers)

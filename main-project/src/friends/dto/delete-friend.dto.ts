@@ -5,14 +5,16 @@ export class DeleteFriendDto {
   @IsNotEmpty()
   @IsNumber()
   @ApiProperty({
-    example: 1,
+    example: 2,
+    description: '친구목록 no',
   })
-  userNo: number;
+  friendNo: number;
 
   @IsNotEmpty()
   @IsNumber()
   @ApiProperty({
     example: 2,
+    description: '친구의 userNo',
   })
-  friendNo: number;
+  friendUserNo: number;
 }
