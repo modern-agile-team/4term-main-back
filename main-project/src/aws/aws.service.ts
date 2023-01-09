@@ -33,14 +33,16 @@ export class AwsService {
       };
     });
 
-    await uploadFileList.map((uploadFile: any) => {
-      this.s3.upload(uploadFile, (err, data) => {
-        if (err) {
-          throw new InternalServerErrorException(
-            '파일 업로드에 실패하였습니다.',
-          );
-        }
-      });
+    uploadFileList.map(async (uploadFile: any) => {
+      await this.s3
+        .upload(uploadFile, (err, data) => {
+          if (err) {
+            throw new InternalServerErrorException(
+              '파일 업로드에 실패하였습니다.',
+            );
+          }
+        })
+        .promise();
     });
 
     const fileUrlList: string[] = uploadFileList.map((file: any) => {
