@@ -11,6 +11,7 @@ import {
   Query,
 } from '@nestjs/common/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Cron } from '@nestjs/schedule';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -23,6 +24,13 @@ import { UsersService } from './users.service';
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
+
+  @Cron('0 0 0 * * *')
+  async deleteHaltedUsers() {
+    await this.usersService.deleteHaltedUsers();
+
+    return { msg: '가입 중단 유저 목록이 삭제되었습니다.' };
+  }
 
   @ApiOperation({
     summary:

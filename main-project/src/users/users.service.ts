@@ -17,7 +17,7 @@ import { ProfileImagesRepository } from './repository/profile-images.repository'
 import { UserStatus } from 'src/common/configs/user-status.config';
 import { Users } from './entity/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { User, UserImage } from './interface/user.interface';
+import { SearchedUser, User, UserImage } from './interface/user.interface';
 import { JwtService } from '@nestjs/jwt';
 import { Payload } from 'src/auth/interface/auth.interface';
 import { ConfigService } from '@nestjs/config';
@@ -145,8 +145,12 @@ export class UsersService {
     await this.updateUserStatus(userNo, UserStatus.CONFIRMED);
   }
 
-  async getUserByNickname(nickname: string) {
+  async getUserByNickname(nickname: string): Promise<SearchedUser[]> {
     return await this.userProfileRepository.getUserByNickname(nickname);
+  }
+
+  async deleteHaltedUsers(): Promise<void> {
+    await this.userRepository.deleteHaltedUsers();
   }
 
   private async validateAdminAuthority(adminNo: number): Promise<void> {
