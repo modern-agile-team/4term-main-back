@@ -5,7 +5,7 @@ export interface MeetingMembersList {
   guestUserNo: number[];
 }
 
-export class CreateChat {
+export class ChatToCreate {
   userNo?: number;
   @IsNumber()
   boardNo: number;
@@ -23,19 +23,12 @@ export interface JoinChatRoom {
   chatRoomNo: number;
 }
 
-// export interface MessagePayload{
-//   userNo: number;
-//   chatRoomNo: number;
-//   message?: string;
-//   uploadedFileUrls?: string[];
-// }
-
 export interface FileUrlDetail {
   chatLogNo: number;
   fileUrl: string;
 }
 
-export interface ChatRoom {
+export interface ChatRoomToSet {
   guestNickname?: string;
   hostNickname?: string;
   roomName?: string;
@@ -52,7 +45,7 @@ export interface ChatRoomUser {
   userNo: number;
 }
 
-export interface ChatRoomList {
+export interface ChatRoom {
   roomName: string;
   chatRoomNo: number;
 }

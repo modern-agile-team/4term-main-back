@@ -6,19 +6,15 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { AsyncApiPub, AsyncApiSub } from 'nestjs-asyncapi';
+import { AsyncApiSub } from 'nestjs-asyncapi';
 import { Namespace, Socket } from 'socket.io';
-import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { APIResponse } from 'src/common/interface/interface';
-import { EntityManager } from 'typeorm';
 import { ChatsGatewayService } from './chats-gateway.service';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { InitSocketDto } from './dto/init-socket.dto';
-import { JoinChatRoomDto } from './dto/join-chat.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
-import { ChatLog } from './entity/chat-log.entity';
-import { ChatRoomList } from './interface/chat.interface';
+import { ChatRoom } from './interface/chat.interface';
 
 @WebSocketGateway(4000, { namespace: 'chat' })
 export class ChatsGateway {
@@ -68,10 +64,12 @@ export class ChatsGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: InitSocketDto,
   ): Promise<APIResponse> {
-    const chatRoomList: ChatRoomList[] =
-      await this.chatGatewayService.initSocket(socket, messagePayload);
+    const chatRooms: ChatRoom[] = await this.chatGatewayService.initSocket(
+      socket,
+      messagePayload,
+    );
 
-    return { response: { chatRoomList } };
+    return { response: { chatRooms } };
   }
 
   /**

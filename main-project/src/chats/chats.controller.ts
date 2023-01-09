@@ -36,7 +36,7 @@ export class ChatsController {
     description: '채팅방 목록 조회',
   })
   async getChatRoomList(@Param('userNo') userNo: number): Promise<APIResponse> {
-    const chatRoom = await this.chatControllerService.getChatRoomListByUserNo(
+    const chatRoom = await this.chatControllerService.getChatRoomsByUserNo(
       userNo,
     );
     return {

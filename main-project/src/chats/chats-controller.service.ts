@@ -16,7 +16,7 @@ import { InviteUserDTO } from './dto/invite-user.dto';
 import { ChatList } from './entity/chat-list.entity';
 import { ChatLog } from './entity/chat-log.entity';
 import {
-  ChatRoomList,
+  ChatRoom,
   ChatUserInfo,
   UserValidation,
 } from './interface/chat.interface';
@@ -43,9 +43,10 @@ export class ChatsControllerService {
     private readonly noticeChatsRepository: NoticeChatsRepository,
   ) {}
 
-  async getChatRoomListByUserNo(userNo): Promise<ChatRoomList[]> {
-    const chatList: ChatRoomList[] =
-      await this.chatUsersRepository.getChatRoomList(userNo);
+  async getChatRoomsByUserNo(userNo): Promise<ChatRoom[]> {
+    const chatList: ChatRoom[] = await this.chatUsersRepository.getChatRooms(
+      userNo,
+    );
 
     return chatList;
   }
