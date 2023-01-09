@@ -18,8 +18,11 @@ import {
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { UserProfile } from './user-profile.entity';
+import { Authentication } from 'src/auth/entity/authentication.entity';
+import { UserCertificates } from './user-certificate.entity';
 
 @Entity('users')
 export class Users extends BaseEntity {
@@ -29,9 +32,6 @@ export class Users extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   email: string;
 
-  @Column({ default: false })
-  gender: boolean;
-
   @Column({ type: 'tinyint', width: 1, default: false })
   isAdmin: boolean;
 
@@ -40,6 +40,9 @@ export class Users extends BaseEntity {
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
+
+  @UpdateDateColumn({ name: 'updated_date' })
+  updatedDate: Date;
 
   @DeleteDateColumn({ name: 'deleted_date', nullable: true })
   deletedDate: Date;
@@ -97,4 +100,10 @@ export class Users extends BaseEntity {
 
   @OneToMany((type) => ChatLog, (chatLog) => chatLog.userNo)
   chatLogUserNo: ChatLog[];
+
+  @OneToOne(() => Authentication, (authentication) => authentication.userNo)
+  authentication: Authentication;
+
+  @OneToOne(() => UserCertificates, (userCertificate) => userCertificate.userNo)
+  userCertificateNo: UserCertificates;
 }
