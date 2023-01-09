@@ -1,20 +1,17 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class DeleteFriendDto {
+export class JoinChatRoomDto {
   @IsNotEmpty()
   @IsNumber()
   @ApiProperty({
-    example: 2,
-    description: '친구목록 no',
+    example: 1,
   })
-  friendNo: number;
-
+  userNo: number;
   @IsNotEmpty()
   @IsNumber()
   @ApiProperty({
-    example: 2,
-    description: '친구의 userNo',
+    example: 3,
   })
-  friendUserNo: number;
+  chatRoomNo: number;
 }

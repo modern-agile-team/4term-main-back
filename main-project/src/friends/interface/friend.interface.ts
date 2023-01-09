@@ -1,26 +1,25 @@
-export interface FriendDetail {
+export interface FriendRequestValidation {
+  userNo?: number;
   receiverNo?: number;
   senderNo?: number;
   friendNo?: number;
+  friendReqStatus?: boolean;
 }
 export interface FriendRequestStatus {
-  isAccept?: number;
+  isAccept?: boolean;
+  friendNo?: number;
 }
 export interface Friend {
   no?: number;
   userNo?: number;
   friendNo?: number;
-}
-export interface FriendList {
-  no?: number;
-  userNo?: number;
-  friendNo?: number;
+  friendUserNo?: number;
   receiverNo?: number;
   senderNo?: number;
 }
 
-export interface FriendRequestResponse {
-  affectedRows: number;
+export interface FriendInsertResult {
+  affectedRows?: number;
   insertId?: number;
 }
 
@@ -33,17 +32,15 @@ export interface FriendInfo {
   friendNo: number;
   nickname: string;
 }
+
 export interface NoticeFriend {
   noticeNo?: number;
-  senderNo?: number;
   receiverNo?: number;
+  senderNo?: number;
   friendNo?: number;
 }
+
 export interface NoticeUser {
   noticeNo: number;
   userNo: number;
-}
-
-export interface FriendNo {
-  friendNo: number;
 }

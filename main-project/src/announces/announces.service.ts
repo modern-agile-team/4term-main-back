@@ -7,7 +7,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateResponse } from 'src/boards/interface/boards.interface';
 import { DeleteResult } from 'typeorm';
-import { AnnouncesFilterDto } from './dto/announce-filter.dto';
 import { AnnouncesDto } from './dto/announce.dto';
 import { AnnouncesImages } from './entity/announce-images.entity';
 import { Announces } from './entity/announce.entity';
@@ -43,6 +42,10 @@ export class AnnouncesService {
     announcesNo: number,
     uploadedImagesUrlList: string[],
   ): Promise<string> {
+    await this.getAnnouncesByNo(announcesNo);
+    if (uploadedImagesUrlList.length === 0) {
+      throw new BadRequestException('사진이 없습니다.');
+    }
     const images = uploadedImagesUrlList.map((url) => {
       return { announcesNo, imageUrl: url };
     });
@@ -60,10 +63,9 @@ export class AnnouncesService {
   }
 
   // 조회 관련
-  async getAnnounces({ type }: AnnouncesFilterDto): Promise<Announces[]> {
-    const announces: Announces[] = await this.announcesRepository.getAnnounces(
-      type,
-    );
+  async getAllAnnounces(): Promise<Announces[]> {
+    const announces: Announces[] =
+      await this.announcesRepository.getAllAnnounces();
 
     if (announces.length === 0) {
       throw new NotFoundException(
@@ -104,15 +106,15 @@ export class AnnouncesService {
 
   // 수정 관련
   async updateAnnounces(
-    manager,
     announcesNo: number,
     announcesDto: AnnouncesDto,
   ): Promise<string> {
     await this.getAnnouncesByNo(announcesNo);
 
-    const affectedRows: number = await manager
-      .getCustomRepository(AnnouncesRepository)
-      .updateAnnounces(announcesNo, announcesDto);
+    const affectedRows: number = await this.announcesRepository.updateAnnounces(
+      announcesNo,
+      announcesDto,
+    );
 
     if (!affectedRows) {
       throw new InternalServerErrorException(
@@ -144,6 +146,8 @@ export class AnnouncesService {
 
     const { affected }: DeleteResult =
       await this.announcesImagesRepository.deleteAnnouncesImages(announcesNo);
+
+    console.log(affected);
 
     if (!affected) {
       throw new BadRequestException(

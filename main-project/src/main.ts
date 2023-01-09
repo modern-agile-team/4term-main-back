@@ -2,6 +2,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AsyncApiDocumentBuilder, AsyncApiModule } from 'nestjs-asyncapi';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/exceptions/http-exception-filter';
 import { ReturnInterceptor } from './common/interceptor/return-interceptor';
@@ -16,6 +17,20 @@ async function bootstrap() {
     .setTitle('4term project API')
     .setVersion('0.0.1')
     .build();
+
+  const asyncApiOptions = new AsyncApiDocumentBuilder()
+    .setTitle('채팅 소켓 API')
+    .setDescription('모던애자일 4기 소켓 통신 API')
+    .setVersion('1.0')
+    .setDefaultContentType('application/json')
+    .build();
+
+  const asyncapiDocument = await AsyncApiModule.createDocument(
+    app,
+    asyncApiOptions,
+  );
+  await AsyncApiModule.setup('asyncapi', app, asyncapiDocument);
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
