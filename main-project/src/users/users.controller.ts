@@ -7,6 +7,8 @@ import {
   UseGuards,
   Delete,
   Param,
+  Get,
+  Query,
 } from '@nestjs/common/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -14,7 +16,7 @@ import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { User } from './interface/user.interface';
+import { SearchedUser, User } from './interface/user.interface';
 import { UsersService } from './users.service';
 
 @ApiTags('유저 API')
@@ -113,5 +115,18 @@ export class UsersController {
     await this.usersService.confirmUser(adminNo, userNo);
 
     return { msg: '유저 학적 정보가 수락되었습니다.' };
+  }
+
+  @ApiOperation({
+    summary: '닉네임으로 유저 조회',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  async getUserByNickname(@Query('nickname') nickname: string) {
+    const users: SearchedUser[] = await this.usersService.getUserByNickname(
+      nickname,
+    );
+
+    return { response: { users } };
   }
 }

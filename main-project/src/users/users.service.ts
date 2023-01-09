@@ -145,6 +145,10 @@ export class UsersService {
     await this.updateUserStatus(userNo, UserStatus.CONFIRMED);
   }
 
+  async getUserByNickname(nickname: string) {
+    return await this.userProfileRepository.getUserByNickname(nickname);
+  }
+
   private async validateAdminAuthority(adminNo: number): Promise<void> {
     const { isAdmin }: Users = await this.getUserByNo(adminNo);
 

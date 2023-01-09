@@ -8,7 +8,11 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { UserProfile } from '../entity/user-profile.entity';
-import { UpdatedProfile, ProfileDetail } from '../interface/user.interface';
+import {
+  UpdatedProfile,
+  ProfileDetail,
+  SearchedUser,
+} from '../interface/user.interface';
 
 @EntityRepository(UserProfile)
 export class UserProfilesRepository extends Repository<UserProfile> {
@@ -72,6 +76,28 @@ export class UserProfilesRepository extends Repository<UserProfile> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 유저 프로필 수정 오류(updateUserProfile): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getUserByNickname(nickname: string): Promise<SearchedUser[]> {
+    try {
+      const searchedUsers: SearchedUser[] = await this.createQueryBuilder(
+        'user_profiles',
+      )
+        .leftJoin('user_profiles.profileImage', 'profileImages')
+        .select([
+          'user_profiles.userNo AS userNo',
+          'user_profiles.nickname AS nickname',
+          'profileImages.imageUrl AS profileImage',
+        ])
+        .where('user_profiles.nickname LIKE nickname', { nickname })
+        .getRawMany();
+
+      return searchedUsers;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 닉네임으로 유저 조회 오류(getUserByNickname) :알 수 없는 서버 에러입니다.`,
       );
     }
   }
