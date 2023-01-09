@@ -100,4 +100,18 @@ export class UsersController {
 
     return { msg: '유저가 삭제되었습니다.' };
   }
+
+  @ApiOperation({
+    summary: '유저 학적 정보 수락',
+  })
+  @UseGuards(JwtAuthGuard)
+  @Patch('/:userNo/certificate')
+  async confirmUser(
+    @GetUser() adminNo: number,
+    @Param('userNo') userNo: number,
+  ) {
+    await this.usersService.confirmUser(adminNo, userNo);
+
+    return { msg: '유저 학적 정보가 수락되었습니다.' };
+  }
 }

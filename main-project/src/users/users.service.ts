@@ -8,7 +8,11 @@ import { AwsService } from 'src/aws/aws.service';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UserProfilesRepository } from './repository/user-profiles.repository';
 import { UsersRepository } from './repository/users.repository';
-import { InternalServerErrorException } from '@nestjs/common/exceptions';
+import {
+  InternalServerErrorException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common/exceptions';
 import { ProfileImagesRepository } from './repository/profile-images.repository';
 import { UserStatus } from 'src/common/configs/user-status.config';
 import { Users } from './entity/user.entity';
@@ -18,6 +22,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Payload } from 'src/auth/interface/auth.interface';
 import { ConfigService } from '@nestjs/config';
 import { UserCertificatesRepository } from './repository/user-certificates.repository';
+import { UserCertificates } from './entity/user-certificate.entity';
 @Injectable()
 export class UsersService {
   constructor(
@@ -83,7 +88,7 @@ export class UsersService {
     const { imageUrl, profileNo }: UserImage =
       await this.profileImageRepository.getProfileImage(userNo);
     if (imageUrl) {
-      this.awsService.deleteProfileImage(imageUrl);
+      await this.awsService.deleteFile(imageUrl);
     }
 
     const newImageUrl: string = await this.awsService.uploadProfileImage(
@@ -125,6 +130,49 @@ export class UsersService {
     await this.updateUserStatus(userNo, UserStatus.NOT_CONFIRMED);
 
     return { userNo, status: UserStatus.NOT_CONFIRMED };
+  }
+
+  async confirmUser(adminNo: number, userNo: number) {
+    await this.validateAdminAuthority(adminNo);
+
+    const { status }: Users = await this.getUserByNo(userNo);
+    if (status !== UserStatus.NOT_CONFIRMED) {
+      throw new BadRequestException('학적 인증 수락을 할 수 없는 유저입니다.');
+    }
+
+    await this.deleteCertificateFile(userNo);
+    await this.deleleCertificate(userNo);
+    await this.updateUserStatus(userNo, UserStatus.CONFIRMED);
+  }
+
+  private async validateAdminAuthority(adminNo: number): Promise<void> {
+    const { isAdmin }: Users = await this.getUserByNo(adminNo);
+
+    if (!isAdmin) {
+      throw new UnauthorizedException('관리자 계정이 아닙니다.');
+    }
+  }
+
+  private async deleteCertificateFile(userNo: number): Promise<void> {
+    const { certificate }: UserCertificates =
+      await this.userCertificateRepository.getCertifiacateByNo(userNo);
+
+    if (!certificate) {
+      throw new NotFoundException(`학적 인증 정보가 없는 유저입니다.`);
+    }
+
+    await this.awsService.deleteFile(certificate);
+  }
+
+  private async deleleCertificate(userNo: number): Promise<void> {
+    const isCertificateDeleted: number =
+      await this.userCertificateRepository.deleteCerticificate(userNo);
+
+    if (!isCertificateDeleted) {
+      throw new InternalServerErrorException(
+        '학적 정보가 삭제되지 않았습니다.',
+      );
+    }
   }
 
   private async saveUserCertificate(

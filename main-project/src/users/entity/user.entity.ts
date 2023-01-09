@@ -18,6 +18,7 @@ import {
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { UserProfile } from './user-profile.entity';
 import { Authentication } from 'src/auth/entity/authentication.entity';
@@ -39,6 +40,9 @@ export class Users extends BaseEntity {
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
+
+  @UpdateDateColumn({ name: 'updated_date' })
+  updatedDate: Date;
 
   @DeleteDateColumn({ name: 'deleted_date', nullable: true })
   deletedDate: Date;

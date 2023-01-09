@@ -61,15 +61,15 @@ export class AwsService {
     return await this.uploadFile(image, key);
   }
 
-  async deleteProfileImage(imageUrl: string) {
-    const profileImage = {
+  async deleteFile(fileUrl: string): Promise<void> {
+    const file = {
       Bucket: process.env.AWS_BUCKET_NAME,
-      Key: imageUrl.replace(process.env.AWS_BUCKET_LINK, ''),
+      Key: fileUrl.replace(process.env.AWS_BUCKET_LINK, ''),
     };
 
-    this.s3.deleteObject(profileImage, (err) => {
+    this.s3.deleteObject(file, (err) => {
       if (err) {
-        throw new InternalServerErrorException('이미지 삭제에 실패하였습니다.');
+        throw new InternalServerErrorException('파일 삭제에 실패하였습니다.');
       }
     });
   }
