@@ -13,9 +13,12 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { APIResponse } from 'src/common/interface/interface';
-import { CreateFriendDto } from './dto/create-friend.dto';
+import { EntityManager } from 'typeorm';
+import { CreateFriendRequestDto } from './dto/create-friend.dto';
 import { DeleteFriendDto } from './dto/delete-friend.dto';
+import { FriendRequestDto } from './dto/friend-request.dto';
 import { FriendsService } from './friends.service';
+import { Friend } from './interface/friend.interface';
 
 @Controller('friends')
 @ApiTags('친구 API')
@@ -29,7 +32,7 @@ export class FriendsController {
   })
   async getFriendList(
     @Param('userNo', ParseIntPipe) userNo: number,
-  ): Promise<object> {
+  ): Promise<APIResponse> {
     const friendList = await this.friendsService.getFriendList(userNo);
 
     return { response: { friendList } };
@@ -41,9 +44,9 @@ export class FriendsController {
     summary: '친구 신청 API',
     description: '친구 신청 API',
   })
-  async createFriendRequest(
-    @Body() createFriendDto: CreateFriendDto,
-    @TransactionDecorator() manager,
+  async sendFriendRequest(
+    @Body() createFriendDto: CreateFriendRequestDto,
+    @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
     await this.friendsService.createFriendRequest(manager, createFriendDto);
 
@@ -58,29 +61,16 @@ export class FriendsController {
     description: '토큰의 userNo와 body로 받은 senderNo',
   })
   async acceptFriendRequest(
-    @Param('userNo', ParseIntPipe) receiverNo: number,
-    @Body('senderNo', ParseIntPipe) senderNo: number,
-  ): Promise<object> {
-    await this.friendsService.acceptFriendRequest(receiverNo, senderNo);
+    @Param('userNo', ParseIntPipe) userNo: number,
+    @Body() friendRequest: FriendRequestDto,
+  ): Promise<APIResponse> {
+    await this.friendsService.acceptFriendRequest({
+      userNo,
+      ...friendRequest,
+    });
 
     return {
       msg: '친구 신청을 수락했습니다.',
-    };
-  }
-
-  @Patch('/accept/notice/:noticeNo')
-  @ApiOperation({
-    summary: '친구 요청 수락 API',
-    description: 'notice번호를 통한 요청 수락',
-  })
-  async acceptFriendRequestByNoticeNo(
-    @Param('noticeNo', ParseIntPipe) noticeNo: number,
-    @Body('userNo', ParseIntPipe) userNo: number,
-  ): Promise<object> {
-    await this.friendsService.acceptFriendRequestByNoticeNo(noticeNo, userNo);
-
-    return {
-      msg: '친구요청을 수락했습니다.',
     };
   }
 
@@ -91,7 +81,7 @@ export class FriendsController {
   })
   async getAllReceiveFriendRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
-  ): Promise<object> {
+  ): Promise<APIResponse> {
     const receivedRequestList =
       await this.friendsService.getAllReceivedFriendRequest(receiverNo);
 
@@ -105,7 +95,7 @@ export class FriendsController {
   })
   async getAllSendFriendRequest(
     @Param('userNo', ParseIntPipe) senderNo: number,
-  ): Promise<object> {
+  ): Promise<APIResponse> {
     const sendedRequestList =
       await this.friendsService.getAllSendedFriendRequest(senderNo);
 
@@ -119,9 +109,9 @@ export class FriendsController {
   })
   async refuseRequest(
     @Param('userNo', ParseIntPipe) receiverNo: number,
-    @Body('friendNo', ParseIntPipe) senderNo: number,
-  ) {
-    await this.friendsService.refuseRequest({ receiverNo, senderNo });
+    @Body() friendRequest: FriendRequestDto,
+  ): Promise<APIResponse> {
+    await this.friendsService.refuseRequest({ receiverNo, ...friendRequest });
 
     return {
       msg: '친구 요청을 거절했습니다.',
@@ -129,15 +119,16 @@ export class FriendsController {
   }
 
   // 추후 토큰의 유저no와 friendNo 확인 후 삭제
-  @Delete('/delete')
+  @Delete('/delete/:userNo')
   @ApiOperation({
     summary: '친구 삭제 API',
     description: '친구 삭제 API',
   })
   async deleteFriend(
+    @Param('userNo', ParseIntPipe) userNo: number,
     @Body() deleteFriendDto: DeleteFriendDto,
-  ): Promise<object> {
-    await this.friendsService.deleteFriend(deleteFriendDto);
+  ): Promise<APIResponse> {
+    await this.friendsService.deleteFriend({ userNo, ...deleteFriendDto });
 
     return {
       msg: '친구삭제가 완료되었습니다.',
@@ -152,7 +143,7 @@ export class FriendsController {
   async searchFriend(
     @Param('nickname') nickname: string,
     @Body('userNo', ParseIntPipe) userNo: number,
-  ) {
+  ): Promise<APIResponse> {
     const searchResult = await this.friendsService.searchFriend(
       nickname,
       userNo,
