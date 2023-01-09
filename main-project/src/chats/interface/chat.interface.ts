@@ -5,9 +5,8 @@ export interface MeetingMembersList {
   guestUserNo: number[];
 }
 
-export class ChatToCreate {
+export interface ChatToCreate {
   userNo?: number;
-  @IsNumber()
   boardNo: number;
   roomName?: string;
 }
@@ -52,18 +51,18 @@ export interface ChatRoom {
 
 export interface PreviousChatLog {
   userNo: number;
-  currentChatLogNo?: number;
   chatRoomNo: number;
+  currentChatLogNo?: number;
   message?: string;
   timeStamp?: Date;
 }
 
 export interface ChatUserInfo {
-  userNo?: number;
-  chatRoomNo?: number;
-  targetUserNo?: number;
+  userNo: number;
+  chatRoomNo: number;
   userType?: number;
-  type?: number;
+  targetUserNo?: number;
+  noticeType?: number;
 }
 
 export interface UserValidation {

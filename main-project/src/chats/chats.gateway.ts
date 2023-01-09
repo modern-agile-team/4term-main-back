@@ -91,13 +91,13 @@ export class ChatsGateway {
     @MessageBody() messagePayload: CreateChatDto,
   ): Promise<APIResponse> {
     const manager = socket.manager;
-    const chatRoomNo = await this.chatGatewayService.createRoom(
+    const chatRoom: ChatRoom = await this.chatGatewayService.createRoom(
       manager,
       socket,
       messagePayload,
     );
 
-    return { response: { chatRoomNo } };
+    return { response: { chatRoom } };
   }
 
   @SubscribeMessage('message')

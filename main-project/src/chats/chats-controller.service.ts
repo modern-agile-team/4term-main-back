@@ -176,7 +176,7 @@ export class ChatsControllerService {
     const noticeChat = await this.noticeChatsRepository.checkNoticeChat({
       targetUserNo,
       chatRoomNo,
-      type,
+      noticeType: type,
       userNo,
     });
 
