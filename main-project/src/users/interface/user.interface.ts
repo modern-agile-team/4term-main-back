@@ -28,3 +28,9 @@ export interface UserImage {
   profileNo: number;
   imageUrl: string;
 }
+
+export interface SearchedUser {
+  userNo: number;
+  nickname: string;
+  profileImage: string;
+}
