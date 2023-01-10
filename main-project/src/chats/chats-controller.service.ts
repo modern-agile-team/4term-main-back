@@ -153,7 +153,7 @@ export class ChatsControllerService {
     await this.checkUserInChatRoom({
       userNo: targetUserNo,
       chatRoomNo,
-      isUserNeeded: true,
+      isUserNeeded: false,
       target: `${targetUserNo}`,
     });
 
