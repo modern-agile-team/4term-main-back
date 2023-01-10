@@ -1,10 +1,18 @@
 import { Controller } from '@nestjs/common';
-import { Body, Delete, Post, UseGuards } from '@nestjs/common/decorators';
+import {
+  Body,
+  Delete,
+  Get,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common/decorators';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { User } from 'src/users/interface/user.interface';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SignInDto } from './dto/sign-in.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 
@@ -60,5 +68,26 @@ export class AuthController {
     await this.authService.logout(userNo);
 
     return { msg: '로그아웃 성공' };
+  }
+
+  @Patch('/non-robot')
+  async resetLoginFailedCount(@Body('email') email: string) {
+    await this.authService.resetLoginFailedCount(email);
+
+    return { msg: '로그인 실패 횟수가 초기화되었습니다.' };
+  }
+
+  @Get('/password-token')
+  async getPasswordToken(@Body('email') email: string) {
+    await this.authService.sendPasswordToken(email);
+
+    return { msg: '비밀번호 재설정 이메일이 전송되었습니다.' };
+  }
+
+  @Patch('/forgotten-password')
+  async resetForgottenPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    await this.authService.resetUserPassword(resetPasswordDto);
+
+    return { msg: '비밀번호가 설정되었습니다.' };
   }
 }

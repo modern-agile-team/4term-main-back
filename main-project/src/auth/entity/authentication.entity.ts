@@ -22,4 +22,7 @@ export class Authentication extends BaseEntity {
 
   @Column({ type: 'varchar', length: 255, nullable: false })
   password: string;
+
+  @Column({ type: 'int', name: 'failed_count', default: 0 })
+  failedCount: number;
 }
