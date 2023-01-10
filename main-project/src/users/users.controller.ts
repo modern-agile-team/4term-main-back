@@ -137,4 +137,14 @@ export class UsersController {
 
     return { response: { users } };
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('/valid-nicknames/:nickname')
+  async isValidUserNickname(nickname: string) {
+    const isValidNickname: boolean = await this.usersService.isValidNickname(
+      nickname,
+    );
+
+    return { response: { isValidNickname } };
+  }
 }

@@ -153,6 +153,14 @@ export class UsersService {
     await this.userRepository.deleteHaltedUsers();
   }
 
+  async isValidNickname(nickname: string): Promise<boolean> {
+    const user: Users = await this.userProfileRepository.getUserBySameNickname(
+      nickname,
+    );
+
+    return Boolean(user);
+  }
+
   private async validateAdminAuthority(adminNo: number): Promise<void> {
     const { isAdmin }: Users = await this.getUserByNo(adminNo);
 

@@ -8,6 +8,7 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { UserProfile } from '../entity/user-profile.entity';
+import { Users } from '../entity/user.entity';
 import {
   UpdatedProfile,
   ProfileDetail,
@@ -91,13 +92,29 @@ export class UserProfilesRepository extends Repository<UserProfile> {
           'user_profiles.nickname AS nickname',
           'profileImages.imageUrl AS profileImage',
         ])
-        .where('user_profiles.nickname LIKE nickname', { nickname })
+        .where('user_profiles.nickname LIKE :nickname', {
+          nickname: `%${nickname}%`,
+        })
         .getRawMany();
 
       return searchedUsers;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 닉네임으로 유저 조회 오류(getUserByNickname) :알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getUserBySameNickname(nickname: string): Promise<Users> {
+    try {
+      const user: Users = await this.createQueryBuilder('user_profiles')
+        .where('user_profiles.nickname = :nickname', { nickname })
+        .getRawOne();
+
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 닉네임이 일치하는 유저 조회 오류(getUserBySameNickname) :알 수 없는 서버 에러입니다.`,
       );
     }
   }
