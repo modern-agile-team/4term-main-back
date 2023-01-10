@@ -27,6 +27,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common/exceptions';
 import { Authentication } from './entity/authentication.entity';
+import { AuthConfig } from './config/auth.config';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -104,7 +106,9 @@ export class AuthService {
     await this.validateUserNotCreated(email);
     const validationKey = randomBytes(7).toString('base64url');
 
-    await this.cacheManager.set(email, validationKey, { ttl: 310 });
+    await this.cacheManager.set(email, validationKey, {
+      ttl: AuthConfig.signInTokenExpiration,
+    });
 
     await this.mailerService.sendMail({
       to: email,
@@ -119,8 +123,8 @@ export class AuthService {
 
     const user: User = await this.createUserByEmail(email);
     const userAuth: UserAuth = await this.createAuthentication(
-      password,
       user.userNo,
+      password,
     );
     const { affectedRows }: ResultSetHeader =
       await this.authRepository.createAuth(userAuth);
@@ -189,6 +193,55 @@ export class AuthService {
     await this.authRepository.updateFailedCount(userNo, 0);
   }
 
+  async sendPasswordToken(email: string): Promise<void> {
+    const { userNo } = await this.getUserByEmail(email);
+    await this.getUserAuthentication(userNo);
+
+    const passwordToken = randomBytes(7).toString('base64url');
+    await this.cacheManager.set(passwordToken, email, {
+      ttl: AuthConfig.passwordTokenExpiration,
+    });
+
+    await this.mailerService.sendMail({
+      to: email,
+      subject: '비밀번호 재설정(ModernAgileFourth)',
+      html: `<b>${passwordToken}</b>`,
+    });
+  }
+
+  async resetUserPassword({ code, password }: ResetPasswordDto): Promise<void> {
+    const email = await this.cacheManager.get(code);
+    if (!email) {
+      throw new UnauthorizedException('올바른 인증 코드가 아닙니다.');
+    }
+
+    const { userNo }: User = await this.getUserByEmail(email);
+    const userAuth: Authentication = await this.getUserAuthentication(userNo);
+    if (bcrypt.compareSync(password, userAuth.password)) {
+      throw new BadRequestException('새로운 비밀번호를 입력해 주세요.');
+    }
+
+    await this.updatePassword(userNo, password);
+    await this.cacheManager.del(code);
+  }
+
+  private async updatePassword(
+    userNo: number,
+    password: string,
+  ): Promise<void> {
+    const userAuth: UserAuth = await this.createAuthentication(
+      userNo,
+      password,
+    );
+
+    const isPasswordUpdated: number = await this.authRepository.updatePassword(
+      userAuth,
+    );
+    if (!isPasswordUpdated) {
+      throw new InternalServerErrorException('비밀번호 수정 오류입니다.');
+    }
+  }
+
   private async getUserByEmail(email: string) {
     const user: User = await this.userRepository.getUserByEmail(email);
 
@@ -206,7 +259,7 @@ export class AuthService {
 
     if (!userAuth) {
       throw new NotFoundException(
-        `인증 정보가 존재하지 않는 유저입니다. 소셜 로그인을 이용해 주세요.`,
+        `인증 정보가 존재하지 않는 소셜 로그인 유저입니다.`,
       );
     }
 
@@ -240,8 +293,8 @@ export class AuthService {
   }
 
   private async createAuthentication(
-    password: string,
     userNo: number,
+    password: string,
   ): Promise<UserAuth> {
     const saltedPassword = bcrypt.hashSync(password, 3);
 

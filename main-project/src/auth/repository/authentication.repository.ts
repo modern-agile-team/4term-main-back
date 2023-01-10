@@ -31,14 +31,11 @@ export class AuthRepository extends Repository<Authentication> {
 
   async findAuthByUserNo(userNo: number): Promise<Authentication> {
     try {
-      const auth: Authentication = await this.createQueryBuilder(
-        'authentication',
-      )
-        .leftJoin('authentication.userNo', 'users')
+      const auth: Authentication = await this.createQueryBuilder()
         .select([
-          'users.no AS userNo',
-          'authentication.password AS password',
-          'authentication.failedCount AS failedCount',
+          'user_no AS userNo',
+          'password',
+          'failed_count AS failedCount',
         ])
         .where(`user_no = :userNo`, { userNo })
         .getRawOne();
@@ -66,6 +63,22 @@ export class AuthRepository extends Repository<Authentication> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 로그인 실패 횟수 업데이트(updateFailedCount): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async updatePassword({ userNo, password }: UserAuth): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update()
+        .set({ password })
+        .where('user_no = :userNo', { userNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 비밀번호 업데이트(updatePassword): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
