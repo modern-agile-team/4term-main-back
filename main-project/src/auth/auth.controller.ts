@@ -1,5 +1,11 @@
 import { Controller } from '@nestjs/common';
-import { Body, Delete, Post, UseGuards } from '@nestjs/common/decorators';
+import {
+  Body,
+  Delete,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common/decorators';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { User } from 'src/users/interface/user.interface';
@@ -61,4 +67,7 @@ export class AuthController {
 
     return { msg: '로그아웃 성공' };
   }
+
+  @Patch('/non-robot')
+  async resetLoginFailedCount(@Body('email') email: string) {}
 }

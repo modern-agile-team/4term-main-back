@@ -8,10 +8,11 @@ import {
 } from 'typeorm';
 import { UserStatus } from '../../common/configs/user-status.config';
 import { Users } from '../entity/user.entity';
+import { User } from '../interface/user.interface';
 
 @EntityRepository(Users)
 export class UsersRepository extends Repository<Users> {
-  async getUserByEmail(email: string): Promise<any> {
+  async getUserByEmail(email: string): Promise<User> {
     try {
       const user = await this.createQueryBuilder('users')
         .select(['users.no AS userNo', 'users.status AS status'])

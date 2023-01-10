@@ -15,14 +15,18 @@ import { UsersRepository } from 'src/users/repository/users.repository';
 import { MailerService } from '@nestjs-modules/mailer';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResultSetHeader } from 'mysql2/promise';
-import { Profile, User } from 'src/users/interface/user.interface';
+import { User } from 'src/users/interface/user.interface';
 import { AuthRepository } from './repository/authentication.repository';
 import { Payload, UserAuth } from './interface/auth.interface';
 import { LoginDto } from './dto/login.dto';
 import { UserProfilesRepository } from 'src/users/repository/user-profiles.repository';
 import { ConfigService } from '@nestjs/config';
 import { UserStatus } from 'src/common/configs/user-status.config';
-import { UnauthorizedException } from '@nestjs/common/exceptions';
+import {
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common/exceptions';
+import { Authentication } from './entity/authentication.entity';
 
 @Injectable()
 export class AuthService {
@@ -129,25 +133,12 @@ export class AuthService {
   }
 
   async login({ password, email }: LoginDto): Promise<User> {
-    const user: User = await this.userRepository.getUserByEmail(email);
-
-    if (!user) {
-      throw new NotFoundException(`회원가입을 하지 않은 이메일입니다.`);
-    }
-
-    const userAuth: UserAuth = await this.authRepository.findAuthByUserNo(
+    const user: User = await this.getUserByEmail(email);
+    const userAuth: Authentication = await this.getUserAuthentication(
       user.userNo,
     );
 
-    if (!userAuth) {
-      throw new NotFoundException(
-        `인증 정보가 존재하지 않는 유저입니다. 소셜 로그인을 이용해 주세요.`,
-      );
-    }
-
-    if (!bcrypt.compareSync(password, userAuth.password)) {
-      throw new BadRequestException(`올바르지 않은 비밀번호입니다.`);
-    }
+    await this.validatePassword(userAuth, password);
 
     return await this.issueToken(user);
   }
@@ -180,6 +171,58 @@ export class AuthService {
 
   async logout(userNo: number): Promise<void> {
     await this.cacheManager.del(userNo);
+  }
+
+  async resetLoginFailedCount(email: string) {}
+
+  private async getUserByEmail(email: string) {
+    const user: User = await this.userRepository.getUserByEmail(email);
+
+    if (!user) {
+      throw new NotFoundException('회원가입을 하지 않은 이메일입니다.');
+    }
+
+    return user;
+  }
+
+  private async getUserAuthentication(userNo: number): Promise<Authentication> {
+    const userAuth: Authentication = await this.authRepository.findAuthByUserNo(
+      userNo,
+    );
+
+    if (!userAuth) {
+      throw new NotFoundException(
+        `인증 정보가 존재하지 않는 유저입니다. 소셜 로그인을 이용해 주세요.`,
+      );
+    }
+
+    return userAuth;
+  }
+
+  private async validatePassword(
+    userAuth: Authentication,
+    password: string,
+  ): Promise<void> {
+    const { userNo, failedCount }: Authentication = userAuth;
+
+    if (failedCount >= 5) {
+      throw new ForbiddenException('로그인 실패 횟수가 5회 이상인 유저입니다.');
+    }
+    if (!bcrypt.compareSync(password, userAuth.password)) {
+      await this.updateLoginFailedCount(userNo, failedCount + 1);
+      throw new BadRequestException(`올바르지 않은 비밀번호입니다.`);
+    }
+
+    await this.updateLoginFailedCount(userNo, 0);
+  }
+
+  private async updateLoginFailedCount(userNo: number, failedCount: number) {
+    const isFailedCountUpdated: number =
+      await this.authRepository.updateFailedCount(userNo, failedCount);
+
+    if (!isFailedCountUpdated) {
+      throw new InternalServerErrorException('유저 로그인 실패 횟수 수정 오류');
+    }
   }
 
   private async createAuthentication(
