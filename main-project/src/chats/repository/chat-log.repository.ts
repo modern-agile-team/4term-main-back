@@ -27,10 +27,16 @@ export class ChatLogRepository extends Repository<ChatLog> {
   ): Promise<ChatLog[]> {
     try {
       const previousChatLog = await this.createQueryBuilder('chat_log')
-        .select(['chat_log.*'])
+        .select([
+          'chat_log.no AS chatLogNo',
+          'user.no AS userNo',
+          'chat_log.message AS message',
+          'chat_log.sended_time AS sendedTime',
+        ])
+        .leftJoin('chat_log.userNo', 'user')
         .where('chat_log.chat_room_no = :chatRoomNo', { chatRoomNo })
         .andWhere(`chat_log.no < :currentChatLogNo`, { currentChatLogNo })
-        .orderBy('no', 'DESC')
+        .orderBy('chat_log.no', 'DESC')
         .limit(30)
         .getRawMany();
 
@@ -44,10 +50,18 @@ export class ChatLogRepository extends Repository<ChatLog> {
 
   async getCurrentChatLog(chatRoomNo: number): Promise<ChatLog[]> {
     try {
-      const previousChatLog = await this.createQueryBuilder('chat_log')
-        .select(['chat_log.*'])
+      const previousChatLog: ChatLog[] = await this.createQueryBuilder(
+        'chat_log',
+      )
+        .select([
+          'chat_log.no AS chatLogNo',
+          'user.no AS userNo',
+          'chat_log.message AS message',
+          'chat_log.sended_time AS sendedTime',
+        ])
+        .leftJoin('chat_log.userNo', 'user')
         .where('chat_log.chat_room_no = :chatRoomNo', { chatRoomNo })
-        .orderBy('no', 'DESC')
+        .orderBy('chat_log.no', 'DESC')
         .limit(30)
         .getRawMany();
 

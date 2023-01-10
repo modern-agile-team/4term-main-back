@@ -21,6 +21,7 @@ import { APIResponse } from 'src/common/interface/interface';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { EntityManager } from 'typeorm';
+import { ChatRoom } from './interface/chat.interface';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -36,9 +37,8 @@ export class ChatsController {
     description: '채팅방 목록 조회',
   })
   async getChatRoomList(@Param('userNo') userNo: number): Promise<APIResponse> {
-    const chatRoom = await this.chatControllerService.getChatRoomsByUserNo(
-      userNo,
-    );
+    const chatRoom: ChatRoom[] =
+      await this.chatControllerService.getChatRoomsByUserNo(userNo);
     return {
       response: { chatRoom },
     };

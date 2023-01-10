@@ -79,7 +79,7 @@ export class ChatsControllerService {
     getChatLogDto: GetChatLogDTO,
     chatRoomNo: number,
   ): Promise<ChatLog[]> {
-    const { userNo, currentChatLogNo }: GetChatLogDTO = getChatLogDto;
+    const { userNo }: GetChatLogDTO = getChatLogDto;
 
     await this.checkChatRoomExists(chatRoomNo);
 
@@ -107,12 +107,8 @@ export class ChatsControllerService {
   private async checkUserInChatRoom(
     chatUserInfo: UserValidation,
   ): Promise<void> {
-    const {
-      userNo,
-      chatRoomNo,
-      isUserNeeded,
-      target: target,
-    }: UserValidation = chatUserInfo;
+    const { userNo, chatRoomNo, isUserNeeded, target }: UserValidation =
+      chatUserInfo;
 
     const chatRoom: ChatList =
       await this.chatListRepository.checkRoomExistsByChatRoomNo(chatRoomNo);
@@ -120,10 +116,11 @@ export class ChatsControllerService {
       throw new NotFoundException('존재하지 않는 채팅방입니다.');
     }
 
-    const user = await this.chatUsersRepository.checkUserInChatRoom({
-      userNo,
-      chatRoomNo,
-    });
+    const user: ChatUserInfo =
+      await this.chatUsersRepository.checkUserInChatRoom({
+        userNo,
+        chatRoomNo,
+      });
 
     if (isUserNeeded === Boolean(user)) {
       return;

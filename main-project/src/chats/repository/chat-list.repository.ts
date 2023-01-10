@@ -42,7 +42,7 @@ export class ChatListRepository extends Repository<ChatList> {
     try {
       const result = await this.createQueryBuilder('chat_list')
         .leftJoin('chat_list.chatUserNo', 'chatUser')
-        .leftJoin('chatUser.userNo', 'user')
+        .leftJoin('chatUser.chatUserNo', 'user')
         .leftJoin('user.userProfileNo', 'userProfile')
         .select([
           'chat_list.room_name AS roomName',
@@ -64,9 +64,8 @@ export class ChatListRepository extends Repository<ChatList> {
   async checkRoomExistsByChatRoomNo(chatRoomNo: number): Promise<ChatList> {
     try {
       const result = await this.createQueryBuilder('chat_list')
-        .select(['chat_list.no AS chatRoomNo'])
         .where(`no = :chatRoomNo`, { chatRoomNo })
-        .getRawOne();
+        .getOne();
 
       return result;
     } catch (error) {
