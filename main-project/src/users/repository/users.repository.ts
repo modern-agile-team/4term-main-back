@@ -6,6 +6,7 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
+import { UserStatus } from '../../common/configs/user-status.config';
 import { Users } from '../entity/user.entity';
 
 @EntityRepository(Users)
@@ -83,6 +84,23 @@ export class UsersRepository extends Repository<Users> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 회원 탈퇴 에러(softDeleteUser): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async deleteHaltedUsers(): Promise<void> {
+    try {
+      await this.createQueryBuilder()
+        .delete()
+        .from(Users)
+        .where(
+          `status = ${UserStatus.NO_PROFILE} OR status = ${UserStatus.NO_CERTIFICATE} OR status = ${UserStatus.DENIED}`,
+        )
+        .andWhere('DATEDIFF(NOW(), updated_date) >= 10')
+        .execute();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 가입 중단한 유저 삭제(deleteHaltedUsers): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
