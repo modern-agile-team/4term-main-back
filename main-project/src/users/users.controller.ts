@@ -147,4 +147,15 @@ export class UsersController {
 
     return { response: { isValidNickname } };
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('/:userNo/certificate')
+  async denyUserCertificate(
+    @GetUser() adminNo: number,
+    @Param('userNo') userNo: number,
+  ) {
+    await this.usersService.denyUserCertificate(adminNo, userNo);
+
+    return { msg: '유저 학적 정보가 반려되었습니다.' };
+  }
 }

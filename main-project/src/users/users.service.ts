@@ -158,6 +158,17 @@ export class UsersService {
     return Boolean(user);
   }
 
+  async denyUserCertificate(adminNo: number, userNo: number): Promise<void> {
+    await this.validateAdminAuthority(adminNo);
+
+    const user: Users = await this.getUserByNo(userNo);
+    if (user.status !== UserStatus.NOT_CONFIRMED) {
+      throw new BadRequestException('학적 정보를 반려할 수 없는 유저입니다.');
+    }
+
+    await this.updateUserStatus(userNo, UserStatus.DENIED);
+  }
+
   private async updateProfile(
     userNo: number,
     updatedProfile: UpdateProfileDto,
