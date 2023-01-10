@@ -62,7 +62,7 @@ export interface ChatUserInfo {
   chatRoomNo: number;
   userType?: number;
   targetUserNo?: number;
-  noticeType?: number;
+  type?: number;
 }
 
 export interface UserValidation {
