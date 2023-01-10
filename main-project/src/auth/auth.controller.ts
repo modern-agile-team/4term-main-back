@@ -69,5 +69,9 @@ export class AuthController {
   }
 
   @Patch('/non-robot')
-  async resetLoginFailedCount(@Body('email') email: string) {}
+  async resetLoginFailedCount(@Body('email') email: string) {
+    await this.authService.resetLoginFailedCount(email);
+
+    return { msg: '로그인 실패 횟수가 초기화되었습니다.' };
+  }
 }

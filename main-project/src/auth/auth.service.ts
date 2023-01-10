@@ -173,7 +173,21 @@ export class AuthService {
     await this.cacheManager.del(userNo);
   }
 
-  async resetLoginFailedCount(email: string) {}
+  async resetLoginFailedCount(email: string): Promise<void> {
+    const { userNo, status }: User = await this.getUserByEmail(email);
+    if (status !== UserStatus.CONFIRMED) {
+      throw new BadRequestException('아직 인증 절차를 마치지 않은 유저입니다.');
+    }
+
+    const { failedCount }: Authentication = await this.getUserAuthentication(
+      userNo,
+    );
+    if (failedCount !== 5) {
+      throw new BadRequestException('로그인 시도 횟수가 남아 있는 유저입니다.');
+    }
+
+    await this.authRepository.updateFailedCount(userNo, 0);
+  }
 
   private async getUserByEmail(email: string) {
     const user: User = await this.userRepository.getUserByEmail(email);
