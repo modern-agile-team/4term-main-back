@@ -1,19 +1,21 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { BoardGuests } from '../entity/board-guest.entity';
+import { BoardParticipation } from '../entity/board-participation.entity';
 import { Boards } from '../entity/board.entity';
-import { CreateResponse } from '../interface/boards.interface';
+import { CreateResponse, Participation } from '../interface/boards.interface';
 
-@EntityRepository(BoardGuests)
-export class BoardParticipationRepository extends Repository<BoardGuests> {
+@EntityRepository(BoardParticipation)
+export class BoardParticipationRepository extends Repository<BoardParticipation> {
   // 조회
   async getAllGuestsByBoardNo(
     boardNo: number,
   ): Promise<Pick<Boards, 'userNo'>[]> {
     try {
       const guests = await this.createQueryBuilder('boardGuest')
+        .leftJoin('boardGuest.teamNo', 'team')
         .select('boardGuest.userNo AS userNo')
-        .where('boardGuest.boardNo = :boardNo', { boardNo })
+        .where('team.boardNo = :boardNo', { boardNo })
         .getRawMany();
 
       return guests;
@@ -25,14 +27,16 @@ export class BoardParticipationRepository extends Repository<BoardGuests> {
   }
 
   // 생성
-  async createGuestMembers(guests: object[]): Promise<CreateResponse> {
+  async createParticipation(
+    participation: Participation,
+  ): Promise<CreateResponse> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
-        'board_guests',
+        'board_participation',
       )
         .insert()
-        .into(BoardGuests)
-        .values(guests)
+        .into(BoardParticipation)
+        .values(participation)
         .execute();
 
       return raw;

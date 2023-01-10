@@ -1,14 +1,12 @@
 import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
-  Column,
   Entity,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { BoardParticipation } from './board-participation.entity';
-import { Boards } from './board.entity';
 
 @Entity('board_guests')
 export class BoardGuests extends BaseEntity {

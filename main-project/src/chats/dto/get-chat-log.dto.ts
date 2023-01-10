@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 
 export class GetChatLogDTO {
   @IsNotEmpty()
@@ -9,7 +9,7 @@ export class GetChatLogDTO {
   })
   userNo: number;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsNumber()
   @ApiProperty({
     example: 3,

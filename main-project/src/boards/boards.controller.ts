@@ -7,25 +7,37 @@ import {
   ParseIntPipe,
   Post,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { ParticipationDto } from './dto/participation.dto';
 import { BoardDto } from './dto/board.dto';
 import { Board } from './interface/boards.interface';
+import { BoardFilterDto } from './dto/board-filter.dto';
+import { Cron, CronExpression } from '@nestjs/schedule/dist';
 
 @Controller('boards')
 @ApiTags('게시글 API')
 export class BoardsController {
   constructor(private boardService: BoardsService) {}
+  //Cron
+  @Cron(CronExpression.EVERY_HOUR)
+  @Patch()
+  async closingThunder(): Promise<void> {
+    await this.boardService.closeThunder();
+  }
+
   //Get Methods
   @Get()
   @ApiOperation({
-    summary: '게시글 전체 조회 API',
-    description: '게시글 전부를 내림차순으로 조회한다.',
+    summary: '게시글 필터링 API',
+    description: '게시글 필터링해서 내림차순으로 조회한다.',
   })
-  async getAllBoards(): Promise<object> {
-    const boards: Board[] = await this.boardService.getAllBoards();
+  async getBoards(@Query() BoardFilterDto: BoardFilterDto): Promise<object> {
+    console.log(BoardFilterDto);
+
+    const boards: Board[] = await this.boardService.getBoards(BoardFilterDto);
 
     return { response: { boards } };
   }
@@ -72,7 +84,7 @@ export class BoardsController {
     return { response: { bookmark } };
   }
 
-  @Post('/:boardNo/application')
+  @Post('/:boardNo/participation')
   @ApiOperation({
     summary: '게스트 참가 신청 API',
     description: '',
