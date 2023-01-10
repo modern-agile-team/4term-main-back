@@ -13,24 +13,20 @@ import { Announces } from '../entity/announce.entity';
 @EntityRepository(Announces)
 export class AnnouncesRepository extends Repository<Announces> {
   //  조회 관련
-  async getAnnounces(type: number): Promise<Announces[]> {
+  async getAllAnnounces(): Promise<Announces[]> {
     try {
       const announces = this.createQueryBuilder('announces')
         .select([
           'announces.no AS no',
           'announces.title AS title',
           'announces.description AS description',
-          'announces.type AS type',
         ])
         .orderBy('no', 'DESC');
-      if (type) {
-        announces.where('type = :type', { type });
-      }
 
       return announces.getRawMany();
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getAnnounces-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getAllAnnounces-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -43,7 +39,7 @@ export class AnnouncesRepository extends Repository<Announces> {
           'announces.no AS no',
           'announces.title AS title',
           'announces.description AS description',
-          'JSON_ARRAYAGG(images.imageUrl) AS imgs',
+          'JSON_ARRAYAGG(images.imageUrl) AS images',
         ])
         .where('announces.no = :announcesNo', { announcesNo })
         .getRawOne();

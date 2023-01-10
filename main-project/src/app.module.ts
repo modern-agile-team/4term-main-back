@@ -19,6 +19,7 @@ import { AnnouncesModule } from './announces/announces.module';
 import { AuthModule } from './auth/auth.module';
 import { cacheModule } from './common/configs/redis.config';
 import { mailModule } from './common/configs/email.config';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { mailModule } from './common/configs/email.config';
     AuthModule,
     cacheModule,
     mailModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
