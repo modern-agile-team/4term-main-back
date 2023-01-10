@@ -47,6 +47,7 @@ export class UsersService {
       throw new BadRequestException(`프로필을 만들 수 없는 유저입니다.`);
     }
 
+    await this.validateUserNickname(createProfileDto.nickname);
     const userProfileNo: number = await this.saveUserProfile(createProfileDto);
     const imageUrl = await this.getProfileImageUrl(profileImage, userNo);
     await this.saveProfileImage(userProfileNo, imageUrl);
@@ -59,22 +60,18 @@ export class UsersService {
     userNo: number,
     updateProfileDto: UpdateProfileDto,
   ): Promise<User> {
+    const { nickname, description } = updateProfileDto;
+    if (!nickname && !description) {
+      throw new BadRequestException('변경 사항이 하나 이상 있어야 합니다.');
+    }
+
+    await this.updateProfile(userNo, updateProfileDto);
+
     const user: User = {
       userNo,
       status: UserStatus.CONFIRMED,
     };
-
-    const isProfileUpdated: number =
-      await this.userProfileRepository.updateUserProfile(
-        userNo,
-        updateProfileDto,
-      );
-
-    if (!isProfileUpdated) {
-      throw new InternalServerErrorException(`유저 프로필 수정 오류입니다.`);
-    }
-
-    if (updateProfileDto.nickname) {
+    if (nickname) {
       user.accessToken = await this.updateAccessToken(userNo);
     }
 
@@ -159,6 +156,35 @@ export class UsersService {
     );
 
     return Boolean(user);
+  }
+
+  private async updateProfile(
+    userNo: number,
+    updatedProfile: UpdateProfileDto,
+  ): Promise<void> {
+    if (updatedProfile.nickname) {
+      await this.validateUserNickname(updatedProfile.nickname);
+    }
+
+    const isProfileUpdated: number =
+      await this.userProfileRepository.updateUserProfile(
+        userNo,
+        updatedProfile,
+      );
+
+    if (!isProfileUpdated) {
+      throw new InternalServerErrorException(`유저 프로필 수정 오류입니다.`);
+    }
+  }
+
+  private async validateUserNickname(nickname: string) {
+    if (nickname.match(/\s/g)) {
+      throw new BadRequestException('닉네임에 공백이 포함되어 있습니다.');
+    }
+
+    if (!(await this.isValidNickname(nickname))) {
+      throw new BadRequestException('이미 사용 중인 닉네임입니다.');
+    }
   }
 
   private async validateAdminAuthority(adminNo: number): Promise<void> {

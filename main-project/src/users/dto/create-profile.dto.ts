@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  MinLength,
 } from 'class-validator';
 import { ToBoolean } from 'src/common/decorator/validateValue.decorator';
 
@@ -19,7 +20,8 @@ export class CreateProfileDto {
   })
   userNo: number;
 
-  @MaxLength(45)
+  @MaxLength(12)
+  @MinLength(2)
   @IsString()
   @IsNotEmpty()
   @ApiProperty({
