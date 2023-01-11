@@ -1,5 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { CreateResponse } from 'src/boards/interface/boards.interface';
+import { ResultSetHeader } from 'mysql2';
 import {
   DeleteResult,
   EntityRepository,
@@ -15,15 +15,16 @@ export class AnnouncesRepository extends Repository<Announces> {
   //  조회 관련
   async getAllAnnounces(): Promise<Announces[]> {
     try {
-      const announces = this.createQueryBuilder('announces')
+      const announces: Announces[] = await this.createQueryBuilder('announces')
         .select([
           'announces.no AS no',
           'announces.title AS title',
           'announces.description AS description',
         ])
-        .orderBy('no', 'DESC');
+        .orderBy('no', 'DESC')
+        .getRawMany();
 
-      return announces.getRawMany();
+      return announces;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getAllAnnounces-repository: 알 수 없는 서버 에러입니다.`,
@@ -33,7 +34,7 @@ export class AnnouncesRepository extends Repository<Announces> {
 
   async getAnnouncesByNo(announcesNo: number): Promise<Announces> {
     try {
-      const announces = this.createQueryBuilder('announces')
+      const announces: Announces = await this.createQueryBuilder('announces')
         .leftJoin('announces.announcesImages', 'images')
         .select([
           'announces.no AS no',
@@ -53,7 +54,7 @@ export class AnnouncesRepository extends Repository<Announces> {
   }
 
   // 생성 관련
-  async createAnnounces(announcesDto: AnnouncesDto): Promise<CreateResponse> {
+  async createAnnounces(announcesDto: AnnouncesDto): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('announces')
         .insert()
@@ -73,15 +74,15 @@ export class AnnouncesRepository extends Repository<Announces> {
   async updateAnnounces(
     announcesNo: number,
     announcesDto: AnnouncesDto,
-  ): Promise<number> {
+  ): Promise<ResultSetHeader> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder('boards')
+      const { raw }: UpdateResult = await this.createQueryBuilder('boards')
         .update(Announces)
         .set(announcesDto)
         .where('no = :announcesNo', { announcesNo })
         .execute();
 
-      return affected;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateAnnounces-repository: 알 수 없는 서버 에러입니다.`,
@@ -90,9 +91,9 @@ export class AnnouncesRepository extends Repository<Announces> {
   }
 
   // 삭제 관련
-  async deleteAnnouncesByNo(announcesNo: number): Promise<DeleteResult> {
+  async deleteAnnouncesByNo(announcesNo: number): Promise<ResultSetHeader> {
     try {
-      const raw: DeleteResult = await this.createQueryBuilder('announces')
+      const { raw }: DeleteResult = await this.createQueryBuilder('announces')
         .delete()
         .from(Announces)
         .where('no = :announcesNo', { announcesNo })

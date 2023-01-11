@@ -18,14 +18,12 @@ import { AwsService } from 'src/aws/aws.service';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { Events } from './entity/events.entity';
 import { EventDto } from './dto/event.dto';
-import { EventImages } from './entity/events-image.entity';
 
 @Controller('events')
 @ApiTags('이벤트 API')
 export class EventsController {
   constructor(
-    private eventsService: EventsService,
-
+    private readonly eventsService: EventsService,
     private readonly awsService: AwsService,
   ) {}
   //Get Methods
@@ -73,13 +71,10 @@ export class EventsController {
     description: '입력한 정보로 이벤트을 생성한다.',
   })
   @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
-  async createEvent(
-    @Body() eventsDto: EventDto,
-    @TransactionDecorator() manager,
-  ): Promise<APIResponse> {
-    const event: string = await this.eventsService.createEvent(eventsDto);
+  async createEvent(@Body() eventsDto: EventDto): Promise<APIResponse> {
+    await this.eventsService.createEvent(eventsDto);
 
-    return { response: { event } };
+    return { response: { msg: '이벤트 생성 성공' } };
   }
 
   @Post('/images/:eventNo')
@@ -92,17 +87,14 @@ export class EventsController {
     @Param('eventNo', ParseIntPipe) eventNo: number,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
-    const uploadedImagesUrlList = await this.awsService.uploadImages(
+    const imageUrls: string[] = await this.awsService.uploadImages(
       files,
       'events',
     );
 
-    await this.eventsService.uploadEventImagesUrl(
-      eventNo,
-      uploadedImagesUrlList,
-    );
+    await this.eventsService.uploadImageUrls(eventNo, imageUrls);
 
-    return { response: { uploadedImagesUrlList } };
+    return { response: { msg: '이미지 업로드 성공' } };
   }
 
   // Patch Methods
@@ -115,12 +107,9 @@ export class EventsController {
     @Param('eventNo', ParseIntPipe) eventNo: number,
     @Body() eventsDto: EventDto,
   ): Promise<APIResponse> {
-    const event: string = await this.eventsService.updateEvent(
-      eventNo,
-      eventsDto,
-    );
+    await this.eventsService.updateEvent(eventNo, eventsDto);
 
-    return { response: { event } };
+    return { response: { msg: '이벤트 수정 성공' } };
   }
 
   // Delete Methods
@@ -129,19 +118,15 @@ export class EventsController {
     summary: '이벤트 삭제 API',
     description: '이벤트 번호를 사용해 이벤트을 삭제한다.',
   })
-  async deleteEvents(
+  async deleteEvent(
     @Param('eventNo', ParseIntPipe) eventNo: number,
   ): Promise<APIResponse> {
-    const images: string[] = await this.eventsService.deleteEventImages(
-      eventNo,
-    );
-    if (images.length) {
-      await this.awsService.deleteFiles(images);
-    }
+    const images: string[] = await this.eventsService.getEventImages(eventNo);
 
+    await this.awsService.deleteFiles(images);
     await this.eventsService.deleteEventByNo(eventNo);
 
-    return { response: { true: true } };
+    return { response: { msg: '이벤트 삭제 성공' } };
   }
 
   // Delete Methods
@@ -153,12 +138,12 @@ export class EventsController {
   async deleteEventImages(
     @Param('eventNo', ParseIntPipe) eventNo: number,
   ): Promise<APIResponse> {
-    const imagesUrlList = await this.eventsService.getEventImages(eventNo);
+    const imagesUrls = await this.eventsService.getEventImages(eventNo);
 
     await this.eventsService.deleteEventImages(eventNo);
 
-    await this.awsService.deleteFiles(imagesUrlList);
+    // await this.awsService.deleteFiles(imagesUrls);
 
-    return { response: { true: true } };
+    return { response: { msg: '이벤트 이미지 삭제 성공' } };
   }
 }

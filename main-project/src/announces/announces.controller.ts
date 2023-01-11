@@ -23,7 +23,7 @@ import { TransactionDecorator } from 'src/common/decorator/transaction-manager.d
 @ApiTags('공지사항 API')
 export class AnnouncesController {
   constructor(
-    private announcesService: AnnouncesService,
+    private readonly announcesService: AnnouncesService,
     private readonly awsService: AwsService,
   ) {}
   //Get Methods
@@ -47,10 +47,11 @@ export class AnnouncesController {
   async getAnnouncesByNo(
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
   ): Promise<APIResponse> {
-    const announcement: Announces =
-      await this.announcesService.getAnnouncesByNo(announcesNo);
+    const announces: Announces = await this.announcesService.getAnnouncesByNo(
+      announcesNo,
+    );
 
-    return { response: announcement };
+    return { response: announces };
   }
 
   @Get('/images/:announcesNo')
@@ -79,12 +80,9 @@ export class AnnouncesController {
     @Body() announcesDto: AnnouncesDto,
     @TransactionDecorator() manager,
   ): Promise<APIResponse> {
-    const Announces: string = await this.announcesService.createAnnounces(
-      manager,
-      announcesDto,
-    );
+    await this.announcesService.createAnnounces(manager, announcesDto);
 
-    return { response: { Announces } };
+    return { response: { msg: '공지사항 생성 성공' } };
   }
 
   @Post('/images/:announcesNo')
@@ -97,17 +95,11 @@ export class AnnouncesController {
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
-    const uploadedImagesUrlList = await this.awsService.uploadImages(
-      files,
-      'announces',
-    );
+    const images = await this.awsService.uploadImages(files, 'announces');
 
-    await this.announcesService.uploadAnnouncesimagesUrl(
-      announcesNo,
-      uploadedImagesUrlList,
-    );
+    await this.announcesService.uploadImageUrls(announcesNo, images);
 
-    return { response: { uploadedImagesUrlList } };
+    return { response: { images } };
   }
 
   // Patch Methods
@@ -120,12 +112,9 @@ export class AnnouncesController {
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
     @Body() announcesDto: AnnouncesDto,
   ): Promise<APIResponse> {
-    const announces: string = await this.announcesService.updateAnnounces(
-      announcesNo,
-      announcesDto,
-    );
+    await this.announcesService.updateAnnounces(announcesNo, announcesDto);
 
-    return { response: { announces } };
+    return { response: { msg: '공지사항 수정 성공' } };
   }
 
   // Delete Methods
@@ -137,19 +126,15 @@ export class AnnouncesController {
   async deleteAnnounces(
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
   ): Promise<APIResponse> {
-    const announces: string = await this.announcesService.deleteAnnouncesByNo(
-      announcesNo,
-    );
+    await this.announcesService.deleteAnnouncesByNo(announcesNo);
 
     await this.announcesService.deleteAnnouncesImages(announcesNo);
 
-    const imagesUrlList = await this.announcesService.getAnnouncesImages(
-      announcesNo,
-    );
+    const images = await this.announcesService.getAnnouncesImages(announcesNo);
 
-    await this.awsService.deleteFiles(imagesUrlList);
+    await this.awsService.deleteFiles(images);
 
-    return { response: { announces } };
+    return { response: { msg: '공지사항 삭제 성공' } };
   }
 
   // Delete Methods
@@ -169,6 +154,6 @@ export class AnnouncesController {
 
     await this.awsService.deleteFiles(imagesUrlList);
 
-    return { response: { true: true } };
+    return { response: { msg: '공지사항 이미지 삭제 성공' } };
   }
 }

@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import { CreateResponse } from 'src/boards/interface/boards.interface';
 import {
   DeleteResult,
@@ -26,7 +27,7 @@ export class AnnouncesImagesRepository extends Repository<AnnouncesImages> {
     }
   }
   // 생성 관련
-  async uploadAnnouncesimagesUrl(
+  async uploadImageUrls(
     images: { announcesNo: number; imageUrl: string }[],
   ): Promise<CreateResponse> {
     try {
@@ -41,15 +42,15 @@ export class AnnouncesImagesRepository extends Repository<AnnouncesImages> {
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} uploadAnnouncesimagesUrl-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} uploadImageUrls-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
   // 삭제 관련
-  async deleteAnnouncesImages(announcesNo: number): Promise<DeleteResult> {
+  async deleteAnnouncesImages(announcesNo: number): Promise<ResultSetHeader> {
     try {
-      const affected: DeleteResult = await this.createQueryBuilder(
+      const { raw }: DeleteResult = await this.createQueryBuilder(
         'announcesImages',
       )
         .delete()
@@ -57,7 +58,7 @@ export class AnnouncesImagesRepository extends Repository<AnnouncesImages> {
         .where('announcesNo = :announcesNo', { announcesNo })
         .execute();
 
-      return affected;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteAnnouncesImages-repository: 알 수 없는 서버 에러입니다.`,

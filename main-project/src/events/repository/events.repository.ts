@@ -1,5 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { CreateResponse } from 'src/boards/interface/boards.interface';
+import { ResultSetHeader } from 'mysql2';
 import {
   DeleteResult,
   EntityRepository,
@@ -15,15 +15,12 @@ export class EventsRepository extends Repository<Events> {
   //  조회 관련
   async getAllEvents(): Promise<Events[]> {
     try {
-      const events = this.createQueryBuilder('events')
-        .select([
-          'events.no AS no',
-          'events.title AS title',
-          'events.description AS description',
-        ])
-        .orderBy('no', 'DESC');
+      const events: Events[] = await this.createQueryBuilder()
+        .select(['no AS no', 'title AS title', 'description AS description'])
+        .orderBy('no', 'DESC')
+        .getRawMany();
 
-      return events.getRawMany();
+      return events;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getAllEvents-repository: 알 수 없는 서버 에러입니다.`,
@@ -33,7 +30,7 @@ export class EventsRepository extends Repository<Events> {
 
   async getEventByNo(eventNo: number): Promise<Events> {
     try {
-      const events = this.createQueryBuilder('events')
+      const events: Events = await this.createQueryBuilder('events')
         .leftJoin('events.eventImages', 'images')
         .select([
           'events.no AS no',
@@ -53,9 +50,9 @@ export class EventsRepository extends Repository<Events> {
   }
 
   // 생성 관련
-  async createEvents(eventsDto: EventDto): Promise<CreateResponse> {
+  async createEvent(eventsDto: EventDto): Promise<ResultSetHeader> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder('events')
+      const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
         .into(Events)
         .values(eventsDto)
@@ -64,32 +61,35 @@ export class EventsRepository extends Repository<Events> {
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createEvents-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createEvent-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
   // 수정 관련
-  async updateEvents(eventNo: number, eventsDto: EventDto): Promise<number> {
+  async updateEvent(
+    eventNo: number,
+    eventsDto: EventDto,
+  ): Promise<ResultSetHeader> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder('events')
+      const { raw }: UpdateResult = await this.createQueryBuilder()
         .update(Events)
         .set(eventsDto)
         .where('no = :eventNo', { eventNo })
         .execute();
 
-      return affected;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} updateEvents-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} updateEvent-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
   // 삭제 관련
-  async deleteEventsByNo(eventNo: number): Promise<DeleteResult> {
+  async deleteEventByNo(eventNo: number): Promise<ResultSetHeader> {
     try {
-      const raw: DeleteResult = await this.createQueryBuilder('events')
+      const { raw }: DeleteResult = await this.createQueryBuilder()
         .delete()
         .from(Events)
         .where('no = :eventNo', { eventNo })
@@ -98,7 +98,7 @@ export class EventsRepository extends Repository<Events> {
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} deleteEventsByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} deleteEventByNo-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

@@ -5,8 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ResultSetHeader } from 'mysql2';
 import { CreateResponse } from 'src/boards/interface/boards.interface';
-import { DeleteResult } from 'typeorm';
+import { DeleteResult, UpdateResult } from 'typeorm';
 import { AnnouncesDto } from './dto/announce.dto';
 import { AnnouncesImages } from './entity/announce-images.entity';
 import { Announces } from './entity/announce.entity';
@@ -18,10 +19,7 @@ export class AnnouncesService {
   private readonly s3: AWS.S3;
 
   constructor(
-    @InjectRepository(AnnouncesRepository)
     private readonly announcesRepository: AnnouncesRepository,
-
-    @InjectRepository(AnnouncesImagesRepository)
     private readonly announcesImagesRepository: AnnouncesImagesRepository,
   ) {}
   // 생성 관련
@@ -38,24 +36,24 @@ export class AnnouncesService {
     return `${insertId}번 공지사항 생성 성공`;
   }
 
-  async uploadAnnouncesimagesUrl(
+  async uploadImageUrls(
     announcesNo: number,
-    uploadedImagesUrlList: string[],
+    imageUrls: string[],
   ): Promise<string> {
     await this.getAnnouncesByNo(announcesNo);
-    if (uploadedImagesUrlList.length === 0) {
+    if (imageUrls.length === 0) {
       throw new BadRequestException('사진이 없습니다.');
     }
-    const images = uploadedImagesUrlList.map((url) => {
+    const images = imageUrls.map((url) => {
       return { announcesNo, imageUrl: url };
     });
 
     const { insertId }: CreateResponse =
-      await this.announcesImagesRepository.uploadAnnouncesimagesUrl(images);
+      await this.announcesImagesRepository.uploadImageUrls(images);
 
     if (!insertId) {
       throw new InternalServerErrorException(
-        `이미지 업로드(uploadimagesUrl-service): 알 수 없는 서버 에러입니다.`,
+        `이미지 업로드(uploadImageUrls-service): 알 수 없는 서버 에러입니다.`,
       );
     }
 
@@ -77,7 +75,7 @@ export class AnnouncesService {
   }
 
   async getAnnouncesImages(announcesNo: number): Promise<string[]> {
-    const { imageUrl } =
+    const { imageUrl }: AnnouncesImages =
       await this.announcesImagesRepository.getAnnouncesImages(announcesNo);
 
     if (!imageUrl) {
@@ -97,7 +95,7 @@ export class AnnouncesService {
 
     if (!announces) {
       throw new NotFoundException(
-        `공지사항 상세 조회(getBoardByNo-service): ${announcesNo}번 공지사항이 없습니다.`,
+        `공지사항 상세 조회(getAnnouncesByNo-service): ${announcesNo}번 공지사항이 없습니다.`,
       );
     }
 
@@ -111,14 +109,12 @@ export class AnnouncesService {
   ): Promise<string> {
     await this.getAnnouncesByNo(announcesNo);
 
-    const affectedRows: number = await this.announcesRepository.updateAnnounces(
-      announcesNo,
-      announcesDto,
-    );
+    const { affectedRows }: ResultSetHeader =
+      await this.announcesRepository.updateAnnounces(announcesNo, announcesDto);
 
     if (!affectedRows) {
       throw new InternalServerErrorException(
-        `공지사항 수정(updateAnnouncement-service): 알 수 없는 서버 에러입니다.`,
+        `공지사항 수정(updateAnnounces-service): 알 수 없는 서버 에러입니다.`,
       );
     }
 
@@ -126,35 +122,29 @@ export class AnnouncesService {
   }
 
   // 삭제 관련
-  async deleteAnnouncesByNo(announcesNo: number): Promise<string> {
+  async deleteAnnouncesByNo(announcesNo: number): Promise<void> {
     await this.getAnnouncesByNo(announcesNo);
 
-    const { affected }: DeleteResult =
+    const { affectedRows }: ResultSetHeader =
       await this.announcesRepository.deleteAnnouncesByNo(announcesNo);
 
-    if (!affected) {
+    if (!affectedRows) {
       throw new BadRequestException(
         `공지사항 삭제(deleteAnnouncesByNo-service): 알 수 없는 서버 에러입니다.`,
       );
     }
-
-    return `${announcesNo}번 공지사항 삭제 성공`;
   }
 
-  async deleteAnnouncesImages(announcesNo: number): Promise<string> {
+  async deleteAnnouncesImages(announcesNo: number): Promise<void> {
     await this.getAnnouncesByNo(announcesNo);
 
-    const { affected }: DeleteResult =
+    const { affectedRows }: ResultSetHeader =
       await this.announcesImagesRepository.deleteAnnouncesImages(announcesNo);
 
-    console.log(affected);
-
-    if (!affected) {
+    if (!affectedRows) {
       throw new BadRequestException(
         `이미지 삭제(deleteAnnouncesImages-service): 알 수 없는 서버 에러입니다.`,
       );
     }
-
-    return `이미지 삭제 성공`;
   }
 }
