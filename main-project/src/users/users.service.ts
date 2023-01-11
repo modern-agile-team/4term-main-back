@@ -137,11 +137,15 @@ export class UsersService {
     return { userNo, status: UserStatus.NOT_CONFIRMED };
   }
 
-  async resubmitCertificate(
+  async updateUserCertificate(
     userNo: number,
     major: string,
     file: Express.Multer.File,
   ): Promise<User> {
+    if (!major) {
+      throw new BadRequestException('학과를 입력해 주세요');
+    }
+
     const { status }: Users = await this.getUserByNo(userNo);
     if (status !== UserStatus.DENIED) {
       throw new BadRequestException('학적 정보를 수정할 수 없는 유저입니다.');

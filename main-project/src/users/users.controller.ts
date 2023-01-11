@@ -26,6 +26,7 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { SearchedUser, User } from './interface/user.interface';
 import { ApiCreateCertificate } from './swagger-decorator/create-certificate.decorator';
 import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
+import { ApiUpdateCertificate } from './swagger-decorator/update-certificate.decorator';
 import { ApiUpdateProfileImage } from './swagger-decorator/update-profile-image.decorator';
 import { ApiUpdateProfile } from './swagger-decorator/update-profile.decorator';
 import { UsersService } from './users.service';
@@ -108,23 +109,21 @@ export class UsersController {
     return { msg: '유저 학적 파일이 업로드되었습니다.', response: { user } };
   }
 
-  @ApiOperation({
-    summary: '반려된 학적 정보 다시 제출',
-  })
+  @ApiUpdateCertificate()
   @UseInterceptors(FileInterceptor('file'))
   @Patch('/:userNo/denied-certificate')
-  async updateCollegeRegister(
+  async updateUserCertificate(
     @Param('userNo') userNo: number,
     @Body('major') major: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    const user: User = await this.usersService.resubmitCertificate(
+    const user: User = await this.usersService.updateUserCertificate(
       userNo,
       major,
       file,
     );
 
-    return { response: { user } };
+    return { msg: '학적 정보가 재등록되었습니다.', response: { user } };
   }
 
   @ApiOperation({
