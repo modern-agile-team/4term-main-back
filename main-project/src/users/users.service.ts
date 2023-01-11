@@ -202,7 +202,7 @@ export class UsersService {
       nickname,
     );
 
-    return Boolean(user);
+    return !Boolean(user);
   }
 
   async denyUserCertificate(adminNo: number, userNo: number): Promise<void> {
