@@ -18,12 +18,13 @@ import {
 } from '@nestjs/common/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Cron } from '@nestjs/schedule';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { SearchedUser, User } from './interface/user.interface';
+import { ApiConfirmUser } from './swagger-decorator/confirm-user.decorator';
 import { ApiCreateCertificate } from './swagger-decorator/create-certificate.decorator';
 import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
 import { ApiUpdateCertificate } from './swagger-decorator/update-certificate.decorator';
@@ -137,9 +138,7 @@ export class UsersController {
     return { msg: '유저가 삭제되었습니다.' };
   }
 
-  @ApiOperation({
-    summary: '유저 학적 정보 수락',
-  })
+  @ApiConfirmUser()
   @UseGuards(JwtAuthGuard)
   @Patch('/:userNo/certificate')
   async confirmUser(
