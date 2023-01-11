@@ -129,6 +129,49 @@ export class UsersService {
     return { userNo, status: UserStatus.NOT_CONFIRMED };
   }
 
+  async resubmitCertificate(
+    userNo: number,
+    major: string,
+    file: Express.Multer.File,
+  ): Promise<User> {
+    const { status }: Users = await this.getUserByNo(userNo);
+    if (status !== UserStatus.DENIED) {
+      throw new BadRequestException('학적 정보를 수정할 수 없는 유저입니다.');
+    }
+
+    await this.deleteCertificateFile(userNo);
+    await this.updateCertificateFile(userNo, file);
+    await this.updateMajor(userNo, major);
+    await this.updateUserStatus(userNo, UserStatus.NOT_CONFIRMED);
+
+    return { userNo, status: UserStatus.NOT_CONFIRMED };
+  }
+
+  private async updateCertificateFile(
+    userNo: number,
+    file: Express.Multer.File,
+  ): Promise<void> {
+    const certificate = await this.awsService.uploadCertificate(userNo, file);
+    const isCertificateUpdated =
+      await this.userCertificateRepository.updateCertificate(
+        userNo,
+        certificate,
+      );
+
+    if (!isCertificateUpdated) {
+      throw new InternalServerErrorException('학적 정보 수정 오류입니다.');
+    }
+  }
+
+  private async updateMajor(userNo: number, major: string): Promise<void> {
+    const isMajorUpdated: number =
+      await this.userProfileRepository.updateUserMajor(userNo, major);
+
+    if (!isMajorUpdated) {
+      throw new InternalServerErrorException('학적 정보 수정 에러');
+    }
+  }
+
   async confirmUser(adminNo: number, userNo: number) {
     await this.validateAdminAuthority(adminNo);
 

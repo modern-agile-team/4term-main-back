@@ -63,14 +63,10 @@ export class UserProfilesRepository extends Repository<UserProfile> {
     updatedProfile: UpdatedProfile,
   ): Promise<number> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder(
-        'user_profiles',
-      )
+      const { affected }: UpdateResult = await this.createQueryBuilder()
         .update()
         .set(updatedProfile)
-        .where('user_profiles.user_no = :userNo', {
-          userNo,
-        })
+        .where('user_no = :userNo', { userNo })
         .execute();
 
       return affected;
@@ -115,6 +111,22 @@ export class UserProfilesRepository extends Repository<UserProfile> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 닉네임이 일치하는 유저 조회 오류(getUserBySameNickname) :알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async updateUserMajor(userNo: number, major: string): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update()
+        .set({ major })
+        .where('user_no = :userNo', { userNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 유저 학과 변경(updateUserMajor) :알 수 없는 서버 에러입니다.`,
       );
     }
   }

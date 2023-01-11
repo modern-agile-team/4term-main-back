@@ -5,6 +5,7 @@ import {
   EntityRepository,
   InsertResult,
   Repository,
+  UpdateResult,
 } from 'typeorm';
 import { UserCertificates } from '../entity/user-certificate.entity';
 
@@ -56,6 +57,25 @@ export class UserCertificatesRepository extends Repository<UserCertificates> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 유저 학적 정보 삭제 에러(deleteCerticificate): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async updateCertificate(
+    userNo: number,
+    certificate: string,
+  ): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update()
+        .set({ certificate })
+        .where('user_no = :userNo', { userNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error}사용자 학적 증명 수정(updateCertificate): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

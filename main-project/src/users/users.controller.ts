@@ -101,6 +101,25 @@ export class UsersController {
   }
 
   @ApiOperation({
+    summary: '반려된 학적 정보 다시 제출',
+  })
+  @UseInterceptors(FileInterceptor('file'))
+  @Patch('/:userNo/denied-certificate')
+  async updateCollegeRegister(
+    @Param('userNo') userNo: number,
+    @Body('major') major: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const user: User = await this.usersService.resubmitCertificate(
+      userNo,
+      major,
+      file,
+    );
+
+    return { response: { user } };
+  }
+
+  @ApiOperation({
     summary: '회원 탈퇴',
   })
   @UseGuards(JwtAuthGuard)
