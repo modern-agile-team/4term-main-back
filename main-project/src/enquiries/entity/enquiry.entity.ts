@@ -24,6 +24,14 @@ export class Enquiries extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
+  @Column({
+    type: 'tinyint',
+    width: 1,
+    default: false,
+    nullable: true,
+  })
+  isDone: boolean;
+
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
 
@@ -38,6 +46,5 @@ export class Enquiries extends BaseEntity {
   userNo: number;
 
   @OneToOne((type) => EnquiryImages, (enquiryImages) => enquiryImages.enquiryNo)
-  @JoinColumn({ name: 'enquiry_images' })
   enquiryImages: EnquiryImages;
 }

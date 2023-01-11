@@ -12,15 +12,27 @@ export class CreateChat {
   roomName?: string;
 }
 
+export interface ChatRoomUsers {
+  users: string;
+  userType: number;
+  chatRoomNo: number;
+}
+
 export interface JoinChatRoom {
   userNo: number;
   chatRoomNo: number;
 }
 
-export interface MessagePayload {
-  message?: string;
-  chatRoomNo: number;
-  userNo: number;
+// export interface MessagePayload{
+//   userNo: number;
+//   chatRoomNo: number;
+//   message?: string;
+//   uploadedFileUrls?: string[];
+// }
+
+export interface FileUrlDetail {
+  chatLogNo: number;
+  fileUrl: string;
 }
 
 export interface ChatRoom {
@@ -32,7 +44,7 @@ export interface ChatRoom {
   hostUserNo?: string;
 }
 
-export interface ChatRoomUsers {
+export interface ChatRoomUser {
   chatRoomNo: number;
   nickname: string;
   roomName: string;
@@ -55,7 +67,15 @@ export interface PreviousChatLog {
 
 export interface ChatUserInfo {
   userNo?: number;
-  chatRoomNo: number;
+  chatRoomNo?: number;
+  targetUserNo?: number;
   userType?: number;
   type?: number;
+}
+
+export interface UserValidation {
+  userNo: number;
+  chatRoomNo: number;
+  isUserNeeded: boolean;
+  target: string;
 }

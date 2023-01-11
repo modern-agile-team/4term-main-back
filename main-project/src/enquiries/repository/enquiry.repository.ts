@@ -1,5 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { CreateResponse } from 'src/boards/interface/boards.interface';
+import { ResultSetHeader } from 'mysql2';
 import {
   DeleteResult,
   EntityRepository,
@@ -7,16 +7,14 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { EnquiryDto } from '../dto/enquiry.dto';
+import { CreateEnquiryDto } from '../dto/create-enquiry.dto';
+import { UpdateEnquiryDto } from '../dto/update-enquiry.dto';
 import { Enquiries } from '../entity/enquiry.entity';
-import {
-  EnquiryIF,
-} from '../interface/enquiry.interface';
 
 @EntityRepository(Enquiries)
-export class EnquiryRepository extends Repository<Enquiries> {
+export class EnquirysRepository extends Repository<Enquiries> {
   // 문의사항 조회 관련
-  async getAllEnquiries(): Promise<EnquiryIF[]> {
+  async getAllEnquiries(): Promise<Enquiries[]> {
     try {
       const enquiries = this.createQueryBuilder('enquiries')
         .leftJoin('enquiries.userNo', 'users')
@@ -25,6 +23,7 @@ export class EnquiryRepository extends Repository<Enquiries> {
           'users.no AS userNo',
           'enquiries.title AS title',
           'enquiries.description AS description',
+          `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
         ])
         .orderBy('no', 'DESC')
         .getRawMany();
@@ -37,7 +36,7 @@ export class EnquiryRepository extends Repository<Enquiries> {
     }
   }
 
-  async getEnquiriesByNo(enquiryNo: number): Promise<EnquiryIF> {
+  async getEnquiryByNo(enquiryNo: number): Promise<Enquiries> {
     try {
       const enquiry = this.createQueryBuilder('enquiries')
         .leftJoin('enquiries.userNo', 'users')
@@ -46,6 +45,7 @@ export class EnquiryRepository extends Repository<Enquiries> {
           'users.no AS userNo',
           'enquiries.title AS title',
           'enquiries.description AS description',
+          `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
         ])
         .where('enquiries.no = :enquiryNo', { enquiryNo })
         .getRawOne();
@@ -53,17 +53,15 @@ export class EnquiryRepository extends Repository<Enquiries> {
       return enquiry;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getEnquiriesByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getEnquiryByNo-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
   //문의사항 생성 관련
-  async createEnquiry(
-    enquiry: EnquiryIF,
-  ): Promise<CreateResponse> {
+  async createEnquiry(enquiry): Promise<ResultSetHeader> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder('eqnuiries')
+      const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
         .into(Enquiries)
         .values(enquiry)
@@ -80,16 +78,16 @@ export class EnquiryRepository extends Repository<Enquiries> {
   //문의사항 수정 관련
   async updateEnquiry(
     enquiryNo: number,
-    enquiry: EnquiryDto,
-  ): Promise<number> {
+    updateEnquiryDto: UpdateEnquiryDto,
+  ): Promise<ResultSetHeader> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
+      const { raw }: UpdateResult = await this.createQueryBuilder()
         .update(Enquiries)
-        .set(enquiry)
+        .set(updateEnquiryDto)
         .where('no = :enquiryNo', { enquiryNo })
         .execute();
 
-      return affected;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateEnquiry-repository: 알 수 없는 서버 에러입니다.`,
@@ -98,20 +96,18 @@ export class EnquiryRepository extends Repository<Enquiries> {
   }
 
   // 문의사항 삭제 관련
-  async deleteEnquiryByNo(enquiryNo: number): Promise<number> {
+  async deleteEnquiry(enquiryNo: number): Promise<ResultSetHeader> {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder(
-        'enquiries',
-      )
+      const { raw }: DeleteResult = await this.createQueryBuilder()
         .delete()
         .from(Enquiries)
         .where('no = :enquiryNo', { enquiryNo })
         .execute();
 
-      return affected;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} deleteEnquiryByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} deleteEnquiry-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
