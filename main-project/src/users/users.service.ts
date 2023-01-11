@@ -38,17 +38,21 @@ export class UsersService {
   ) {}
 
   async createUserProfile(
+    userNo: number,
     createProfileDto: CreateProfileDto,
     profileImage: Express.Multer.File,
   ): Promise<User> {
-    const { userNo } = createProfileDto;
     const user = await this.getUserByNo(userNo);
     if (user.status != UserStatus.NO_PROFILE) {
       throw new BadRequestException(`프로필을 만들 수 없는 유저입니다.`);
     }
 
     await this.validateUserNickname(createProfileDto.nickname);
-    const userProfileNo: number = await this.saveUserProfile(createProfileDto);
+    const userProfileNo: number = await this.saveUserProfile(
+      userNo,
+      createProfileDto,
+    );
+
     const imageUrl = await this.getProfileImageUrl(profileImage, userNo);
     await this.saveProfileImage(userProfileNo, imageUrl);
     await this.updateUserStatus(userNo, UserStatus.NO_CERTIFICATE);
@@ -338,10 +342,14 @@ export class UsersService {
   }
 
   private async saveUserProfile(
+    userNo: number,
     createProfileDto: CreateProfileDto,
   ): Promise<number> {
     const userProfileNo: number =
-      await this.userProfileRepository.createUserProfile(createProfileDto);
+      await this.userProfileRepository.createUserProfile({
+        userNo,
+        ...createProfileDto,
+      });
 
     if (!userProfileNo) {
       throw new InternalServerErrorException(`유저 프로필 생성 오류입니다.`);

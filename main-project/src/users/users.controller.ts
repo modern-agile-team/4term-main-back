@@ -1,4 +1,9 @@
-import { Controller, UploadedFile, UseInterceptors } from '@nestjs/common';
+import {
+  HttpStatus,
+  Controller,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import {
   Body,
   Post,
@@ -9,6 +14,7 @@ import {
   Param,
   Get,
   Query,
+  HttpCode,
 } from '@nestjs/common/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Cron } from '@nestjs/schedule';
@@ -18,6 +24,7 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { SearchedUser, User } from './interface/user.interface';
+import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
 import { UsersService } from './users.service';
 
 @ApiTags('유저 API')
@@ -32,17 +39,17 @@ export class UsersController {
     return { msg: '가입 중단 유저 목록이 삭제되었습니다.' };
   }
 
-  @ApiOperation({
-    summary:
-      '유저 프로필 생성, 프로필 이미지 추가 시 image를 키값으로 form-data 전송',
-  })
-  @UseInterceptors(FileInterceptor('image'))
-  @Post('/profile')
+  @ApiCreateProfile()
+  @UseInterceptors(FileInterceptor('file'))
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Post('/:userNo/profile')
   async createUserProfile(
+    @Param('userNo') userNo: number,
     @UploadedFile() profileImage: Express.Multer.File,
     @Body() createProfileDto: CreateProfileDto,
   ) {
     const user: User = await this.usersService.createUserProfile(
+      userNo,
       createProfileDto,
       profileImage,
     );
