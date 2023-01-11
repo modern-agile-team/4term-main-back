@@ -18,13 +18,14 @@ import {
 } from '@nestjs/common/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Cron } from '@nestjs/schedule';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { SearchedUser, User } from './interface/user.interface';
 import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
+import { ApiUpdateProfile } from './swagger-decorator/update-profile.decorator';
 import { UsersService } from './users.service';
 
 @ApiTags('유저 API')
@@ -41,7 +42,6 @@ export class UsersController {
 
   @ApiCreateProfile()
   @UseInterceptors(FileInterceptor('file'))
-  @HttpCode(HttpStatus.ACCEPTED)
   @Post('/:userNo/profile')
   async createUserProfile(
     @Param('userNo') userNo: number,
@@ -54,10 +54,10 @@ export class UsersController {
       profileImage,
     );
 
-    return { response: { user } };
+    return { msg: '프로필이 등록되었습니다.', response: { user } };
   }
 
-  @ApiOperation({ summary: '유저 프로필 수정' })
+  @ApiUpdateProfile()
   @UseGuards(JwtAuthGuard)
   @Patch('/profile')
   async updateProfile(
@@ -69,7 +69,7 @@ export class UsersController {
       updateProfielDto,
     );
 
-    return { response: { user } };
+    return { msg: '프로필이 수정되었습니다.', response: { user } };
   }
 
   @ApiOperation({
