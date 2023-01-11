@@ -18,13 +18,15 @@ import {
 } from '@nestjs/common/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Cron } from '@nestjs/schedule';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { SearchedUser, User } from './interface/user.interface';
+import { ApiCreateCertificate } from './swagger-decorator/create-certificate.decorator';
 import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
+import { ApiUpdateProfileImage } from './swagger-decorator/update-profile-image.decorator';
 import { ApiUpdateProfile } from './swagger-decorator/update-profile.decorator';
 import { UsersService } from './users.service';
 
@@ -72,10 +74,8 @@ export class UsersController {
     return { msg: '프로필이 수정되었습니다.', response: { user } };
   }
 
-  @ApiOperation({
-    summary: '유저 프로필 이미지 수정',
-  })
-  @UseInterceptors(FileInterceptor('image'))
+  @ApiUpdateProfileImage()
+  @UseInterceptors(FileInterceptor('file'))
   @UseGuards(JwtAuthGuard)
   @Put('/profile-image')
   async updateImage(
@@ -87,24 +87,25 @@ export class UsersController {
       image,
     );
 
-    return { response: { accessToken } };
+    return {
+      msg: '프로필 이미지가 수정되었습니다.',
+      response: { accessToken },
+    };
   }
 
-  @ApiOperation({
-    summary: '유저 학적 정보 추가',
-  })
+  @ApiCreateCertificate()
   @UseInterceptors(FileInterceptor('file'))
   @Post('/:userNo/certificate')
-  async createCollegeRegister(
+  async createUserCertificate(
     @Param('userNo') userNo: number,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    const user: User = await this.usersService.createCollegeCertificate(
+    const user: User = await this.usersService.createUserCertificate(
       userNo,
       file,
     );
 
-    return { response: { user } };
+    return { msg: '유저 학적 파일이 업로드되었습니다.', response: { user } };
   }
 
   @ApiOperation({

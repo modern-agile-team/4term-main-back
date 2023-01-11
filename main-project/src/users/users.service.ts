@@ -86,6 +86,10 @@ export class UsersService {
     userNo: number,
     profileImage: Express.Multer.File,
   ): Promise<string> {
+    if (!profileImage) {
+      throw new BadRequestException('프로필 이미지를 추가해 주세요');
+    }
+
     const { imageUrl, profileNo }: UserImage =
       await this.profileImageRepository.getProfileImage(userNo);
     if (imageUrl) {
@@ -112,7 +116,7 @@ export class UsersService {
     await this.cacheManager.del(userNo);
   }
 
-  async createCollegeCertificate(
+  async createUserCertificate(
     userNo: number,
     file: Express.Multer.File,
   ): Promise<User> {
