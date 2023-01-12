@@ -31,6 +31,7 @@ import { ApiGetUserByNickname } from './swagger-decorator/get-user-by-nickname.d
 import { ApiUpdateCertificate } from './swagger-decorator/update-certificate.decorator';
 import { ApiUpdateProfileImage } from './swagger-decorator/update-profile-image.decorator';
 import { ApiUpdateProfile } from './swagger-decorator/update-profile.decorator';
+import { ApiValidateNickname } from './swagger-decorator/validate-nickname.decorator';
 import { UsersService } from './users.service';
 
 @ApiTags('유저 API')
@@ -162,14 +163,15 @@ export class UsersController {
     return { msg: '유저 닉네임으로 조회 성공', response: { users } };
   }
 
+  @ApiValidateNickname()
   @UseGuards(JwtAuthGuard)
   @Get('/valid-nicknames/:nickname')
-  async isValidUserNickname(nickname: string) {
+  async isValidUserNickname(@Param('nickname') nickname: string) {
     const isValidNickname: boolean = await this.usersService.isValidNickname(
       nickname,
     );
 
-    return { response: { isValidNickname } };
+    return { msg: '닉네임 중복 여부 확인', response: { isValidNickname } };
   }
 
   @UseGuards(JwtAuthGuard)
