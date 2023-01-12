@@ -8,6 +8,7 @@ export class InviteUserDTO {
     example: 1,
   })
   userNo: number;
+
   @IsNotEmpty()
   @IsNumber()
   @ApiProperty({

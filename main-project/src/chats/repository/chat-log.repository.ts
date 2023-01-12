@@ -1,11 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
+import { MessagePayloadDto } from '../dto/message-payload.dto';
 import { ChatLog } from '../entity/chat-log.entity';
-import { MessagePayload } from '../interface/chat.interface';
 
 @EntityRepository(ChatLog)
 export class ChatLogRepository extends Repository<ChatLog> {
-  async saveMessage(messagePayload: MessagePayload): Promise<InsertResult> {
+  async saveMessage(messagePayload: MessagePayloadDto): Promise<InsertResult> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
@@ -27,10 +27,41 @@ export class ChatLogRepository extends Repository<ChatLog> {
   ): Promise<ChatLog[]> {
     try {
       const previousChatLog = await this.createQueryBuilder('chat_log')
-        .select(['chat_log.*'])
+        .select([
+          'chat_log.no AS chatLogNo',
+          'user.no AS userNo',
+          'chat_log.message AS message',
+          'chat_log.sended_time AS sendedTime',
+        ])
+        .leftJoin('chat_log.userNo', 'user')
         .where('chat_log.chat_room_no = :chatRoomNo', { chatRoomNo })
         .andWhere(`chat_log.no < :currentChatLogNo`, { currentChatLogNo })
-        .orderBy('no', 'DESC')
+        .orderBy('chat_log.no', 'DESC')
+        .limit(30)
+        .getRawMany();
+
+      return previousChatLog;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error}: 채팅로그 불러오기(getPreviousChatLog): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getCurrentChatLog(chatRoomNo: number): Promise<ChatLog[]> {
+    try {
+      const previousChatLog: ChatLog[] = await this.createQueryBuilder(
+        'chat_log',
+      )
+        .select([
+          'chat_log.no AS chatLogNo',
+          'user.no AS userNo',
+          'chat_log.message AS message',
+          'chat_log.sended_time AS sendedTime',
+        ])
+        .leftJoin('chat_log.userNo', 'user')
+        .where('chat_log.chat_room_no = :chatRoomNo', { chatRoomNo })
+        .orderBy('chat_log.no', 'DESC')
         .limit(30)
         .getRawMany();
 

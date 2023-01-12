@@ -18,7 +18,7 @@ export class AwsService {
     this.s3 = new AWS.S3();
   }
 
-  async uploadFiles(files: any, chatRoomNo: number) {
+  async uploadChatFiles(files: Express.Multer.File[], chatRoomNo: number) {
     if (!files.length) {
       throw new BadRequestException(`업로드 할 파일이 존재하지 않습니다.`);
     }
@@ -33,14 +33,16 @@ export class AwsService {
       };
     });
 
-    await uploadFileList.map((uploadFile: any) => {
-      this.s3.upload(uploadFile, (err, data) => {
-        if (err) {
-          throw new InternalServerErrorException(
-            '파일 업로드에 실패하였습니다.',
-          );
-        }
-      });
+    uploadFileList.map(async (uploadFile: any) => {
+      await this.s3
+        .upload(uploadFile, (err, data) => {
+          if (err) {
+            throw new InternalServerErrorException(
+              '파일 업로드에 실패하였습니다.',
+            );
+          }
+        })
+        .promise();
     });
 
     const fileUrlList: string[] = uploadFileList.map((file: any) => {
@@ -48,5 +50,120 @@ export class AwsService {
     });
 
     return fileUrlList;
+  }
+
+  async uploadImages(
+    files: Express.Multer.File[],
+    module: string,
+  ): Promise<string[]> {
+    if (!files.length) {
+      throw new BadRequestException(`업로드 할 파일이 존재하지 않습니다.`);
+    }
+    const uploadFileList: object[] = files.map((file) => {
+      const key = `${module}/${Date.now()}_${file.originalname}`;
+
+      return {
+        Bucket: process.env.AWS_BUCKET_NAME,
+        ACL: 'public-read',
+        Key: key,
+        Body: file.buffer,
+      };
+    });
+
+    uploadFileList.map((uploadFile: any) => {
+      this.s3
+        .upload(uploadFile, (err, data) => {
+          if (err) {
+            throw new InternalServerErrorException(
+              '파일 업로드에 실패하였습니다.',
+            );
+          }
+        })
+        .promise();
+    });
+
+    const fileUrlList: string[] = uploadFileList.map((file: any) => {
+      return process.env.AWS_BUCKET_LINK + file.Key;
+    });
+
+    return fileUrlList;
+  }
+
+  async deleteFiles(imagesUrlList: string[]): Promise<void> {
+    const keys = imagesUrlList.map((el: string) => {
+      let url = el.split('.com/');
+
+      return { Key: url[1] };
+    });
+
+    const params = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Delete: {
+        Objects: keys,
+        Quiet: false,
+      },
+    };
+
+    await this.s3
+      .deleteObjects(params, function (err, data) {
+        if (err) console.log(err, err.stack);
+        else console.log(data);
+      })
+      .promise();
+  }
+
+  async uploadProfileImage(
+    userNo: number,
+    image: Express.Multer.File,
+  ): Promise<string> {
+    const key = `user-profile/${userNo}/${Date.now()}_${
+      image.originalname
+    }`.replace(/ /g, '');
+
+    return await this.uploadFile(image, key);
+  }
+
+  async deleteFile(fileUrl: string): Promise<void> {
+    const file = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      Key: fileUrl.replace(process.env.AWS_BUCKET_LINK, ''),
+    };
+
+    this.s3.deleteObject(file, (err) => {
+      if (err) {
+        throw new InternalServerErrorException('파일 삭제에 실패하였습니다.');
+      }
+    });
+  }
+
+  async uploadCertificate(
+    userNo: number,
+    file: Express.Multer.File,
+  ): Promise<string> {
+    const key = `user-certificate/${userNo}/${Date.now()}_${
+      file.originalname
+    }`.replace(/ /g, '');
+
+    return await this.uploadFile(file, key);
+  }
+
+  private async uploadFile(
+    file: Express.Multer.File,
+    key: string,
+  ): Promise<string> {
+    const fileDetail = {
+      Bucket: process.env.AWS_BUCKET_NAME,
+      ACL: 'public-read',
+      Key: key,
+      Body: file.buffer,
+    };
+
+    this.s3.upload(fileDetail, (error) => {
+      if (error) {
+        throw new InternalServerErrorException('파일 업로드에 실패하였습니다.');
+      }
+    });
+
+    return process.env.AWS_BUCKET_LINK + key;
   }
 }
