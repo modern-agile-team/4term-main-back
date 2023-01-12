@@ -7,20 +7,17 @@ import {
   ParseIntPipe,
   Patch,
   Post,
-  Query,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AnnouncesService } from './announces.service';
 import { AnnouncesDto } from './dto/announce.dto';
-import { AnnouncesFilterDto } from './dto/announce-filter.dto';
 import { Announces } from './entity/announce.entity';
 import { APIResponse } from 'src/common/interface/interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AwsService } from 'src/aws/aws.service';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
-import { AnnouncesImages } from './entity/announce-images.entity';
 
 @Controller('announces')
 @ApiTags('공지사항 API')
@@ -32,15 +29,12 @@ export class AnnouncesController {
   //Get Methods
   @Get()
   @ApiOperation({
-    summary: '공지사항 필터링 API',
-    description: '공지사항을 필터링을 통해 내림차순으로 조회한다.',
+    summary: '공지사항 전체조회 API',
+    description: '공지사항을 내림차순으로 전체 조회한다.',
   })
-  async getAllAnnounces(
-    @Query() filter: AnnouncesFilterDto,
-  ): Promise<APIResponse> {
-    const announces: Announces[] = await this.announcesService.getAnnounces(
-      filter,
-    );
+  async getAllAnnounces(): Promise<APIResponse> {
+    const announces: Announces[] =
+      await this.announcesService.getAllAnnounces();
 
     return { response: announces };
   }
@@ -53,10 +47,11 @@ export class AnnouncesController {
   async getAnnouncesByNo(
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
   ): Promise<APIResponse> {
-    const announcement: Announces =
-      await this.announcesService.getAnnouncesByNo(announcesNo);
+    const announces: Announces = await this.announcesService.getAnnouncesByNo(
+      announcesNo,
+    );
 
-    return { response: announcement };
+    return { response: announces };
   }
 
   @Get('/images/:announcesNo')
@@ -67,11 +62,11 @@ export class AnnouncesController {
   async getAnnouncesImages(
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
   ): Promise<APIResponse> {
-    const imageUrl: string[] = await this.announcesService.getAnnouncesImages(
+    const images: string[] = await this.announcesService.getAnnouncesImages(
       announcesNo,
     );
 
-    return { response: { imageUrl } };
+    return { response: { images } };
   }
 
   // Post Methods
@@ -83,14 +78,10 @@ export class AnnouncesController {
   @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
   async createAnnounces(
     @Body() announcesDto: AnnouncesDto,
-    @TransactionDecorator() manager,
   ): Promise<APIResponse> {
-    const Announces: string = await this.announcesService.createAnnounces(
-      manager,
-      announcesDto,
-    );
+    await this.announcesService.createAnnounces(announcesDto);
 
-    return { response: { Announces } };
+    return { response: { msg: '공지사항 생성 성공' } };
   }
 
   @Post('/images/:announcesNo')
@@ -103,16 +94,14 @@ export class AnnouncesController {
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
-    const uploadedImagesUrlList = await this.awsService.uploadAnnouncesFiles(
-      files,
-    );
+    const imageURLs = await this.awsService.uploadImages(files, 'announces');
 
     await this.announcesService.uploadAnnouncesimagesUrl(
       announcesNo,
-      uploadedImagesUrlList,
+      imageURLs,
     );
 
-    return { response: { uploadedImagesUrlList } };
+    return { response: { msg: '이미지 업로드 성공' } };
   }
 
   // Patch Methods
@@ -122,17 +111,12 @@ export class AnnouncesController {
     description: '입력한 정보로 공지사항을 수정한다.',
   })
   async updateAnnounces(
-    @TransactionDecorator() manager,
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
     @Body() announcesDto: AnnouncesDto,
   ): Promise<APIResponse> {
-    const announces: string = await this.announcesService.updateAnnounces(
-      manager,
-      announcesNo,
-      announcesDto,
-    );
+    await this.announcesService.updateAnnounces(announcesNo, announcesDto);
 
-    return { response: { announces } };
+    return { response: { msg: '공지사항 수정 성공' } };
   }
 
   // Delete Methods
@@ -148,14 +132,22 @@ export class AnnouncesController {
       announcesNo,
     );
 
-    return { response: { announces } };
+    await this.announcesService.deleteAnnouncesImages(announcesNo);
+
+    const imagesUrlList = await this.announcesService.getAnnouncesImages(
+      announcesNo,
+    );
+
+    await this.awsService.deleteFiles(imagesUrlList);
+
+    return { response: { msg: '공지사항 삭제 성공' } };
   }
 
   // Delete Methods
   @Delete('/images/:announcesNo')
   @ApiOperation({
-    summary: '공지사항 삭제 API',
-    description: '공지사항 번호를 사용해 공지사항을 삭제한다.',
+    summary: '공지사항 이미지 삭제 API',
+    description: '공지사항 번호를 사용해 이미지를 삭제한다.',
   })
   async deleteAnnouncesimages(
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
@@ -166,8 +158,8 @@ export class AnnouncesController {
 
     await this.announcesService.deleteAnnouncesImages(announcesNo);
 
-    await this.awsService.deleteFiles(imagesUrlList, 'announces');
+    await this.awsService.deleteFiles(imagesUrlList);
 
-    return { response: { true: true } };
+    return { response: { msg: '이미지 삯제 성공' } };
   }
 }

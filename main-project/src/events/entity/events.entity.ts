@@ -4,16 +4,14 @@ import {
   CreateDateColumn,
   DeleteDateColumn,
   Entity,
-  JoinColumn,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { AnnouncesImages } from './announce-images.entity';
+import { EventImages } from './events-image.entity';
 
-@Entity('announces')
-export class Announces extends BaseEntity {
+@Entity('events')
+export class Events extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
@@ -32,9 +30,6 @@ export class Announces extends BaseEntity {
   @DeleteDateColumn({ name: 'deleted_date' })
   deletedDate: Date;
 
-  @OneToMany(
-    (type) => AnnouncesImages,
-    (announcesImages) => announcesImages.announcesNo,
-  )
-  announcesImages: AnnouncesImages;
+  @OneToMany((type) => EventImages, (eventImages) => eventImages.eventNo)
+  eventImages: EventImages;
 }

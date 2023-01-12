@@ -52,12 +52,15 @@ export class AwsService {
     return fileUrlList;
   }
 
-  async uploadAnnouncesFiles(files: Express.Multer.File[]): Promise<string[]> {
+  async uploadImages(
+    files: Express.Multer.File[],
+    module: string,
+  ): Promise<string[]> {
     if (!files.length) {
       throw new BadRequestException(`업로드 할 파일이 존재하지 않습니다.`);
     }
     const uploadFileList: object[] = files.map((file) => {
-      const key = `announces/${Date.now()}_${file.originalname}`;
+      const key = `${module}/${Date.now()}_${file.originalname}`;
 
       return {
         Bucket: process.env.AWS_BUCKET_NAME,
@@ -86,7 +89,7 @@ export class AwsService {
     return fileUrlList;
   }
 
-  async deleteFiles(imagesUrlList: string[], table: string): Promise<void> {
+  async deleteFiles(imagesUrlList: string[]): Promise<void> {
     const keys = imagesUrlList.map((el: string) => {
       let url = el.split('.com/');
 
