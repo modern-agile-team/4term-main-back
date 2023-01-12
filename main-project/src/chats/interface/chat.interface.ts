@@ -1,5 +1,3 @@
-import { IsNumber } from 'class-validator';
-
 export interface MeetingMembersList {
   hostUserNo: number[];
   guestUserNo: number[];
