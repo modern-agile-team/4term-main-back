@@ -1,9 +1,4 @@
-import {
-  HttpStatus,
-  Controller,
-  UploadedFile,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, UploadedFile, UseInterceptors } from '@nestjs/common';
 import {
   Body,
   Post,
@@ -14,11 +9,10 @@ import {
   Param,
   Get,
   Query,
-  HttpCode,
 } from '@nestjs/common/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Cron } from '@nestjs/schedule';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CreateProfileDto } from './dto/create-profile.dto';
@@ -27,6 +21,7 @@ import { SearchedUser, User } from './interface/user.interface';
 import { ApiConfirmUser } from './swagger-decorator/confirm-user.decorator';
 import { ApiCreateCertificate } from './swagger-decorator/create-certificate.decorator';
 import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
+import { ApiDenyUser } from './swagger-decorator/deny-user.decorator';
 import { ApiGetUserByNickname } from './swagger-decorator/get-user-by-nickname.decorator';
 import { ApiUpdateCertificate } from './swagger-decorator/update-certificate.decorator';
 import { ApiUpdateProfileImage } from './swagger-decorator/update-profile-image.decorator';
@@ -130,7 +125,7 @@ export class UsersController {
   }
 
   @ApiOperation({
-    summary: '회원 탈퇴',
+    summary: '회원 탈퇴(미정)',
   })
   @UseGuards(JwtAuthGuard)
   @Delete()
@@ -174,6 +169,7 @@ export class UsersController {
     return { msg: '닉네임 중복 여부 확인', response: { isValidNickname } };
   }
 
+  @ApiDenyUser()
   @UseGuards(JwtAuthGuard)
   @Delete('/:userNo/certificate')
   async denyUserCertificate(
