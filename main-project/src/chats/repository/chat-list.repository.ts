@@ -40,9 +40,9 @@ export class ChatListRepository extends Repository<ChatList> {
     userNo: number,
   ): Promise<ChatRoomUser> {
     try {
-      const result = await this.createQueryBuilder('chat_list')
+      const result: ChatRoomUser = await this.createQueryBuilder('chat_list')
         .leftJoin('chat_list.chatUserNo', 'chatUser')
-        .leftJoin('chatUser.chatUserNo', 'user')
+        .leftJoin('chatUser.userNo', 'user')
         .leftJoin('user.userProfileNo', 'userProfile')
         .select([
           'chat_list.room_name AS roomName',

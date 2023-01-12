@@ -10,7 +10,7 @@ import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
-import { Connection, EntityManager, getConnection, QueryRunner } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { AcceptInvitationDTO } from './dto/accept-invitation.dto';
 import { GetChatLogDTO } from './dto/get-chat-log.dto';
 import { InviteUserDTO } from './dto/invite-user.dto';
