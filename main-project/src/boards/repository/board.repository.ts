@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import { Users } from 'src/users/entity/user.entity';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import {
@@ -10,7 +11,7 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { BoardFilterDto } from '../dto/board-filter.dto';
-import { BoardDto } from '../dto/board.dto';
+import { CreateBoardDto } from '../dto/board.dto';
 import { Boards } from '../entity/board.entity';
 import { Board } from '../interface/boards.interface';
 
@@ -131,16 +132,16 @@ export class BoardRepository extends Repository<Boards> {
   //게시글 생성 관련
   async createBoard(
     userNo: number,
-    newBoard: Partial<BoardDto>,
-  ): Promise<number> {
+    newBoard: Partial<CreateBoardDto>,
+  ): Promise<ResultSetHeader> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder('boards')
+      const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
         .into(Boards)
         .values({ userNo, ...newBoard })
         .execute();
 
-      return raw.insertId;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
@@ -151,16 +152,16 @@ export class BoardRepository extends Repository<Boards> {
   //게시글 수정 관련
   async updateBoard(
     boardNo: number,
-    newBoard: Partial<BoardDto>,
-  ): Promise<number> {
+    newBoard: Partial<CreateBoardDto>,
+  ): Promise<ResultSetHeader> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder('boards')
+      const { raw }: UpdateResult = await this.createQueryBuilder('boards')
         .update(Boards)
         .set(newBoard)
         .where('no = :boardNo', { boardNo })
         .execute();
 
-      return affected;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
@@ -184,15 +185,15 @@ export class BoardRepository extends Repository<Boards> {
   }
 
   // 게시글 삭제 관련
-  async deleteBoard(boardNo: number): Promise<number> {
+  async deleteBoard(boardNo: number): Promise<ResultSetHeader> {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder('boards')
+      const { raw }: DeleteResult = await this.createQueryBuilder('boards')
         .delete()
         .from(Boards)
         .where('no = :boardNo', { boardNo })
         .execute();
 
-      return affected;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,

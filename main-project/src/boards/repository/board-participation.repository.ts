@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { BoardGuests } from '../entity/board-guest.entity';
 import { BoardParticipation } from '../entity/board-participation.entity';
@@ -29,7 +30,7 @@ export class BoardParticipationRepository extends Repository<BoardParticipation>
   // 생성
   async createParticipation(
     participation: Participation,
-  ): Promise<CreateResponse> {
+  ): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
         'board_participation',
