@@ -1,15 +1,15 @@
 import { IsNotEmpty, IsNumber } from 'class-validator';
 
 export class AcceptInvitationDTO {
-  @IsNotEmpty()
   @IsNumber()
-  userNo: number;
+  @IsNotEmpty()
+  inviterNo: number;
 
-  @IsNotEmpty()
   @IsNumber()
+  @IsNotEmpty()
   targetUserNo: number;
 
-  @IsNotEmpty()
   @IsNumber()
+  @IsNotEmpty()
   type: number;
 }
