@@ -1,5 +1,10 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { UserStatus } from 'src/common/configs/user-status.config';
 
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
@@ -23,6 +28,22 @@ export function ApiUpdateProfile() {
           },
         },
       ),
+    ),
+    ApiBadRequestResponse(
+      SwaggerApiResponse.exception([
+        {
+          name: 'noContent',
+          example: { msg: '변경 사항이 하나 이상 있어야 합니다.' },
+        },
+        {
+          name: 'userNicknameFormatMismatch',
+          example: { msg: '닉네임에 공백이 포함되어 있습니다.' },
+        },
+        {
+          name: 'nicknameAlreadyUsed',
+          example: { msg: '이미 사용 중인 닉네임입니다.' },
+        },
+      ]),
     ),
   );
 }

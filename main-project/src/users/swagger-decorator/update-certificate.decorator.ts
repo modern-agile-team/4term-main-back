@@ -1,8 +1,9 @@
 import { applyDecorators } from '@nestjs/common';
 import {
-  ApiBearerAuth,
+  ApiBadRequestResponse,
   ApiBody,
   ApiConsumes,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
@@ -45,6 +46,23 @@ export function ApiUpdateCertificate() {
           },
         },
       ),
+    ),
+    ApiBadRequestResponse(
+      SwaggerApiResponse.exception([
+        { name: 'noMajor', example: { msg: '학과를 입력해 주세요' } },
+        {
+          name: 'userStatusMismatch',
+          example: { msg: '학적 정보를 수정할 수 없는 유저입니다.' },
+        },
+      ]),
+    ),
+    ApiNotFoundResponse(
+      SwaggerApiResponse.exception([
+        {
+          name: 'certificateNotFound',
+          example: { msg: '학적 인증 정보가 없는 유저입니다.' },
+        },
+      ]),
     ),
   );
 }

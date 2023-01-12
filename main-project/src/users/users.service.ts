@@ -370,7 +370,7 @@ export class UsersService {
     const user: Users = await this.userRepository.getUserByNo(userNo);
 
     if (!user) {
-      throw new BadRequestException(`존재하지 않는 유저 번호입니다.`);
+      throw new NotFoundException(`존재하지 않는 유저 번호입니다.`);
     }
 
     return user;

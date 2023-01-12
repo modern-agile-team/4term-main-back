@@ -1,5 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
@@ -41,6 +42,14 @@ export function ApiUpdateProfileImage() {
           },
         },
       ),
+    ),
+    ApiBadRequestResponse(
+      SwaggerApiResponse.exception([
+        {
+          name: 'noProfileImage',
+          example: { msg: '프로필 이미지를 추가해 주세요' },
+        },
+      ]),
     ),
   );
 }

@@ -1,7 +1,9 @@
 import { applyDecorators } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBody,
   ApiConsumes,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
@@ -55,6 +57,30 @@ export function ApiCreateProfile() {
         '프로필이 등록되었습니다.',
         { user: { userNo: 1, status: UserStatus.NO_CERTIFICATE } },
       ),
+    ),
+    ApiNotFoundResponse(
+      SwaggerApiResponse.exception([
+        {
+          name: 'userNotFound',
+          example: { msg: `존재하지 않는 유저 번호입니다.` },
+        },
+      ]),
+    ),
+    ApiBadRequestResponse(
+      SwaggerApiResponse.exception([
+        {
+          name: 'userStatusMismatch',
+          example: { msg: `프로필을 만들 수 없는 유저입니다.` },
+        },
+        {
+          name: 'userNicknameFormatMismatch',
+          example: { msg: '닉네임에 공백이 포함되어 있습니다.' },
+        },
+        {
+          name: 'nicknameAlreadyUsed',
+          example: { msg: '이미 사용 중인 닉네임입니다.' },
+        },
+      ]),
     ),
   );
 }
