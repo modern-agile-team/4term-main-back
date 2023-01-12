@@ -27,6 +27,7 @@ import { SearchedUser, User } from './interface/user.interface';
 import { ApiConfirmUser } from './swagger-decorator/confirm-user.decorator';
 import { ApiCreateCertificate } from './swagger-decorator/create-certificate.decorator';
 import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
+import { ApiGetUserByNickname } from './swagger-decorator/get-user-by-nickname.decorator';
 import { ApiUpdateCertificate } from './swagger-decorator/update-certificate.decorator';
 import { ApiUpdateProfileImage } from './swagger-decorator/update-profile-image.decorator';
 import { ApiUpdateProfile } from './swagger-decorator/update-profile.decorator';
@@ -150,9 +151,7 @@ export class UsersController {
     return { msg: '유저 학적 정보가 수락되었습니다.' };
   }
 
-  @ApiOperation({
-    summary: '닉네임으로 유저 조회',
-  })
+  @ApiGetUserByNickname()
   @UseGuards(JwtAuthGuard)
   @Get()
   async getUserByNickname(@Query('nickname') nickname: string) {
@@ -160,7 +159,7 @@ export class UsersController {
       nickname,
     );
 
-    return { response: { users } };
+    return { msg: '유저 닉네임으로 조회 성공', response: { users } };
   }
 
   @UseGuards(JwtAuthGuard)

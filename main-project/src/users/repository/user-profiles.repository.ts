@@ -1,6 +1,7 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
 import { Payload } from 'src/auth/interface/auth.interface';
+import { UserStatus } from 'src/common/configs/user-status.config';
 import {
   EntityRepository,
   InsertResult,
@@ -82,6 +83,7 @@ export class UserProfilesRepository extends Repository<UserProfile> {
       const searchedUsers: SearchedUser[] = await this.createQueryBuilder(
         'user_profiles',
       )
+        .leftJoin('user_profiles.userNo', 'users')
         .leftJoin('user_profiles.profileImage', 'profileImages')
         .select([
           'user_profiles.userNo AS userNo',
@@ -91,6 +93,7 @@ export class UserProfilesRepository extends Repository<UserProfile> {
         .where('user_profiles.nickname LIKE :nickname', {
           nickname: `%${nickname}%`,
         })
+        .andWhere('users.status = :status', { status: UserStatus.CONFIRMED })
         .getRawMany();
 
       return searchedUsers;
