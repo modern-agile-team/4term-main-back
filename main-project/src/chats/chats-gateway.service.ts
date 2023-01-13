@@ -6,22 +6,30 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Socket } from 'socket.io';
+import { Board } from 'src/boards/interface/boards.interface';
 import { BoardRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
-import { Connection, getConnection, InsertResult, QueryRunner } from 'typeorm';
+import {
+  Connection,
+  EntityManager,
+  getConnection,
+  InsertResult,
+  QueryRunner,
+} from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { InitSocketDto } from './dto/init-socket.dto';
 import { JoinChatRoomDto } from './dto/join-chat.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
+import { ChatList } from './entity/chat-list.entity';
 import { ChatLog } from './entity/chat-log.entity';
 import {
+  ChatRoomToSet,
   ChatRoom,
-  ChatRoomList,
   ChatRoomUser,
   ChatRoomUsers,
   ChatUserInfo,
-  CreateChat,
+  ChatToCreate,
   FileUrlDetail,
 } from './interface/chat.interface';
 import { ChatFileUrlsRepository } from './repository/chat-file-urls.repository';
@@ -48,135 +56,90 @@ export class ChatsGatewayService {
     private readonly chatFileUrlsRepository: ChatFileUrlsRepository,
   ) {}
 
-  async initSocket(
-    socket,
-    messagePayload: InitSocketDto,
-  ): Promise<ChatRoomList[]> {
+  async initSocket(socket, messagePayload: InitSocketDto): Promise<ChatRoom[]> {
     const { userNo } = messagePayload;
-    const chatRoomList = await this.getChatRoomListByUserNo(
-      Object.values(userNo),
-    );
-    if (chatRoomList) {
-      chatRoomList.forEach((el) => {
-        socket.join(`${el.chatRoomNo}`);
+    const chatRooms: ChatRoom[] = await this.getChatRoomsByUserNo(userNo);
+    if (chatRooms) {
+      chatRooms.forEach((chatRoom) => {
+        socket.join(`${chatRoom.chatRoomNo}`);
       });
     }
 
-    return chatRoomList;
+    return chatRooms;
   }
 
   async createRoom(
+    manager: EntityManager,
     socket: Socket,
     messagePayload: CreateChatDto,
-  ): Promise<number> {
-    const connection: Connection = getConnection();
-    const queryRunner: QueryRunner = connection.createQueryRunner();
-
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
+  ): Promise<ChatRoom> {
     const { boardNo } = messagePayload;
 
-    try {
-      await this.checkChatRoomExists(boardNo);
+    await this.checkChatRoomExists(boardNo);
 
-      const { roomName, hostUserNo, guestUserNo } =
-        await this.getUsersByBoardNo(boardNo);
+    const { roomName, hostUserNo, guestUserNo } = await this.getUsersByBoardNo(
+      boardNo,
+    );
+    const chatRoomNo: number = await this.createChatRoomByBoardNo(manager, {
+      boardNo,
+      roomName,
+    });
 
-      const chatRoomNo: number = await this.createRoomByBoardNo(queryRunner, {
-        boardNo,
-        roomName,
-      });
+    await this.setChatRoom(manager, {
+      users: hostUserNo,
+      userType: UserType.HOST,
+      chatRoomNo,
+    });
 
-      await this.setChatRoom(queryRunner, {
-        users: hostUserNo,
-        userType: UserType.HOST,
-        chatRoomNo,
-      });
+    await this.setChatRoom(manager, {
+      users: guestUserNo,
+      userType: UserType.GUEST,
+      chatRoomNo,
+    });
 
-      await this.setChatRoom(queryRunner, {
-        users: guestUserNo,
-        userType: UserType.GUEST,
-        chatRoomNo,
-      });
+    socket.join(`${chatRoomNo}`);
 
-      await queryRunner.commitTransaction();
-
-      socket.join(`${chatRoomNo}`);
-      return chatRoomNo;
-    } catch (error) {
-      await queryRunner?.rollbackTransaction();
-
-      throw error;
-    } finally {
-      await queryRunner?.release();
-    }
+    return { chatRoomNo, roomName };
   }
 
   private async setChatRoom(
-    queryRunner: QueryRunner,
+    manager: EntityManager,
     chatRoomUsers: ChatRoomUsers,
   ): Promise<void> {
-    const { users, userType, chatRoomNo }: ChatRoomUsers = chatRoomUsers;
+    const { userType, chatRoomNo }: ChatRoomUsers = chatRoomUsers;
+    const users = chatRoomUsers.users.split(',').map(Number);
 
-    const userList: number[] = users.split(',').map((item) => {
-      return parseInt(item);
-    });
-
-    const chatUserList: ChatUserInfo[] = userList.reduce((values, userNo) => {
+    const chatUsers: ChatUserInfo[] = users.reduce((values, userNo) => {
       values.push({ chatRoomNo, userNo, userType });
 
       return values;
     }, []);
 
-    await this.setChatRoomUsers(queryRunner, chatUserList);
+    await this.setChatRoomUsers(manager, chatUsers);
   }
 
   private async checkChatRoomExists(boardNo): Promise<void> {
-    const boardExists = await this.boardRepository.getBoardByNo(boardNo);
-    if (!boardExists.no) {
+    const board: Board = await this.boardRepository.getBoardByNo(boardNo);
+    if (!board.no) {
       throw new NotFoundException(`게시물을 찾지 못했습니다.`);
     }
 
-    const roomExists = await this.chatListRepository.checkRoomExistByBoardNo(
-      boardNo,
-    );
-    if (roomExists) {
+    const chatRoom: ChatList =
+      await this.chatListRepository.checkRoomExistByBoardNo(boardNo);
+    if (chatRoom) {
       throw new BadRequestException('이미 생성된 채팅방 입니다.');
     }
   }
 
-  async joinRoom(socket, chat: JoinChatRoomDto): Promise<ChatLog[]> {
-    const { userNo, chatRoomNo } = chat;
-    const user: ChatRoomUser = await this.chatListRepository.isUserInChatRoom(
-      chatRoomNo,
+  async getChatRoomsByUserNo(userNo: number): Promise<ChatRoom[]> {
+    const chatRooms: ChatRoom[] = await this.chatUsersRepository.getChatRooms(
       userNo,
     );
-    if (!user) {
-      throw new BadRequestException('채팅방에 유저의 정보가 없습니다.');
-    }
-
-    socket.join(`${user.chatRoomNo}`);
-
-    //추후 로그 또는 삭제
-    socket.broadcast.to(`${user.chatRoomNo}`).emit('join-room', {
-      username: user.nickname,
-      msg: `${user.nickname}님이 접속하셨습니다.`,
-    });
-
-    const recentChatLog = this.chatLogRepository.getRecentChatLog(chatRoomNo);
-
-    return recentChatLog;
-  }
-
-  async getChatRoomListByUserNo(userNo): Promise<ChatRoomList[]> {
-    const chatList: ChatRoomList[] =
-      await this.chatUsersRepository.getChatRoomList(userNo);
-    if (!chatList.length) {
+    if (!chatRooms.length) {
       throw new BadRequestException('채팅방이 존재하지 않습니다.');
     }
 
-    return chatList;
+    return chatRooms;
   }
 
   async sendChat(socket, messagePayload: MessagePayloadDto): Promise<void> {
@@ -274,10 +237,9 @@ export class ChatsGatewayService {
     }
   }
 
-  private async getUsersByBoardNo(boardNo: number): Promise<ChatRoom> {
-    const chatInfo: ChatRoom = await this.boardRepository.getUserListByBoardNo(
-      boardNo,
-    );
+  private async getUsersByBoardNo(boardNo: number): Promise<ChatRoomToSet> {
+    const chatInfo: ChatRoomToSet =
+      await this.boardRepository.getUserListByBoardNo(boardNo);
 
     if (!chatInfo) {
       throw new NotFoundException('유저 조회 오류입니다.');
@@ -287,38 +249,39 @@ export class ChatsGatewayService {
     return chatRoom;
   }
 
-  private setChatRoomName(chatRoom: ChatRoom): ChatRoom {
+  private setChatRoomName(chatRoom: ChatRoomToSet): ChatRoomToSet {
     chatRoom.roomName = chatRoom.guestNickname + ',' + chatRoom.hostNickname;
 
     return chatRoom;
   }
 
   private async setChatRoomUsers(
-    queryRunner: QueryRunner,
+    manager: EntityManager,
     roomUsers: ChatUserInfo[],
   ): Promise<number> {
-    const affectedRows: number = await queryRunner.manager
+    const insertResult: number = await manager
       .getCustomRepository(ChatUsersRepository)
       .setChatRoomUsers(roomUsers);
-    if (!affectedRows) {
+
+    if (!insertResult) {
       throw new BadRequestException('채팅방 유저정보 생성 오류입니다.');
     }
 
-    return affectedRows;
+    return insertResult;
   }
 
-  private async createRoomByBoardNo(
-    queryRunner: QueryRunner,
-    createChat: CreateChat,
+  private async createChatRoomByBoardNo(
+    manager: EntityManager,
+    chatRoom: ChatToCreate,
   ): Promise<number> {
-    const insertId: number = await queryRunner.manager
+    const createResult: number = await manager
       .getCustomRepository(ChatListRepository)
-      .createChatRoom(createChat);
-    if (!insertId) {
+      .createChatRoom(chatRoom);
+    if (!createResult) {
       throw new InternalServerErrorException(`채팅방 생성 오류입니다.`);
     }
 
-    return insertId;
+    return createResult;
   }
 
   private async checkChatRoom(
