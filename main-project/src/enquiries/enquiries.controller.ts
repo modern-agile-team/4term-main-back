@@ -39,7 +39,7 @@ export class EnquiriesController {
     const eunqiries: Enquiries[] =
       await this.enquiriesService.getAllEnquiries();
 
-    return { response: { eunqiries } };
+    return { response: eunqiries };
   }
 
   @Get('/reply')
@@ -55,6 +55,7 @@ export class EnquiriesController {
   }
 
   @Get('/:enquiryNo')
+  @UseGuards(JwtAuthGuard)
   @ApiOperation({
     summary: '문의사항 상세 조회 API',
     description: '문의 번호를 통해 문의사항을 상세 조회한다.',

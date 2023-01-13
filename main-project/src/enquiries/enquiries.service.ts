@@ -154,12 +154,13 @@ export class EnquiriesService {
     }
   }
 
-  //게시글 수정 관련
+  //Patch Methods
   async updateEnquiry(
     enquiryNo: number,
     updateEnquiryDto: UpdateEnquiryDto,
   ): Promise<void> {
     await this.getEnquiryByNo(enquiryNo);
+
     const { affectedRows }: ResultSetHeader =
       await this.enquirysRepository.updateEnquiry(enquiryNo, updateEnquiryDto);
 

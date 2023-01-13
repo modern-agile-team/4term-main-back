@@ -7,16 +7,14 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { UpdateEnquiryDto } from '../dto/update-enquiry.dto';
 import { EnquiryImages } from '../entity/enquiry-images.entity';
-import { Enquiries } from '../entity/enquiry.entity';
 
 @EntityRepository(EnquiryImages)
 export class EnquiryImagesRepository extends Repository<EnquiryImages> {
-  // 문의사항 조회 관련
-  async getAllEnquiryImages(): Promise<Enquiries[]> {
+  //Get Methods
+  async getAllEnquiryImages(): Promise<EnquiryImages[]> {
     try {
-      const enquiries = await this.createQueryBuilder()
+      const images = await this.createQueryBuilder()
         .leftJoin('enquiries.userNo', 'users')
         .select([
           'enquiries.no AS no',
@@ -28,7 +26,7 @@ export class EnquiryImagesRepository extends Repository<EnquiryImages> {
         .orderBy('no', 'DESC')
         .getRawMany();
 
-      return enquiries;
+      return images;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getAllEnquiryImages-repository: 알 수 없는 서버 에러입니다.`,
@@ -36,9 +34,9 @@ export class EnquiryImagesRepository extends Repository<EnquiryImages> {
     }
   }
 
-  async getEnquiryImagesByNo(enquiryNo: number): Promise<Enquiries> {
+  async getEnquiryImagesByNo(enquiryNo: number): Promise<EnquiryImages> {
     try {
-      const enquiry = await this.createQueryBuilder('enquiries')
+      const images = await this.createQueryBuilder('enquiries')
         .leftJoin('enquiries.userNo', 'users')
         .select([
           'enquiries.no AS no',
@@ -50,7 +48,7 @@ export class EnquiryImagesRepository extends Repository<EnquiryImages> {
         .where('enquiries.no = :enquiryNo', { enquiryNo })
         .getRawOne();
 
-      return enquiry;
+      return images;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getEnquiryImagesByNo-repository: 알 수 없는 서버 에러입니다.`,
@@ -63,7 +61,7 @@ export class EnquiryImagesRepository extends Repository<EnquiryImages> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
-        .into(Enquiries)
+        .into(EnquiryImages)
         .values(images)
         .execute();
 
@@ -75,12 +73,12 @@ export class EnquiryImagesRepository extends Repository<EnquiryImages> {
     }
   }
 
-  // 문의사항 삭제 관련
+  //Delete Methods
   async deleteEnquiryImages(enquiryNo: number): Promise<ResultSetHeader> {
     try {
       const { raw }: DeleteResult = await this.createQueryBuilder()
         .delete()
-        .from(Enquiries)
+        .from(EnquiryImages)
         .where('no = :enquiryNo', { enquiryNo })
         .execute();
 

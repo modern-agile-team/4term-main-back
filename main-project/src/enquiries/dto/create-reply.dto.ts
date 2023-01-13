@@ -11,7 +11,7 @@ export class CreateReplyDto {
 
   @ApiProperty({
     example: '이 과팅의 파괴를 막기 위해, 이 과팅의 평화를 지키기 위해!',
-    description: '문의사항 내용',
+    description: '답변 내용',
   })
   @IsString()
   @IsNotEmpty()
