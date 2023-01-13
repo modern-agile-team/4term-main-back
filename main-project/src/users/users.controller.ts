@@ -18,11 +18,12 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { MajorDto } from './dto/user-major.dto';
-import { SearchedUser, User } from './interface/user.interface';
+import { EntireProfile, SearchedUser, User } from './interface/user.interface';
 import { ApiConfirmUser } from './swagger-decorator/confirm-user.decorator';
 import { ApiCreateCertificate } from './swagger-decorator/create-certificate.decorator';
 import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
 import { ApiDenyUser } from './swagger-decorator/deny-user.decorator';
+import { ApiGetUserProfile } from './swagger-decorator/get-profile.decorator';
 import { ApiGetUserByNickname } from './swagger-decorator/get-user-by-nickname.decorator';
 import { ApiUpdateCertificate } from './swagger-decorator/update-certificate.decorator';
 import { ApiUpdateMajor } from './swagger-decorator/update-major.decorator';
@@ -197,5 +198,16 @@ export class UsersController {
     await this.usersService.updateUserMajor(userNo, major, file);
 
     return { msg: '학과 변경 신청이 완료되었습니다.' };
+  }
+
+  @ApiGetUserProfile()
+  @UseGuards(JwtAuthGuard)
+  @Get('/:userNo/profile')
+  async getUserProfile(@Param('userNo') userNo: number) {
+    const userProfile: EntireProfile = await this.usersService.getUserProfile(
+      userNo,
+    );
+
+    return { msg: '프로필 조회 성공', response: { userProfile } };
   }
 }

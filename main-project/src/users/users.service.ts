@@ -19,6 +19,7 @@ import { Users } from './entity/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
   DetailedCertificate,
+  EntireProfile,
   SearchedUser,
   User,
   UserImage,
@@ -216,6 +217,28 @@ export class UsersService {
   ): Promise<void> {
     await this.validateNoUserCertificateExist(userNo);
     await this.saveUserCertificate(userNo, major, file);
+  }
+
+  async getUserProfile(userNo: number): Promise<EntireProfile> {
+    await this.validateIsConfirmedUser(userNo);
+
+    const profile: EntireProfile =
+      await this.userProfileRepository.getUserProfileByUserNo(userNo);
+    if (!profile) {
+      throw new NotFoundException('프로필이 존재하지 않는 유저입니다.');
+    }
+
+    return profile;
+  }
+
+  private async validateIsConfirmedUser(userNo: number): Promise<void> {
+    const user: Users = await this.userRepository.getConfirmedUserByNo(userNo);
+
+    if (!user) {
+      throw new NotFoundException(
+        '존재하지 않거나 가입 절차가 완료되지 않은 유저입니다.',
+      );
+    }
   }
 
   private async validateNoUserCertificateExist(userNo: number): Promise<void> {

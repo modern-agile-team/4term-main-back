@@ -47,3 +47,13 @@ export interface DetailedCertificate {
   certificate: string;
   major: string;
 }
+
+export interface EntireProfile {
+  userNo: number;
+  nickname: string;
+  major: string;
+  gender: boolean;
+  description: string;
+  profileImage: string;
+  mannerGrade: number;
+}
