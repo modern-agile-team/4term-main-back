@@ -104,7 +104,7 @@ export class AuthService {
 
   async signIn({ email }: SignInDto): Promise<void> {
     await this.validateUserNotCreated(email);
-    const validationKey = randomBytes(7).toString('base64url');
+    const validationKey = this.getEmailValidationKey();
 
     await this.cacheManager.set(email, validationKey, {
       ttl: AuthConfig.signInTokenExpiration,
@@ -223,6 +223,12 @@ export class AuthService {
 
     await this.updatePassword(userNo, password);
     await this.cacheManager.del(code);
+  }
+
+  private getEmailValidationKey(): string {
+    const randomNumbers = Math.floor(Math.random() * 1000001);
+
+    return String(randomNumbers).padStart(6, '0');
   }
 
   private async updatePassword(
