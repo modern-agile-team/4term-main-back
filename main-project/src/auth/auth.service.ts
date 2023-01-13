@@ -10,7 +10,6 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { SignInDto } from './dto/sign-in.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { MailerService } from '@nestjs-modules/mailer';
 import { VerifyEmailDto } from './dto/verify-email.dto';
@@ -103,7 +102,7 @@ export class AuthService {
     return await this.issueToken(user);
   }
 
-  async signIn({ email }: SignInDto): Promise<void> {
+  async signIn(email: string): Promise<void> {
     await this.validateUserNotCreated(email);
     const validationKey = this.getEmailValidationKey();
 
@@ -179,10 +178,7 @@ export class AuthService {
   }
 
   async resetLoginFailedCount(email: string): Promise<void> {
-    const { userNo, status }: User = await this.getUserByEmail(email);
-    if (status !== UserStatus.CONFIRMED) {
-      throw new BadRequestException('아직 인증 절차를 마치지 않은 유저입니다.');
-    }
+    const { userNo }: User = await this.getUserByEmail(email);
 
     const { failedCount }: Authentication = await this.getUserAuthentication(
       userNo,
@@ -191,7 +187,7 @@ export class AuthService {
       throw new BadRequestException('로그인 시도 횟수가 남아 있는 유저입니다.');
     }
 
-    await this.authRepository.updateFailedCount(userNo, 0);
+    await this.resetFailedCount(userNo);
   }
 
   async sendPasswordToken(email: string): Promise<void> {
@@ -240,6 +236,17 @@ export class AuthService {
     }
 
     await this.updatePassword(userNo, newPassword);
+  }
+
+  private async resetFailedCount(userNo: number): Promise<void> {
+    const isFailedCountUpdated: number =
+      await this.authRepository.updateFailedCount(userNo, 0);
+
+    if (!isFailedCountUpdated) {
+      throw new InternalServerErrorException(
+        '비밀번호 틀린 횟수 변경 오류입니다.',
+      );
+    }
   }
 
   private getEmailValidationKey(): string {
@@ -332,7 +339,7 @@ export class AuthService {
 
     if (user) {
       throw new BadRequestException(
-        `이미 가입된 회원입니다. 로그인을 이용해 주세요.`,
+        '이미 가입된 회원입니다. 로그인을 이용해 주세요.',
       );
     }
   }
@@ -341,13 +348,13 @@ export class AuthService {
     const validCode = await this.cacheManager.get(email);
 
     if (!validCode) {
-      throw new BadRequestException(
-        `인증 코드가 만료됐거나 발급 이력이 없는 이메일입니다. 코드를 요청해 주세요.`,
+      throw new NotFoundException(
+        '인증 코드가 만료됐거나 발급 이력이 없는 이메일입니다.',
       );
     }
 
     if (validCode !== code) {
-      throw new BadRequestException(`올바르지 않은 인증 코드입니다.`);
+      throw new BadRequestException('올바르지 않은 인증 코드입니다.');
     }
   }
 
