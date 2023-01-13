@@ -6,7 +6,9 @@ import {
   Patch,
   Post,
   UseGuards,
+  Req,
 } from '@nestjs/common/decorators';
+import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -30,11 +32,12 @@ import { ApiVerifyEmail } from './swagger-decorator/verify-email.decorator';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
-  @Post('/login/kakao')
-  async kakaoLogin(@Body('token') token: string) {
-    const user: User = await this.authService.kakaoLogin(token);
+  @Get('oauth/kakao')
+  @UseGuards(AuthGuard('kakao'))
+  async kakaoLogin(@GetUser() email: string) {
+    const user: User = await this.authService.loginBySocialEmail(email);
 
-    return { response: { user } };
+    return { msg: '카카오 계정으로 로그인되었습니다.', response: { user } };
   }
 
   @Post('/login/google')

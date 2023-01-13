@@ -43,21 +43,7 @@ export class AuthService {
     private readonly userProfileRepository: UserProfilesRepository,
   ) {}
 
-  async kakaoLogin(token: string): Promise<User> {
-    const kakaoUserInfoUrl = 'https://kapi.kakao.com/v2/user/me';
-    const headers = {
-      'Content-Type': 'application/x-www-form-urlencoded=utf-8',
-      Authorization: 'Bearer ' + token,
-    };
-
-    const { data } = await axios({
-      method: 'GET',
-      url: kakaoUserInfoUrl,
-      timeout: 30000,
-      headers,
-    });
-
-    const { email } = data.kakao_account;
+  async loginBySocialEmail(email: string): Promise<User> {
     const user = await this.createOrGetUser(email);
 
     return await this.issueToken(user);
