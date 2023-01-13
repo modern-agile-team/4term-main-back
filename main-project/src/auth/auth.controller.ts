@@ -48,11 +48,12 @@ export class AuthController {
     return { msg: '네이버 계정으로 로그인되었습니다.', response: { user } };
   }
 
-  @Post('/login/google')
-  async googleLogin(@Body('token') token: string) {
-    const user: User = await this.authService.googleLogin(token);
+  @Get('oauth/google')
+  @UseGuards(AuthGuard('google'))
+  async googleLogin(@GetUser() email: string) {
+    const user: User = await this.authService.loginBySocialEmail(email);
 
-    return { response: { user } };
+    return { msg: '구글 계정으로 로그인되었습니다.', response: { user } };
   }
 
   @ApiSignIn()

@@ -11,6 +11,7 @@ import { jwtModule } from 'src/common/configs/jwt-module.config';
 import { WebSocketJwtStrategy } from './jwt/ws-token.strategy';
 import { KakaoStrategy } from './jwt/kakao.strategy';
 import { NaverStrategy } from './jwt/naver.strategy';
+import { GoogleStrategy } from './jwt/google.strategy';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { NaverStrategy } from './jwt/naver.strategy';
     WebSocketJwtStrategy,
     KakaoStrategy,
     NaverStrategy,
+    GoogleStrategy,
   ],
 })
 export class AuthModule {}
