@@ -28,7 +28,7 @@ export class UserCertificatesRepository extends Repository<UserCertificates> {
     }
   }
 
-  async getCertifiacateByNo(userNo: number): Promise<UserCertificates> {
+  async getCertifiacateByUserNo(userNo: number): Promise<UserCertificates> {
     try {
       const certificate: UserCertificates = await this.createQueryBuilder()
         .where('user_no = :userNo', { userNo })
@@ -37,7 +37,7 @@ export class UserCertificatesRepository extends Repository<UserCertificates> {
       return certificate;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} 유저 학적 조회 에러(getUserCertificateByNo): 알 수 없는 서버 에러입니다.`,
+        `${error} 유저 학적 조회 에러(getUserCertificateByUserNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

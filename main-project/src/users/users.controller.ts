@@ -25,6 +25,7 @@ import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
 import { ApiDenyUser } from './swagger-decorator/deny-user.decorator';
 import { ApiGetUserByNickname } from './swagger-decorator/get-user-by-nickname.decorator';
 import { ApiUpdateCertificate } from './swagger-decorator/update-certificate.decorator';
+import { ApiUpdateMajor } from './swagger-decorator/update-major.decorator';
 import { ApiUpdateProfileImage } from './swagger-decorator/update-profile-image.decorator';
 import { ApiUpdateProfile } from './swagger-decorator/update-profile.decorator';
 import { ApiValidateNickname } from './swagger-decorator/validate-nickname.decorator';
@@ -184,12 +185,17 @@ export class UsersController {
     return { msg: '유저 학적 정보가 반려되었습니다.' };
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @UseInterceptors(FileInterceptor('file'))
-  // @Patch('/major')
-  // async updateMajor(
-  //   @UploadedFile() file: Express.Multer.File,
-  //   @Body() { major }: MajorDto,
-  //   @GetUser() userNo: number,
-  // ) {}
+  @ApiUpdateMajor()
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @Patch('/major')
+  async updateMajor(
+    @GetUser() userNo: number,
+    @Body() { major }: MajorDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    await this.usersService.updateUserMajor(userNo, major, file);
+
+    return { msg: '학과 변경 신청이 완료되었습니다.' };
+  }
 }

@@ -131,10 +131,6 @@ export class UsersService {
     major: string,
     file: Express.Multer.File,
   ): Promise<User> {
-    if (!file) {
-      throw new BadRequestException('학적 증명 파일을 첨부해 주세요.');
-    }
-
     const { status }: Users = await this.getUserByNo(userNo);
     if (status != UserStatus.NO_CERTIFICATE) {
       throw new BadRequestException(
@@ -162,15 +158,6 @@ export class UsersService {
     await this.updateUserStatus(userNo, UserStatus.NOT_CONFIRMED);
 
     return { userNo, status: UserStatus.NOT_CONFIRMED };
-  }
-
-  private async updateMajor(userNo: number, major: string): Promise<void> {
-    const isMajorUpdated: number =
-      await this.userProfileRepository.updateUserMajor(userNo, major);
-
-    if (!isMajorUpdated) {
-      throw new InternalServerErrorException('학적 정보 수정 에러');
-    }
   }
 
   async confirmUser(adminNo: number, certificateNo: number): Promise<void> {
@@ -220,6 +207,35 @@ export class UsersService {
     }
 
     await this.awsService.deleteFile(certificate);
+  }
+
+  async updateUserMajor(
+    userNo: number,
+    major: string,
+    file: Express.Multer.File,
+  ): Promise<void> {
+    await this.validateNoUserCertificateExist(userNo);
+    await this.saveUserCertificate(userNo, major, file);
+  }
+
+  private async validateNoUserCertificateExist(userNo: number): Promise<void> {
+    const certificate: UserCertificates =
+      await this.userCertificateRepository.getCertifiacateByUserNo(userNo);
+
+    if (certificate) {
+      throw new BadRequestException(
+        '학과 변경 심사 진행 중에는 추가 신청을 보낼 수 없습니다.',
+      );
+    }
+  }
+
+  private async updateMajor(userNo: number, major: string): Promise<void> {
+    const isMajorUpdated: number =
+      await this.userProfileRepository.updateUserMajor(userNo, major);
+
+    if (!isMajorUpdated) {
+      throw new InternalServerErrorException('학적 정보 수정 에러');
+    }
   }
 
   private async getDetailedCertificate(
@@ -303,7 +319,11 @@ export class UsersService {
     major: string,
     file: Express.Multer.File,
   ): Promise<void> {
+    if (!file) {
+      throw new BadRequestException('학적 증명 파일을 첨부해 주세요.');
+    }
     const certificate = await this.awsService.uploadCertificate(userNo, file);
+
     const certificateSavedResult: ResultSetHeader =
       await this.userCertificateRepository.createCertificate({
         userNo,
