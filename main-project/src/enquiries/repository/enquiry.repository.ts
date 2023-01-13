@@ -12,12 +12,13 @@ import { UpdateEnquiryDto } from '../dto/update-enquiry.dto';
 import { Enquiries } from '../entity/enquiry.entity';
 
 @EntityRepository(Enquiries)
-export class EnquirysRepository extends Repository<Enquiries> {
-  // 문의사항 조회 관련
+export class EnquiriesRepository extends Repository<Enquiries> {
+  //Get Methods
   async getAllEnquiries(): Promise<Enquiries[]> {
     try {
       const enquiries = this.createQueryBuilder('enquiries')
         .leftJoin('enquiries.userNo', 'users')
+        .leftJoin('enquiries.enquiryImages', 'images')
         .select([
           'enquiries.no AS no',
           'users.no AS userNo',
@@ -27,7 +28,7 @@ export class EnquirysRepository extends Repository<Enquiries> {
         ])
         .orderBy('no', 'DESC')
         .getRawMany();
-
+      //TODO: 공지사항 전체조회 시 이미지 사용하는 지 토의
       return enquiries;
     } catch (error) {
       throw new InternalServerErrorException(
@@ -58,7 +59,7 @@ export class EnquirysRepository extends Repository<Enquiries> {
     }
   }
 
-  //문의사항 생성 관련
+  //Post Methods
   async createEnquiry(enquiry): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
@@ -75,7 +76,7 @@ export class EnquirysRepository extends Repository<Enquiries> {
     }
   }
 
-  //문의사항 수정 관련
+  //Patch Methods
   async updateEnquiry(
     enquiryNo: number,
     updateEnquiryDto: UpdateEnquiryDto,
@@ -95,7 +96,7 @@ export class EnquirysRepository extends Repository<Enquiries> {
     }
   }
 
-  // 문의사항 삭제 관련
+  //Delete Methods
   async deleteEnquiry(enquiryNo: number): Promise<ResultSetHeader> {
     try {
       const { raw }: DeleteResult = await this.createQueryBuilder()

@@ -7,11 +7,13 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { EnquiryImages } from './enquiry-images.entity';
+import { EnquiryReplies } from './enquiry-reply.entity';
 
 @Entity('enquiries')
 export class Enquiries extends BaseEntity {
@@ -45,6 +47,15 @@ export class Enquiries extends BaseEntity {
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 
-  @OneToOne((type) => EnquiryImages, (enquiryImages) => enquiryImages.enquiryNo)
+  @OneToMany(
+    (type) => EnquiryImages,
+    (enquiryImages) => enquiryImages.enquiryNo,
+  )
   enquiryImages: EnquiryImages;
+
+  @OneToOne(
+    (type) => EnquiryReplies,
+    (enquiriesReply) => enquiriesReply.enquiryNo,
+  )
+  enquiryReply: EnquiryReplies;
 }
