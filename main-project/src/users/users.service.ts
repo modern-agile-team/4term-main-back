@@ -204,7 +204,7 @@ export class UsersService {
       await this.updateUserStatus(userNo, UserStatus.CONFIRMED);
     }
     await this.awsService.deleteFile(certificate);
-    await this.deleteCertificate(userNo);
+    await this.deleteCertificate(certificateNo);
     await this.updateMajor(userNo, major);
   }
 
@@ -224,19 +224,23 @@ export class UsersService {
     return !Boolean(user);
   }
 
-  async denyUserCertificate(adminNo: number, userNo: number): Promise<void> {
+  async denyUserCertificate(
+    adminNo: number,
+    certificateNo: number,
+  ): Promise<void> {
     await this.validateAdminAuthority(adminNo);
 
-    const { status }: Users = await this.getUserByNo(userNo);
+    const { userNo, status, certificate }: DetailedCertificate =
+      await this.getDetailedCertificate(certificateNo);
+    await this.deleteCertificate(certificateNo);
+
     if (status === UserStatus.CONFIRMED) {
-      await this.deleteCertificateFile(userNo);
-      await this.deleteCertificate(userNo);
       await this.saveCertificateDeniedNotice(userNo);
-    } else if (status !== UserStatus.NOT_CONFIRMED) {
-      throw new BadRequestException('학적 정보를 반려할 수 없는 유저입니다.');
+    } else {
+      await this.updateUserStatus(userNo, UserStatus.DENIED);
     }
 
-    await this.updateUserStatus(userNo, UserStatus.DENIED);
+    await this.awsService.deleteFile(certificate);
   }
 
   private async getDetailedCertificate(
@@ -319,9 +323,11 @@ export class UsersService {
     await this.awsService.deleteFile(certificate);
   }
 
-  private async deleteCertificate(userNo: number): Promise<void> {
+  private async deleteCertificate(certificateNo: number): Promise<void> {
     const isCertificateDeleted: number =
-      await this.userCertificateRepository.deleteCerticificate(userNo);
+      await this.userCertificateRepository.deleteCerticificateByNo(
+        certificateNo,
+      );
 
     if (!isCertificateDeleted) {
       throw new InternalServerErrorException(

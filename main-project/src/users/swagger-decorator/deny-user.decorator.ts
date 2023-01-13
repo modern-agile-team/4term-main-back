@@ -1,6 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
 import {
-  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -28,23 +27,11 @@ export function ApiDenyUser() {
         { name: 'notAdminUser', example: { msg: '관리자 계정이 아닙니다.' } },
       ]),
     ),
-    ApiBadRequestResponse(
-      SwaggerApiResponse.exception([
-        {
-          name: 'userStatusMismatch',
-          example: { msg: '학적 정보를 반려할 수 없는 유저입니다.' },
-        },
-      ]),
-    ),
     ApiNotFoundResponse(
       SwaggerApiResponse.exception([
         {
-          name: 'noCertificate',
-          example: { msg: '학적 인증 정보가 없는 유저입니다.' },
-        },
-        {
-          name: 'userNotFound',
-          example: { msg: `존재하지 않는 유저 번호입니다.` },
+          name: 'noSuchCertificate',
+          example: { msg: '존재하지 않는 학적 정보 번호입니다.' },
         },
       ]),
     ),

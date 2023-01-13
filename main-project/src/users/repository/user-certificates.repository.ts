@@ -42,12 +42,12 @@ export class UserCertificatesRepository extends Repository<UserCertificates> {
     }
   }
 
-  async deleteCerticificate(userNo: number): Promise<number> {
+  async deleteCerticificateByNo(no: number): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()
         .from(UserCertificates)
-        .where('userNo = :userNo', { userNo })
+        .where('no = :no', { no })
         .execute();
 
       return affected;

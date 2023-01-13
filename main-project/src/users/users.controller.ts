@@ -174,12 +174,12 @@ export class UsersController {
 
   @ApiDenyUser()
   @UseGuards(JwtAuthGuard)
-  @Delete('/:userNo/certificate')
+  @Delete('/certificates/:certificateNo')
   async denyUserCertificate(
     @GetUser() adminNo: number,
-    @Param('userNo') userNo: number,
+    @Param('certificateNo') certificateNo: number,
   ) {
-    await this.usersService.denyUserCertificate(adminNo, userNo);
+    await this.usersService.denyUserCertificate(adminNo, certificateNo);
 
     return { msg: '유저 학적 정보가 반려되었습니다.' };
   }
