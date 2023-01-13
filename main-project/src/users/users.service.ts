@@ -18,6 +18,7 @@ import { UserStatus } from 'src/common/configs/user-status.config';
 import { Users } from './entity/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import {
+  CertificateForJudgment,
   DetailedCertificate,
   EntireProfile,
   SearchedUser,
@@ -229,6 +230,12 @@ export class UsersService {
     }
 
     return profile;
+  }
+
+  async getCertificates(adminNo: number): Promise<CertificateForJudgment[]> {
+    await this.validateAdminAuthority(adminNo);
+
+    return this.userCertificateRepository.getAllCertificates();
   }
 
   private async validateIsConfirmedUser(userNo: number): Promise<void> {

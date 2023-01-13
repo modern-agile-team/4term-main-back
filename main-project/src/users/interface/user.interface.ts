@@ -57,3 +57,9 @@ export interface EntireProfile {
   profileImage: string;
   mannerGrade: number;
 }
+
+export interface CertificateForJudgment {
+  certificateNo: number;
+  major: string;
+  certificate: string;
+}

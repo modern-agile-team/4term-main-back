@@ -18,11 +18,17 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { MajorDto } from './dto/user-major.dto';
-import { EntireProfile, SearchedUser, User } from './interface/user.interface';
+import {
+  CertificateForJudgment,
+  EntireProfile,
+  SearchedUser,
+  User,
+} from './interface/user.interface';
 import { ApiConfirmUser } from './swagger-decorator/confirm-user.decorator';
 import { ApiCreateCertificate } from './swagger-decorator/create-certificate.decorator';
 import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
 import { ApiDenyUser } from './swagger-decorator/deny-user.decorator';
+import { ApiGetUserCertificates } from './swagger-decorator/get-certificates.decorator';
 import { ApiGetUserProfile } from './swagger-decorator/get-profile.decorator';
 import { ApiGetUserByNickname } from './swagger-decorator/get-user-by-nickname.decorator';
 import { ApiUpdateCertificate } from './swagger-decorator/update-certificate.decorator';
@@ -209,5 +215,15 @@ export class UsersController {
     );
 
     return { msg: '프로필 조회 성공', response: { userProfile } };
+  }
+
+  @ApiGetUserCertificates()
+  @UseGuards(JwtAuthGuard)
+  @Get('/certificates')
+  async getUserCertificates(@GetUser() adminNo: number) {
+    const certificates: CertificateForJudgment[] =
+      await this.usersService.getCertificates(adminNo);
+
+    return { msg: '학적 정보 조회 성공', response: { certificates } };
   }
 }

@@ -5,10 +5,13 @@ import {
   EntityRepository,
   InsertResult,
   Repository,
-  UpdateResult,
 } from 'typeorm';
 import { UserCertificates } from '../entity/user-certificate.entity';
-import { Certificate, DetailedCertificate } from '../interface/user.interface';
+import {
+  Certificate,
+  CertificateForJudgment,
+  DetailedCertificate,
+} from '../interface/user.interface';
 
 @EntityRepository(UserCertificates)
 export class UserCertificatesRepository extends Repository<UserCertificates> {
@@ -79,6 +82,25 @@ export class UserCertificatesRepository extends Repository<UserCertificates> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error}사용자 학적 정보 상세 조회(getDetailedCertificateByNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getAllCertificates(): Promise<CertificateForJudgment[]> {
+    try {
+      const certificates: CertificateForJudgment[] =
+        await this.createQueryBuilder('user_certificates')
+          .select([
+            'user_certificates.no AS certificateNo',
+            'user_certificates.major AS major',
+            'user_certificates.certificate AS certificate',
+          ])
+          .getRawMany();
+
+      return certificates;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error}전체 학적 정보 조회(getAllCertificates): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
