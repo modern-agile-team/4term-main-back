@@ -6,8 +6,10 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
+import { UseGuards } from '@nestjs/common/decorators';
 import { AsyncApiSub } from 'nestjs-asyncapi';
 import { Namespace, Socket } from 'socket.io';
+import { WebSocketAuthGuard } from 'src/common/guards/ws-jwt-auth.guard';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { APIResponse } from 'src/common/interface/interface';
 import { ChatsGatewayService } from './chats-gateway.service';
@@ -15,6 +17,7 @@ import { CreateChatDto } from './dto/create-chat.dto';
 import { InitSocketDto } from './dto/init-socket.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
 import { ChatRoom } from './interface/chat.interface';
+import { WebSocketGetUser } from 'src/common/decorator/ws-get-user.decorator';
 
 @WebSocketGateway(4000, { namespace: 'chat' })
 export class ChatsGateway {
@@ -85,8 +88,10 @@ export class ChatsGateway {
       payload: CreateChatDto,
     },
   })
+  @UseGuards(WebSocketAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   async handleCreateRoom(
+    @WebSocketGetUser() user,
     @ConnectedSocket() socket,
     @MessageBody() messagePayload: CreateChatDto,
   ): Promise<APIResponse> {
