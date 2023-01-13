@@ -8,7 +8,7 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { UserCertificates } from '../entity/user-certificate.entity';
-import { Certificate } from '../interface/user.interface';
+import { Certificate, DetailedCertificate } from '../interface/user.interface';
 
 @EntityRepository(UserCertificates)
 export class UserCertificatesRepository extends Repository<UserCertificates> {
@@ -73,6 +73,31 @@ export class UserCertificatesRepository extends Repository<UserCertificates> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error}사용자 학적 증명 수정(updateCertificate): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getDetailedCertificateByNo(
+    certificateNo: number,
+  ): Promise<DetailedCertificate> {
+    try {
+      const certificate: DetailedCertificate = await this.createQueryBuilder(
+        'user_certificates',
+      )
+        .leftJoin('user_certificates.userNo', 'users')
+        .select([
+          'users.no AS userNo',
+          'users.status AS status',
+          'user_certificates.certificate AS certificate',
+          'user_certificates.major AS major',
+        ])
+        .where('no = :certificateNo', { certificateNo })
+        .getRawOne();
+
+      return certificate;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error}사용자 학적 정보 상세 조회(getDetailedCertificateByNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

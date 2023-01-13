@@ -140,12 +140,12 @@ export class UsersController {
 
   @ApiConfirmUser()
   @UseGuards(JwtAuthGuard)
-  @Patch('/:userNo/certificate')
+  @Patch('/valid-certificates/:certificateNo')
   async confirmUser(
     @GetUser() adminNo: number,
-    @Param('userNo') userNo: number,
+    @Param('certificateNo') certificateNo: number,
   ) {
-    await this.usersService.confirmUser(adminNo, userNo);
+    await this.usersService.confirmUser(adminNo, certificateNo);
 
     return { msg: '유저 학적 정보가 수락되었습니다.' };
   }

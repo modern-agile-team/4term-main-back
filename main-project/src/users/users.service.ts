@@ -17,7 +17,12 @@ import { ProfileImagesRepository } from './repository/profile-images.repository'
 import { UserStatus } from 'src/common/configs/user-status.config';
 import { Users } from './entity/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { SearchedUser, User, UserImage } from './interface/user.interface';
+import {
+  DetailedCertificate,
+  SearchedUser,
+  User,
+  UserImage,
+} from './interface/user.interface';
 import { JwtService } from '@nestjs/jwt';
 import { Payload } from 'src/auth/interface/auth.interface';
 import { ConfigService } from '@nestjs/config';
@@ -189,16 +194,17 @@ export class UsersService {
     }
   }
 
-  async confirmUser(adminNo: number, userNo: number): Promise<void> {
+  async confirmUser(adminNo: number, certificateNo: number): Promise<void> {
     await this.validateAdminAuthority(adminNo);
-    await this.validateConfirmedUserStatus(userNo);
 
-    const { certificate, major }: UserCertificates = await this.getCertificate(
-      userNo,
-    );
+    const { userNo, status, certificate, major }: DetailedCertificate =
+      await this.getDetailedCertificate(certificateNo);
+
+    if (status === UserStatus.NOT_CONFIRMED) {
+      await this.updateUserStatus(userNo, UserStatus.CONFIRMED);
+    }
     await this.awsService.deleteFile(certificate);
     await this.deleteCertificate(userNo);
-
     await this.updateMajor(userNo, major);
   }
 
@@ -233,6 +239,21 @@ export class UsersService {
     await this.updateUserStatus(userNo, UserStatus.DENIED);
   }
 
+  private async getDetailedCertificate(
+    certificateNo: number,
+  ): Promise<DetailedCertificate> {
+    const certificate: DetailedCertificate =
+      await this.userCertificateRepository.getDetailedCertificateByNo(
+        certificateNo,
+      );
+
+    if (!certificate) {
+      throw new NotFoundException('존재하지 않는 학적 정보 번호입니다.');
+    }
+
+    return certificate;
+  }
+
   private async saveCertificateDeniedNotice(userNo): Promise<void> {
     const { affectedRows }: InsertRaw = await this.noticeRepository.saveNotice({
       userNo,
@@ -241,21 +262,6 @@ export class UsersService {
 
     if (!affectedRows) {
       throw new InternalServerErrorException('알림이 전송되지 않았습니다.');
-    }
-  }
-
-  private async validateConfirmedUserStatus(userNo: number): Promise<void> {
-    const { status }: Users = await this.getUserByNo(userNo);
-
-    if (
-      status !== UserStatus.CONFIRMED &&
-      status !== UserStatus.NOT_CONFIRMED
-    ) {
-      throw new BadRequestException('학적 인증 수락을 할 수 없는 유저입니다.');
-    }
-
-    if (status === UserStatus.NOT_CONFIRMED) {
-      await this.updateUserStatus(userNo, UserStatus.CONFIRMED);
     }
   }
 

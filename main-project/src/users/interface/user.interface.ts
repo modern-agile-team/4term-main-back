@@ -40,3 +40,10 @@ export interface Certificate {
   major: string;
   certificate: string;
 }
+
+export interface DetailedCertificate {
+  userNo: number;
+  status: number;
+  certificate: string;
+  major: string;
+}
