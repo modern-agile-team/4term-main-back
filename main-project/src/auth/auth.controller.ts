@@ -12,6 +12,7 @@ import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { User } from 'src/users/interface/user.interface';
 import { AuthService } from './auth.service';
+import { EmailDto } from './dto/email.dto';
 import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SignInDto } from './dto/sign-in.dto';
@@ -75,14 +76,14 @@ export class AuthController {
   }
 
   @Patch('/non-robot')
-  async resetLoginFailedCount(@Body('email') email: string) {
+  async resetLoginFailedCount(@Body() { email }: EmailDto) {
     await this.authService.resetLoginFailedCount(email);
 
     return { msg: '로그인 실패 횟수가 초기화되었습니다.' };
   }
 
   @Get('/password-token')
-  async getPasswordToken(@Body('email') email: string) {
+  async getPasswordToken(@Body() { email }: EmailDto) {
     await this.authService.sendPasswordToken(email);
 
     return { msg: '비밀번호 재설정 이메일이 전송되었습니다.' };
