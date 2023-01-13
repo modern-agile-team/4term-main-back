@@ -15,7 +15,6 @@ import { EventsService } from './events.service';
 import { APIResponse } from 'src/common/interface/interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AwsService } from 'src/aws/aws.service';
-import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { Events } from './entity/events.entity';
 import { EventDto } from './dto/event.dto';
 
@@ -61,7 +60,7 @@ export class EventsController {
   ): Promise<APIResponse> {
     const imageUrl: string[] = await this.eventsService.getEventImages(eventNo);
 
-    return { response: { imageUrl } };
+    return { response: imageUrl };
   }
 
   // Post Methods
@@ -74,7 +73,7 @@ export class EventsController {
   async createEvent(@Body() eventsDto: EventDto): Promise<APIResponse> {
     await this.eventsService.createEvent(eventsDto);
 
-    return { response: { msg: '이벤트 생성 성공' } };
+    return { msg: '이벤트 생성 성공' };
   }
 
   @Post('/images/:eventNo')
@@ -94,7 +93,7 @@ export class EventsController {
 
     await this.eventsService.uploadImageUrls(eventNo, imageUrls);
 
-    return { response: { msg: '이미지 업로드 성공' } };
+    return { msg: '이미지 업로드 성공' };
   }
 
   // Patch Methods
@@ -109,7 +108,7 @@ export class EventsController {
   ): Promise<APIResponse> {
     await this.eventsService.updateEvent(eventNo, eventsDto);
 
-    return { response: { msg: '이벤트 수정 성공' } };
+    return { msg: '이벤트 수정 성공' };
   }
 
   // Delete Methods
@@ -126,7 +125,7 @@ export class EventsController {
     await this.awsService.deleteFiles(images);
     await this.eventsService.deleteEventByNo(eventNo);
 
-    return { response: { msg: '이벤트 삭제 성공' } };
+    return { msg: '이벤트 삭제 성공' };
   }
 
   // Delete Methods
@@ -140,10 +139,9 @@ export class EventsController {
   ): Promise<APIResponse> {
     const imagesUrls = await this.eventsService.getEventImages(eventNo);
 
+    await this.awsService.deleteFiles(imagesUrls);
     await this.eventsService.deleteEventImages(eventNo);
 
-    // await this.awsService.deleteFiles(imagesUrls);
-
-    return { response: { msg: '이벤트 이미지 삭제 성공' } };
+    return { msg: '이벤트 이미지 삭제 성공' };
   }
 }

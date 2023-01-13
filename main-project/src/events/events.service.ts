@@ -4,10 +4,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ResultSetHeader } from 'mysql2';
-import { CreateResponse } from 'src/boards/interface/boards.interface';
-import { DeleteResult } from 'typeorm';
 import { EventDto } from './dto/event.dto';
 import { Events } from './entity/events.entity';
 import { EventImagesRepository } from './repository/events-image.repository';
@@ -122,34 +119,17 @@ export class EventsService {
     }
   }
 
-  async deleteEventImages(eventNo: number): Promise<string[]> {
+  async deleteEventImages(eventNo: number): Promise<void> {
     await this.getEventByNo(eventNo);
-
-    const images = await this.eventsImagesRepository.find({
-      where: {
-        eventNo,
-      },
-    });
-    console.log(images);
-
-    if (!images) {
-      throw new BadRequestException(
-        `이미지 삭제(deleteEventImages-service): 해당 이벤트의 이미지가 없습니다.`,
-      );
-    }
-
-    const imageUrls: string[] = images.map((el) => {
-      return el.imageUrl;
-    });
+    await this.getEventImages(eventNo);
 
     const { affectedRows }: ResultSetHeader =
       await this.eventsImagesRepository.deleteEventImages(eventNo);
+
     if (!affectedRows) {
       throw new BadRequestException(
         `이미지 삭제(deleteEventImages-service): 알 수 없는 서버 에러입니다.`,
       );
     }
-
-    return imageUrls;
   }
 }
