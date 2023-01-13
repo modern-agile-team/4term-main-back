@@ -8,6 +8,7 @@ import { AuthRepository } from './repository/authentication.repository';
 import { UserProfilesRepository } from 'src/users/repository/user-profiles.repository';
 import { JwtStrategy } from './jwt/access-token.strategy';
 import { jwtModule } from 'src/common/configs/jwt-module.config';
+import { WebSocketJwtStrategy } from './jwt/ws-token.strategy';
 
 @Module({
   imports: [
@@ -20,6 +21,6 @@ import { jwtModule } from 'src/common/configs/jwt-module.config';
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, WebSocketJwtStrategy],
 })
 export class AuthModule {}
