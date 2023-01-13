@@ -40,16 +40,17 @@ export class AuthController {
     return { msg: '카카오 계정으로 로그인되었습니다.', response: { user } };
   }
 
+  @Get('oauth/naver')
+  @UseGuards(AuthGuard('naver'))
+  async naverLogin(@GetUser() email: string) {
+    const user: User = await this.authService.loginBySocialEmail(email);
+
+    return { msg: '네이버 계정으로 로그인되었습니다.', response: { user } };
+  }
+
   @Post('/login/google')
   async googleLogin(@Body('token') token: string) {
     const user: User = await this.authService.googleLogin(token);
-
-    return { response: { user } };
-  }
-
-  @Post('/login/naver')
-  async naverLogin(@Body('token') token: string) {
-    const user: User = await this.authService.naverLogin(token);
 
     return { response: { user } };
   }

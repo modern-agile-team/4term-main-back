@@ -69,25 +69,6 @@ export class AuthService {
     return await this.issueToken(user);
   }
 
-  async naverLogin(token: string): Promise<User> {
-    const naverUserInfoUrl = 'https://openapi.naver.com/v1/nid/me';
-    const headers = {
-      Authorization: 'Bearer ' + token,
-    };
-
-    const { data } = await axios({
-      method: 'GET',
-      url: naverUserInfoUrl,
-      timeout: 30000,
-      headers,
-    });
-
-    const { email } = data.response;
-    const user = await this.createOrGetUser(email);
-
-    return await this.issueToken(user);
-  }
-
   async signIn(email: string): Promise<void> {
     await this.validateUserNotCreated(email);
     const validationKey = this.getEmailValidationKey();

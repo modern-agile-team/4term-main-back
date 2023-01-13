@@ -10,6 +10,7 @@ import { JwtStrategy } from './jwt/access-token.strategy';
 import { jwtModule } from 'src/common/configs/jwt-module.config';
 import { WebSocketJwtStrategy } from './jwt/ws-token.strategy';
 import { KakaoStrategy } from './jwt/kakao.strategy';
+import { NaverStrategy } from './jwt/naver.strategy';
 
 @Module({
   imports: [
@@ -22,6 +23,12 @@ import { KakaoStrategy } from './jwt/kakao.strategy';
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, WebSocketJwtStrategy, KakaoStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    WebSocketJwtStrategy,
+    KakaoStrategy,
+    NaverStrategy,
+  ],
 })
 export class AuthModule {}
