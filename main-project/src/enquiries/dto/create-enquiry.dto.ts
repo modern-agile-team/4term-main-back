@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 export class CreateEnquiryDto {
   @ApiProperty({
     example: '애인은 어떻게 만들죠?',
@@ -24,6 +24,6 @@ export class CreateEnquiryDto {
     description: '문의사항 내용',
   })
   @IsBoolean()
-  @IsNotEmpty()
+  @IsOptional()
   isDone: boolean;
 }

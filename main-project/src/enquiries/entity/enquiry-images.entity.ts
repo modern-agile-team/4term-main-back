@@ -14,7 +14,7 @@ export class EnquiryImages extends BaseEntity {
   no: number;
 
   @Column({ type: 'varchar', length: 255, nullable: false, name: 'img_url' })
-  imgUrl: string;
+  imageUrl: string;
 
   @OneToOne((type) => Enquiries, (enquiries) => enquiries.enquiryImages, {
     onDelete: 'CASCADE',

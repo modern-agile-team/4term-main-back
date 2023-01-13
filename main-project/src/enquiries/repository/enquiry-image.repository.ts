@@ -16,7 +16,7 @@ export class EnquiryImagesRepository extends Repository<EnquiryImages> {
   // 문의사항 조회 관련
   async getAllEnquiryImages(): Promise<Enquiries[]> {
     try {
-      const enquiries = this.createQueryBuilder()
+      const enquiries = await this.createQueryBuilder()
         .leftJoin('enquiries.userNo', 'users')
         .select([
           'enquiries.no AS no',
@@ -38,7 +38,7 @@ export class EnquiryImagesRepository extends Repository<EnquiryImages> {
 
   async getEnquiryImagesByNo(enquiryNo: number): Promise<Enquiries> {
     try {
-      const enquiry = this.createQueryBuilder('enquiries')
+      const enquiry = await this.createQueryBuilder('enquiries')
         .leftJoin('enquiries.userNo', 'users')
         .select([
           'enquiries.no AS no',
@@ -59,18 +59,18 @@ export class EnquiryImagesRepository extends Repository<EnquiryImages> {
   }
 
   //문의사항 생성 관련
-  async uploadEnquiryImages(enquiry): Promise<ResultSetHeader> {
+  async setEnquiryImages(images): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
         .into(Enquiries)
-        .values(enquiry)
+        .values(images)
         .execute();
 
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} uploadEnquiryImages-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} setEnquiryImages-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
