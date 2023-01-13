@@ -7,6 +7,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common/decorators';
+import { ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { User } from 'src/users/interface/user.interface';
@@ -14,8 +15,11 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SignInDto } from './dto/sign-in.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ApiUpdatePassword } from './swagger-decorator/upate-password.decorator';
 
+@ApiTags('인증 API')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
@@ -89,5 +93,17 @@ export class AuthController {
     await this.authService.resetUserPassword(resetPasswordDto);
 
     return { msg: '비밀번호가 설정되었습니다.' };
+  }
+
+  @ApiUpdatePassword()
+  @UseGuards(JwtAuthGuard)
+  @Patch('/password')
+  async updateUserPassword(
+    @GetUser() userNo: number,
+    @Body() updatePasswordDto: UpdatePasswordDto,
+  ) {
+    await this.authService.updateUserPassword(userNo, updatePasswordDto);
+
+    return { msg: '비밀번호가 변경되었습니다.' };
   }
 }

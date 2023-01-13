@@ -29,6 +29,7 @@ import {
 import { Authentication } from './entity/authentication.entity';
 import { AuthConfig } from './config/auth.config';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -225,6 +226,22 @@ export class AuthService {
     await this.cacheManager.del(code);
   }
 
+  async updateUserPassword(
+    userNo: number,
+    { password, newPassword }: UpdatePasswordDto,
+  ): Promise<void> {
+    if (password === newPassword) {
+      throw new BadRequestException('새로운 비밀번호를 설정해 주세요.');
+    }
+
+    const userAuth: UserAuth = await this.getUserAuthentication(userNo);
+    if (!bcrypt.compareSync(password, userAuth.password)) {
+      throw new BadRequestException('올바르지 않은 비밀번호입니다.');
+    }
+
+    await this.updatePassword(userNo, newPassword);
+  }
+
   private getEmailValidationKey(): string {
     const randomNumbers = Math.floor(Math.random() * 1000001);
 
@@ -265,7 +282,7 @@ export class AuthService {
 
     if (!userAuth) {
       throw new NotFoundException(
-        `인증 정보가 존재하지 않는 소셜 로그인 유저입니다.`,
+        '인증 정보가 존재하지 않는 소셜 로그인 유저입니다.',
       );
     }
 
