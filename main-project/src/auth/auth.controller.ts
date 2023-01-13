@@ -6,7 +6,6 @@ import {
   Patch,
   Post,
   UseGuards,
-  Req,
 } from '@nestjs/common/decorators';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -32,6 +31,10 @@ import { ApiVerifyEmail } from './swagger-decorator/verify-email.decorator';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Get('login/kakao')
+  @UseGuards(AuthGuard('kakao'))
+  async redirectTokakaoLogin() {}
+
   @Get('oauth/kakao')
   @UseGuards(AuthGuard('kakao'))
   async kakaoLogin(@GetUser() email: string) {
@@ -40,6 +43,10 @@ export class AuthController {
     return { msg: '카카오 계정으로 로그인되었습니다.', response: { user } };
   }
 
+  @Get('login/naver')
+  @UseGuards(AuthGuard('naver'))
+  async redirectToNaverLogin() {}
+
   @Get('oauth/naver')
   @UseGuards(AuthGuard('naver'))
   async naverLogin(@GetUser() email: string) {
@@ -47,6 +54,10 @@ export class AuthController {
 
     return { msg: '네이버 계정으로 로그인되었습니다.', response: { user } };
   }
+
+  @Get('login/google')
+  @UseGuards(AuthGuard('google'))
+  async redirectToGoogleLogin() {}
 
   @Get('oauth/google')
   @UseGuards(AuthGuard('google'))
