@@ -148,41 +148,20 @@ export class UsersService {
     return { userNo, status: UserStatus.NOT_CONFIRMED };
   }
 
-  async updateUserCertificate(
+  async resubmitUserCertificate(
     userNo: number,
     major: string,
     file: Express.Multer.File,
   ): Promise<User> {
-    if (!major) {
-      throw new BadRequestException('학과를 입력해 주세요');
-    }
-
     const { status }: Users = await this.getUserByNo(userNo);
     if (status !== UserStatus.DENIED) {
-      throw new BadRequestException('학적 정보를 수정할 수 없는 유저입니다.');
+      throw new BadRequestException('학적 정보를 재등록할 수 없는 유저입니다.');
     }
 
-    await this.deleteCertificateFile(userNo);
-    await this.updateCertificateFile(userNo, file);
+    await this.saveUserCertificate(userNo, major, file);
     await this.updateUserStatus(userNo, UserStatus.NOT_CONFIRMED);
 
     return { userNo, status: UserStatus.NOT_CONFIRMED };
-  }
-
-  private async updateCertificateFile(
-    userNo: number,
-    file: Express.Multer.File,
-  ): Promise<void> {
-    const certificate = await this.awsService.uploadCertificate(userNo, file);
-    const isCertificateUpdated =
-      await this.userCertificateRepository.updateCertificate(
-        userNo,
-        certificate,
-      );
-
-    if (!isCertificateUpdated) {
-      throw new InternalServerErrorException('학적 정보 수정 오류입니다.');
-    }
   }
 
   private async updateMajor(userNo: number, major: string): Promise<void> {
@@ -304,23 +283,6 @@ export class UsersService {
     if (!isAdmin) {
       throw new UnauthorizedException('관리자 계정이 아닙니다.');
     }
-  }
-
-  private async getCertificate(userNo: number): Promise<UserCertificates> {
-    const userCertifiate: UserCertificates =
-      await this.userCertificateRepository.getCertifiacateByNo(userNo);
-
-    if (!userCertifiate) {
-      throw new NotFoundException(`학적 인증 정보가 없는 유저입니다.`);
-    }
-
-    return userCertifiate;
-  }
-
-  private async deleteCertificateFile(userNo: number): Promise<void> {
-    const { certificate }: UserCertificates = await this.getCertificate(userNo);
-
-    await this.awsService.deleteFile(certificate);
   }
 
   private async deleteCertificate(certificateNo: number): Promise<void> {

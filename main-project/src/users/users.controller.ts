@@ -113,12 +113,12 @@ export class UsersController {
   @ApiUpdateCertificate()
   @UseInterceptors(FileInterceptor('file'))
   @Patch('/:userNo/denied-certificate')
-  async updateUserCertificate(
+  async resubmitUserCertificate(
     @Param('userNo') userNo: number,
-    @Body('major') major: string,
+    @Body() { major }: MajorDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    const user: User = await this.usersService.updateUserCertificate(
+    const user: User = await this.usersService.resubmitUserCertificate(
       userNo,
       major,
       file,
@@ -183,4 +183,13 @@ export class UsersController {
 
     return { msg: '유저 학적 정보가 반려되었습니다.' };
   }
+
+  // @UseGuards(JwtAuthGuard)
+  // @UseInterceptors(FileInterceptor('file'))
+  // @Patch('/major')
+  // async updateMajor(
+  //   @UploadedFile() file: Express.Multer.File,
+  //   @Body() { major }: MajorDto,
+  //   @GetUser() userNo: number,
+  // ) {}
 }

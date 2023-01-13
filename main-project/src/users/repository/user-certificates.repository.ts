@@ -58,25 +58,6 @@ export class UserCertificatesRepository extends Repository<UserCertificates> {
     }
   }
 
-  async updateCertificate(
-    userNo: number,
-    certificate: string,
-  ): Promise<number> {
-    try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
-        .update()
-        .set({ certificate })
-        .where('user_no = :userNo', { userNo })
-        .execute();
-
-      return affected;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error}사용자 학적 증명 수정(updateCertificate): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
   async getDetailedCertificateByNo(
     certificateNo: number,
   ): Promise<DetailedCertificate> {

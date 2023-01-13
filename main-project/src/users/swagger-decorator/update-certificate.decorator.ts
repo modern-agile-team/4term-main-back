@@ -28,6 +28,7 @@ export function ApiUpdateCertificate() {
           },
           major: {
             maxLength: 45,
+            minLength: 2,
             type: 'string',
             example: '컴퓨터소프트웨어학과',
             description: '학과 정보',
@@ -49,18 +50,17 @@ export function ApiUpdateCertificate() {
     ),
     ApiBadRequestResponse(
       SwaggerApiResponse.exception([
-        { name: 'noMajor', example: { msg: '학과를 입력해 주세요' } },
         {
           name: 'userStatusMismatch',
-          example: { msg: '학적 정보를 수정할 수 없는 유저입니다.' },
+          example: { msg: '학적 정보를 재등록할 수 없는 유저입니다.' },
         },
       ]),
     ),
     ApiNotFoundResponse(
       SwaggerApiResponse.exception([
         {
-          name: 'certificateNotFound',
-          example: { msg: '학적 인증 정보가 없는 유저입니다.' },
+          name: 'userNotFound',
+          example: { msg: `존재하지 않는 유저 번호입니다.` },
         },
       ]),
     ),
