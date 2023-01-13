@@ -26,6 +26,11 @@ export function ApiCreateCertificate() {
             format: 'binary',
             description: '프로필 이미지 파일',
           },
+          major: {
+            type: 'string',
+            maxLength: 45,
+            minLength: 2,
+          },
         },
       },
     }),

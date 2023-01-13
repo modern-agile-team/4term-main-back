@@ -17,6 +17,7 @@ import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { MajorDto } from './dto/user-major.dto';
 import { SearchedUser, User } from './interface/user.interface';
 import { ApiConfirmUser } from './swagger-decorator/confirm-user.decorator';
 import { ApiCreateCertificate } from './swagger-decorator/create-certificate.decorator';
@@ -97,10 +98,12 @@ export class UsersController {
   @Post('/:userNo/certificate')
   async createUserCertificate(
     @Param('userNo') userNo: number,
+    @Body() { major }: MajorDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
     const user: User = await this.usersService.createUserCertificate(
       userNo,
+      major,
       file,
     );
 

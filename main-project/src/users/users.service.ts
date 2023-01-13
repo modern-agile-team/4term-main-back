@@ -23,6 +23,10 @@ import { Payload } from 'src/auth/interface/auth.interface';
 import { ConfigService } from '@nestjs/config';
 import { UserCertificatesRepository } from './repository/user-certificates.repository';
 import { UserCertificates } from './entity/user-certificate.entity';
+import { ResultSetHeader } from 'mysql2';
+import { NoticesRepository } from 'src/notices/repository/notices.repository';
+import { NoticeType } from 'src/common/configs/notice-type.config';
+import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 @Injectable()
 export class UsersService {
   constructor(
@@ -32,6 +36,7 @@ export class UsersService {
     private readonly userProfileRepository: UserProfilesRepository,
     private readonly profileImageRepository: ProfileImagesRepository,
     private readonly userCertificateRepository: UserCertificatesRepository,
+    private readonly noticeRepository: NoticesRepository,
     private readonly awsService: AwsService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -118,6 +123,7 @@ export class UsersService {
 
   async createUserCertificate(
     userNo: number,
+    major: string,
     file: Express.Multer.File,
   ): Promise<User> {
     if (!file) {
@@ -131,7 +137,7 @@ export class UsersService {
       );
     }
 
-    await this.saveUserCertificate(userNo, file);
+    await this.saveUserCertificate(userNo, major, file);
     await this.updateUserStatus(userNo, UserStatus.NOT_CONFIRMED);
 
     return { userNo, status: UserStatus.NOT_CONFIRMED };
@@ -153,7 +159,6 @@ export class UsersService {
 
     await this.deleteCertificateFile(userNo);
     await this.updateCertificateFile(userNo, file);
-    await this.updateMajor(userNo, major);
     await this.updateUserStatus(userNo, UserStatus.NOT_CONFIRMED);
 
     return { userNo, status: UserStatus.NOT_CONFIRMED };
@@ -184,17 +189,17 @@ export class UsersService {
     }
   }
 
-  async confirmUser(adminNo: number, userNo: number) {
+  async confirmUser(adminNo: number, userNo: number): Promise<void> {
     await this.validateAdminAuthority(adminNo);
+    await this.validateConfirmedUserStatus(userNo);
 
-    const { status }: Users = await this.getUserByNo(userNo);
-    if (status !== UserStatus.NOT_CONFIRMED) {
-      throw new BadRequestException('학적 인증 수락을 할 수 없는 유저입니다.');
-    }
+    const { certificate, major }: UserCertificates = await this.getCertificate(
+      userNo,
+    );
+    await this.awsService.deleteFile(certificate);
+    await this.deleteCertificate(userNo);
 
-    await this.deleteCertificateFile(userNo);
-    await this.deleleCertificate(userNo);
-    await this.updateUserStatus(userNo, UserStatus.CONFIRMED);
+    await this.updateMajor(userNo, major);
   }
 
   async getUserByNickname(nickname: string): Promise<SearchedUser[]> {
@@ -216,12 +221,42 @@ export class UsersService {
   async denyUserCertificate(adminNo: number, userNo: number): Promise<void> {
     await this.validateAdminAuthority(adminNo);
 
-    const user: Users = await this.getUserByNo(userNo);
-    if (user.status !== UserStatus.NOT_CONFIRMED) {
+    const { status }: Users = await this.getUserByNo(userNo);
+    if (status === UserStatus.CONFIRMED) {
+      await this.deleteCertificateFile(userNo);
+      await this.deleteCertificate(userNo);
+      await this.saveCertificateDeniedNotice(userNo);
+    } else if (status !== UserStatus.NOT_CONFIRMED) {
       throw new BadRequestException('학적 정보를 반려할 수 없는 유저입니다.');
     }
 
     await this.updateUserStatus(userNo, UserStatus.DENIED);
+  }
+
+  private async saveCertificateDeniedNotice(userNo): Promise<void> {
+    const { affectedRows }: InsertRaw = await this.noticeRepository.saveNotice({
+      userNo,
+      type: NoticeType.CERTIFICATE_DENIED,
+    });
+
+    if (!affectedRows) {
+      throw new InternalServerErrorException('알림이 전송되지 않았습니다.');
+    }
+  }
+
+  private async validateConfirmedUserStatus(userNo: number): Promise<void> {
+    const { status }: Users = await this.getUserByNo(userNo);
+
+    if (
+      status !== UserStatus.CONFIRMED &&
+      status !== UserStatus.NOT_CONFIRMED
+    ) {
+      throw new BadRequestException('학적 인증 수락을 할 수 없는 유저입니다.');
+    }
+
+    if (status === UserStatus.NOT_CONFIRMED) {
+      await this.updateUserStatus(userNo, UserStatus.CONFIRMED);
+    }
   }
 
   private async updateProfile(
@@ -261,18 +296,24 @@ export class UsersService {
     }
   }
 
-  private async deleteCertificateFile(userNo: number): Promise<void> {
-    const { certificate }: UserCertificates =
+  private async getCertificate(userNo: number): Promise<UserCertificates> {
+    const userCertifiate: UserCertificates =
       await this.userCertificateRepository.getCertifiacateByNo(userNo);
 
-    if (!certificate) {
+    if (!userCertifiate) {
       throw new NotFoundException(`학적 인증 정보가 없는 유저입니다.`);
     }
+
+    return userCertifiate;
+  }
+
+  private async deleteCertificateFile(userNo: number): Promise<void> {
+    const { certificate }: UserCertificates = await this.getCertificate(userNo);
 
     await this.awsService.deleteFile(certificate);
   }
 
-  private async deleleCertificate(userNo: number): Promise<void> {
+  private async deleteCertificate(userNo: number): Promise<void> {
     const isCertificateDeleted: number =
       await this.userCertificateRepository.deleteCerticificate(userNo);
 
@@ -285,16 +326,18 @@ export class UsersService {
 
   private async saveUserCertificate(
     userNo: number,
+    major: string,
     file: Express.Multer.File,
   ): Promise<void> {
     const certificate = await this.awsService.uploadCertificate(userNo, file);
-    const isCertificateSaved: number =
-      await this.userCertificateRepository.createCertificate(
+    const certificateSavedResult: ResultSetHeader =
+      await this.userCertificateRepository.createCertificate({
         userNo,
+        major,
         certificate,
-      );
+      });
 
-    if (!isCertificateSaved) {
+    if (!certificateSavedResult.affectedRows) {
       throw new InternalServerErrorException('학적 증명 파일 추가 오류입니다.');
     }
   }

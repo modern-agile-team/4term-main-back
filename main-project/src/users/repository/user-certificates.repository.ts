@@ -8,22 +8,19 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { UserCertificates } from '../entity/user-certificate.entity';
+import { Certificate } from '../interface/user.interface';
 
 @EntityRepository(UserCertificates)
 export class UserCertificatesRepository extends Repository<UserCertificates> {
-  async createCertificate(
-    userNo: number,
-    certificate: string,
-  ): Promise<number> {
+  async createCertificate(certificate: Certificate): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
         .into(UserCertificates)
-        .values({ userNo, certificate })
+        .values(certificate)
         .execute();
-      const { affectedRows }: ResultSetHeader = raw;
 
-      return affectedRows;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error}사용자 학적 증명 추가 오류(createCertificate): 알 수 없는 서버 에러입니다.`,
