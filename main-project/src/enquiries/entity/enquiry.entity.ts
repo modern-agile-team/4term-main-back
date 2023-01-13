@@ -7,6 +7,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -46,7 +47,10 @@ export class Enquiries extends BaseEntity {
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 
-  @OneToOne((type) => EnquiryImages, (enquiryImages) => enquiryImages.enquiryNo)
+  @OneToMany(
+    (type) => EnquiryImages,
+    (enquiryImages) => enquiryImages.enquiryNo,
+  )
   enquiryImages: EnquiryImages;
 
   @OneToOne(

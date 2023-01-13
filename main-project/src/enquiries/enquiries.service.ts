@@ -14,21 +14,19 @@ import { EnquiryReplies } from './entity/enquiry-reply.entity';
 import { Enquiries } from './entity/enquiry.entity';
 import { EnquiryImagesRepository } from './repository/enquiry-image.repository';
 import { EnquiryRepliesRepository } from './repository/enquiry-reply.repository';
-import { EnquirysRepository } from './repository/enquiry.repository';
+import { EnquiriesRepository } from './repository/enquiry.repository';
 
 @Injectable()
 export class EnquiriesService {
   constructor(
-    private readonly enquirysRepository: EnquirysRepository,
+    private readonly enquiriesRepository: EnquiriesRepository,
     private readonly enquiryRepliesRepository: EnquiryRepliesRepository,
-    private readonly usersRepository: UsersRepository,
-
-    private readonly awsService: AwsService,
+    private readonly usersRepository: UsersRepository, // private readonly awsService: AwsService,
   ) {}
   // 문의사항 조회 관련
   async getAllEnquiries(): Promise<Enquiries[]> {
     const enquiries: Enquiries[] =
-      await this.enquirysRepository.getAllEnquiries();
+      await this.enquiriesRepository.getAllEnquiries();
 
     if (!enquiries) {
       throw new NotFoundException(
@@ -40,7 +38,7 @@ export class EnquiriesService {
   }
 
   async getEnquiryByNo(enquiryNo: number): Promise<Enquiries> {
-    const enquiry: Enquiries = await this.enquirysRepository.getEnquiryByNo(
+    const enquiry: Enquiries = await this.enquiriesRepository.getEnquiryByNo(
       enquiryNo,
     );
 
@@ -83,29 +81,26 @@ export class EnquiriesService {
 
   // 문의사항 생성 관련
   async createEnquiry(
-    manager: EntityManager,
+    manager,
     createEnquiryDto: CreateEnquiryDto,
     userNo: number,
     files: Express.Multer.File[],
   ): Promise<void> {
-    const imageUrls: string[] = await this.uploadEnquiryImages(manager, files);
+    const imageUrls: string[] = ['시발시발'];
+    // const imageUrls: string[] = await this.uploadEnquiryImages(manager, files);
 
     const enquiryNo: number = await this.setEnquiry(manager, {
       ...createEnquiryDto,
       userNo,
     });
-    console.log('enquiryNo : ', enquiryNo);
 
     await this.setEnquiryImages(manager, imageUrls, enquiryNo);
   }
 
   private async setEnquiry(manager: EntityManager, enquiry): Promise<number> {
-    console.log(enquiry);
-
     const { insertId }: ResultSetHeader = await manager
-      .getCustomRepository(EnquirysRepository)
+      .getCustomRepository(EnquiriesRepository)
       .createEnquiry(enquiry);
-    console.log(insertId);
 
     if (!insertId) {
       throw new InternalServerErrorException(
@@ -116,14 +111,14 @@ export class EnquiriesService {
     return insertId;
   }
 
-  private async uploadEnquiryImages(
-    manager: EntityManager,
-    files: Express.Multer.File[],
-  ): Promise<string[]> {
-    const imageUrls = await this.awsService.uploadImages(files, 'enquiry');
+  // private async uploadEnquiryImages(
+  //   manager: EntityManager,
+  //   files: Express.Multer.File[],
+  // ): Promise<string[]> {
+  //   const imageUrls = await this.awsService.uploadImages(files, 'enquiry');
 
-    return imageUrls;
-  }
+  //   return imageUrls;
+  // }
 
   private async setEnquiryImages(
     manager: EntityManager,
@@ -162,7 +157,7 @@ export class EnquiriesService {
     await this.getEnquiryByNo(enquiryNo);
 
     const { affectedRows }: ResultSetHeader =
-      await this.enquirysRepository.updateEnquiry(enquiryNo, updateEnquiryDto);
+      await this.enquiriesRepository.updateEnquiry(enquiryNo, updateEnquiryDto);
 
     if (!affectedRows) {
       throw new InternalServerErrorException(
@@ -177,7 +172,7 @@ export class EnquiriesService {
   ): Promise<void> {
     await this.getEnquiryByNo(enquiryNo);
     const { affectedRows }: ResultSetHeader =
-      await this.enquirysRepository.updateEnquiry(enquiryNo, updateEnquiryDto);
+      await this.enquiriesRepository.updateEnquiry(enquiryNo, updateEnquiryDto);
 
     if (!affectedRows) {
       throw new InternalServerErrorException(
@@ -191,7 +186,7 @@ export class EnquiriesService {
     await this.getEnquiryByNo(enquiryNo);
 
     const { affectedRows }: ResultSetHeader =
-      await this.enquirysRepository.deleteEnquiry(enquiryNo);
+      await this.enquiriesRepository.deleteEnquiry(enquiryNo);
 
     if (!affectedRows) {
       throw new InternalServerErrorException(

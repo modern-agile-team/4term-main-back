@@ -16,6 +16,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { APIResponse } from 'src/common/interface/interface';
 import { EntityManager } from 'typeorm';
 import { CreateEnquiryDto } from './dto/create-enquiry.dto';
@@ -88,6 +89,7 @@ export class EnquiriesController {
   // Post Methods
   @Post()
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
   @ApiOperation({
     summary: '문의사항 생성 API',

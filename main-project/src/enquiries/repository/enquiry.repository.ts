@@ -12,7 +12,7 @@ import { UpdateEnquiryDto } from '../dto/update-enquiry.dto';
 import { Enquiries } from '../entity/enquiry.entity';
 
 @EntityRepository(Enquiries)
-export class EnquirysRepository extends Repository<Enquiries> {
+export class EnquiriesRepository extends Repository<Enquiries> {
   //Get Methods
   async getAllEnquiries(): Promise<Enquiries[]> {
     try {

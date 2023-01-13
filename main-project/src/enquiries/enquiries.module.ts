@@ -6,12 +6,12 @@ import { EnquiriesController } from './enquiries.controller';
 import { EnquiriesService } from './enquiries.service';
 import { EnquiryImagesRepository } from './repository/enquiry-image.repository';
 import { EnquiryRepliesRepository } from './repository/enquiry-reply.repository';
-import { EnquirysRepository } from './repository/enquiry.repository';
+import { EnquiriesRepository } from './repository/enquiry.repository';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      EnquirysRepository,
+      EnquiriesRepository,
       EnquiryImagesRepository,
       EnquiryRepliesRepository,
       UsersRepository,

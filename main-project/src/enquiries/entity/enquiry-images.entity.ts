@@ -3,6 +3,7 @@ import {
   Column,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -16,7 +17,7 @@ export class EnquiryImages extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: false, name: 'img_url' })
   imageUrl: string;
 
-  @OneToOne((type) => Enquiries, (enquiries) => enquiries.enquiryImages, {
+  @ManyToOne((type) => Enquiries, (enquiries) => enquiries.enquiryImages, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'enquiry_no' })
