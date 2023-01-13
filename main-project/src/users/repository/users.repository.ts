@@ -8,10 +8,11 @@ import {
 } from 'typeorm';
 import { UserStatus } from '../../common/configs/user-status.config';
 import { Users } from '../entity/user.entity';
+import { User } from '../interface/user.interface';
 
 @EntityRepository(Users)
 export class UsersRepository extends Repository<Users> {
-  async getUserByEmail(email: string): Promise<any> {
+  async getUserByEmail(email: string): Promise<User> {
     try {
       const user = await this.createQueryBuilder('users')
         .select(['users.no AS userNo', 'users.status AS status'])
@@ -44,7 +45,7 @@ export class UsersRepository extends Repository<Users> {
 
   async getUserByNo(userNo: number): Promise<Users> {
     try {
-      const user = await this.createQueryBuilder('users')
+      const user: Users = await this.createQueryBuilder('users')
         .where('users.no = :userNo', { userNo })
         .getOne();
 
@@ -101,6 +102,21 @@ export class UsersRepository extends Repository<Users> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 가입 중단한 유저 삭제(deleteHaltedUsers): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getConfirmedUserByNo(userNo: number): Promise<Users> {
+    try {
+      const user: Users = await this.createQueryBuilder('users')
+        .where('users.no = :userNo', { userNo })
+        .andWhere('users.status = :status', { status: UserStatus.CONFIRMED })
+        .getOne();
+
+      return user;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 가입 완료된 조회 에러(getConfirmedUserByNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
