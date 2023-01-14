@@ -20,6 +20,6 @@ export class ProfileImages extends BaseEntity {
     nullable: false,
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'user_no' })
+  @JoinColumn({ name: 'profile_no' })
   userProfileNo: number;
 }
