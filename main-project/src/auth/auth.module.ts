@@ -9,6 +9,9 @@ import { UserProfilesRepository } from 'src/users/repository/user-profiles.repos
 import { JwtStrategy } from './jwt/access-token.strategy';
 import { jwtModule } from 'src/common/configs/jwt-module.config';
 import { WebSocketJwtStrategy } from './jwt/ws-token.strategy';
+import { KakaoStrategy } from './jwt/kakao.strategy';
+import { NaverStrategy } from './jwt/naver.strategy';
+import { GoogleStrategy } from './jwt/google.strategy';
 
 @Module({
   imports: [
@@ -21,6 +24,13 @@ import { WebSocketJwtStrategy } from './jwt/ws-token.strategy';
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, WebSocketJwtStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    WebSocketJwtStrategy,
+    KakaoStrategy,
+    NaverStrategy,
+    GoogleStrategy,
+  ],
 })
 export class AuthModule {}
