@@ -4,47 +4,36 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { MeetingRepository } from './repository/meeting.repository';
-import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { Meetings } from './entity/meeting.entity';
 import {
   InsertRaw,
+  Meeting,
   MeetingGuests,
   MeetingHosts,
 } from './interface/meeting.interface';
-import { Connection, QueryRunner } from 'typeorm';
 import { ChatListRepository } from 'src/chats/repository/chat-list.repository';
-import { ChatList } from 'src/chats/entity/chat-list.entity';
+import { ChatUsersRepository } from 'src/chats/repository/chat-users.repository';
 
 @Injectable()
 export class MeetingsService {
   constructor(
-    @InjectRepository(MeetingRepository)
     private readonly meetingRepository: MeetingRepository,
-
-    @InjectRepository(ChatListRepository)
     private readonly chacListRepository: ChatListRepository,
+    private readonly chatUserRepository: ChatUsersRepository,
   ) {}
 
-  async createMeeting(createMeetingDto: CreateMeetingDto): Promise<number> {
+  async createMeeting(
+    createMeetingDto: CreateMeetingDto,
+    userNo: number,
+  ): Promise<number> {
     const { chatRoomNo }: CreateMeetingDto = createMeetingDto;
-    await this.validateChatRoom(chatRoomNo);
+    await this.validateUserInChatRoom(userNo, chatRoomNo);
     await this.validateMeetingNotExist(chatRoomNo);
 
-    const { insertId }: InsertRaw = await this.meetingRepository.createMeeting(
-      createMeetingDto,
-    );
-
-    if (!insertId) {
-      throw new InternalServerErrorException(
-        `약속 생성 에러(createMeeting): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-
-    return insertId;
+    return await this.saveMeeting(createMeetingDto);
   }
 
   async deleteMeeting(meetingNo: number, userNo: number): Promise<void> {
@@ -83,24 +72,41 @@ export class MeetingsService {
     }
   }
 
-  private async validateChatRoom(chatRoomNo: number): Promise<void> {
-    const chatRoom: ChatList =
-      await this.chacListRepository.checkRoomExistsByChatRoomNo(chatRoomNo);
-
-    if (!chatRoom) {
-      throw new NotFoundException(
-        `${chatRoomNo}에 해당하는 채팅방이 존재하지 않습니다.`,
+  private async saveMeeting(meeting: Meeting): Promise<number> {
+    const { insertId }: InsertRaw = await this.meetingRepository.createMeeting(
+      meeting,
+    );
+    if (!insertId) {
+      throw new InternalServerErrorException(
+        `약속 생성(createMeeting): 알 수 없는 서버 에러입니다.`,
       );
+    }
+
+    return insertId;
+  }
+
+  private async validateUserInChatRoom(
+    userNo: number,
+    chatRoomNo: number,
+  ): Promise<void> {
+    const { users } = await this.chatUserRepository.getChatRoomUsers(
+      chatRoomNo,
+    );
+
+    if (!users) {
+      throw new NotFoundException('존재하지 않는 채팅방입니다');
+    }
+    if (!JSON.parse(users).includes(userNo)) {
+      throw new BadRequestException('채팅방에 참여 중인 유저가 아닙니다.');
     }
   }
 
   private async validateMeetingNotExist(chatRoomNo: number): Promise<void> {
-    const meeting = await this.meetingRepository.findMeetingByChatRoom(
-      chatRoomNo,
-    );
+    const meeting: Meetings =
+      await this.meetingRepository.findMeetingByChatRoom(chatRoomNo);
 
     if (meeting) {
-      throw new BadRequestException(`이미 약속이 있는 채팅방입니다.`);
+      throw new BadRequestException('이미 약속이 있는 채팅방입니다.');
     }
   }
 

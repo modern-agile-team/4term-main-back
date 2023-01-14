@@ -3,42 +3,43 @@ import {
   Body,
   Controller,
   Post,
-  HttpCode,
-  HttpStatus,
   Patch,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MeetingsService } from './meetings.service';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
 import { AcceptMeetingDto } from './dto/acceptMeeting.dto';
+import { APIResponse } from 'src/common/interface/interface';
+import { ApiCreateMeeting } from './swagger-decorator/create-meeting.decorator';
+import { GetUser } from 'src/common/decorator/get-user.decorator';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 
 @Controller('meetings')
 @ApiTags('약속 API')
 export class MeetingsController {
   constructor(private readonly meetingsService: MeetingsService) {}
 
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({
-    summary: '새로운 약속 생성',
-    description: '약속 시간/장소/채팅방 번호를 입력하여 약속 생성',
-  })
+  @ApiCreateMeeting()
+  @UseGuards(JwtAuthGuard)
   @Post()
   async createMeeting(
     @Body() createMeetingDto: CreateMeetingDto,
-  ): Promise<object> {
+    @GetUser() userNo: number,
+  ): Promise<APIResponse> {
     const meetingNo: number = await this.meetingsService.createMeeting(
       createMeetingDto,
+      userNo,
     );
 
     return {
-      success: true,
-      meetingNo,
+      msg: '약속 생성 성공',
+      response: { meetingNo },
     };
   }
 
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: '약속 삭제',
     description: '약속 번호에 해당되는 약속 삭제',
@@ -56,7 +57,6 @@ export class MeetingsController {
     };
   }
 
-  @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: '약속 수정',
     description: '약속 장소/시간 수정 (호스트 측 인원만 수정 가능)',
@@ -71,7 +71,6 @@ export class MeetingsController {
     return { success: true, msg: `약속이 수정되었습니다` };
   }
 
-  @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({
     summary: '약속 수락',
     description: 'meetingNo를 통해 약속 수락(게스트 측 인원만 수정 가능)',
