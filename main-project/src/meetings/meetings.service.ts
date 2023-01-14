@@ -62,17 +62,17 @@ export class MeetingsService {
     if (!updateMeetingDto.location && !updateMeetingDto.time) {
       throw new BadRequestException('변경 사항 없음');
     }
-
     if (updateMeetingDto.time) {
       this.validateMeetingTime(updateMeetingDto.time);
     }
 
+    await this.validateIsNotAccepted(meetingNo);
     await this.validateIsMeetingMember(userNo, meetingNo);
     await this.updateMeetingByNo(meetingNo, updateMeetingDto);
   }
 
   async acceptMeeting(meetingNo: number, userNo: number): Promise<void> {
-    await this.checkIsAccepted(meetingNo);
+    await this.validateIsNotAccepted(meetingNo);
     await this.validateIsMeetingGuest(userNo, meetingNo);
     await this.updateMeetingByNo(meetingNo, { isAccepted: true });
   }
@@ -134,7 +134,7 @@ export class MeetingsService {
       throw new NotFoundException('유저가 참여 중인 채팅방이 아닙니다.');
     }
     if (chatUser.userType !== UserType.HOST) {
-      throw new BadRequestException('채팅방 호스트가 아닙니다.');
+      throw new UnauthorizedException('채팅방 호스트가 아닙니다.');
     }
   }
 
@@ -174,8 +174,8 @@ export class MeetingsService {
   ): Promise<void> {
     const meeting: MeetingMembers =
       await this.meetingRepository.getMeetingMembers(meetingNo);
-    if (!meeting) {
-      throw new NotFoundException('존재하지 않는 약속입니다.');
+    if (!meeting.members) {
+      throw new NotFoundException('멤버가 존재하지 않는 약속입니다.');
     }
 
     const isUserInMeeting: boolean = JSON.parse(meeting.members).includes(
@@ -186,7 +186,7 @@ export class MeetingsService {
     }
   }
 
-  private async checkIsAccepted(meetingNo: number): Promise<void> {
+  private async validateIsNotAccepted(meetingNo: number): Promise<void> {
     const { isAccepted }: Meetings = await this.getMeeting(meetingNo);
 
     if (isAccepted) {

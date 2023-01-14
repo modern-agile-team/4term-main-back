@@ -4,6 +4,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
@@ -22,20 +23,28 @@ export function ApiCreateMeeting() {
     ApiNotFoundResponse(
       SwaggerApiResponse.exception([
         {
-          name: 'chatRoomNotFound',
-          example: { msg: '존재하지 않는 채팅방입니다' },
+          name: 'chatRoomUserNotFound',
+          example: { msg: '유저가 참여 중인 채팅방이 아닙니다.' },
         },
       ]),
     ),
     ApiBadRequestResponse(
       SwaggerApiResponse.exception([
         {
-          name: 'userNotInChatRoom',
-          example: { msg: '채팅방에 참여 중인 유저가 아닙니다.' },
-        },
-        {
           name: 'meetingAlreadyExist',
           example: { msg: '이미 약속이 있는 채팅방입니다.' },
+        },
+        {
+          name: 'invalidMeetingTime',
+          example: { msg: '약속 시간 변경 필요' },
+        },
+      ]),
+    ),
+    ApiUnauthorizedResponse(
+      SwaggerApiResponse.exception([
+        {
+          name: 'notChatRoomHost',
+          example: { msg: '채팅방 호스트가 아닙니다.' },
         },
       ]),
     ),

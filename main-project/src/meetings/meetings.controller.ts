@@ -7,7 +7,7 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { MeetingsService } from './meetings.service';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
@@ -15,6 +15,9 @@ import { APIResponse } from 'src/common/interface/interface';
 import { ApiCreateMeeting } from './swagger-decorator/create-meeting.decorator';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { ApiDeleteMeeting } from './swagger-decorator/delete-meeting.decorator';
+import { ApiUpdateMeeting } from './swagger-decorator/update-meeting.decorator';
+import { ApiAcceptMeeting } from './swagger-decorator/accept-meeting.decorator';
 
 @ApiTags('약속 API')
 @ApiBearerAuth()
@@ -40,10 +43,7 @@ export class MeetingsController {
     };
   }
 
-  @ApiOperation({
-    summary: '약속 삭제',
-    description: '약속 번호에 해당되는 약속 삭제',
-  })
+  @ApiDeleteMeeting()
   @Delete('/:meetingNo')
   async deleteMeeting(
     @Param('meetingNo') meetingNo: number,
@@ -56,36 +56,30 @@ export class MeetingsController {
     };
   }
 
-  @ApiOperation({
-    summary: '약속 수정',
-    description: '약속 장소/시간 수정 (호스트 측 인원만 수정 가능)',
-  })
+  @ApiUpdateMeeting()
   @Patch('/:meetingNo')
   async updateMeeting(
     @Param('meetingNo') meetingNo: number,
     @Body() updateMeetingDto: UpdateMeetingDto,
     @GetUser() userNo: number,
-  ): Promise<object> {
+  ): Promise<APIResponse> {
     await this.meetingsService.updateMeeting(
       userNo,
       meetingNo,
       updateMeetingDto,
     );
 
-    return { success: true, msg: `약속이 수정되었습니다` };
+    return { msg: '약속이 수정되었습니다' };
   }
 
-  @ApiOperation({
-    summary: '약속 수락',
-    description: 'meetingNo를 통해 약속 수락(게스트 측 인원만 수정 가능)',
-  })
+  @ApiAcceptMeeting()
   @Patch('/:meetingNo/accept')
   async acceptMeeting(
     @Param('meetingNo') meetingNo: number,
     @GetUser() userNo: number,
-  ): Promise<object> {
+  ): Promise<APIResponse> {
     await this.meetingsService.acceptMeeting(meetingNo, userNo);
 
-    return { success: true, msg: `약속이 수락되었습니다` };
+    return { msg: '약속이 수락되었습니다' };
   }
 }
