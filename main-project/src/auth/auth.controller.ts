@@ -8,7 +8,12 @@ import {
   UseGuards,
 } from '@nestjs/common/decorators';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { User } from 'src/users/interface/user.interface';
@@ -23,6 +28,7 @@ import { ApiLogin } from './swagger-decorator/login.decorator';
 import { ApiResetForgottenPassword } from './swagger-decorator/reset-forgotten-password.decorator';
 import { ApiResetLoginFailedCount } from './swagger-decorator/reset-login-failed-count.decorator';
 import { ApiSignIn } from './swagger-decorator/sign-in.decorator';
+import { ApiSocialLogin } from './swagger-decorator/social-login.decorator';
 import { ApiUpdatePassword } from './swagger-decorator/upate-password.decorator';
 import { ApiVerifyEmail } from './swagger-decorator/verify-email.decorator';
 
@@ -31,10 +37,13 @@ import { ApiVerifyEmail } from './swagger-decorator/verify-email.decorator';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @ApiOperation({ summary: '카카오 로그인' })
+  @ApiOkResponse()
   @Get('login/kakao')
   @UseGuards(AuthGuard('kakao'))
   async redirectTokakaoLogin() {}
 
+  @ApiSocialLogin()
   @Get('oauth/kakao')
   @UseGuards(AuthGuard('kakao'))
   async kakaoLogin(@GetUser() email: string) {
@@ -43,10 +52,12 @@ export class AuthController {
     return { msg: '카카오 계정으로 로그인되었습니다.', response: { user } };
   }
 
+  @ApiOperation({ summary: '네이버 로그인' })
   @Get('login/naver')
   @UseGuards(AuthGuard('naver'))
   async redirectToNaverLogin() {}
 
+  @ApiSocialLogin()
   @Get('oauth/naver')
   @UseGuards(AuthGuard('naver'))
   async naverLogin(@GetUser() email: string) {
@@ -55,10 +66,12 @@ export class AuthController {
     return { msg: '네이버 계정으로 로그인되었습니다.', response: { user } };
   }
 
+  @ApiOperation({ summary: '구글 로그인' })
   @Get('login/google')
   @UseGuards(AuthGuard('google'))
   async redirectToGoogleLogin() {}
 
+  @ApiSocialLogin()
   @Get('oauth/google')
   @UseGuards(AuthGuard('google'))
   async googleLogin(@GetUser() email: string) {

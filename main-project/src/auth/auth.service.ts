@@ -45,26 +45,12 @@ export class AuthService {
 
   async loginBySocialEmail(email: string): Promise<User> {
     const user = await this.createOrGetUser(email);
+    const authentication: Authentication =
+      await this.authRepository.findAuthByUserNo(user.userNo);
 
-    return await this.issueToken(user);
-  }
-
-  async googleLogin(token: string): Promise<User> {
-    const googleUserInfoUrl =
-      'https://openidconnect.googleapis.com/v1/userinfo';
-    const headers = {
-      Authorization: 'Bearer ' + token,
-    };
-
-    const googleUser = await axios({
-      method: 'GET',
-      url: googleUserInfoUrl,
-      timeout: 30000,
-      headers,
-    });
-
-    const { email } = googleUser.data;
-    const user = await this.createOrGetUser(email);
+    if (authentication) {
+      throw new UnauthorizedException('자체 로그인 사용 유저');
+    }
 
     return await this.issueToken(user);
   }
