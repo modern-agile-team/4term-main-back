@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -29,6 +28,7 @@ import { Authentication } from './entity/authentication.entity';
 import { AuthConfig } from './config/auth.config';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { EntityManager } from 'typeorm';
 
 @Injectable()
 export class AuthService {
@@ -43,8 +43,11 @@ export class AuthService {
     private readonly userProfileRepository: UserProfilesRepository,
   ) {}
 
-  async loginBySocialEmail(email: string): Promise<User> {
-    const user = await this.createOrGetUser(email);
+  async loginBySocialEmail(
+    email: string,
+    manager: EntityManager,
+  ): Promise<User> {
+    const user = await this.createOrGetUser(email, manager);
     const authentication: Authentication =
       await this.authRepository.findAuthByUserNo(user.userNo);
 
@@ -70,21 +73,15 @@ export class AuthService {
     });
   }
 
-  async verifyEmail({ email, code, password }: VerifyEmailDto): Promise<User> {
+  async verifyEmail(
+    { email, code, password }: VerifyEmailDto,
+    manager: EntityManager,
+  ): Promise<User> {
     await this.validateUserNotCreated(email);
     await this.validateEmail(email, code);
 
-    const user: User = await this.createUserByEmail(email);
-    const userAuth: UserAuth = await this.createAuthentication(
-      user.userNo,
-      password,
-    );
-    const { affectedRows }: ResultSetHeader =
-      await this.authRepository.createAuth(userAuth);
-
-    if (!affectedRows) {
-      throw new InternalServerErrorException(`비밀번호 생성 오류입니다.`);
-    }
+    const user: User = await this.saveUser(email, manager);
+    await this.saveAuthentication({ userNo: user.userNo, password }, manager);
 
     return user;
   }
@@ -94,7 +91,6 @@ export class AuthService {
     const userAuth: Authentication = await this.getUserAuthentication(
       user.userNo,
     );
-
     await this.validatePassword(userAuth, password);
 
     return await this.issueToken(user);
@@ -107,7 +103,6 @@ export class AuthService {
     if (!validIssuedDate) {
       throw new UnauthorizedException(`현재 로그인 정보가 없는 유저입니다.`);
     }
-
     if (iat !== validIssuedDate) {
       throw new UnauthorizedException(`다른 곳에서의 로그인 감지.`);
     }
@@ -118,9 +113,13 @@ export class AuthService {
   async refreshAccessToken(payload: Payload): Promise<string> {
     const accessToken = this.jwtService.sign(payload);
     const { iat }: any = this.jwtService.decode(accessToken);
+    const remainedTime = await this.cacheManager.ttl(payload.userNo);
 
     await this.cacheManager.set(payload.userNo, iat, {
-      ttl: await this.cacheManager.ttl(payload.userNo),
+      ttl:
+        remainedTime === -2
+          ? this.configService.get('TOKEN_EXPIRATION')
+          : remainedTime,
     });
 
     return accessToken;
@@ -191,6 +190,26 @@ export class AuthService {
     await this.updatePassword(userNo, newPassword);
   }
 
+  private getSaltedPassword(password: string): string {
+    return bcrypt.hashSync(password, 3);
+  }
+
+  private async saveAuthentication(
+    userAuth: UserAuth,
+    manager: EntityManager,
+  ): Promise<void> {
+    userAuth.password = this.getSaltedPassword(userAuth.password);
+
+    const createAuthResult: ResultSetHeader = await manager
+      .getCustomRepository(AuthRepository)
+      .createAuth(userAuth);
+
+    if (!createAuthResult.affectedRows) {
+      throw new InternalServerErrorException(`비밀번호 생성 오류입니다.`);
+    }
+    throw new Error();
+  }
+
   private async resetFailedCount(userNo: number): Promise<void> {
     const isFailedCountUpdated: number =
       await this.authRepository.updateFailedCount(userNo, 0);
@@ -212,10 +231,10 @@ export class AuthService {
     userNo: number,
     password: string,
   ): Promise<void> {
-    const userAuth: UserAuth = await this.createAuthentication(
+    const userAuth: UserAuth = {
       userNo,
-      password,
-    );
+      password: this.getSaltedPassword(password),
+    };
 
     const isPasswordUpdated: number = await this.authRepository.updatePassword(
       userAuth,
@@ -227,7 +246,6 @@ export class AuthService {
 
   private async getUserByEmail(email: string) {
     const user: User = await this.userRepository.getUserByEmail(email);
-
     if (!user) {
       throw new NotFoundException('회원가입을 하지 않은 이메일입니다.');
     }
@@ -275,18 +293,6 @@ export class AuthService {
     }
   }
 
-  private async createAuthentication(
-    userNo: number,
-    password: string,
-  ): Promise<UserAuth> {
-    const saltedPassword = bcrypt.hashSync(password, 3);
-
-    return {
-      password: saltedPassword,
-      userNo,
-    };
-  }
-
   private async validateUserNotCreated(email: string) {
     const user = await this.userRepository.getUserByEmail(email);
 
@@ -311,23 +317,26 @@ export class AuthService {
     }
   }
 
-  private async createUserByEmail(email: string): Promise<User> {
-    const { insertId }: ResultSetHeader = await this.userRepository.createUser(
-      email,
-    );
+  private async saveUser(email: string, manager: EntityManager): Promise<User> {
+    const { insertId }: ResultSetHeader = await manager
+      .getCustomRepository(UsersRepository)
+      .createUser(email);
 
     if (!insertId) {
-      throw new InternalServerErrorException(`유저 생성 오류(createUser)`);
+      throw new InternalServerErrorException('유저 생성 오류');
     }
 
     return { userNo: insertId, status: UserStatus.NO_PROFILE };
   }
 
-  private async createOrGetUser(email: string): Promise<User> {
+  private async createOrGetUser(
+    email: string,
+    manager: EntityManager,
+  ): Promise<User> {
     const user: User = await this.userRepository.getUserByEmail(email);
 
     if (!user) {
-      return await this.createUserByEmail(email);
+      return await this.saveUser(email, manager);
     }
 
     return user;

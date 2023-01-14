@@ -6,6 +6,7 @@ import {
   Patch,
   Post,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common/decorators';
 import { AuthGuard } from '@nestjs/passport';
 import {
@@ -15,8 +16,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
+import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { User } from 'src/users/interface/user.interface';
+import { EntityManager } from 'typeorm';
 import { AuthService } from './auth.service';
 import { EmailDto } from './dto/email.dto';
 import { LoginDto } from './dto/login.dto';
@@ -45,9 +49,16 @@ export class AuthController {
 
   @ApiSocialLogin()
   @Get('oauth/kakao')
+  @UseInterceptors(TransactionInterceptor)
   @UseGuards(AuthGuard('kakao'))
-  async kakaoLogin(@GetUser() email: string) {
-    const user: User = await this.authService.loginBySocialEmail(email);
+  async kakaoLogin(
+    @GetUser() email: string,
+    @TransactionDecorator() manager: EntityManager,
+  ) {
+    const user: User = await this.authService.loginBySocialEmail(
+      email,
+      manager,
+    );
 
     return { msg: '카카오 계정으로 로그인되었습니다.', response: { user } };
   }
@@ -59,9 +70,16 @@ export class AuthController {
 
   @ApiSocialLogin()
   @Get('oauth/naver')
+  @UseInterceptors(TransactionInterceptor)
   @UseGuards(AuthGuard('naver'))
-  async naverLogin(@GetUser() email: string) {
-    const user: User = await this.authService.loginBySocialEmail(email);
+  async naverLogin(
+    @GetUser() email: string,
+    @TransactionDecorator() manager: EntityManager,
+  ) {
+    const user: User = await this.authService.loginBySocialEmail(
+      email,
+      manager,
+    );
 
     return { msg: '네이버 계정으로 로그인되었습니다.', response: { user } };
   }
@@ -73,9 +91,16 @@ export class AuthController {
 
   @ApiSocialLogin()
   @Get('oauth/google')
+  @UseInterceptors(TransactionInterceptor)
   @UseGuards(AuthGuard('google'))
-  async googleLogin(@GetUser() email: string) {
-    const user: User = await this.authService.loginBySocialEmail(email);
+  async googleLogin(
+    @GetUser() email: string,
+    @TransactionDecorator() manager: EntityManager,
+  ) {
+    const user: User = await this.authService.loginBySocialEmail(
+      email,
+      manager,
+    );
 
     return { msg: '구글 계정으로 로그인되었습니다.', response: { user } };
   }
@@ -89,9 +114,16 @@ export class AuthController {
   }
 
   @ApiVerifyEmail()
+  @UseInterceptors(TransactionInterceptor)
   @Post('/verify')
-  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
-    const user: User = await this.authService.verifyEmail(verifyEmailDto);
+  async verifyEmail(
+    @Body() verifyEmailDto: VerifyEmailDto,
+    @TransactionDecorator() manager: EntityManager,
+  ) {
+    const user: User = await this.authService.verifyEmail(
+      verifyEmailDto,
+      manager,
+    );
 
     return { response: { user } };
   }
