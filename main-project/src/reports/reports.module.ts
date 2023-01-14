@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BoardsService } from 'src/boards/boards.service';
 import { BoardRepository } from 'src/boards/repository/board.repository';
 import { UsersRepository } from 'src/users/repository/users.repository';
-import { UsersService } from 'src/users/users.service';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
+import { ReportBoardRepository } from './repository/report-board.repository';
 import { ReportRepository } from './repository/reports.repository';
+import { ReportUserRepository } from './repository/report-user.repository';
 
 @Module({
   imports: [
@@ -14,9 +14,11 @@ import { ReportRepository } from './repository/reports.repository';
       BoardRepository,
       ReportRepository,
       UsersRepository,
+      ReportBoardRepository,
+      ReportUserRepository,
     ]),
   ],
-  providers: [ReportsService, BoardRepository, UsersRepository],
+  providers: [ReportsService],
   controllers: [ReportsController],
 })
 export class ReportsModule {}

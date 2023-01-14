@@ -1,6 +1,14 @@
-version: "3.8"
+version: '3.8'
 
 services:
+    redis:
+        image: redis:latest
+        command: redis-server  --requirepass redispw --port 55001
+        env_file: .env
+        container_name: redis_prod
+        hostname: redis_prod
+        ports:
+            - 55000:55000
     nest1:
         build:
             context: .
@@ -10,6 +18,8 @@ services:
         ports:
             - 3000:3000
         container_name: nest-prod1
+        depends_on:
+            - redis
         restart: always
     nest2:
         build:
@@ -18,8 +28,10 @@ services:
         env_file: .env
         image: ghcr.io/klaus9267/summer-auto-deploy
         ports:
-            - 4000:4000
+            - 4000:3000
         container_name: nest-prod2
+        depends_on:
+            - redis
         restart: always
     nest3:
         build:
@@ -28,6 +40,8 @@ services:
         env_file: .env
         image: ghcr.io/klaus9267/summer-auto-deploy
         ports:
-            - 5000:5000
+            - 5000:3000
         container_name: nest-prod3
+        depends_on:
+            - redis
         restart: always
