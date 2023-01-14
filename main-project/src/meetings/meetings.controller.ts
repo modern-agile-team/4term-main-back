@@ -7,23 +7,23 @@ import {
   Delete,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { MeetingsService } from './meetings.service';
 import { CreateMeetingDto } from './dto/createMeeting.dto';
 import { UpdateMeetingDto } from './dto/updateMeeting.dto';
-import { AcceptMeetingDto } from './dto/acceptMeeting.dto';
 import { APIResponse } from 'src/common/interface/interface';
 import { ApiCreateMeeting } from './swagger-decorator/create-meeting.decorator';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 
-@Controller('meetings')
 @ApiTags('약속 API')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('meetings')
 export class MeetingsController {
   constructor(private readonly meetingsService: MeetingsService) {}
 
   @ApiCreateMeeting()
-  @UseGuards(JwtAuthGuard)
   @Post()
   async createMeeting(
     @Body() createMeetingDto: CreateMeetingDto,
@@ -47,12 +47,11 @@ export class MeetingsController {
   @Delete('/:meetingNo')
   async deleteMeeting(
     @Param('meetingNo') meetingNo: number,
-    @Body('userNo') userNo: number,
-  ): Promise<object> {
-    await this.meetingsService.deleteMeeting(meetingNo, userNo);
+    @GetUser() userNo: number,
+  ): Promise<APIResponse> {
+    await this.meetingsService.deleteMeeting(userNo, meetingNo);
 
     return {
-      success: true,
       msg: '약속이 삭제되었습니다.',
     };
   }
@@ -65,8 +64,13 @@ export class MeetingsController {
   async updateMeeting(
     @Param('meetingNo') meetingNo: number,
     @Body() updateMeetingDto: UpdateMeetingDto,
+    @GetUser() userNo: number,
   ): Promise<object> {
-    await this.meetingsService.updateMeeting(meetingNo, updateMeetingDto);
+    await this.meetingsService.updateMeeting(
+      userNo,
+      meetingNo,
+      updateMeetingDto,
+    );
 
     return { success: true, msg: `약속이 수정되었습니다` };
   }
@@ -78,7 +82,7 @@ export class MeetingsController {
   @Patch('/:meetingNo/accept')
   async acceptMeeting(
     @Param('meetingNo') meetingNo: number,
-    @Body() { userNo }: AcceptMeetingDto,
+    @GetUser() userNo: number,
   ): Promise<object> {
     await this.meetingsService.acceptMeeting(meetingNo, userNo);
 

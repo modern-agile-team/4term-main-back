@@ -8,11 +8,11 @@ import {
 
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 
-export function ApiCreateMeeting() {
+export function ApiDeleteMeeting() {
   return applyDecorators(
     ApiOperation({
-      summary: '약속 생성',
-      description: '약속 시간/장소/채팅방 번호를 입력하여 약속 생성',
+      summary: '약속 삭제',
+      description: '약속 번호에 해당되는 약속 삭제',
     }),
     ApiOkResponse(
       SwaggerApiResponse.success('생성된 약속 번호 반환', '약속 생성 성공', {
