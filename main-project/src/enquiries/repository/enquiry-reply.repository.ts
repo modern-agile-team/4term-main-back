@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import { UpdateEnquiryDto } from '../dto/update-enquiry.dto';
 import { EnquiryReplies } from '../entity/enquiry-reply.entity';
+import { Reply } from '../interface/enquiry.interface';
 
 @EntityRepository(EnquiryReplies)
 export class EnquiryRepliesRepository extends Repository<EnquiryReplies> {
@@ -27,14 +28,17 @@ export class EnquiryRepliesRepository extends Repository<EnquiryReplies> {
     }
   }
 
-  async getReplyByNo(enquiryNo: number): Promise<EnquiryReplies> {
+  async getReplyByNo(enquiryNo: number): Promise<Reply> {
     try {
-      const reply: EnquiryReplies = await this.createQueryBuilder()
+      const reply: Reply = await this.createQueryBuilder('reply')
+        .leftJoin('reply.replyImage', 'images')
         .select([
-          'no AS no',
-          'title AS title',
-          'description AS description',
-          'created_date AS createdDate',
+          'reply.no AS no',
+          'reply.title AS title',
+          'reply.description AS description',
+          'reply.created_date AS createdDate',
+          `DATE_FORMAT(reply.createdDate, '%Y.%m.%d %T') AS createdDate`,
+          'JSON_ARRAYAGG(images.imageUrl) AS imageUrl',
         ])
         .where('enquiry_no = :enquiryNo', { enquiryNo })
         .getRawOne();
@@ -48,7 +52,7 @@ export class EnquiryRepliesRepository extends Repository<EnquiryReplies> {
   }
 
   //Post Methods
-  async createReply(reply): Promise<ResultSetHeader> {
+  async createReply(reply: Reply): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
@@ -68,15 +72,15 @@ export class EnquiryRepliesRepository extends Repository<EnquiryReplies> {
   async updateReply(
     enquiryNo: number,
     updateEnquiryDto: UpdateEnquiryDto,
-  ): Promise<ResultSetHeader> {
+  ): Promise<number> {
     try {
-      const { raw }: UpdateResult = await this.createQueryBuilder()
+      const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(EnquiryReplies)
         .set(updateEnquiryDto)
         .where('enquiryNo = :enquiryNo', { enquiryNo })
         .execute();
 
-      return raw;
+      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateReply-repository: 알 수 없는 서버 에러입니다.`,

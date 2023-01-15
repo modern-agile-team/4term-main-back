@@ -7,14 +7,13 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { EnquiryReplies } from './enquiry-reply.entity';
-import { Enquiries } from './enquiry.entity';
 
 @Entity('enquiry_reply_images')
 export class EnquiryReplyImages extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: false, name: 'img_url' })
+  @Column({ type: 'varchar', length: 255, nullable: false, name: 'image_url' })
   imageUrl: string;
 
   @ManyToOne(

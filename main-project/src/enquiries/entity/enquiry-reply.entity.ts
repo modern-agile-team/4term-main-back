@@ -33,9 +33,11 @@ export class EnquiryReplies extends BaseEntity {
   @DeleteDateColumn({ name: 'deleted_date' })
   deletedDate: Date;
 
-  @OneToOne((type) => Enquiries, (enquiries) => enquiries.enquiryReply)
+  @OneToOne((type) => Enquiries, (enquiries) => enquiries.enquiryReply, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'enquiry_no' })
-  enquiryNo: Enquiries;
+  enquiryNo: number;
 
   @OneToMany(
     (type) => EnquiryReplyImages,

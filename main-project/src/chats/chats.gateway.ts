@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, UseInterceptors } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -6,15 +6,18 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { AsyncApiPub, AsyncApiSub } from 'nestjs-asyncapi';
+import { UseGuards } from '@nestjs/common/decorators';
+import { AsyncApiSub } from 'nestjs-asyncapi';
 import { Namespace, Socket } from 'socket.io';
+import { WebSocketAuthGuard } from 'src/common/guards/ws-jwt-auth.guard';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { APIResponse } from 'src/common/interface/interface';
 import { ChatsGatewayService } from './chats-gateway.service';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { InitSocketDto } from './dto/init-socket.dto';
-import { JoinChatRoomDto } from './dto/join-chat.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
-import { ChatRoomList } from './interface/chat.interface';
+import { ChatRoom } from './interface/chat.interface';
+import { WebSocketGetUser } from 'src/common/decorator/ws-get-user.decorator';
 
 @WebSocketGateway(4000, { namespace: 'chat' })
 export class ChatsGateway {
@@ -64,12 +67,18 @@ export class ChatsGateway {
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: InitSocketDto,
   ): Promise<APIResponse> {
-    const chatRoomList: ChatRoomList[] =
-      await this.chatGatewayService.initSocket(socket, messagePayload);
+    const chatRooms: ChatRoom[] = await this.chatGatewayService.initSocket(
+      socket,
+      messagePayload,
+    );
 
-    return { response: { chatRoomList } };
+    return { response: { chatRooms } };
   }
 
+  /**
+   *
+   * @todo: 채팅방 생성시 soft delete 구분
+   */
   @SubscribeMessage('create-room')
   @AsyncApiSub({
     description: `채팅방 생성 
@@ -79,36 +88,21 @@ export class ChatsGateway {
       payload: CreateChatDto,
     },
   })
+  @UseGuards(WebSocketAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   async handleCreateRoom(
-    @ConnectedSocket() socket: Socket,
+    @WebSocketGetUser() user,
+    @ConnectedSocket() socket,
     @MessageBody() messagePayload: CreateChatDto,
   ): Promise<APIResponse> {
-    const chatRoomNo = await this.chatGatewayService.createRoom(
-      socket,
-      messagePayload,
-    );
-    return { response: { chatRoomNo } };
-  }
-
-  @SubscribeMessage('join-room')
-  @AsyncApiSub({
-    description: `채팅방 참여 
-    response: { chatRoomNo: number } 반환`,
-    channel: 'join-room',
-    message: {
-      payload: JoinChatRoomDto,
-    },
-  })
-  async handleJoinRoom(
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() messagePayload: JoinChatRoomDto,
-  ): Promise<APIResponse> {
-    const recentChatLog = await this.chatGatewayService.joinRoom(
+    const manager = socket.manager;
+    const chatRoom: ChatRoom = await this.chatGatewayService.createRoom(
+      manager,
       socket,
       messagePayload,
     );
 
-    return { response: { recentChatLog } };
+    return { response: { chatRoom } };
   }
 
   @SubscribeMessage('message')

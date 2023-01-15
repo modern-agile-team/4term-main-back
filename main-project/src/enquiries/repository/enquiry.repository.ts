@@ -7,22 +7,22 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { CreateEnquiryDto } from '../dto/create-enquiry.dto';
 import { UpdateEnquiryDto } from '../dto/update-enquiry.dto';
 import { Enquiries } from '../entity/enquiry.entity';
+import { Enquiry } from '../interface/enquiry.interface';
 
 @EntityRepository(Enquiries)
-export class EnquirysRepository extends Repository<Enquiries> {
+export class EnquiriesRepository extends Repository<Enquiries> {
   //Get Methods
-  async getAllEnquiries(): Promise<Enquiries[]> {
+  async getAllEnquiries(): Promise<Enquiry[]> {
     try {
       const enquiries = this.createQueryBuilder('enquiries')
         .leftJoin('enquiries.userNo', 'users')
-        .leftJoin('enquiries.enquiryImages', 'images')
         .select([
           'enquiries.no AS no',
           'users.no AS userNo',
           'enquiries.title AS title',
+          'enquiries.isDone AS isDone',
           'enquiries.description AS description',
           `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
         ])
@@ -37,16 +37,19 @@ export class EnquirysRepository extends Repository<Enquiries> {
     }
   }
 
-  async getEnquiryByNo(enquiryNo: number): Promise<Enquiries> {
+  async getEnquiryByNo(enquiryNo: number): Promise<Enquiry> {
     try {
       const enquiry = this.createQueryBuilder('enquiries')
         .leftJoin('enquiries.userNo', 'users')
+        .leftJoin('enquiries.enquiryImages', 'images')
         .select([
           'enquiries.no AS no',
           'users.no AS userNo',
           'enquiries.title AS title',
           'enquiries.description AS description',
+          'enquiries.isDone AS isDone',
           `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
+          'JSON_ARRAYAGG(images.imageUrl) AS imageUrl',
         ])
         .where('enquiries.no = :enquiryNo', { enquiryNo })
         .getRawOne();
@@ -80,15 +83,15 @@ export class EnquirysRepository extends Repository<Enquiries> {
   async updateEnquiry(
     enquiryNo: number,
     updateEnquiryDto: UpdateEnquiryDto,
-  ): Promise<ResultSetHeader> {
+  ): Promise<number> {
     try {
-      const { raw }: UpdateResult = await this.createQueryBuilder()
+      const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Enquiries)
         .set(updateEnquiryDto)
         .where('no = :enquiryNo', { enquiryNo })
         .execute();
 
-      return raw;
+      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateEnquiry-repository: 알 수 없는 서버 에러입니다.`,
@@ -96,16 +99,33 @@ export class EnquirysRepository extends Repository<Enquiries> {
     }
   }
 
-  //Delete Methods
-  async deleteEnquiry(enquiryNo: number): Promise<ResultSetHeader> {
+  async closeEnquiry(no: number): Promise<number> {
     try {
-      const { raw }: DeleteResult = await this.createQueryBuilder()
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(Enquiries)
+        .set({ isDone: true })
+        .where('no = :no', { no })
+        .execute();
+      console.log(affected);
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} closeEnquiry-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  //Delete Methods
+  async deleteEnquiry(enquiryNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()
         .from(Enquiries)
         .where('no = :enquiryNo', { enquiryNo })
         .execute();
 
-      return raw;
+      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteEnquiry-repository: 알 수 없는 서버 에러입니다.`,
