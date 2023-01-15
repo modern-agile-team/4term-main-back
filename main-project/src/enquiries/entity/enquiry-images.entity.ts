@@ -14,7 +14,7 @@ export class EnquiryImages extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @Column({ type: 'varchar', length: 255, nullable: false, name: 'img_url' })
+  @Column({ type: 'varchar', length: 255, nullable: false, name: 'image_url' })
   imageUrl: string;
 
   @ManyToOne((type) => Enquiries, (enquiries) => enquiries.enquiryImages, {

@@ -89,8 +89,8 @@ export class AwsService {
     return fileUrlList;
   }
 
-  async deleteFiles(imagesUrlList: string[]): Promise<void> {
-    const keys = imagesUrlList.map((el: string) => {
+  async deleteFiles(imagesUrls: string[]): Promise<void> {
+    const keys = imagesUrls.map((el: string) => {
       let url = el.split('.com/');
 
       return { Key: url[1] };
