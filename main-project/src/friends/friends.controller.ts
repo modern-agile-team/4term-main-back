@@ -7,10 +7,14 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { userInfo } from 'os';
+import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { APIResponse } from 'src/common/interface/interface';
 import { EntityManager } from 'typeorm';
@@ -39,12 +43,14 @@ export class FriendsController {
   }
 
   @Post('/request')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '친구 신청 API',
     description: '친구 신청 API',
   })
   async sendFriendRequest(
+    @GetUser() userNo,
     @Body() createFriendDto: CreateFriendRequestDto,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
