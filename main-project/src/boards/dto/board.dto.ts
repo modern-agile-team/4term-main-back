@@ -8,7 +8,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-export class BoardDto {
+export class CreateBoardDto {
   @ApiProperty({
     example: '크리스마스를 즐기자',
     description: '게시글 제목',

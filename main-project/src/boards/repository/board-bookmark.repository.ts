@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import {
   DeleteResult,
   EntityRepository,
@@ -8,7 +9,7 @@ import {
 import { BoardBookmarks } from '../entity/board-bookmark.entity';
 
 @EntityRepository(BoardBookmarks)
-export class BoardBookmarkRepository extends Repository<BoardBookmarks> {
+export class BoardBookmarksRepository extends Repository<BoardBookmarks> {
   // 생성
   async createBookmark(boardNo: number, userNo: number): Promise<number> {
     try {

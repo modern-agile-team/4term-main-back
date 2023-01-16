@@ -7,10 +7,20 @@ export interface CreateResponse {
   affectedRows: number;
   insertId?: number;
 }
-export class Board extends Boards {
-  nickname: string;
-  hostUserNums: string;
-  hostNicknames: string;
+export class Board {
+  no: number;
+  hostUserNo: number;
+  hostNickname: string;
+  title: string;
+  description: string;
+  location: string;
+  meetingTime: Date;
+  isDone: boolean;
+  recruitMale: number;
+  recruitFemale: number;
+  isImpromptu: boolean;
+  hostMembers: string;
+  hostMembersNickname: string;
 }
 
 export class Participation extends OmitType(ParticipationDto, ['guests']) {

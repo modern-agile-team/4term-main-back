@@ -39,5 +39,5 @@ export class BoardFilterDto {
   @IsBoolean()
   @ToBoolean()
   @IsOptional()
-  isThunder: boolean;
+  isImpromptu: boolean;
 }

@@ -5,18 +5,18 @@ import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { BoardsController } from './boards.controller';
 import { BoardsService } from './boards.service';
-import { BoardBookmarkRepository } from './repository/board-bookmark.repository';
-import { BoardGuestRepository } from './repository/board-guest.repository';
-import { BoardHostRepository } from './repository/board-host.repository';
-import { BoardRepository } from './repository/board.repository';
+import { BoardBookmarksRepository } from './repository/board-bookmark.repository';
+import { BoardGuestsRepository } from './repository/board-guest.repository';
+import { BoardHostsRepository } from './repository/board-host.repository';
+import { BoardsRepository } from './repository/board.repository';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      BoardRepository,
-      BoardGuestRepository,
-      BoardHostRepository,
-      BoardBookmarkRepository,
+      BoardsRepository,
+      BoardGuestsRepository,
+      BoardHostsRepository,
+      BoardBookmarksRepository,
       UsersRepository,
       NoticesRepository,
       NoticeBoardsRepository,

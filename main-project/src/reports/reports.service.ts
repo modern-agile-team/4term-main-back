@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Boards } from 'src/boards/entity/board.entity';
-import { CreateResponse } from 'src/boards/interface/boards.interface';
-import { BoardRepository } from 'src/boards/repository/board.repository';
+import { Board, CreateResponse } from 'src/boards/interface/boards.interface';
+import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { Connection, QueryRunner } from 'typeorm';
 import { CreateReportDto } from './dto/create-reports.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
@@ -22,8 +22,8 @@ export class ReportsService {
     @InjectRepository(ReportRepository)
     private readonly reportRepository: ReportRepository,
 
-    @InjectRepository(BoardRepository)
-    private readonly boardRepository: BoardRepository,
+    @InjectRepository(BoardsRepository)
+    private readonly boardRepository: BoardsRepository,
 
     @InjectRepository(ReportBoardRepository)
     private readonly boardReportRepository: ReportBoardRepository,
@@ -98,7 +98,7 @@ export class ReportsService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const board: Boards = await this.boardRepository.getBoardByNo(boardNo);
+      const board: Board = await this.boardRepository.getBoardByNo(boardNo);
       if (!board.no) {
         throw new BadRequestException(`
         게시글 신고 생성(createBoardReport): ${boardNo}번 게시글을 찾을 수 없습니다.

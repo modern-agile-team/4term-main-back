@@ -1,11 +1,12 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { BoardGuests } from '../entity/board-guest.entity';
 import { Boards } from '../entity/board.entity';
 import { CreateResponse } from '../interface/boards.interface';
 
 @EntityRepository(BoardGuests)
-export class BoardGuestRepository extends Repository<BoardGuests> {
+export class BoardGuestsRepository extends Repository<BoardGuests> {
   // 조회
   async getAllGuestsByBoardNo(
     boardNo: number,
@@ -26,7 +27,7 @@ export class BoardGuestRepository extends Repository<BoardGuests> {
   }
 
   // 생성
-  async createGuests(guests: object[]): Promise<CreateResponse> {
+  async createGuests(guests: object[]): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()

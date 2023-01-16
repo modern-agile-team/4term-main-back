@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Socket } from 'socket.io';
 import { Board } from 'src/boards/interface/boards.interface';
-import { BoardRepository } from 'src/boards/repository/board.repository';
+import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import {
@@ -49,8 +49,8 @@ export class ChatsGatewayService {
     @InjectRepository(ChatLogRepository)
     private readonly chatLogRepository: ChatLogRepository,
 
-    @InjectRepository(BoardRepository)
-    private readonly boardRepository: BoardRepository,
+    @InjectRepository(BoardsRepository)
+    private readonly boardRepository: BoardsRepository,
 
     @InjectRepository(ChatFileUrlsRepository)
     private readonly chatFileUrlsRepository: ChatFileUrlsRepository,
