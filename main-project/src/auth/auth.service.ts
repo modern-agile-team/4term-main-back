@@ -47,7 +47,7 @@ export class AuthService {
     email: string,
     manager: EntityManager,
   ): Promise<User> {
-    const user = await this.createOrGetUser(email, manager);
+    const user : User = await this.createOrGetUser(email, manager);
     const authentication: Authentication =
       await this.authRepository.findAuthByUserNo(user.userNo);
 
