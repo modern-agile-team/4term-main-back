@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import {
   DeleteResult,
   EntityRepository,
@@ -27,7 +28,10 @@ export class BoardBookmarkRepository extends Repository<BoardBookmarks> {
   }
 
   // 삭제
-  async cancelBookmark(boardNo: number, userNo: number): Promise<number> {
+  async cancelBookmark(
+    boardNo: number,
+    userNo: number,
+  ): Promise<ResultSetHeader> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()
@@ -36,7 +40,7 @@ export class BoardBookmarkRepository extends Repository<BoardBookmarks> {
         .andWhere('userNo = :userNo', { userNo })
         .execute();
 
-      return affected;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
