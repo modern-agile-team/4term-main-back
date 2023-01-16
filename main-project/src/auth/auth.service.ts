@@ -47,7 +47,7 @@ export class AuthService {
     email: string,
     manager: EntityManager,
   ): Promise<User> {
-    const user = await this.createOrGetUser(email, manager);
+    const user : User = await this.createOrGetUser(email, manager);
     const authentication: Authentication =
       await this.authRepository.findAuthByUserNo(user.userNo);
 
@@ -207,7 +207,6 @@ export class AuthService {
     if (!createAuthResult.affectedRows) {
       throw new InternalServerErrorException(`비밀번호 생성 오류입니다.`);
     }
-    throw new Error();
   }
 
   private async resetFailedCount(userNo: number): Promise<void> {
