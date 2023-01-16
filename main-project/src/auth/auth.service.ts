@@ -207,7 +207,6 @@ export class AuthService {
     if (!createAuthResult.affectedRows) {
       throw new InternalServerErrorException(`비밀번호 생성 오류입니다.`);
     }
-    throw new Error();
   }
 
   private async resetFailedCount(userNo: number): Promise<void> {
