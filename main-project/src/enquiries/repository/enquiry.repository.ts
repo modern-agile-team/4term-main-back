@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import {
   DeleteResult,
   EntityRepository,
@@ -6,29 +7,28 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { EnquiryDto } from '../dto/enquiry.dto';
+import { UpdateEnquiryDto } from '../dto/update-enquiry.dto';
 import { Enquiries } from '../entity/enquiry.entity';
-import {
-  EnquiryCreateResponse,
-  EnquiryDetail,
-  EnquiryReadResponse,
-} from '../interface/enquiry.interface';
+import { Enquiry } from '../interface/enquiry.interface';
 
 @EntityRepository(Enquiries)
-export class EnquiryRepository extends Repository<Enquiries> {
-  // 문의사항 조회 관련
-  async getAllEnquiries(): Promise<EnquiryReadResponse[]> {
+export class EnquiriesRepository extends Repository<Enquiries> {
+  //Get Methods
+  async getAllEnquiries(): Promise<Enquiry[]> {
     try {
-      const enquiries = this.createQueryBuilder('enquiries')
+      const enquiries: Enquiry[] = await this.createQueryBuilder('enquiries')
+        .leftJoin('enquiries.userNo', 'users')
         .select([
           'enquiries.no AS no',
-          'enquiries.userNo AS user_no',
+          'users.no AS userNo',
           'enquiries.title AS title',
+          'enquiries.isDone AS isDone',
           'enquiries.description AS description',
+          `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
         ])
-        .orderBy('enquiries.no', 'DESC')
+        .orderBy('no', 'DESC')
         .getRawMany();
-
+      //TODO: 공지사항 전체조회 시 이미지 사용하는 지 토의
       return enquiries;
     } catch (error) {
       throw new InternalServerErrorException(
@@ -37,35 +37,38 @@ export class EnquiryRepository extends Repository<Enquiries> {
     }
   }
 
-  async getEnquiriesByNo(enquiryNo: number): Promise<EnquiryReadResponse> {
+  async getEnquiryByNo(enquiryNo: number): Promise<Enquiry> {
     try {
-      const enquiry = this.createQueryBuilder('enquiries')
+      const enquiry: Enquiry = await this.createQueryBuilder('enquiries')
+        .leftJoin('enquiries.userNo', 'users')
+        .leftJoin('enquiries.enquiryImages', 'images')
         .select([
           'enquiries.no AS no',
-          'enquiries.userNo AS user_no',
+          'users.no AS userNo',
           'enquiries.title AS title',
           'enquiries.description AS description',
+          'enquiries.isDone AS isDone',
+          `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
+          'JSON_ARRAYAGG(images.imageUrl) AS imageUrl',
         ])
-        .where('no = :enquiryNo', { enquiryNo })
+        .where('enquiries.no = :enquiryNo', { enquiryNo })
         .getRawOne();
 
       return enquiry;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getEnquiriesByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getEnquiryByNo-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
-  //문의사항 생성 관련
-  async createEnquiry(
-    enquiryDetail: EnquiryDetail,
-  ): Promise<EnquiryCreateResponse> {
+  //Post Methods
+  async createEnquiry(enquiry): Promise<ResultSetHeader> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder('eqnuiries')
+      const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
         .into(Enquiries)
-        .values(enquiryDetail)
+        .values(enquiry)
         .execute();
 
       return raw;
@@ -76,15 +79,15 @@ export class EnquiryRepository extends Repository<Enquiries> {
     }
   }
 
-  //문의사항 수정 관련
+  //Patch Methods
   async updateEnquiry(
     enquiryNo: number,
-    enquiryDto: EnquiryDto,
+    updateEnquiryDto: UpdateEnquiryDto,
   ): Promise<number> {
     try {
       const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Enquiries)
-        .set(enquiryDto)
+        .set(updateEnquiryDto)
         .where('no = :enquiryNo', { enquiryNo })
         .execute();
 
@@ -96,12 +99,27 @@ export class EnquiryRepository extends Repository<Enquiries> {
     }
   }
 
-  // 문의사항 삭제 관련
-  async deleteEnquiryByNo(enquiryNo: number): Promise<number> {
+  async closeEnquiry(no: number): Promise<number> {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder(
-        'enquiries',
-      )
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(Enquiries)
+        .set({ isDone: true })
+        .where('no = :no', { no })
+        .execute();
+      console.log(affected);
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} closeEnquiry-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  //Delete Methods
+  async deleteEnquiry(enquiryNo: number): Promise<number> {
+    try {
+      const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()
         .from(Enquiries)
         .where('no = :enquiryNo', { enquiryNo })
@@ -110,7 +128,7 @@ export class EnquiryRepository extends Repository<Enquiries> {
       return affected;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} deleteEnquiryByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} deleteEnquiry-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

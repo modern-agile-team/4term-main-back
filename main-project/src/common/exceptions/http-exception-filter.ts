@@ -24,9 +24,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = (exception as HttpException).getResponse();
 
     const log = {
-      timestamp: new Date(),
+      success: false,
       url: req.url,
       response,
+      timestamp: new Date(),
     };
 
     this.logger.error(log);

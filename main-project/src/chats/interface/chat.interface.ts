@@ -3,10 +3,16 @@ export interface MeetingMembersList {
   guestUserNo: number[];
 }
 
-export interface CreateChat {
+export interface ChatToCreate {
   userNo?: number;
-  meetingNo: number;
+  boardNo: number;
   roomName?: string;
+}
+
+export interface ChatRoomUsers {
+  users: string;
+  userType: number;
+  chatRoomNo: number;
 }
 
 export interface JoinChatRoom {
@@ -14,22 +20,21 @@ export interface JoinChatRoom {
   chatRoomNo: number;
 }
 
-export interface MessagePayload {
-  message?: string;
-  chatRoomNo: number;
-  userNo: number;
+export interface FileUrlDetail {
+  chatLogNo: number;
+  fileUrl: string;
 }
 
-export interface ChatRoom {
-  guestUserNickname: string;
-  hostUserNickname: string;
+export interface ChatRoomToSet {
+  guestNickname?: string;
+  hostNickname?: string;
   roomName?: string;
   userNo?: string;
-  guestUserNo?: number;
-  hostUserNo?: number;
+  guestUserNo?: string;
+  hostUserNo?: string;
 }
 
-export interface ChatRoomUsers {
+export interface ChatRoomUser {
   chatRoomNo: number;
   nickname: string;
   roomName: string;
@@ -37,15 +42,15 @@ export interface ChatRoomUsers {
   userNo: number;
 }
 
-export interface ChatRoomList {
+export interface ChatRoom {
   roomName: string;
   chatRoomNo: number;
 }
 
 export interface PreviousChatLog {
   userNo: number;
-  currentChatLogNo?: number;
   chatRoomNo: number;
+  currentChatLogNo?: number;
   message?: string;
   timeStamp?: Date;
 }
@@ -53,4 +58,14 @@ export interface PreviousChatLog {
 export interface ChatUserInfo {
   userNo: number;
   chatRoomNo: number;
+  userType?: number;
+  targetUserNo?: number;
+  type?: number;
+}
+
+export interface UserValidation {
+  userNo: number;
+  chatRoomNo: number;
+  isUserNeeded: boolean;
+  target: string;
 }

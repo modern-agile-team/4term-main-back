@@ -42,9 +42,6 @@ export class Notices extends BaseEntity {
   })
   createdDate: Date;
 
-  @Column('varchar', { length: 100, nullable: true })
-  value: string;
-
   @OneToOne((type) => NoticeBoards, (noticeBoards) => noticeBoards.noticeNo)
   noticeBoards: NoticeBoards;
 

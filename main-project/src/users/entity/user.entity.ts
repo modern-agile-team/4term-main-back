@@ -6,12 +6,9 @@ import { ChatLog } from 'src/chats/entity/chat-log.entity';
 import { ChatUsers } from 'src/chats/entity/chat-users.entity';
 import { Enquiries } from 'src/enquiries/entity/enquiry.entity';
 import { Friends } from 'src/friends/entity/friend.entity';
-import { MeetingInfo } from 'src/meetings/entity/meeting-info.entity';
-import { GuestMembers } from 'src/members/entity/guest-members.entity';
-import { HostMembers } from 'src/members/entity/host-members.entity';
 import { Notices } from 'src/notices/entity/notices.entity';
-import { ReportedUsers } from 'src/reports/entity/reported-user.entity';
 import { Reports } from 'src/reports/entity/reports.entity';
+import { ReportUsers } from 'src/reports/entity/report-user.entity';
 import {
   BaseEntity,
   Column,
@@ -21,8 +18,11 @@ import {
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { UserProfile } from './user-profile.entity';
+import { Authentication } from 'src/auth/entity/authentication.entity';
+import { UserCertificates } from './user-certificate.entity';
 
 @Entity('users')
 export class Users extends BaseEntity {
@@ -31,9 +31,6 @@ export class Users extends BaseEntity {
 
   @Column({ type: 'varchar', length: 50 })
   email: string;
-
-  @Column({ default: false })
-  gender: boolean;
 
   @Column({ type: 'tinyint', width: 1, default: false })
   isAdmin: boolean;
@@ -44,20 +41,17 @@ export class Users extends BaseEntity {
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
 
+  @UpdateDateColumn({ name: 'updated_date' })
+  updatedDate: Date;
+
   @DeleteDateColumn({ name: 'deleted_date', nullable: true })
   deletedDate: Date;
 
-  @OneToMany((type) => GuestMembers, (guestMembers) => guestMembers.userNo)
-  guestMembers: GuestMembers[];
+  @OneToMany((type) => BoardGuests, (boardGuests) => boardGuests.userNo)
+  guestMembers: BoardGuests[];
 
-  @OneToMany((type) => HostMembers, (hostMembers) => hostMembers.userNo)
-  hostMembers: HostMembers[];
-
-  @OneToMany((type) => MeetingInfo, (meetingInfo) => meetingInfo.guest)
-  meetingGuest: MeetingInfo[];
-
-  @OneToMany((type) => MeetingInfo, (meetingInfo) => meetingInfo.host)
-  meetingHost: MeetingInfo[];
+  @OneToMany((type) => BoardHosts, (boardHosts) => boardHosts.userNo)
+  hostMembers: BoardHosts[];
 
   @OneToMany((type) => BoardBookmarks, (boardBookmark) => boardBookmark.userNo)
   boardBookmark: BoardBookmarks;
@@ -68,11 +62,8 @@ export class Users extends BaseEntity {
   @OneToMany((type) => Reports, (report) => report.userNo)
   report: Reports[];
 
-  @OneToMany(
-    (type) => ReportedUsers,
-    (reportedUsers) => reportedUsers.targetUserNo,
-  )
-  reportedUser: ReportedUsers[];
+  @OneToMany((type) => ReportUsers, (reportUser) => reportUser.targetUserNo)
+  reportUser: ReportUsers[];
 
   @OneToMany((type) => Notices, (notices) => notices.userNo)
   noticeUser: Notices[];
@@ -99,14 +90,20 @@ export class Users extends BaseEntity {
     (type) => BoardHosts,
     (boardHostMembers) => boardHostMembers.userNo,
   )
-  hostmember: BoardHosts;
+  hostMember: BoardHosts;
 
   @OneToMany(
     (type) => BoardGuests,
     (boardHostMembers) => boardHostMembers.userNo,
   )
-  guestmember: BoardGuests;
+  guestMember: BoardGuests;
 
   @OneToMany((type) => ChatLog, (chatLog) => chatLog.userNo)
   chatLogUserNo: ChatLog[];
+
+  @OneToOne(() => Authentication, (authentication) => authentication.userNo)
+  authentication: Authentication;
+
+  @OneToOne(() => UserCertificates, (userCertificate) => userCertificate.userNo)
+  userCertificateNo: UserCertificates;
 }

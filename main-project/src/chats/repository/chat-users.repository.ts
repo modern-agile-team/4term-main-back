@@ -1,11 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { ChatUsers } from '../entity/chat-users.entity';
-import { ChatRoomList, ChatUserInfo } from '../interface/chat.interface';
+import { ChatRoom, ChatUserInfo } from '../interface/chat.interface';
 
 @EntityRepository(ChatUsers)
 export class ChatUsersRepository extends Repository<ChatUsers> {
-  async setChatRoomUsers(roomUsers: ChatUserInfo[]): Promise<InsertResult> {
+  async setChatRoomUsers(roomUsers: ChatUserInfo[]): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('chat_users')
         .insert()
@@ -21,25 +21,9 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
-  async setChatRoomUser(roomUsers: ChatUserInfo): Promise<number> {
+  async getChatRooms(userNo: number): Promise<ChatRoom[]> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder('chat_users')
-        .insert()
-        .into(ChatUsers)
-        .values(roomUsers)
-        .execute();
-
-      return raw.affectedRows;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error}: 채팅방 유저 정보 설정(setRoomUsers): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async getChatRoomList(userNo: number): Promise<ChatRoomList[]> {
-    try {
-      const chatRoomList = await this.createQueryBuilder('chat_users')
+      const chatRooms = await this.createQueryBuilder('chat_users')
         .leftJoin('chat_users.chatRoomNo', 'chatRoomNo')
         .select([
           'chatRoomNo.room_name AS roomName',
@@ -48,7 +32,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
         .where('chat_users.user_no = :userNo', { userNo })
         .getRawMany();
 
-      return chatRoomList;
+      return chatRooms;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error}: 채팅 목록 조회 (getChatRoomList): 알 수 없는 서버 에러입니다.`,
@@ -62,6 +46,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
         .select([
           'chat_users.user_no AS userNo',
           'chat_users.chat_room_no AS chatRoomNo',
+          'chat_users.user_type AS userType',
         ])
         .where('user_no = :userNo AND chat_room_no = :chatRoomNo', chatUserInfo)
         .getRawOne();
@@ -86,6 +71,21 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 유처 초대(inviteUserByUserNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getChatRoomUsers(chatRoomNo: number) {
+    try {
+      const users = await this.createQueryBuilder('chat_users')
+        .select('JSON_ARRAYAGG(chat_users.userNo) AS users')
+        .where('chat_users.chatRoomNo = :chatRoomNo', { chatRoomNo })
+        .getRawOne();
+
+      return users;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 유저 조회(getChatRoomUsers): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
