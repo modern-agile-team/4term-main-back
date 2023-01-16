@@ -313,6 +313,7 @@ export class UsersService {
       .getCustomRepository(NoticesRepository)
       .saveNotice({
         userNo,
+        targetUserNo: this.configService.get<number>('ADMIN_USER'),
         type: NoticeType.CERTIFICATE_DENIED,
       });
 
