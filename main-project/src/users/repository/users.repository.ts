@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { UserStatus } from '../../common/configs/user-status.config';
 import { Users } from '../entity/user.entity';
-import { User } from '../interface/user.interface';
+import { ProfileImages, User } from '../interface/user.interface';
 
 @EntityRepository(Users)
 export class UsersRepository extends Repository<Users> {
@@ -89,7 +89,7 @@ export class UsersRepository extends Repository<Users> {
     }
   }
 
-  async deleteHaltedUsers(): Promise<void> {
+  async deleteUsersSuspendJoin(): Promise<void> {
     try {
       await this.createQueryBuilder()
         .delete()
@@ -101,7 +101,28 @@ export class UsersRepository extends Repository<Users> {
         .execute();
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} 가입 중단한 유저 삭제(deleteHaltedUsers): 알 수 없는 서버 에러입니다.`,
+        `${error} 가입 중단한 유저 삭제(deleteUsersSuspendJoin): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getNoCertificateUsers(): Promise<ProfileImages> {
+    try {
+      const users: ProfileImages = await this.createQueryBuilder('users')
+        .leftJoin('users.userProfileNo', 'profiles')
+        .leftJoin('profiles.profileImage', 'profileImages')
+        .select('profileImages.imageUrl')
+        .select('JSON_ARRAYAGG(profileImages.imageUrl) AS profileImages')
+        .where(
+          `status = ${UserStatus.NO_CERTIFICATE} OR status = ${UserStatus.DENIED}`,
+        )
+        .andWhere('DATEDIFF(NOW(), updated_date) >= 10')
+        .getRawOne();
+
+      return users;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 가입 중단한 유저의 프로필 이미지 조회(getNoCertificateUsersImage): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

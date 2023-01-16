@@ -14,7 +14,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Cron } from '@nestjs/schedule';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
+import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
+import { EntityManager } from 'typeorm';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { MajorDto } from './dto/user-major.dto';
@@ -44,10 +47,13 @@ export class UsersController {
   constructor(private usersService: UsersService) {}
 
   @Cron('0 0 0 * * *')
-  async deleteHaltedUsers() {
-    await this.usersService.deleteHaltedUsers();
+  @UseInterceptors(TransactionInterceptor)
+  async deleteHaltedUsers(@TransactionDecorator() manager: EntityManager) {
+    await this.usersService.deleteUsersSuspendJoin(manager);
 
-    return { msg: '가입 중단 유저 목록이 삭제되었습니다.' };
+    return {
+      msg: '가입 중단 유저 목록이 삭제되었습니다.',
+    };
   }
 
   @ApiCreateProfile()

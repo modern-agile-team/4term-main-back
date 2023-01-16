@@ -21,6 +21,7 @@ import {
   CertificateForJudgment,
   DetailedCertificate,
   EntireProfile,
+  ProfileImages,
   SearchedUser,
   User,
   UserImage,
@@ -34,6 +35,7 @@ import { ResultSetHeader } from 'mysql2';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
+import { EntityManager } from 'typeorm';
 @Injectable()
 export class UsersService {
   constructor(
@@ -180,8 +182,15 @@ export class UsersService {
     return await this.userProfileRepository.getUserByNickname(nickname);
   }
 
-  async deleteHaltedUsers(): Promise<void> {
-    await this.userRepository.deleteHaltedUsers();
+  async deleteUsersSuspendJoin(manager: EntityManager): Promise<void> {
+    const users: ProfileImages =
+      await this.userRepository.getNoCertificateUsers();
+    await manager.getCustomRepository(UsersRepository).deleteUsersSuspendJoin();
+
+    const profileImages: string[] = JSON.parse(users.profileImages);
+    if (profileImages) {
+      await this.awsService.deleteFiles(profileImages);
+    }
   }
 
   async isValidNickname(nickname: string): Promise<boolean> {

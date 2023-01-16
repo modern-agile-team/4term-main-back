@@ -63,3 +63,7 @@ export interface CertificateForJudgment {
   major: string;
   certificate: string;
 }
+
+export interface ProfileImages {
+  profileImages: string;
+}
