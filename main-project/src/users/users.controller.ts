@@ -48,11 +48,21 @@ export class UsersController {
 
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   @UseInterceptors(TransactionInterceptor)
-  async deleteHaltedUsers(@TransactionDecorator() manager: EntityManager) {
+  async deleteUsersSuspendJoin(@TransactionDecorator() manager: EntityManager) {
     await this.usersService.deleteUsersSuspendJoin(manager);
 
     return {
       msg: '가입 중단 유저 목록이 삭제되었습니다.',
+    };
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_1AM)
+  @UseInterceptors(TransactionInterceptor)
+  async hardDeleteUsers(@TransactionDecorator() manager: EntityManager) {
+    await this.usersService.hardDeleteUsers(manager);
+
+    return {
+      msg: '탈퇴한 유저 영구 삭제',
     };
   }
 
@@ -78,14 +88,17 @@ export class UsersController {
 
   @ApiUpdateProfile()
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   @Patch('/profile')
   async updateProfile(
     @GetUser() userNo: number,
     @Body() updateProfielDto: UpdateProfileDto,
+    @TransactionDecorator() manager: EntityManager,
   ) {
     const user: User = await this.usersService.updateUserProfile(
       userNo,
       updateProfielDto,
+      manager,
     );
 
     return { msg: '프로필이 수정되었습니다.', response: { user } };
@@ -93,15 +106,18 @@ export class UsersController {
 
   @ApiUpdateProfileImage()
   @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(TransactionInterceptor)
   @UseGuards(JwtAuthGuard)
   @Put('/profile-image')
   async updateImage(
     @GetUser() userNo: number,
     @UploadedFile() image: Express.Multer.File,
+    @TransactionDecorator() manager: EntityManager,
   ) {
     const accessToken: string = await this.usersService.updateProfileImage(
       userNo,
       image,
+      manager,
     );
 
     return {

@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { UserStatus } from '../../common/configs/user-status.config';
 import { Users } from '../entity/user.entity';
-import { ProfileImages, User } from '../interface/user.interface';
+import { ProfileImages, User, UserImages } from '../interface/user.interface';
 
 @EntityRepository(Users)
 export class UsersRepository extends Repository<Users> {
@@ -138,6 +138,41 @@ export class UsersRepository extends Repository<Users> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 가입 완료된 조회 에러(getConfirmedUserByNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getDeletedUsersImages(): Promise<UserImages> {
+    try {
+      const userImages: UserImages = await this.createQueryBuilder('users')
+        .leftJoin('users.userCertificateNo', 'userCertificates')
+        .leftJoin('users.userProfileNo', 'userProfiles')
+        .leftJoin('userProfiles.profileImage', 'profileImages')
+        .select([
+          'JSON_ARRAYAGG(profileImages.imageUrl) AS profiles',
+          'JSON_ARRAYAGG(userCertificates.certificate) AS certificates',
+        ])
+        .where('DATEDIFF(NOW(), deleted_date) >= 10')
+        .getRawOne();
+
+      return userImages;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 회원 탈퇴한 유저의 이미지 조회(getDeletedUsersImages): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async hardDeleteUsers(): Promise<void> {
+    try {
+      await this.createQueryBuilder()
+        .delete()
+        .from(Users)
+        .where('DATEDIFF(NOW(), deleted_date) >= 10')
+        .execute();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 회원 탈퇴한 유저 삭제(hardDeleteUsers): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

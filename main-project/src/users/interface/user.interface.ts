@@ -67,3 +67,8 @@ export interface CertificateForJudgment {
 export interface ProfileImages {
   profileImages: string;
 }
+
+export interface UserImages {
+  profiles: string;
+  certificates: string;
+}

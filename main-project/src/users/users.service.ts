@@ -25,6 +25,7 @@ import {
   SearchedUser,
   User,
   UserImage,
+  UserImages,
 } from './interface/user.interface';
 import { JwtService } from '@nestjs/jwt';
 import { Payload } from 'src/auth/interface/auth.interface';
@@ -79,12 +80,13 @@ export class UsersService {
   async updateUserProfile(
     userNo: number,
     updateProfileDto: UpdateProfileDto,
+    manager: EntityManager,
   ): Promise<User> {
     const { nickname, description } = updateProfileDto;
     if (!nickname && !description) {
       throw new BadRequestException('변경 사항이 하나 이상 있어야 합니다.');
     }
-    await this.updateProfile(userNo, updateProfileDto);
+    await this.updateProfile(userNo, updateProfileDto, manager);
 
     const user: User = {
       userNo,
@@ -100,6 +102,7 @@ export class UsersService {
   async updateProfileImage(
     userNo: number,
     profileImage: Express.Multer.File,
+    manager: EntityManager,
   ): Promise<string> {
     if (!profileImage) {
       throw new BadRequestException('프로필 이미지를 추가해 주세요');
@@ -115,20 +118,20 @@ export class UsersService {
       userNo,
       profileImage,
     );
-    await this.updateProfileImageByProfileNo(profileNo, newImageUrl);
+    await this.updateProfileImageByProfileNo(profileNo, newImageUrl, manager);
 
     return await this.updateAccessToken(userNo);
   }
 
   async softDeleteUser(userNo: number) {
+    await this.cacheManager.del(userNo);
+
     const isUserDeleted: number = await this.userRepository.softDeleteUser(
       userNo,
     );
     if (!isUserDeleted) {
       throw new InternalServerErrorException('유저 탈퇴 오류입니다.');
     }
-
-    await this.cacheManager.del(userNo);
   }
 
   async createUserCertificate(
@@ -255,6 +258,25 @@ export class UsersService {
     return this.userCertificateRepository.getAllCertificates();
   }
 
+  async hardDeleteUsers(manager: EntityManager): Promise<void> {
+    const { profiles, certificates }: UserImages =
+      await this.userRepository.getDeletedUsersImages();
+    const images = this.filtersOutEmptyImage(profiles).concat(
+      this.filtersOutEmptyImage(certificates),
+    );
+
+    await this.awsService.deleteFiles(images);
+    await manager.getCustomRepository(UsersRepository).hardDeleteUsers();
+  }
+
+  private filtersOutEmptyImage(images: string): string[] {
+    if (!images) {
+      return [];
+    }
+
+    return JSON.parse(images).filter((image) => Boolean(image));
+  }
+
   private async validateIsConfirmedUser(userNo: number): Promise<void> {
     const user: Users = await this.userRepository.getConfirmedUserByNo(userNo);
 
@@ -325,16 +347,15 @@ export class UsersService {
   private async updateProfile(
     userNo: number,
     updatedProfile: UpdateProfileDto,
+    manager: EntityManager,
   ): Promise<void> {
     if (updatedProfile.nickname) {
       await this.validateUserNickname(updatedProfile.nickname);
     }
 
-    const isProfileUpdated: number =
-      await this.userProfileRepository.updateUserProfile(
-        userNo,
-        updatedProfile,
-      );
+    const isProfileUpdated: number = await manager
+      .getCustomRepository(UserProfilesRepository)
+      .updateUserProfile(userNo, updatedProfile);
 
     if (!isProfileUpdated) {
       throw new InternalServerErrorException(`유저 프로필 수정 오류입니다.`);
@@ -400,9 +421,11 @@ export class UsersService {
   private async updateProfileImageByProfileNo(
     profileNo: number,
     imageUrl: string,
+    manager: EntityManager,
   ) {
-    const isProfileImageUpdated: number =
-      await this.profileImageRepository.updateProfileImage(profileNo, imageUrl);
+    const isProfileImageUpdated: number = await manager
+      .getCustomRepository(ProfileImagesRepository)
+      .updateProfileImage(profileNo, imageUrl);
 
     if (!isProfileImageUpdated) {
       throw new InternalServerErrorException(`프로필 이미지 수정 오류입니다.`);
