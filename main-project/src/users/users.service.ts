@@ -286,6 +286,7 @@ export class UsersService {
   private async saveCertificateDeniedNotice(userNo): Promise<void> {
     const { affectedRows }: InsertRaw = await this.noticeRepository.saveNotice({
       userNo,
+      targetUserNo: this.configService.get<number>('ADMIN_USER'),
       type: NoticeType.CERTIFICATE_DENIED,
     });
 
