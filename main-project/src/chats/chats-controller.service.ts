@@ -18,8 +18,8 @@ import { ChatList } from './entity/chat-list.entity';
 import { ChatLog } from './entity/chat-log.entity';
 import {
   ChatRoom,
-  ChatUserInfo,
-  UserValidation,
+  ChatUser,
+  ChatUserValidation,
 } from './interface/chat.interface';
 import { ChatListRepository } from './repository/chat-list.repository';
 import { ChatLogRepository } from './repository/chat-log.repository';
@@ -45,9 +45,8 @@ export class ChatsControllerService {
   ) {}
 
   async getChatRoomsByUserNo(userNo): Promise<ChatRoom[]> {
-    const chatList: ChatRoom[] = await this.chatUsersRepository.getChatRooms(
-      userNo,
-    );
+    const chatList: ChatRoom[] =
+      await this.chatUsersRepository.getChatRoomsByUserNo(userNo);
 
     return chatList;
   }
@@ -64,7 +63,6 @@ export class ChatsControllerService {
       userNo,
       chatRoomNo,
       isUserNeeded: true,
-      target: `${userNo}`,
     });
 
     const previousChatLog: ChatLog[] =
@@ -88,7 +86,6 @@ export class ChatsControllerService {
       userNo,
       chatRoomNo,
       isUserNeeded: true,
-      target: `${userNo}`,
     });
 
     const currentChatLog: ChatLog[] =
@@ -106,9 +103,9 @@ export class ChatsControllerService {
   }
 
   private async checkUserInChatRoom(
-    chatUserInfo: UserValidation,
-  ): Promise<ChatUserInfo> {
-    const { userNo, chatRoomNo, isUserNeeded, target }: UserValidation =
+    chatUserInfo: ChatUserValidation,
+  ): Promise<ChatUser> {
+    const { userNo, chatRoomNo, isUserNeeded }: ChatUserValidation =
       chatUserInfo;
 
     const chatRoom: ChatList =
@@ -117,19 +114,18 @@ export class ChatsControllerService {
       throw new NotFoundException('존재하지 않는 채팅방입니다.');
     }
 
-    const user: ChatUserInfo =
-      await this.chatUsersRepository.checkUserInChatRoom({
-        userNo,
-        chatRoomNo,
-      });
+    const user: ChatUser = await this.chatUsersRepository.checkUserInChatRoom({
+      userNo,
+      chatRoomNo,
+    });
 
     if (isUserNeeded === Boolean(user)) {
       return user;
     }
 
     const error = isUserNeeded
-      ? new NotFoundException(`${target}님의 정보를 찾을 수 없습니다.`)
-      : new BadRequestException(`채팅방에 이미 ${target}님이 존재합니다.`);
+      ? new NotFoundException(`${userNo}님의 정보를 찾을 수 없습니다.`)
+      : new BadRequestException(`채팅방에 이미 ${userNo}님이 존재합니다.`);
 
     throw error;
   }
@@ -143,18 +139,16 @@ export class ChatsControllerService {
 
     await this.checkChatRoomExists(chatRoomNo);
 
-    const user: ChatUserInfo = await this.checkUserInChatRoom({
+    const user: ChatUser = await this.checkUserInChatRoom({
       userNo,
       chatRoomNo,
       isUserNeeded: true,
-      target: `${userNo}`,
     });
 
     await this.checkUserInChatRoom({
       userNo: targetUserNo,
       chatRoomNo,
       isUserNeeded: false,
-      target: `${targetUserNo}`,
     });
 
     await this.saveNotice(manager, {
@@ -165,7 +159,7 @@ export class ChatsControllerService {
     });
   }
 
-  private async saveNotice(manager: EntityManager, chatUserInfo: ChatUserInfo) {
+  private async saveNotice(manager: EntityManager, chatUserInfo: ChatUser) {
     const { userNo, userType, targetUserNo, chatRoomNo } = chatUserInfo;
     const noticeType = userType
       ? NoticeType.INVITE_HOST
@@ -218,23 +212,21 @@ export class ChatsControllerService {
       userNo: inviterNo,
       chatRoomNo,
       isUserNeeded: true,
-      target: `초대하신 ${targetUserNo}`,
     });
 
     await this.checkUserInChatRoom({
       userNo: targetUserNo,
       chatRoomNo,
       isUserNeeded: false,
-      target: `${targetUserNo}`,
     });
 
     await this.joinChatRoom({ userNo: targetUserNo, chatRoomNo, userType });
   }
 
-  private async joinChatRoom(chatUserInfo: ChatUserInfo): Promise<void> {
+  private async joinChatRoom(chatUserInfo: ChatUser): Promise<void> {
     const user = [chatUserInfo];
 
-    const affectedRow = await this.chatUsersRepository.setChatRoomUsers(user);
+    const affectedRow = await this.chatUsersRepository.createChatUsers(user);
     if (!affectedRow) {
       throw new InternalServerErrorException(`채팅방 유저 추가 오류입니다.`);
     }

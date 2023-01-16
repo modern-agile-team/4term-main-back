@@ -47,7 +47,7 @@ export class AuthService {
     email: string,
     manager: EntityManager,
   ): Promise<User> {
-    const user : User = await this.createOrGetUser(email, manager);
+    const user: User = await this.createOrGetUser(email, manager);
     const authentication: Authentication =
       await this.authRepository.findAuthByUserNo(user.userNo);
 
@@ -78,7 +78,7 @@ export class AuthService {
     manager: EntityManager,
   ): Promise<User> {
     await this.validateUserNotCreated(email);
-    await this.validateEmail(email, code);
+    // await this.validateEmail(email, code);
 
     const user: User = await this.saveUser(email, manager);
     await this.saveAuthentication({ userNo: user.userNo, password }, manager);

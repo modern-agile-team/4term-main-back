@@ -53,7 +53,7 @@ export class FriendsRepository extends Repository<Friends> {
         .leftJoin('friends.senderNo', 'senderUser')
         .leftJoin('senderUser.userProfileNo', 'senderUserProfile')
         .select([
-          'friends.sender_no AS senderUserNo',
+          'friends.send~er_no AS senderUserNo',
           'senderUserProfile.nickname AS senderUserNickname',
         ])
         .where('receiver_no = :receiverNo', { receiverNo })

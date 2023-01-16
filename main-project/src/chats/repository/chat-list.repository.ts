@@ -5,7 +5,7 @@ import { ChatRoomUser, ChatToCreate } from '../interface/chat.interface';
 
 @EntityRepository(ChatList)
 export class ChatListRepository extends Repository<ChatList> {
-  async checkRoomExistByBoardNo(boardNo: number): Promise<ChatList> {
+  async getChatRoomByBoardNo(boardNo: number): Promise<ChatList> {
     try {
       const chatRoom = await this.createQueryBuilder('chat_list')
         .where(`board_no = :boardNo`, { boardNo })

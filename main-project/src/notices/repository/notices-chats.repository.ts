@@ -1,6 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { userInfo } from 'os';
-import { ChatUserInfo } from 'src/chats/interface/chat.interface';
+import { ChatUser } from 'src/chats/interface/chat.interface';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { NoticeChats } from '../entity/notice-chat.entity';
 import { NoticeChatsInfo } from '../interface/notice.interface';
@@ -25,7 +25,7 @@ export class NoticeChatsRepository extends Repository<NoticeChats> {
     }
   }
 
-  async checkNoticeChat(chatUserInfo: ChatUserInfo): Promise<NoticeChats> {
+  async checkNoticeChat(chatUserInfo: ChatUser): Promise<NoticeChats> {
     try {
       const noticeChat = await this.createQueryBuilder('notice_chats')
         .leftJoin('notice_chats.noticeNo', 'notices')

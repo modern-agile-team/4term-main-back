@@ -91,14 +91,16 @@ export class ChatsGateway {
   @UseGuards(WebSocketAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   async handleCreateRoom(
-    @WebSocketGetUser() user,
     @ConnectedSocket() socket,
+    @WebSocketGetUser() userNo,
     @MessageBody() messagePayload: CreateChatDto,
   ): Promise<APIResponse> {
     const manager = socket.manager;
+
     const chatRoom: ChatRoom = await this.chatGatewayService.createRoom(
       manager,
       socket,
+      userNo,
       messagePayload,
     );
 
