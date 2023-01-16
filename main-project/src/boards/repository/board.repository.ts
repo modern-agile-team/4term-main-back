@@ -1,7 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
-import { Users } from 'src/users/entity/user.entity';
-import { UsersRepository } from 'src/users/repository/users.repository';
 import {
   DeleteResult,
   EntityRepository,
