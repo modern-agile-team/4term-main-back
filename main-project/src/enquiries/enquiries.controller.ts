@@ -23,8 +23,6 @@ import { CreateEnquiryDto } from './dto/create-enquiry.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
 import { UpdateEnquiryDto } from './dto/update-enquiry.dto';
 import { EnquiriesService } from './enquiries.service';
-import { EnquiryReplies } from './entity/enquiry-reply.entity';
-import { Enquiries } from './entity/enquiry.entity';
 import { Enquiry, Reply } from './interface/enquiry.interface';
 
 @Controller('enquiries')
@@ -74,9 +72,10 @@ export class EnquiriesController {
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const enquiry: Enquiry = await this.enquiriesService.getEnquiryByNo(
+    const enquiry: Enquiry = await this.enquiriesService.getEnquiry(
       manager,
       enquiryNo,
+      userNo,
     );
 
     return { response: enquiry };

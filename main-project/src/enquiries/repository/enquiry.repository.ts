@@ -16,7 +16,7 @@ export class EnquiriesRepository extends Repository<Enquiries> {
   //Get Methods
   async getAllEnquiries(): Promise<Enquiry[]> {
     try {
-      const enquiries = this.createQueryBuilder('enquiries')
+      const enquiries: Enquiry[] = await this.createQueryBuilder('enquiries')
         .leftJoin('enquiries.userNo', 'users')
         .select([
           'enquiries.no AS no',
@@ -39,7 +39,7 @@ export class EnquiriesRepository extends Repository<Enquiries> {
 
   async getEnquiryByNo(enquiryNo: number): Promise<Enquiry> {
     try {
-      const enquiry = this.createQueryBuilder('enquiries')
+      const enquiry: Enquiry = await this.createQueryBuilder('enquiries')
         .leftJoin('enquiries.userNo', 'users')
         .leftJoin('enquiries.enquiryImages', 'images')
         .select([

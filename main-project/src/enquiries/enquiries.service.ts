@@ -91,21 +91,16 @@ export class EnquiriesService {
     enquiryNo: number,
   ): Promise<Reply> {
     await this.getEnquiryByNo(manager, enquiryNo);
-    const reply: Reply = await this.getReply(manager, enquiryNo);
+
+    const reply: Reply = await manager
+      .getCustomRepository(EnquiryRepliesRepository)
+      .getReplyByNo(enquiryNo);
 
     if (!reply) {
       throw new NotFoundException(
         `문의 답변 상세조회(getReplyByNo-service): ${enquiryNo}번 문의사항의 답변이 없습니다.`,
       );
     }
-
-    return reply;
-  }
-
-  async getReply(manager: EntityManager, enquiryNo: number): Promise<Reply> {
-    const reply: Reply = await manager
-      .getCustomRepository(EnquiryRepliesRepository)
-      .getReplyByNo(enquiryNo);
 
     return reply;
   }
@@ -197,7 +192,9 @@ export class EnquiriesService {
   }
 
   async isCreated(manager: EntityManager, enquiryNo: number): Promise<void> {
-    const reply: Reply = await this.getReply(manager, enquiryNo);
+    const reply: Reply = await manager
+      .getCustomRepository(EnquiryRepliesRepository)
+      .getReplyByNo(enquiryNo);
     if (reply) {
       throw new BadRequestException(
         `답변 작성 확인(isCreated-service): 이미 답변이 작성된 문의사항입니다.`,
