@@ -5,7 +5,7 @@ export interface NoticeResponse {
 
 export interface NoticeDetail {
   userNo: number;
-  targetUserNo: number;
+  targetUserNo?: number;
   type: number;
 }
 

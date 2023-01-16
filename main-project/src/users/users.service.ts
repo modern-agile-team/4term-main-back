@@ -17,12 +17,23 @@ import { ProfileImagesRepository } from './repository/profile-images.repository'
 import { UserStatus } from 'src/common/configs/user-status.config';
 import { Users } from './entity/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { SearchedUser, User, UserImage } from './interface/user.interface';
+import {
+  CertificateForJudgment,
+  DetailedCertificate,
+  EntireProfile,
+  SearchedUser,
+  User,
+  UserImage,
+} from './interface/user.interface';
 import { JwtService } from '@nestjs/jwt';
 import { Payload } from 'src/auth/interface/auth.interface';
 import { ConfigService } from '@nestjs/config';
 import { UserCertificatesRepository } from './repository/user-certificates.repository';
 import { UserCertificates } from './entity/user-certificate.entity';
+import { ResultSetHeader } from 'mysql2';
+import { NoticesRepository } from 'src/notices/repository/notices.repository';
+import { NoticeType } from 'src/common/configs/notice-type.config';
+import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 @Injectable()
 export class UsersService {
   constructor(
@@ -32,23 +43,28 @@ export class UsersService {
     private readonly userProfileRepository: UserProfilesRepository,
     private readonly profileImageRepository: ProfileImagesRepository,
     private readonly userCertificateRepository: UserCertificatesRepository,
+    private readonly noticeRepository: NoticesRepository,
     private readonly awsService: AwsService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
 
   async createUserProfile(
+    userNo: number,
     createProfileDto: CreateProfileDto,
     profileImage: Express.Multer.File,
   ): Promise<User> {
-    const { userNo } = createProfileDto;
     const user = await this.getUserByNo(userNo);
     if (user.status != UserStatus.NO_PROFILE) {
       throw new BadRequestException(`프로필을 만들 수 없는 유저입니다.`);
     }
 
     await this.validateUserNickname(createProfileDto.nickname);
-    const userProfileNo: number = await this.saveUserProfile(createProfileDto);
+    const userProfileNo: number = await this.saveUserProfile(
+      userNo,
+      createProfileDto,
+    );
+
     const imageUrl = await this.getProfileImageUrl(profileImage, userNo);
     await this.saveProfileImage(userProfileNo, imageUrl);
     await this.updateUserStatus(userNo, UserStatus.NO_CERTIFICATE);
@@ -82,6 +98,10 @@ export class UsersService {
     userNo: number,
     profileImage: Express.Multer.File,
   ): Promise<string> {
+    if (!profileImage) {
+      throw new BadRequestException('프로필 이미지를 추가해 주세요');
+    }
+
     const { imageUrl, profileNo }: UserImage =
       await this.profileImageRepository.getProfileImage(userNo);
     if (imageUrl) {
@@ -108,14 +128,11 @@ export class UsersService {
     await this.cacheManager.del(userNo);
   }
 
-  async createCollegeCertificate(
+  async createUserCertificate(
     userNo: number,
+    major: string,
     file: Express.Multer.File,
   ): Promise<User> {
-    if (!file) {
-      throw new BadRequestException('학적 증명 파일을 첨부해 주세요.');
-    }
-
     const { status }: Users = await this.getUserByNo(userNo);
     if (status != UserStatus.NO_CERTIFICATE) {
       throw new BadRequestException(
@@ -123,23 +140,40 @@ export class UsersService {
       );
     }
 
-    await this.saveUserCertificate(userNo, file);
+    await this.saveUserCertificate(userNo, major, file);
     await this.updateUserStatus(userNo, UserStatus.NOT_CONFIRMED);
 
     return { userNo, status: UserStatus.NOT_CONFIRMED };
   }
 
-  async confirmUser(adminNo: number, userNo: number) {
-    await this.validateAdminAuthority(adminNo);
-
+  async resubmitUserCertificate(
+    userNo: number,
+    major: string,
+    file: Express.Multer.File,
+  ): Promise<User> {
     const { status }: Users = await this.getUserByNo(userNo);
-    if (status !== UserStatus.NOT_CONFIRMED) {
-      throw new BadRequestException('학적 인증 수락을 할 수 없는 유저입니다.');
+    if (status !== UserStatus.DENIED) {
+      throw new BadRequestException('학적 정보를 재등록할 수 없는 유저입니다.');
     }
 
-    await this.deleteCertificateFile(userNo);
-    await this.deleleCertificate(userNo);
-    await this.updateUserStatus(userNo, UserStatus.CONFIRMED);
+    await this.saveUserCertificate(userNo, major, file);
+    await this.updateUserStatus(userNo, UserStatus.NOT_CONFIRMED);
+
+    return { userNo, status: UserStatus.NOT_CONFIRMED };
+  }
+
+  async confirmUser(adminNo: number, certificateNo: number): Promise<void> {
+    await this.validateAdminAuthority(adminNo);
+
+    const { userNo, status, certificate, major }: DetailedCertificate =
+      await this.getDetailedCertificate(certificateNo);
+
+    if (status === UserStatus.NOT_CONFIRMED) {
+      await this.updateUserStatus(userNo, UserStatus.CONFIRMED);
+    }
+    await this.awsService.deleteFile(certificate);
+    await this.deleteCertificate(certificateNo);
+    await this.updateMajor(userNo, major);
   }
 
   async getUserByNickname(nickname: string): Promise<SearchedUser[]> {
@@ -155,7 +189,109 @@ export class UsersService {
       nickname,
     );
 
-    return Boolean(user);
+    return !Boolean(user);
+  }
+
+  async denyUserCertificate(
+    adminNo: number,
+    certificateNo: number,
+  ): Promise<void> {
+    await this.validateAdminAuthority(adminNo);
+
+    const { userNo, status, certificate }: DetailedCertificate =
+      await this.getDetailedCertificate(certificateNo);
+    await this.deleteCertificate(certificateNo);
+
+    if (status === UserStatus.CONFIRMED) {
+      await this.saveCertificateDeniedNotice(userNo);
+    } else {
+      await this.updateUserStatus(userNo, UserStatus.DENIED);
+    }
+
+    await this.awsService.deleteFile(certificate);
+  }
+
+  async updateUserMajor(
+    userNo: number,
+    major: string,
+    file: Express.Multer.File,
+  ): Promise<void> {
+    await this.validateNoUserCertificateExist(userNo);
+    await this.saveUserCertificate(userNo, major, file);
+  }
+
+  async getUserProfile(userNo: number): Promise<EntireProfile> {
+    await this.validateIsConfirmedUser(userNo);
+
+    const profile: EntireProfile =
+      await this.userProfileRepository.getUserProfileByUserNo(userNo);
+    if (!profile) {
+      throw new NotFoundException('프로필이 존재하지 않는 유저입니다.');
+    }
+
+    return profile;
+  }
+
+  async getCertificates(adminNo: number): Promise<CertificateForJudgment[]> {
+    await this.validateAdminAuthority(adminNo);
+
+    return this.userCertificateRepository.getAllCertificates();
+  }
+
+  private async validateIsConfirmedUser(userNo: number): Promise<void> {
+    const user: Users = await this.userRepository.getConfirmedUserByNo(userNo);
+
+    if (!user) {
+      throw new NotFoundException(
+        '존재하지 않거나 가입 절차가 완료되지 않은 유저입니다.',
+      );
+    }
+  }
+
+  private async validateNoUserCertificateExist(userNo: number): Promise<void> {
+    const certificate: UserCertificates =
+      await this.userCertificateRepository.getCertifiacateByUserNo(userNo);
+
+    if (certificate) {
+      throw new BadRequestException(
+        '학과 변경 심사 진행 중에는 추가 신청을 보낼 수 없습니다.',
+      );
+    }
+  }
+
+  private async updateMajor(userNo: number, major: string): Promise<void> {
+    const isMajorUpdated: number =
+      await this.userProfileRepository.updateUserMajor(userNo, major);
+
+    if (!isMajorUpdated) {
+      throw new InternalServerErrorException('학적 정보 수정 에러');
+    }
+  }
+
+  private async getDetailedCertificate(
+    certificateNo: number,
+  ): Promise<DetailedCertificate> {
+    const certificate: DetailedCertificate =
+      await this.userCertificateRepository.getDetailedCertificateByNo(
+        certificateNo,
+      );
+
+    if (!certificate) {
+      throw new NotFoundException('존재하지 않는 학적 정보 번호입니다.');
+    }
+
+    return certificate;
+  }
+
+  private async saveCertificateDeniedNotice(userNo): Promise<void> {
+    const { affectedRows }: InsertRaw = await this.noticeRepository.saveNotice({
+      userNo,
+      type: NoticeType.CERTIFICATE_DENIED,
+    });
+
+    if (!affectedRows) {
+      throw new InternalServerErrorException('알림이 전송되지 않았습니다.');
+    }
   }
 
   private async updateProfile(
@@ -195,20 +331,11 @@ export class UsersService {
     }
   }
 
-  private async deleteCertificateFile(userNo: number): Promise<void> {
-    const { certificate }: UserCertificates =
-      await this.userCertificateRepository.getCertifiacateByNo(userNo);
-
-    if (!certificate) {
-      throw new NotFoundException(`학적 인증 정보가 없는 유저입니다.`);
-    }
-
-    await this.awsService.deleteFile(certificate);
-  }
-
-  private async deleleCertificate(userNo: number): Promise<void> {
+  private async deleteCertificate(certificateNo: number): Promise<void> {
     const isCertificateDeleted: number =
-      await this.userCertificateRepository.deleteCerticificate(userNo);
+      await this.userCertificateRepository.deleteCerticificateByNo(
+        certificateNo,
+      );
 
     if (!isCertificateDeleted) {
       throw new InternalServerErrorException(
@@ -219,16 +346,22 @@ export class UsersService {
 
   private async saveUserCertificate(
     userNo: number,
+    major: string,
     file: Express.Multer.File,
   ): Promise<void> {
+    if (!file) {
+      throw new BadRequestException('학적 증명 파일을 첨부해 주세요.');
+    }
     const certificate = await this.awsService.uploadCertificate(userNo, file);
-    const isCertificateSaved: number =
-      await this.userCertificateRepository.createCertificate(
-        userNo,
-        certificate,
-      );
 
-    if (!isCertificateSaved) {
+    const certificateSavedResult: ResultSetHeader =
+      await this.userCertificateRepository.createCertificate({
+        userNo,
+        major,
+        certificate,
+      });
+
+    if (!certificateSavedResult.affectedRows) {
       throw new InternalServerErrorException('학적 증명 파일 추가 오류입니다.');
     }
   }
@@ -284,10 +417,14 @@ export class UsersService {
   }
 
   private async saveUserProfile(
+    userNo: number,
     createProfileDto: CreateProfileDto,
   ): Promise<number> {
     const userProfileNo: number =
-      await this.userProfileRepository.createUserProfile(createProfileDto);
+      await this.userProfileRepository.createUserProfile({
+        userNo,
+        ...createProfileDto,
+      });
 
     if (!userProfileNo) {
       throw new InternalServerErrorException(`유저 프로필 생성 오류입니다.`);
@@ -300,7 +437,7 @@ export class UsersService {
     const user: Users = await this.userRepository.getUserByNo(userNo);
 
     if (!user) {
-      throw new BadRequestException(`존재하지 않는 유저 번호입니다.`);
+      throw new NotFoundException(`존재하지 않는 유저 번호입니다.`);
     }
 
     return user;

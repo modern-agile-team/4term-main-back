@@ -16,6 +16,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('4term project API')
     .setVersion('0.0.1')
+    .addBearerAuth({ in: 'header', type: 'http' })
     .build();
 
   const asyncApiOptions = new AsyncApiDocumentBuilder()
