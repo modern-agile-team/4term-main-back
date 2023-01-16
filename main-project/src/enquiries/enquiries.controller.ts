@@ -61,7 +61,7 @@ export class EnquiriesController {
   }
 
   @Get('/:enquiryNo')
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '문의사항 상세 조회 API',
