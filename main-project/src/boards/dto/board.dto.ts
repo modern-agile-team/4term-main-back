@@ -8,7 +8,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-export class BoardDto {
+export class CreateBoardDto {
   @ApiProperty({
     example: '크리스마스를 즐기자',
     description: '게시글 제목',
@@ -39,7 +39,7 @@ export class BoardDto {
   })
   @IsBoolean()
   @IsOptional()
-  isThunder: boolean;
+  isImpromptu: boolean;
 
   @ApiProperty({ example: '노원 술먹구 가', description: '약속 장소' })
   @IsString()
@@ -55,12 +55,12 @@ export class BoardDto {
   @ApiProperty({ example: 2, description: '남자 인원수' })
   @IsNumber()
   @IsNotEmpty()
-  male: number;
+  recruitMale: number;
 
   @ApiProperty({ example: 2, description: '여자 인원수' })
   @IsNumber()
   @IsNotEmpty()
-  female: number;
+  recruitFemale: number;
 
   @ApiProperty({
     example: [1, 2, 3],

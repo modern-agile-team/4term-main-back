@@ -17,7 +17,7 @@ import { ReportBoards } from 'src/reports/entity/report-board.entity';
 import { NoticeBoards } from 'src/notices/entity/notice-board.entity';
 import { BoardHosts } from './board-host.entity';
 import { ChatList } from 'src/chats/entity/chat-list.entity';
-import { BoardParticipation } from './board-participation.entity';
+import { BoardGuestTeams } from './board-guest-team.entity';
 
 @Entity('boards')
 export class Boards extends BaseEntity {
@@ -41,7 +41,7 @@ export class Boards extends BaseEntity {
     default: false,
     nullable: true,
   })
-  isThunder: boolean;
+  isImpromptu: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
@@ -52,11 +52,11 @@ export class Boards extends BaseEntity {
   @Column({ type: 'datetime', name: 'meeting_time', nullable: true })
   meetingTime: Date;
 
-  @Column({ type: 'int', nullable: false })
-  male: number;
+  @Column({ type: 'int', nullable: false, name: 'recruit_male' })
+  recruitMale: number;
 
-  @Column({ type: 'int', nullable: false })
-  female: number;
+  @Column({ type: 'int', nullable: false, name: 'recruit_female' })
+  recruitFemale: number;
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
@@ -83,10 +83,10 @@ export class Boards extends BaseEntity {
   hosts: BoardHosts;
 
   @OneToMany(
-    (type) => BoardParticipation,
+    (type) => BoardGuestTeams,
     (boardParticipation) => boardParticipation.boardNo,
   )
-  teamNo: BoardParticipation;
+  teamNo: BoardGuestTeams;
 
   @OneToMany((type) => ReportBoards, (boardReport) => boardReport.targetBoardNo)
   boardReport: ReportBoards[];

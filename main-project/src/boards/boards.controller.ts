@@ -8,15 +8,19 @@ import {
   Post,
   Patch,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { ParticipationDto } from './dto/participation.dto';
-import { BoardDto } from './dto/board.dto';
+import { CreateBoardDto } from './dto/board.dto';
 import { Board } from './interface/boards.interface';
 import { BoardFilterDto } from './dto/board-filter.dto';
 import { Cron, CronExpression } from '@nestjs/schedule/dist';
 import { APIResponse } from 'src/common/interface/interface';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
+import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
+import { EntityManager } from 'typeorm';
 
 @Controller('boards')
 @ApiTags('게시글 API')
@@ -56,13 +60,17 @@ export class BoardsController {
 
   // Post Methods
   @Post()
+  @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '게시글 생성 API',
     description: '입력한 정보로 게시글, 멤버 정보을 생성한다.',
   })
-  async createBoard(@Body() createBoarddto: BoardDto): Promise<APIResponse> {
+  async createBoard(
+    @Body() createBoarddto: CreateBoardDto,
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<APIResponse> {
     // TODO: userNo -> jwt
-    await this.boardService.createBoard(createBoarddto);
+    await this.boardService.createBoard(createBoarddto, manager);
 
     return { msg: '게시글 생성 성공' };
   }
@@ -108,9 +116,9 @@ export class BoardsController {
   // TODO: userNo -> jwt
   async updateBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
-    @Body() boardDto: BoardDto,
+    @Body() boardDto: CreateBoardDto,
   ): Promise<APIResponse> {
-    const { userNo, ...board }: BoardDto = boardDto;
+    const { userNo, ...board }: CreateBoardDto = boardDto;
     await this.boardService.editBoard(boardNo, userNo, board);
 
     return { msg: '게시글 수정 성공' };

@@ -1,12 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
-import { BoardGuests } from '../entity/board-guest.entity';
-import { BoardParticipation } from '../entity/board-participation.entity';
+import { BoardGuestTeams } from '../entity/board-guest-team.entity';
 import { Boards } from '../entity/board.entity';
 import { CreateResponse, Participation } from '../interface/boards.interface';
 
-@EntityRepository(BoardParticipation)
-export class BoardParticipationRepository extends Repository<BoardParticipation> {
+@EntityRepository(BoardGuestTeams)
+export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
   // 조회
   async getAllGuestsByBoardNo(
     boardNo: number,
@@ -27,22 +26,18 @@ export class BoardParticipationRepository extends Repository<BoardParticipation>
   }
 
   // 생성
-  async createParticipation(
-    participation: Participation,
-  ): Promise<CreateResponse> {
+  async createGuestTeam(participation: Participation): Promise<CreateResponse> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder(
-        'board_participation',
-      )
+      const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
-        .into(BoardParticipation)
+        .into(BoardGuestTeams)
         .values(participation)
         .execute();
 
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createGuestMembers-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createGuestTeam-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

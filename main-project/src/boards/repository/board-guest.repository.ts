@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { BoardGuests } from '../entity/board-guest.entity';
 import { Boards } from '../entity/board.entity';
@@ -26,11 +27,9 @@ export class BoardGuestRepository extends Repository<BoardGuests> {
   }
 
   // 생성
-  async createGuests(guests: object[]): Promise<CreateResponse> {
+  async createGuests(guests: object[]): Promise<ResultSetHeader> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder(
-        'board_guests',
-      )
+      const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
         .into(BoardGuests)
         .values(guests)
@@ -39,7 +38,7 @@ export class BoardGuestRepository extends Repository<BoardGuests> {
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createGuestMembers-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createGuests-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import { Users } from 'src/users/entity/user.entity';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import {
@@ -10,7 +11,7 @@ import {
   UpdateResult,
 } from 'typeorm';
 import { BoardFilterDto } from '../dto/board-filter.dto';
-import { BoardDto } from '../dto/board.dto';
+import { CreateBoardDto } from '../dto/board.dto';
 import { Boards } from '../entity/board.entity';
 import { Board } from '../interface/boards.interface';
 
@@ -19,14 +20,14 @@ export class BoardRepository extends Repository<Boards> {
   // 게시글 조회 관련
   async checkDeadline(): Promise<{ no: string }> {
     try {
-      const thunders = await this.createQueryBuilder('boards')
+      const boards = await this.createQueryBuilder()
         .select(['JSON_ARRAYAGG(no) AS no'])
         .where('isDone = :isDone', { isDone: false })
-        .andWhere('isThunder = :isThunder', { isThunder: true })
-        .andWhere('TIMESTAMPDIFF(hour, boards.createdDate, NOW()) >= 24')
+        .andWhere('isImpromptu = :isImpromptu', { isImpromptu: true })
+        .andWhere('TIMESTAMPDIFF(hour, createdDate, NOW()) >= 24')
         .getRawOne();
 
-      return thunders;
+      return boards;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} checkDeadline-repository: 알 수 없는 서버 에러입니다.`,
@@ -51,9 +52,9 @@ export class BoardRepository extends Repository<Boards> {
           'boards.location AS location',
           'boards.meetingTime AS meetingTime',
           'boards.isDone AS isDone',
-          'boards.male AS male',
-          'boards.female AS female',
-          'boards.isThunder AS isThunder',
+          'boards.recruitMale AS recruitMale',
+          'boards.recruitFemale AS recruitFemale',
+          'boards.isImpromptu AS isImpromptu',
           'GROUP_CONCAT(hosts.userNo) AS hostUserNums',
           'GROUP_CONCAT(hostProfile.nickname) AS hostNicknames',
         ])
@@ -81,9 +82,9 @@ export class BoardRepository extends Repository<Boards> {
           'boards.location AS location',
           'boards.meetingTime AS meeting_time',
           'boards.isDone AS isDone',
-          'boards.isThunder AS isThunder',
-          'boards.male AS male',
-          'boards.female AS female',
+          'boards.isImpromptu AS isImpromptu',
+          'boards.recruitMale AS recruitMale',
+          'boards.recruitFemale AS recruitFemale',
         ])
         .orderBy('boards.no', 'DESC');
 
@@ -131,16 +132,17 @@ export class BoardRepository extends Repository<Boards> {
   //게시글 생성 관련
   async createBoard(
     userNo: number,
-    newBoard: Partial<BoardDto>,
-  ): Promise<number> {
+    newBoard: Partial<CreateBoardDto>,
+  ): Promise<ResultSetHeader> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder('boards')
+      const { raw }: InsertResult = await this.createQueryBuilder();
+      const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
         .into(Boards)
         .values({ userNo, ...newBoard })
         .execute();
 
-      return raw.insertId;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
@@ -151,16 +153,16 @@ export class BoardRepository extends Repository<Boards> {
   //게시글 수정 관련
   async updateBoard(
     boardNo: number,
-    newBoard: Partial<BoardDto>,
-  ): Promise<number> {
+    newBoard: Partial<CreateBoardDto>,
+  ): Promise<ResultSetHeader> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder('boards')
+      const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Boards)
         .set(newBoard)
         .where('no = :boardNo', { boardNo })
         .execute();
 
-      return affected;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
@@ -168,14 +170,15 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async closeBoard(no: number[]): Promise<UpdateResult> {
+  async closeBoard(no: number[]): Promise<number> {
     try {
-      const deadline = await this.createQueryBuilder('boards')
+      const { affected }: UpdateResult = await this.createQueryBuilder()
         .update(Boards)
         .set({ isDone: true })
-        .where('no IN (:no)', { no });
+        .where('no IN (:no)', { no })
+        .execute();
 
-      return deadline.execute();
+      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
@@ -184,15 +187,15 @@ export class BoardRepository extends Repository<Boards> {
   }
 
   // 게시글 삭제 관련
-  async deleteBoard(boardNo: number): Promise<number> {
+  async deleteBoard(boardNo: number): Promise<ResultSetHeader> {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder('boards')
+      const { raw }: DeleteResult = await this.createQueryBuilder('boards')
         .delete()
         .from(Boards)
         .where('no = :boardNo', { boardNo })
         .execute();
 
-      return affected;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
@@ -204,8 +207,8 @@ export class BoardRepository extends Repository<Boards> {
     try {
       const userList = await this.createQueryBuilder('boards')
         .leftJoin('boards.hosts', 'hostList')
-        .leftJoin('boards.teamNo', 'guestParticipation')
-        .leftJoin('guestParticipation.boardGuest', 'guestList')
+        .leftJoin('boards.teamNo', 'team')
+        .leftJoin('team.boardGuest', 'guestList')
         .leftJoin('hostList.userNo', 'hostUser')
         .leftJoin('guestList.userNo', 'guestUser')
         .leftJoin('hostUser.userProfileNo', 'hostProfile')
