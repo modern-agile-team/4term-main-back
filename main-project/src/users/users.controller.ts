@@ -11,7 +11,7 @@ import {
   Query,
 } from '@nestjs/common/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
@@ -46,7 +46,7 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
-  @Cron('0 0 0 * * *')
+  @Cron(CronExpression.EVERY_DAY_AT_2AM)
   @UseInterceptors(TransactionInterceptor)
   async deleteHaltedUsers(@TransactionDecorator() manager: EntityManager) {
     await this.usersService.deleteUsersSuspendJoin(manager);
@@ -58,16 +58,19 @@ export class UsersController {
 
   @ApiCreateProfile()
   @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(TransactionInterceptor)
   @Post('/:userNo/profile')
   async createUserProfile(
     @Param('userNo') userNo: number,
     @UploadedFile() profileImage: Express.Multer.File,
     @Body() createProfileDto: CreateProfileDto,
+    @TransactionDecorator() manager: EntityManager,
   ) {
     const user: User = await this.usersService.createUserProfile(
       userNo,
       createProfileDto,
       profileImage,
+      manager,
     );
 
     return { msg: '프로필이 등록되었습니다.', response: { user } };
@@ -109,16 +112,19 @@ export class UsersController {
 
   @ApiCreateCertificate()
   @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(TransactionInterceptor)
   @Post('/:userNo/certificate')
   async createUserCertificate(
     @Param('userNo') userNo: number,
     @Body() { major }: MajorDto,
     @UploadedFile() file: Express.Multer.File,
+    @TransactionDecorator() manager: EntityManager,
   ) {
     const user: User = await this.usersService.createUserCertificate(
       userNo,
       major,
       file,
+      manager,
     );
 
     return { msg: '유저 학적 파일이 업로드되었습니다.', response: { user } };
@@ -126,16 +132,19 @@ export class UsersController {
 
   @ApiUpdateCertificate()
   @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(TransactionInterceptor)
   @Patch('/:userNo/denied-certificate')
   async resubmitUserCertificate(
     @Param('userNo') userNo: number,
     @Body() { major }: MajorDto,
     @UploadedFile() file: Express.Multer.File,
+    @TransactionDecorator() manager: EntityManager,
   ) {
     const user: User = await this.usersService.resubmitUserCertificate(
       userNo,
       major,
       file,
+      manager,
     );
 
     return { msg: '학적 정보가 재등록되었습니다.', response: { user } };
@@ -153,13 +162,15 @@ export class UsersController {
   }
 
   @ApiConfirmUser()
+  @UseInterceptors(TransactionInterceptor)
   @UseGuards(JwtAuthGuard)
   @Patch('/valid-certificates/:certificateNo')
   async confirmUser(
     @GetUser() adminNo: number,
     @Param('certificateNo') certificateNo: number,
+    @TransactionDecorator() manager: EntityManager,
   ) {
-    await this.usersService.confirmUser(adminNo, certificateNo);
+    await this.usersService.confirmUser(adminNo, certificateNo, manager);
 
     return { msg: '유저 학적 정보가 수락되었습니다.' };
   }
@@ -188,26 +199,34 @@ export class UsersController {
 
   @ApiDenyUser()
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   @Delete('/certificates/:certificateNo')
   async denyUserCertificate(
     @GetUser() adminNo: number,
     @Param('certificateNo') certificateNo: number,
+    @TransactionDecorator() manager: EntityManager,
   ) {
-    await this.usersService.denyUserCertificate(adminNo, certificateNo);
+    await this.usersService.denyUserCertificate(
+      adminNo,
+      certificateNo,
+      manager,
+    );
 
     return { msg: '유저 학적 정보가 반려되었습니다.' };
   }
 
   @ApiUpdateMajor()
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   @UseInterceptors(FileInterceptor('file'))
   @Patch('/major')
   async updateMajor(
     @GetUser() userNo: number,
     @Body() { major }: MajorDto,
     @UploadedFile() file: Express.Multer.File,
+    @TransactionDecorator() manager: EntityManager,
   ) {
-    await this.usersService.updateUserMajor(userNo, major, file);
+    await this.usersService.updateUserMajor(userNo, major, file, manager);
 
     return { msg: '학과 변경 신청이 완료되었습니다.' };
   }

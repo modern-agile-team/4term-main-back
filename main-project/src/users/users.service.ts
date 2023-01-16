@@ -55,6 +55,7 @@ export class UsersService {
     userNo: number,
     createProfileDto: CreateProfileDto,
     profileImage: Express.Multer.File,
+    manager: EntityManager,
   ): Promise<User> {
     const user = await this.getUserByNo(userNo);
     if (user.status != UserStatus.NO_PROFILE) {
@@ -65,11 +66,12 @@ export class UsersService {
     const userProfileNo: number = await this.saveUserProfile(
       userNo,
       createProfileDto,
+      manager,
     );
 
     const imageUrl = await this.getProfileImageUrl(profileImage, userNo);
-    await this.saveProfileImage(userProfileNo, imageUrl);
-    await this.updateUserStatus(userNo, UserStatus.NO_CERTIFICATE);
+    await this.saveProfileImage(userProfileNo, imageUrl, manager);
+    await this.updateUserStatus(userNo, UserStatus.NO_CERTIFICATE, manager);
 
     return { userNo, status: UserStatus.NO_CERTIFICATE };
   }
@@ -82,7 +84,6 @@ export class UsersService {
     if (!nickname && !description) {
       throw new BadRequestException('변경 사항이 하나 이상 있어야 합니다.');
     }
-
     await this.updateProfile(userNo, updateProfileDto);
 
     const user: User = {
@@ -134,6 +135,7 @@ export class UsersService {
     userNo: number,
     major: string,
     file: Express.Multer.File,
+    manager: EntityManager,
   ): Promise<User> {
     const { status }: Users = await this.getUserByNo(userNo);
     if (status != UserStatus.NO_CERTIFICATE) {
@@ -142,8 +144,8 @@ export class UsersService {
       );
     }
 
-    await this.saveUserCertificate(userNo, major, file);
-    await this.updateUserStatus(userNo, UserStatus.NOT_CONFIRMED);
+    await this.saveUserCertificate(userNo, major, file, manager);
+    await this.updateUserStatus(userNo, UserStatus.NOT_CONFIRMED, manager);
 
     return { userNo, status: UserStatus.NOT_CONFIRMED };
   }
@@ -152,30 +154,35 @@ export class UsersService {
     userNo: number,
     major: string,
     file: Express.Multer.File,
+    manager: EntityManager,
   ): Promise<User> {
     const { status }: Users = await this.getUserByNo(userNo);
     if (status !== UserStatus.DENIED) {
       throw new BadRequestException('학적 정보를 재등록할 수 없는 유저입니다.');
     }
 
-    await this.saveUserCertificate(userNo, major, file);
-    await this.updateUserStatus(userNo, UserStatus.NOT_CONFIRMED);
+    await this.saveUserCertificate(userNo, major, file, manager);
+    await this.updateUserStatus(userNo, UserStatus.NOT_CONFIRMED, manager);
 
     return { userNo, status: UserStatus.NOT_CONFIRMED };
   }
 
-  async confirmUser(adminNo: number, certificateNo: number): Promise<void> {
+  async confirmUser(
+    adminNo: number,
+    certificateNo: number,
+    manager: EntityManager,
+  ): Promise<void> {
     await this.validateAdminAuthority(adminNo);
 
     const { userNo, status, certificate, major }: DetailedCertificate =
       await this.getDetailedCertificate(certificateNo);
 
     if (status === UserStatus.NOT_CONFIRMED) {
-      await this.updateUserStatus(userNo, UserStatus.CONFIRMED);
+      await this.updateUserStatus(userNo, UserStatus.CONFIRMED, manager);
     }
     await this.awsService.deleteFile(certificate);
-    await this.deleteCertificate(certificateNo);
-    await this.updateMajor(userNo, major);
+    await this.deleteCertificate(certificateNo, manager);
+    await this.updateMajor(userNo, major, manager);
   }
 
   async getUserByNickname(nickname: string): Promise<SearchedUser[]> {
@@ -204,29 +211,30 @@ export class UsersService {
   async denyUserCertificate(
     adminNo: number,
     certificateNo: number,
+    manager: EntityManager,
   ): Promise<void> {
     await this.validateAdminAuthority(adminNo);
 
     const { userNo, status, certificate }: DetailedCertificate =
       await this.getDetailedCertificate(certificateNo);
-    await this.deleteCertificate(certificateNo);
+    await this.deleteCertificate(certificateNo, manager);
+    await this.awsService.deleteFile(certificate);
 
     if (status === UserStatus.CONFIRMED) {
-      await this.saveCertificateDeniedNotice(userNo);
-    } else {
-      await this.updateUserStatus(userNo, UserStatus.DENIED);
+      await this.saveCertificateDeniedNotice(userNo, manager);
+      return;
     }
-
-    await this.awsService.deleteFile(certificate);
+    await this.updateUserStatus(userNo, UserStatus.DENIED, manager);
   }
 
   async updateUserMajor(
     userNo: number,
     major: string,
     file: Express.Multer.File,
+    manager: EntityManager,
   ): Promise<void> {
     await this.validateNoUserCertificateExist(userNo);
-    await this.saveUserCertificate(userNo, major, file);
+    await this.saveUserCertificate(userNo, major, file, manager);
   }
 
   async getUserProfile(userNo: number): Promise<EntireProfile> {
@@ -268,9 +276,14 @@ export class UsersService {
     }
   }
 
-  private async updateMajor(userNo: number, major: string): Promise<void> {
-    const isMajorUpdated: number =
-      await this.userProfileRepository.updateUserMajor(userNo, major);
+  private async updateMajor(
+    userNo: number,
+    major: string,
+    manager: EntityManager,
+  ): Promise<void> {
+    const isMajorUpdated: number = await manager
+      .getCustomRepository(UserProfilesRepository)
+      .updateUserMajor(userNo, major);
 
     if (!isMajorUpdated) {
       throw new InternalServerErrorException('학적 정보 수정 에러');
@@ -292,11 +305,16 @@ export class UsersService {
     return certificate;
   }
 
-  private async saveCertificateDeniedNotice(userNo): Promise<void> {
-    const { affectedRows }: InsertRaw = await this.noticeRepository.saveNotice({
-      userNo,
-      type: NoticeType.CERTIFICATE_DENIED,
-    });
+  private async saveCertificateDeniedNotice(
+    userNo: number,
+    manager: EntityManager,
+  ): Promise<void> {
+    const { affectedRows }: InsertRaw = await manager
+      .getCustomRepository(NoticesRepository)
+      .saveNotice({
+        userNo,
+        type: NoticeType.CERTIFICATE_DENIED,
+      });
 
     if (!affectedRows) {
       throw new InternalServerErrorException('알림이 전송되지 않았습니다.');
@@ -340,11 +358,13 @@ export class UsersService {
     }
   }
 
-  private async deleteCertificate(certificateNo: number): Promise<void> {
-    const isCertificateDeleted: number =
-      await this.userCertificateRepository.deleteCerticificateByNo(
-        certificateNo,
-      );
+  private async deleteCertificate(
+    certificateNo: number,
+    manager: EntityManager,
+  ): Promise<void> {
+    const isCertificateDeleted: number = await manager
+      .getCustomRepository(UserCertificatesRepository)
+      .deleteCerticificateByNo(certificateNo);
 
     if (!isCertificateDeleted) {
       throw new InternalServerErrorException(
@@ -357,19 +377,20 @@ export class UsersService {
     userNo: number,
     major: string,
     file: Express.Multer.File,
+    manager: EntityManager,
   ): Promise<void> {
     if (!file) {
       throw new BadRequestException('학적 증명 파일을 첨부해 주세요.');
     }
     const certificate = await this.awsService.uploadCertificate(userNo, file);
 
-    const certificateSavedResult: ResultSetHeader =
-      await this.userCertificateRepository.createCertificate({
+    const certificateSavedResult: ResultSetHeader = await manager
+      .getCustomRepository(UserCertificatesRepository)
+      .createCertificate({
         userNo,
         major,
         certificate,
       });
-
     if (!certificateSavedResult.affectedRows) {
       throw new InternalServerErrorException('학적 증명 파일 추가 오류입니다.');
     }
@@ -413,12 +434,14 @@ export class UsersService {
     return await this.awsService.uploadProfileImage(userNo, image);
   }
 
-  private async saveProfileImage(userProfileNo: number, imageUrl: string) {
-    const isProfileImageSaved: number =
-      await this.profileImageRepository.createProfileImage(
-        userProfileNo,
-        imageUrl,
-      );
+  private async saveProfileImage(
+    userProfileNo: number,
+    imageUrl: string,
+    manager: EntityManager,
+  ): Promise<void> {
+    const isProfileImageSaved: number = await manager
+      .getCustomRepository(ProfileImagesRepository)
+      .createProfileImage(userProfileNo, imageUrl);
 
     if (!isProfileImageSaved) {
       throw new InternalServerErrorException(`유저 이미지 생성 오류입니다.`);
@@ -428,9 +451,11 @@ export class UsersService {
   private async saveUserProfile(
     userNo: number,
     createProfileDto: CreateProfileDto,
+    manager: EntityManager,
   ): Promise<number> {
-    const userProfileNo: number =
-      await this.userProfileRepository.createUserProfile({
+    const userProfileNo: number = await manager
+      .getCustomRepository(UserProfilesRepository)
+      .createUserProfile({
         userNo,
         ...createProfileDto,
       });
@@ -455,11 +480,11 @@ export class UsersService {
   private async updateUserStatus(
     userNo: number,
     status: number,
+    manager: EntityManager,
   ): Promise<void> {
-    const isStatusUpdated = await this.userRepository.updateUserStatus(
-      userNo,
-      status,
-    );
+    const isStatusUpdated = await manager
+      .getCustomRepository(UsersRepository)
+      .updateUserStatus(userNo, status);
 
     if (!isStatusUpdated) {
       throw new InternalServerErrorException(`유저 status 수정 오류입니다.`);
