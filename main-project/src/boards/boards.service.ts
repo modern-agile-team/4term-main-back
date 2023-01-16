@@ -9,7 +9,7 @@ import { NoticeType } from 'src/common/configs/notice-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
-import { Connection, QueryRunner, UpdateResult } from 'typeorm';
+import { Connection, QueryRunner } from 'typeorm';
 import { ParticipationDto } from './dto/participation.dto';
 import { BoardDto } from './dto/board.dto';
 import { Boards } from './entity/board.entity';
@@ -22,28 +22,17 @@ import { BoardBookmarkRepository } from './repository/board-bookmark.repository'
 import { BoardGuestRepository } from './repository/board-guest.repository';
 import { BoardHostRepository } from './repository/board-host.repository';
 import { BoardRepository } from './repository/board.repository';
-import { BoardParticipationRepository } from './repository/board-participation.repository';
+import { BoardGuestTeamsRepository } from './repository/board-guest-team.repository';
 import { BoardFilterDto } from './dto/board-filter.dto';
 
 @Injectable()
 export class BoardsService {
   constructor(
-    @InjectRepository(BoardBookmarkRepository)
     private readonly boardBookmarkRepository: BoardBookmarkRepository,
-
-    @InjectRepository(BoardGuestRepository)
     private readonly boardGuestRepository: BoardGuestRepository,
-
-    @InjectRepository(BoardHostRepository)
     private readonly boardHostRepository: BoardHostRepository,
-
-    @InjectRepository(BoardRepository)
     private readonly boardRepository: BoardRepository,
-
-    @InjectRepository(NoticesRepository)
     private readonly noticeRepository: NoticesRepository,
-
-    @InjectRepository(NoticeBoardsRepository)
     private readonly noticeBoardsRepository: NoticeBoardsRepository,
 
     private readonly connection: Connection,
@@ -133,7 +122,7 @@ export class BoardsService {
       // TODO: newGuest user 확인 로직 추가
 
       const { guests, ...participation }: ParticipationDto = participationDto;
-      const { male, female }: Board = board;
+      const { recruitMale: male, recruitFemale: female }: Board = board;
 
       if (female + male != guests.length) {
         throw new BadRequestException(
@@ -191,8 +180,8 @@ export class BoardsService {
     participation: Participation,
   ): Promise<number> {
     const { affectedRows, insertId }: CreateResponse = await queryRunner.manager
-      .getCustomRepository(BoardParticipationRepository)
-      .createParticipation(participation);
+      .getCustomRepository(BoardGuestTeamsRepository)
+      .createGuestTeam(participation);
 
     if (!affectedRows) {
       throw new InternalServerErrorException(

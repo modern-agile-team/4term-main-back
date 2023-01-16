@@ -12,9 +12,7 @@ export class BoardBookmarkRepository extends Repository<BoardBookmarks> {
   // 생성
   async createBookmark(boardNo: number, userNo: number): Promise<number> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder(
-        'boardBookmark',
-      )
+      const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
         .into(BoardBookmarks)
         .values({ boardNo, userNo })
@@ -31,9 +29,7 @@ export class BoardBookmarkRepository extends Repository<BoardBookmarks> {
   // 삭제
   async cancelBookmark(boardNo: number, userNo: number): Promise<number> {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder(
-        'boardBookmark',
-      )
+      const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()
         .from(BoardBookmarks)
         .where('boardNo = :boardNo', { boardNo })
