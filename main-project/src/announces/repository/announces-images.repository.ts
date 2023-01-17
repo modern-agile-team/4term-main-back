@@ -13,7 +13,9 @@ export class AnnouncesImagesRepository extends Repository<AnnouncesImages> {
   // 조회 관련
   async getAnnouncesImages(announcesNo: number): Promise<AnnouncesImages> {
     try {
-      const images = this.createQueryBuilder('announcesImages')
+      const images: AnnouncesImages = await this.createQueryBuilder(
+        'announcesImages',
+      )
         .select(['JSON_ARRAYAGG(announcesImages.imageUrl) AS imageUrl'])
         .where('announcesImages.announcesNo = :announcesNo', { announcesNo })
         .getRawOne();

@@ -1,11 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { ChatUsers } from '../entity/chat-users.entity';
-import { ChatRoom, ChatUserInfo } from '../interface/chat.interface';
+import { ChatRoom, ChatUser } from '../interface/chat.interface';
 
 @EntityRepository(ChatUsers)
 export class ChatUsersRepository extends Repository<ChatUsers> {
-  async setChatRoomUsers(roomUsers: ChatUserInfo[]): Promise<number> {
+  async createChatUsers(roomUsers: ChatUser[]): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('chat_users')
         .insert()
@@ -21,7 +21,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
-  async getChatRooms(userNo: number): Promise<ChatRoom[]> {
+  async getChatRoomsByUserNo(userNo: number): Promise<ChatRoom[]> {
     try {
       const chatRooms = await this.createQueryBuilder('chat_users')
         .leftJoin('chat_users.chatRoomNo', 'chatRoomNo')
@@ -40,9 +40,9 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
-  async checkUserInChatRoom(chatUserInfo: ChatUserInfo): Promise<ChatUserInfo> {
+  async checkUserInChatRoom(chatUserInfo: ChatUser): Promise<ChatUser> {
     try {
-      const user: ChatUserInfo = await this.createQueryBuilder('chat_users')
+      const user: ChatUser = await this.createQueryBuilder('chat_users')
         .select([
           'chat_users.user_no AS userNo',
           'chat_users.chat_room_no AS chatRoomNo',
@@ -59,7 +59,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
-  async inviteUserByUserNo(chatUserInfo: ChatUserInfo): Promise<InsertResult> {
+  async inviteUserByUserNo(chatUserInfo: ChatUser): Promise<InsertResult> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('chat_users')
         .insert()
