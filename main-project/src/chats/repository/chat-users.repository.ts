@@ -40,7 +40,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
-  async checkUserInChatRoom(chatUserInfo: ChatUser): Promise<ChatUser> {
+  async getChatUser(userNo, chatRoomNo): Promise<ChatUser> {
     try {
       const user: ChatUser = await this.createQueryBuilder('chat_users')
         .select([
@@ -48,7 +48,10 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
           'chat_users.chat_room_no AS chatRoomNo',
           'chat_users.user_type AS userType',
         ])
-        .where('user_no = :userNo AND chat_room_no = :chatRoomNo', chatUserInfo)
+        .where('user_no = :userNo AND chat_room_no = :chatRoomNo', {
+          userNo,
+          chatRoomNo,
+        })
         .getRawOne();
 
       return user;

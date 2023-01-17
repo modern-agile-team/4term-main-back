@@ -1,60 +1,39 @@
-export interface ChatToCreate {
-  boardNo: number;
-  userNo?: number;
-  roomName?: string;
-}
-
 export interface ChatRoom {
-  roomName: string;
   chatRoomNo: number;
+  roomName: string;
+  userNo?: number;
+  boardNo?: number;
 }
 
-export interface ChatUser {
-  userNo: number;
-  chatRoomNo: number;
+export interface ChatRoomOfBoard extends Partial<ChatRoom> {
+  hostsNickname: string;
+  guestsNickname: string;
+  hostsUserNo: string;
+  guestsUserNo: string;
+}
+export interface ChatRoomBeforeCreate extends Partial<ChatRoom> {}
+
+export interface ChatRoomWithUsers extends Pick<ChatRoom, 'chatRoomNo'> {
+  users: string;
+  userType: number;
+}
+
+export interface ChatUser extends Partial<ChatRoom> {
+  userType: number;
+  nickname?: string;
+}
+
+export interface ChatUserValidation extends Partial<ChatRoom> {
+  isUserNeeded: boolean;
+}
+
+export interface ChatRoomInvitation extends Partial<ChatRoom> {
+  targetUserNo: number;
   userType?: number;
-  targetUserNo?: number;
   type?: number;
 }
 
-export interface ChatRoomUser {
-  userNo: number;
-  chatRoomNo: number;
-  nickname: string;
-  roomName: string;
-  meetingNo: number;
-}
-
-export interface ChatRoomUsers {
-  users: string;
-  userType: number;
-  chatRoomNo: number;
-}
-
-export interface FileUrlDetail {
+export interface FileUrl {
   chatLogNo: number;
   fileUrl: string;
-}
-
-export interface ChatRoomBeforeCreate {
-  hostUserNo: string;
-  guestUserNo: string;
-  hostNickname: string;
-  guestNickname: string;
-  userNo?: string;
-  roomName?: string;
-}
-
-export interface PreviousChatLog {
-  userNo: number;
-  chatRoomNo: number;
-  currentChatLogNo?: number;
-  message?: string;
-  timeStamp?: Date;
-}
-
-export interface ChatUserValidation {
-  userNo: number;
-  chatRoomNo: number;
-  isUserNeeded: boolean;
 }

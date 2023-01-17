@@ -127,8 +127,10 @@ export class MeetingsService {
     userNo: number,
     chatRoomNo: number,
   ): Promise<void> {
-    const chatUser: ChatUser =
-      await this.chatUserRepository.checkUserInChatRoom({ userNo, chatRoomNo });
+    const chatUser: ChatUser = await this.chatUserRepository.getChatUser(
+      userNo,
+      chatRoomNo,
+    );
 
     if (!chatUser) {
       throw new NotFoundException('유저가 참여 중인 채팅방이 아닙니다.');
