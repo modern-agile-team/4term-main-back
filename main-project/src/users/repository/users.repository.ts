@@ -120,4 +120,19 @@ export class UsersRepository extends Repository<Users> {
       );
     }
   }
+
+  async getUsersByNums(userNo: number[]) {
+    try {
+      const users = await this.createQueryBuilder('users')
+        .select(['JSON_ARRAYAGG(users.no) AS no'])
+        .where('no IN (:userNo)', { userNo })
+        .getRawOne();
+
+      return users;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 유저 조회 에러(getUsersByNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
 }

@@ -8,9 +8,9 @@ export interface CreateResponse {
   insertId?: number;
 }
 export class Board {
-  no: number;
-  hostUserNo: number;
-  hostNickname: string;
+  no?: number;
+  hostUserNo?: number;
+  hostNickname?: string;
   title: string;
   description: string;
   location: string;
@@ -19,8 +19,8 @@ export class Board {
   recruitMale: number;
   recruitFemale: number;
   isImpromptu: boolean;
-  hostMembers: string;
-  hostMembersNickname: string;
+  hostMembers?: string;
+  hostMembersNickname?: string;
 }
 
 export class Participation extends OmitType(ParticipationDto, ['guests']) {

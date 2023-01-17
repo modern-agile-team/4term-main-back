@@ -1,25 +1,17 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { ResultSetHeader } from 'mysql2';
-import {
-  DeleteResult,
-  EntityRepository,
-  InsertResult,
-  Repository,
-} from 'typeorm';
+import { EntityRepository, Repository } from 'typeorm';
 import { BoardBookmarks } from '../entity/board-bookmark.entity';
 
 @EntityRepository(BoardBookmarks)
 export class BoardBookmarksRepository extends Repository<BoardBookmarks> {
   // 생성
-  async createBookmark(boardNo: number, userNo: number): Promise<number> {
+  async createBookmark(boardNo: number, userNo: number): Promise<void> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .insert()
         .into(BoardBookmarks)
         .values({ boardNo, userNo })
         .execute();
-
-      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createBookmark-repository: 알 수 없는 서버 에러입니다.`,
@@ -28,16 +20,14 @@ export class BoardBookmarksRepository extends Repository<BoardBookmarks> {
   }
 
   // 삭제
-  async cancelBookmark(boardNo: number, userNo: number): Promise<number> {
+  async cancelBookmark(boardNo: number, userNo: number): Promise<void> {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .delete()
         .from(BoardBookmarks)
         .where('boardNo = :boardNo', { boardNo })
         .andWhere('userNo = :userNo', { userNo })
         .execute();
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,

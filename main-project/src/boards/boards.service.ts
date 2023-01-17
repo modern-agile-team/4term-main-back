@@ -9,7 +9,7 @@ import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { ParticipationDto } from './dto/participation.dto';
-import { CreateBoardDto } from './dto/board.dto';
+import { CreateBoardDto } from './dto/create-board.dto';
 import { Boards } from './entity/board.entity';
 import { Board, Participation } from './interface/boards.interface';
 import { BoardBookmarksRepository } from './repository/board-bookmark.repository';
@@ -20,6 +20,8 @@ import { BoardGuestTeamsRepository } from './repository/board-guest-team.reposit
 import { BoardFilterDto } from './dto/board-filter.dto';
 import { EntityManager } from 'typeorm';
 import { ResultSetHeader } from 'mysql2';
+import { UpdateBoardDto } from './dto/update-board.dto';
+import { UsersRepository } from 'src/users/repository/users.repository';
 
 @Injectable()
 export class BoardsService {
@@ -30,14 +32,17 @@ export class BoardsService {
     private readonly boardRepository: BoardsRepository,
     private readonly noticeRepository: NoticesRepository,
     private readonly noticeBoardsRepository: NoticeBoardsRepository,
+    private readonly usersRepository: UsersRepository,
   ) {}
   //cron
-  async closeThunder(): Promise<void> {
-    const thunders: { no: string } = await this.boardRepository.checkDeadline();
+  async closeBoard(manager: EntityManager): Promise<void> {
+    const boards: { no: string } = await manager
+      .getCustomRepository(BoardsRepository)
+      .checkDeadline();
 
-    const no: number[] = JSON.parse(thunders.no);
+    const no: number[] = JSON.parse(boards.no);
 
-    await this.boardRepository.closeBoard(no);
+    await manager.getCustomRepository(BoardsRepository).closeBoard(no);
   }
 
   // 조회 관련
@@ -78,48 +83,38 @@ export class BoardsService {
   // 생성 관련
   async createBoard(
     manager: EntityManager,
-    { hostMembers, userNo, ...newboard }: CreateBoardDto,
+    userNo: number,
+    { hostMembers, ...board }: CreateBoardDto,
   ): Promise<void> {
+    await this.validateUsers(manager, hostMembers);
+    const boardNo: number = await this.setBoard(manager, userNo, board);
+
+    hostMembers.push(userNo);
+    await this.setHosts(manager, boardNo, hostMembers);
+  }
+
+  private async setBoard(
+    manager: EntityManager,
+    userNo: number,
+    newboard: Omit<CreateBoardDto, 'hostMembers'>,
+  ): Promise<number> {
     const { insertId }: ResultSetHeader = await manager
       .getCustomRepository(BoardsRepository)
       .createBoard(userNo, newboard);
 
-    const hostArr: object[] = await this.validateHosts(
-      insertId,
-      userNo,
-      hostMembers,
-    );
-
-    await this.setHosts(manager, hostArr);
+    return insertId;
   }
 
   private async setHosts(
     manager: EntityManager,
-    hostArr: object[],
-  ): Promise<void> {
-    const { affectedRows }: ResultSetHeader = await manager
-      .getCustomRepository(BoardHostsRepository)
-      .createHosts(hostArr);
-
-    if (!affectedRows) {
-      throw new InternalServerErrorException(
-        `board-host-members 생성(setHosts-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  private async validateHosts(
     boardNo: number,
-    userNo: number,
-    hosts: number[],
-  ): Promise<object[]> {
-    hosts.unshift(userNo);
-    // TODO: user 확인 로직 추가
-    const hostArr: object[] = hosts.map((el: number) => {
-      return { boardNo, userNo: el };
+    hostArr: number[],
+  ): Promise<void> {
+    const hosts = hostArr.map((userNo) => {
+      return { boardNo, userNo };
     });
 
-    return hostArr;
+    await manager.getCustomRepository(BoardHostsRepository).createHosts(hosts);
   }
 
   async createGuestTeam(
@@ -140,7 +135,7 @@ export class BoardsService {
     }
 
     await this.validateGuests(board, guests);
-    const teamNo: number = await this.setParticipation(manager, {
+    const teamNo: number = await this.setGuestTeam(manager, {
       ...participation,
       boardNo,
     });
@@ -173,7 +168,7 @@ export class BoardsService {
     // }
   }
 
-  private async setParticipation(
+  private async setGuestTeam(
     manager: EntityManager,
     participation: Participation,
   ): Promise<number> {
@@ -219,51 +214,31 @@ export class BoardsService {
     manager: EntityManager,
     boardNo: number,
     userNo: number,
-    // TODO: userNo -> jwt로 빠질 예정
-    { hostMembers, ...newBoard }: Omit<CreateBoardDto, 'userNo'>,
+    updateBoardDto: UpdateBoardDto,
   ): Promise<void> {
     await this.getBoardByNo(manager, boardNo);
+    // 사용자 확인 로직
 
-    const hosts: object[] = await this.validateHosts(
-      boardNo,
-      userNo,
-      hostMembers,
-    );
-
-    await this.updateBoard(manager, boardNo, newBoard);
-    await this.deleteHosts(manager, boardNo);
-    await this.setHosts(manager, hosts);
+    await this.updateBoard(manager, boardNo, updateBoardDto);
   }
 
   private async updateBoard(
     manager: EntityManager,
     boardNo: number,
-    newBoard: Partial<CreateBoardDto>,
+    updateBoardDto: UpdateBoardDto,
   ): Promise<void> {
-    const isUpdated: number = await manager
+    await manager
       .getCustomRepository(BoardsRepository)
-      .updateBoard(boardNo, newBoard);
-
-    if (!isUpdated) {
-      throw new InternalServerErrorException(
-        `게시글 수정(updateBoard-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+      .updateBoard(boardNo, updateBoardDto);
   }
 
   private async deleteHosts(
     manager: EntityManager,
     boardNo: number,
   ): Promise<void> {
-    const { affectedRows }: ResultSetHeader = await manager
+    await manager
       .getCustomRepository(BoardHostsRepository)
       .deleteHosts(boardNo);
-
-    if (!affectedRows) {
-      throw new InternalServerErrorException(
-        `게시글 수정(deleteHosts-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
   }
 
   // 삭제 관련
@@ -273,14 +248,7 @@ export class BoardsService {
   ): Promise<void> {
     await this.getBoardByNo(manager, boardNo);
 
-    const { affectedRows }: ResultSetHeader =
-      await this.boardRepository.deleteBoard(boardNo);
-
-    if (!affectedRows) {
-      throw new BadRequestException(
-        `게시글 삭제(deleteBoardByNo-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+    await this.boardRepository.deleteBoard(boardNo);
   }
 
   async cancelBookmark(
@@ -290,16 +258,7 @@ export class BoardsService {
   ): Promise<void> {
     await this.getBoardByNo(manager, boardNo);
     // TODO: user확인 메서드
-    const isDeleted: number = await this.boardBookmarkRepository.cancelBookmark(
-      boardNo,
-      userNo,
-    );
-
-    if (!isDeleted) {
-      throw new BadRequestException(
-        `북마크 삭제(cancelBookmark-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+    await this.boardBookmarkRepository.cancelBookmark(boardNo, userNo);
   }
 
   // 알람 생성
@@ -318,5 +277,25 @@ export class BoardsService {
     await manager
       .getCustomRepository(NoticeBoardsRepository)
       .saveNoticeBoard(insertId, boardNo);
+  }
+
+  // function
+  private async validateUsers(
+    manager: EntityManager,
+    userArr: number[],
+  ): Promise<void> {
+    const { no } = await manager
+      .getCustomRepository(UsersRepository)
+      .getUsersByNums(userArr);
+
+    const users = JSON.parse(no);
+
+    const isUser = userArr.filter((userNo) => {
+      return !users.includes(userNo);
+    });
+
+    if (isUser.length) {
+      throw new BadRequestException(`${isUser}번 유저가 없습니다.`);
+    }
   }
 }

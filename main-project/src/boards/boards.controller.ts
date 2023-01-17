@@ -14,7 +14,7 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { ParticipationDto } from './dto/participation.dto';
-import { CreateBoardDto } from './dto/board.dto';
+import { CreateBoardDto } from './dto/create-board.dto';
 import { Board } from './interface/boards.interface';
 import { BoardFilterDto } from './dto/board-filter.dto';
 import { Cron, CronExpression } from '@nestjs/schedule/dist';
@@ -23,6 +23,8 @@ import { TransactionInterceptor } from 'src/common/interceptor/transaction-inter
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { EntityManager } from 'typeorm';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { GetUser } from 'src/common/decorator/get-user.decorator';
+import { UpdateBoardDto } from './dto/update-board.dto';
 
 @Controller('boards')
 @ApiTags('게시글 API')
@@ -30,9 +32,12 @@ export class BoardsController {
   constructor(private boardService: BoardsService) {}
   //Cron
   @Cron(CronExpression.EVERY_HOUR)
+  @UseInterceptors(TransactionInterceptor)
   @Patch()
-  async closingThunder(): Promise<void> {
-    await this.boardService.closeThunder();
+  async closingThunder(
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<void> {
+    await this.boardService.closeBoard(manager);
   }
 
   //Get Methods
@@ -73,6 +78,7 @@ export class BoardsController {
 
   // Post Methods
   @Post()
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '게시글 생성 API',
@@ -80,10 +86,10 @@ export class BoardsController {
   })
   async createBoard(
     @Body() createBoarddto: CreateBoardDto,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    // TODO: userNo -> jwt
-    await this.boardService.createBoard(manager, createBoarddto);
+    await this.boardService.createBoard(manager, userNo, createBoarddto);
 
     return { msg: '게시글 생성 성공' };
   }
@@ -121,19 +127,19 @@ export class BoardsController {
 
   // Patch Methods
   @Patch('/:boardNo')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '게시글 수정 API',
     description: '입력한 정보로 게시글, 멤버 정보을 수정한다.',
   })
-  // TODO: userNo -> jwt
   async updateBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
-    @Body() boardDto: CreateBoardDto,
+    @Body() updateBoardDto: UpdateBoardDto,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const { userNo, ...board }: CreateBoardDto = boardDto;
-    await this.boardService.editBoard(manager, boardNo, userNo, board);
+    await this.boardService.editBoard(manager, boardNo, userNo, updateBoardDto);
 
     return { msg: '게시글 수정 성공' };
   }
