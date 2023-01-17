@@ -1,5 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { ChatToCreate } from 'src/chats/interface/chat.interface';
+import { ChatRoomOfBoard } from 'src/chats/interface/chat.interface';
 import { Users } from 'src/users/entity/user.entity';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import {
@@ -201,9 +201,12 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async getUsersByBoardNo(boardInfo: ChatToCreate) {
+  async getUsersByBoardNo(
+    boardNo: number,
+    userNo: number,
+  ): Promise<ChatRoomOfBoard> {
     try {
-      const users = await this.createQueryBuilder('boards')
+      const users: ChatRoomOfBoard = await this.createQueryBuilder('boards')
         .leftJoin('boards.hosts', 'hostList')
         .leftJoin('boards.teamNo', 'guestParticipation')
         .leftJoin('guestParticipation.boardGuest', 'guestList')
@@ -212,12 +215,16 @@ export class BoardRepository extends Repository<Boards> {
         .leftJoin('hostUser.userProfileNo', 'hostProfile')
         .leftJoin('guestUser.userProfileNo', 'guestProfile')
         .select([
-          'GROUP_CONCAT(DISTINCT hostProfile.nickname) AS hostNickname',
-          'GROUP_CONCAT(DISTINCT guestProfile.nickname) AS guestNickname',
-          'GROUP_CONCAT(DISTINCT hostList.user_no) AS hostUserNo',
-          'GROUP_CONCAT(DISTINCT guestList.user_no) AS guestUserNo',
+          'boards.no AS boardNo',
+          'GROUP_CONCAT(DISTINCT hostProfile.nickname) AS hostsNickname',
+          'GROUP_CONCAT(DISTINCT guestProfile.nickname) AS guestsNickname',
+          'GROUP_CONCAT(DISTINCT hostList.user_no) AS hostsUserNo',
+          'GROUP_CONCAT(DISTINCT guestList.user_no) AS guestsUserNo',
         ])
-        .where('boards.no = :boardNo AND boards.user_no = :userNo', boardInfo)
+        .where('boards.no = :boardNo AND boards.user_no = :userNo', {
+          boardNo,
+          userNo,
+        })
         .getRawOne();
 
       return users;

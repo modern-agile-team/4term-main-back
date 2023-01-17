@@ -4,34 +4,23 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Socket } from 'socket.io';
 import { Boards } from 'src/boards/entity/board.entity';
-import { Board } from 'src/boards/interface/boards.interface';
 import { BoardRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
-import {
-  Connection,
-  EntityManager,
-  getConnection,
-  InsertResult,
-  QueryRunner,
-} from 'typeorm';
+import { EntityManager, InsertResult } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { InitSocketDto } from './dto/init-socket.dto';
-import { JoinChatRoomDto } from './dto/join-chat.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
 import { ChatList } from './entity/chat-list.entity';
-import { ChatLog } from './entity/chat-log.entity';
 import {
-  ChatRoomBeforeCreate,
   ChatRoom,
-  ChatRoomUser,
-  ChatRoomUsers,
+  ChatRoomBeforeCreate,
+  ChatRoomOfBoard,
+  ChatRoomWithUsers,
   ChatUser,
-  ChatToCreate,
-  FileUrlDetail,
+  FileUrl,
 } from './interface/chat.interface';
 import { ChatFileUrlsRepository } from './repository/chat-file-urls.repository';
 import { ChatListRepository } from './repository/chat-list.repository';
@@ -41,20 +30,10 @@ import { ChatUsersRepository } from './repository/chat-users.repository';
 @Injectable()
 export class ChatsGatewayService {
   constructor(
-    @InjectRepository(ChatListRepository)
     private readonly chatListRepository: ChatListRepository,
-
-    @InjectRepository(ChatUsersRepository)
     private readonly chatUsersRepository: ChatUsersRepository,
-
-    @InjectRepository(ChatLogRepository)
     private readonly chatLogRepository: ChatLogRepository,
-
-    @InjectRepository(BoardRepository)
     private readonly boardRepository: BoardRepository,
-
-    @InjectRepository(ChatFileUrlsRepository)
-    private readonly chatFileUrlsRepository: ChatFileUrlsRepository,
   ) {}
 
   async initSocket(socket, messagePayload: InitSocketDto): Promise<ChatRoom[]> {
@@ -79,23 +58,21 @@ export class ChatsGatewayService {
 
     await this.checkChatRoomExists(boardNo, userNo);
 
-    const { roomName, hostUserNo, guestUserNo } = await this.getUsersByBoardNo(
-      boardNo,
-      userNo,
-    );
+    const { roomName, hostsUserNo, guestsUserNo } =
+      await this.getUsersByBoardNo(boardNo, userNo);
     const chatRoomNo: number = await this.createChatRoom(manager, {
       boardNo,
       roomName,
     });
 
     await this.setChatRoomUsers(manager, {
-      users: hostUserNo,
+      users: hostsUserNo,
       userType: UserType.HOST,
       chatRoomNo,
     });
 
     await this.setChatRoomUsers(manager, {
-      users: guestUserNo,
+      users: guestsUserNo,
       userType: UserType.GUEST,
       chatRoomNo,
     });
@@ -107,9 +84,9 @@ export class ChatsGatewayService {
 
   private async setChatRoomUsers(
     manager: EntityManager,
-    chatRoomUsers: ChatRoomUsers,
+    chatRoomUsers: ChatRoomWithUsers,
   ): Promise<void> {
-    const { userType, chatRoomNo }: ChatRoomUsers = chatRoomUsers;
+    const { userType, chatRoomNo }: ChatRoomWithUsers = chatRoomUsers;
     const users = chatRoomUsers.users.split(',').map(Number);
 
     const chatUsers: ChatUser[] = users.reduce((values, userNo) => {
@@ -121,7 +98,10 @@ export class ChatsGatewayService {
     await this.createChatUsers(manager, chatUsers);
   }
 
-  private async checkChatRoomExists(boardNo, userNo): Promise<void> {
+  private async checkChatRoomExists(
+    boardNo: number,
+    userNo: number,
+  ): Promise<void> {
     const board: Boards = await this.boardRepository.getBoard(boardNo);
     if (!board) {
       throw new NotFoundException('게시물을 찾지 못했습니다.');
@@ -147,7 +127,10 @@ export class ChatsGatewayService {
     return chatRooms;
   }
 
-  async sendChat(socket, messagePayload: MessagePayloadDto): Promise<void> {
+  async sendChat(
+    socket: Socket,
+    messagePayload: MessagePayloadDto,
+  ): Promise<void> {
     const { userNo, chatRoomNo, message }: MessagePayloadDto = messagePayload;
 
     await this.checkChatRoom(chatRoomNo, userNo);
@@ -169,7 +152,9 @@ export class ChatsGatewayService {
     const { userNo, chatRoomNo, uploadedFileUrls }: MessagePayloadDto =
       messagePayload;
 
-    const chatLogNo = await this.saveMessageByQueryRunner(
+    await this.checkChatRoom(chatRoomNo, userNo);
+
+    const chatLogNo = await this.saveMessageByEntityManager(
       manager,
       messagePayload,
     );
@@ -183,9 +168,9 @@ export class ChatsGatewayService {
     });
   }
 
-  private async saveMessageByQueryRunner(
-    manager,
-    messagePayload,
+  private async saveMessageByEntityManager(
+    manager: EntityManager,
+    messagePayload: MessagePayloadDto,
   ): Promise<InsertResult> {
     const insertId: InsertResult = await manager
       .getCustomRepository(ChatLogRepository)
@@ -198,24 +183,21 @@ export class ChatsGatewayService {
   }
 
   private async saveFileUrls(
-    manager,
+    manager: EntityManager,
     messagePayload,
     chatLogNo,
   ): Promise<void> {
     const { uploadedFileUrls }: MessagePayloadDto = messagePayload;
-    const fileUrlDetail: FileUrlDetail[] = uploadedFileUrls.reduce(
-      (values, fileUrl) => {
-        values.push({ chatLogNo, fileUrl });
+    const fileUrl: FileUrl[] = uploadedFileUrls.reduce((values, fileUrl) => {
+      values.push({ chatLogNo, fileUrl });
 
-        return values;
-      },
-      [],
-    );
+      return values;
+    }, []);
 
     const { affectedRows }: InsertRaw = await manager
       .getCustomRepository(ChatFileUrlsRepository)
-      .saveFileUrl(fileUrlDetail);
-    if (affectedRows !== fileUrlDetail.length) {
+      .saveFileUrl(fileUrl);
+    if (affectedRows !== fileUrl.length) {
       throw new InternalServerErrorException('파일 url 저장에 실패하였습니다.');
     }
   }
@@ -230,23 +212,20 @@ export class ChatsGatewayService {
   private async getUsersByBoardNo(
     boardNo: number,
     userNo: number,
-  ): Promise<ChatRoomBeforeCreate> {
-    const chatRoomBeforeCreate: ChatRoomBeforeCreate =
-      await this.boardRepository.getUsersByBoardNo({ boardNo, userNo });
-    if (!chatRoomBeforeCreate) {
+  ): Promise<ChatRoomOfBoard> {
+    const chatUsersOfBoard: ChatRoomOfBoard =
+      await this.boardRepository.getUsersByBoardNo(boardNo, userNo);
+    if (!chatUsersOfBoard) {
       throw new NotFoundException('유저 조회 오류입니다.');
     }
 
-    const chatRoom: ChatRoomBeforeCreate =
-      this.setChatRoomName(chatRoomBeforeCreate);
+    const chatRoom: ChatRoomOfBoard = this.setChatRoomName(chatUsersOfBoard);
 
     return chatRoom;
   }
 
-  private setChatRoomName(
-    chatRoom: ChatRoomBeforeCreate,
-  ): ChatRoomBeforeCreate {
-    chatRoom.roomName = chatRoom.guestNickname + ',' + chatRoom.hostNickname;
+  private setChatRoomName(chatRoom: ChatRoomOfBoard): ChatRoomOfBoard {
+    chatRoom.roomName = chatRoom.guestsNickname + ',' + chatRoom.hostsNickname;
 
     return chatRoom;
   }
@@ -268,7 +247,7 @@ export class ChatsGatewayService {
 
   private async createChatRoom(
     manager: EntityManager,
-    chatRoom: ChatToCreate,
+    chatRoom: ChatRoomBeforeCreate,
   ): Promise<number> {
     const createResult: number = await manager
       .getCustomRepository(ChatListRepository)
@@ -289,7 +268,7 @@ export class ChatsGatewayService {
       throw new NotFoundException(`해당 채팅방이 존재하지 않습니다.`);
     }
 
-    const user: ChatRoomUser = await this.chatListRepository.isUserInChatRoom(
+    const user: ChatUser = await this.chatListRepository.getUser(
       chatRoomNo,
       userNo,
     );

@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
+import { NoticeChats } from 'src/notices/entity/notice-chat.entity';
 import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { EntityManager } from 'typeorm';
@@ -18,6 +19,7 @@ import { ChatList } from './entity/chat-list.entity';
 import { ChatLog } from './entity/chat-log.entity';
 import {
   ChatRoom,
+  ChatRoomInvitation,
   ChatUser,
   ChatUserValidation,
 } from './interface/chat.interface';
@@ -44,7 +46,7 @@ export class ChatsControllerService {
     private readonly noticeChatsRepository: NoticeChatsRepository,
   ) {}
 
-  async getChatRoomsByUserNo(userNo): Promise<ChatRoom[]> {
+  async getChatRoomsByUserNo(userNo: number): Promise<ChatRoom[]> {
     const chatList: ChatRoom[] =
       await this.chatUsersRepository.getChatRoomsByUserNo(userNo);
 
@@ -116,10 +118,10 @@ export class ChatsControllerService {
       throw new NotFoundException('존재하지 않는 채팅방입니다.');
     }
 
-    const user: ChatUser = await this.chatUsersRepository.checkUserInChatRoom({
+    const user: ChatUser = await this.chatUsersRepository.getChatUser(
       userNo,
       chatRoomNo,
-    });
+    );
 
     if (isUserNeeded === Boolean(user)) {
       return user;
@@ -161,18 +163,22 @@ export class ChatsControllerService {
     });
   }
 
-  private async saveNotice(manager: EntityManager, chatUserInfo: ChatUser) {
-    const { userNo, userType, targetUserNo, chatRoomNo } = chatUserInfo;
+  private async saveNotice(
+    manager: EntityManager,
+    chatRoomInvitation: ChatRoomInvitation,
+  ) {
+    const { userNo, userType, targetUserNo, chatRoomNo } = chatRoomInvitation;
     const noticeType = userType
       ? NoticeType.INVITE_HOST
       : NoticeType.INVITE_GUEST;
 
-    const noticeChat = await this.noticeChatsRepository.checkNoticeChat({
-      userNo,
-      targetUserNo,
-      type: noticeType,
-      chatRoomNo,
-    });
+    const noticeChat: NoticeChats =
+      await this.noticeChatsRepository.getNoticeChat({
+        userNo,
+        targetUserNo,
+        type: noticeType,
+        chatRoomNo,
+      });
     if (noticeChat) {
       throw new BadRequestException('이미 초대를 보낸 상태입니다.');
     }
@@ -188,7 +194,7 @@ export class ChatsControllerService {
       throw new InternalServerErrorException('Notice 저장에 실패했습니다.');
     }
 
-    const insertResult = await manager
+    const insertResult: number = await manager
       .getCustomRepository(NoticeChatsRepository)
       .saveNoticeChat({
         noticeNo: insertId,
