@@ -19,8 +19,6 @@ export class AwsService {
   }
 
   async uploadChatFiles(files: Express.Multer.File[], chatRoomNo: number) {
-    console.log(files);
-
     if (!files.length) {
       throw new BadRequestException(`업로드 할 파일이 존재하지 않습니다.`);
     }
