@@ -1,5 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
+import { JsonArray } from 'src/common/interface/interface';
 import {
   EntityRepository,
   InsertResult,
@@ -15,7 +16,7 @@ import { Board } from '../interface/boards.interface';
 @EntityRepository(Boards)
 export class BoardsRepository extends Repository<Boards> {
   // 게시글 조회 관련
-  async checkDeadline(): Promise<{ no: string }> {
+  async checkDeadline(): Promise<JsonArray> {
     try {
       const boards = await this.createQueryBuilder()
         .select(['JSON_ARRAYAGG(no) AS no'])

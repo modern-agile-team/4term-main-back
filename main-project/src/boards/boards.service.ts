@@ -22,6 +22,7 @@ import { EntityManager } from 'typeorm';
 import { ResultSetHeader } from 'mysql2';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
+import { JsonArray } from 'src/common/interface/interface';
 
 @Injectable()
 export class BoardsService {
@@ -30,13 +31,15 @@ export class BoardsService {
     private readonly boardGuestRepository: BoardGuestsRepository,
     private readonly boardHostRepository: BoardHostsRepository,
     private readonly boardRepository: BoardsRepository,
+
     private readonly noticeRepository: NoticesRepository,
     private readonly noticeBoardsRepository: NoticeBoardsRepository,
+
     private readonly usersRepository: UsersRepository,
   ) {}
   //cron
   async closeBoard(manager: EntityManager): Promise<void> {
-    const boards: { no: string } = await manager
+    const boards: JsonArray = await manager
       .getCustomRepository(BoardsRepository)
       .checkDeadline();
 
