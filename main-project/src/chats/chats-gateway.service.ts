@@ -164,45 +164,30 @@ export class ChatsGatewayService {
   async sendFile(
     socket: Socket,
     messagePayload: MessagePayloadDto,
+    manager: EntityManager,
   ): Promise<void> {
-    const connection: Connection = getConnection();
-    const queryRunner: QueryRunner = connection.createQueryRunner();
+    const { userNo, chatRoomNo, uploadedFileUrls }: MessagePayloadDto =
+      messagePayload;
 
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    const chatLogNo = await this.saveMessageByQueryRunner(
+      manager,
+      messagePayload,
+    );
 
-    try {
-      const { userNo, chatRoomNo, uploadedFileUrls }: MessagePayloadDto =
-        messagePayload;
+    await this.saveFileUrls(manager, messagePayload, chatLogNo);
 
-      const chatLogNo = await this.saveMessageByQueryRunner(
-        queryRunner,
-        messagePayload,
-      );
-
-      await this.saveFileUrls(queryRunner, messagePayload, chatLogNo);
-
-      await queryRunner.commitTransaction();
-
-      socket.broadcast.to(`${chatRoomNo}`).emit('message', {
-        message: uploadedFileUrls,
-        userNo,
-        chatRoomNo,
-      });
-    } catch (error) {
-      await queryRunner?.rollbackTransaction();
-
-      throw error;
-    } finally {
-      await queryRunner?.release();
-    }
+    socket.broadcast.to(`${chatRoomNo}`).emit('message', {
+      message: uploadedFileUrls,
+      userNo,
+      chatRoomNo,
+    });
   }
 
   private async saveMessageByQueryRunner(
-    queryRunner,
+    manager,
     messagePayload,
   ): Promise<InsertResult> {
-    const insertId: InsertResult = await queryRunner.manager
+    const insertId: InsertResult = await manager
       .getCustomRepository(ChatLogRepository)
       .saveMessage(messagePayload);
     if (!insertId) {
@@ -213,7 +198,7 @@ export class ChatsGatewayService {
   }
 
   private async saveFileUrls(
-    queryRunner,
+    manager,
     messagePayload,
     chatLogNo,
   ): Promise<void> {
@@ -227,7 +212,7 @@ export class ChatsGatewayService {
       [],
     );
 
-    const { affectedRows }: InsertRaw = await queryRunner.manager
+    const { affectedRows }: InsertRaw = await manager
       .getCustomRepository(ChatFileUrlsRepository)
       .saveFileUrl(fileUrlDetail);
     if (affectedRows !== fileUrlDetail.length) {
@@ -299,9 +284,7 @@ export class ChatsGatewayService {
     chatRoomNo: number,
     userNo: number,
   ): Promise<void> {
-    const chatRoom = await this.chatListRepository.checkRoomExistsByChatRoomNo(
-      chatRoomNo,
-    );
+    const chatRoom = await this.chatListRepository.getChatRoomByNo(chatRoomNo);
     if (!chatRoom) {
       throw new NotFoundException(`해당 채팅방이 존재하지 않습니다.`);
     }

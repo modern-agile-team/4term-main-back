@@ -95,8 +95,9 @@ export class ChatsControllerService {
   }
 
   private async checkChatRoomExists(chatRoomNo: number): Promise<void> {
-    const chatRoom: ChatList =
-      await this.chatListRepository.checkRoomExistsByChatRoomNo(chatRoomNo);
+    const chatRoom: ChatList = await this.chatListRepository.getChatRoomByNo(
+      chatRoomNo,
+    );
     if (!chatRoom) {
       throw new NotFoundException('존재하지 않는 채팅방입니다.');
     }
@@ -108,8 +109,9 @@ export class ChatsControllerService {
     const { userNo, chatRoomNo, isUserNeeded }: ChatUserValidation =
       chatUserInfo;
 
-    const chatRoom: ChatList =
-      await this.chatListRepository.checkRoomExistsByChatRoomNo(chatRoomNo);
+    const chatRoom: ChatList = await this.chatListRepository.getChatRoomByNo(
+      chatRoomNo,
+    );
     if (!chatRoom) {
       throw new NotFoundException('존재하지 않는 채팅방입니다.');
     }
