@@ -123,7 +123,7 @@ export class UsersService {
     return await this.updateAccessToken(userNo);
   }
 
-  async softDeleteUser(userNo: number) {
+  async softDeleteUser(userNo: number): Promise<void> {
     await this.cacheManager.del(userNo);
 
     const isUserDeleted: number = await this.userRepository.softDeleteUser(
@@ -422,7 +422,7 @@ export class UsersService {
     profileNo: number,
     imageUrl: string,
     manager: EntityManager,
-  ) {
+  ): Promise<void>{
     const isProfileImageUpdated: number = await manager
       .getCustomRepository(ProfileImagesRepository)
       .updateProfileImage(profileNo, imageUrl);
