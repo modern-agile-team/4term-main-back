@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { NoticeType } from 'src/common/configs/notice-type.config';
@@ -10,8 +9,12 @@ import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.rep
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { Boards } from './entity/board.entity';
-import { Board, Guest, GuestTeam } from './interface/boards.interface';
+import {
+  JsonBoard,
+  Guest,
+  GuestTeam,
+  Board,
+} from './interface/boards.interface';
 import { BoardBookmarksRepository } from './repository/board-bookmark.repository';
 import { BoardGuestsRepository as BoardGuestsRepository } from './repository/board-guest.repository';
 import { BoardHostsRepository } from './repository/board-host.repository';
@@ -52,8 +55,8 @@ export class BoardsService {
   async getBoards(
     manager: EntityManager,
     filter: BoardFilterDto,
-  ): Promise<Board[]> {
-    const boards: Board[] = await manager
+  ): Promise<JsonBoard[]> {
+    const boards: JsonBoard[] = await manager
       .getCustomRepository(BoardsRepository)
       .getBoards(filter);
 
@@ -67,19 +70,23 @@ export class BoardsService {
   }
 
   async getBoardByNo(manager: EntityManager, boardNo: number): Promise<Board> {
-    const board: Board = await manager
-      .getCustomRepository(BoardsRepository)
-      .getBoardByNo(boardNo);
+    const { no, hostMembers, hostMembersNickname, ...jsonBoard }: JsonBoard =
+      await manager.getCustomRepository(BoardsRepository).getBoardByNo(boardNo);
 
-    board.hostMembers = JSON.parse(board.hostMembers);
-    board.hostMembersNickname = JSON.parse(board.hostMembersNickname);
+    const parsingHostMembers: number[] = JSON.parse(hostMembers);
+    const parsingHostMembersNickname: number[] =
+      JSON.parse(hostMembersNickname);
 
-    if (!board.no) {
+    if (!no) {
       throw new NotFoundException(
         `게시글 상세 조회(getBoardByNo-service): ${boardNo}번 게시글이 없습니다.`,
       );
     }
-
+    const board: Board = {
+      hostMembers: parsingHostMembers,
+      hostMembersNickname: parsingHostMembersNickname,
+      ...jsonBoard,
+    };
     return board;
   }
 
@@ -125,12 +132,10 @@ export class BoardsService {
     boardNo: number,
     createGuestTeamDto: CreateGuestTeamDto,
   ): Promise<void> {
+    const { guests, ...participation }: CreateGuestTeamDto = createGuestTeamDto;
+
     const { recruitMale, recruitFemale, hostUserNo, hostMembers }: Board =
       await this.getBoardByNo(manager, boardNo);
-    const hosts: number[] = JSON.parse(hostMembers);
-    // TODO: newGuest user 확인 로직 추가
-
-    const { guests, ...participation }: CreateGuestTeamDto = createGuestTeamDto;
 
     if (recruitMale + recruitFemale != guests.length) {
       throw new BadRequestException(
@@ -138,13 +143,14 @@ export class BoardsService {
       );
     }
 
-    await this.validateGuests(manager, boardNo, hosts, guests);
-    const teamNo: number = await this.setGuestTeam(manager, {
-      ...participation,
-      boardNo,
-    });
-    await this.setGuests(manager, teamNo, guests);
-    await this.saveNoticeParticipation(manager, boardNo, guests[0], hostUserNo);
+    await this.validateGuests(manager, boardNo, hostMembers, guests);
+
+    // const teamNo: number = await this.setGuestTeam(manager, {
+    //   ...participation,
+    //   boardNo,
+    // });
+    // await this.setGuests(manager, teamNo, guests);
+    // await this.saveNoticeParticipation(manager, boardNo, guests[0], hostUserNo);
   }
 
   private async validateGuests(
@@ -153,19 +159,34 @@ export class BoardsService {
     hosts: number[],
     newGuests: number[],
   ): Promise<void> {
-    await this.usersRepository.getUsersByNums(newGuests);
-    const { userNo }: JsonArray = await manager
-      .getCustomRepository(BoardGuestsRepository)
-      .getAllGuestsByBoardNo(boardNo);
-    const preGuests = JSON.parse(userNo);
+    await this.validateUsers(manager, newGuests);
+    const preGuests: number[] = await this.getPreGuests(manager, boardNo);
+    const wrongUser: number[] = [];
 
     for (let no in newGuests) {
       if (hosts.includes(newGuests[no]) || preGuests.includes(newGuests[no])) {
-        throw new BadRequestException(
-          `참가자 확인(validateGuests-service): ${newGuests[no]}번 참가자의 잘못된 신청.`,
-        );
+        wrongUser.push(newGuests[no]);
       }
     }
+
+    if (wrongUser.length) {
+      throw new BadRequestException(
+        `참가자 확인(validateGuests-service): ${wrongUser}번 참가자의 잘못된 신청.`,
+      );
+    }
+  }
+
+  private async getPreGuests(
+    manager: EntityManager,
+    boardNo: number,
+  ): Promise<number[]> {
+    const { userNo }: JsonArray = await manager
+      .getCustomRepository(BoardGuestsRepository)
+      .getAllGuestsByBoardNo(boardNo);
+
+    const preGuests = !userNo ? [] : JSON.parse(userNo);
+
+    return preGuests;
   }
 
   private async setGuestTeam(

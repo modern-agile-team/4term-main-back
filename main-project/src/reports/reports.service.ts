@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Board } from 'src/boards/interface/boards.interface';
+import { JsonBoard } from 'src/boards/interface/boards.interface';
 import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { Connection, QueryRunner } from 'typeorm';
 import { CreateReportDto } from './dto/create-reports.dto';
@@ -98,7 +98,7 @@ export class ReportsService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const board: Board = await this.boardRepository.getBoardByNo(boardNo);
+      const board: JsonBoard = await this.boardRepository.getBoardByNo(boardNo);
       if (!board.no) {
         throw new BadRequestException(`
         게시글 신고 생성(createBoardReport): ${boardNo}번 게시글을 찾을 수 없습니다.

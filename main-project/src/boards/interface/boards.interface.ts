@@ -1,7 +1,7 @@
 import { OmitType } from '@nestjs/swagger';
 import { CreateGuestTeamDto } from '../dto/create-guest-team.dto';
 
-export class Board {
+export class JsonBoard {
   no?: number;
   hostUserNo?: number;
   hostNickname?: string;
@@ -15,6 +15,14 @@ export class Board {
   isImpromptu: boolean;
   hostMembers?: string;
   hostMembersNickname?: string;
+}
+
+export class Board extends OmitType(JsonBoard, [
+  'hostMembers',
+  'hostMembersNickname',
+]) {
+  hostMembers?: number[];
+  hostMembersNickname?: number[];
 }
 
 export class GuestTeam extends OmitType(CreateGuestTeamDto, ['guests']) {

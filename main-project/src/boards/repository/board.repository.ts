@@ -11,7 +11,7 @@ import { BoardFilterDto } from '../dto/board-filter.dto';
 import { CreateBoardDto } from '../dto/create-board.dto';
 import { UpdateBoardDto } from '../dto/update-board.dto';
 import { Boards } from '../entity/board.entity';
-import { Board } from '../interface/boards.interface';
+import { JsonBoard } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
 export class BoardsRepository extends Repository<Boards> {
@@ -33,9 +33,9 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async getBoardByNo(boardNo: number): Promise<Board> {
+  async getBoardByNo(boardNo: number): Promise<JsonBoard> {
     try {
-      const board: Board = await this.createQueryBuilder('boards')
+      const board: JsonBoard = await this.createQueryBuilder('boards')
         .leftJoin('boards.userNo', 'users')
         .leftJoin('users.userProfileNo', 'profile')
         .leftJoin('boards.hosts', 'hosts')
@@ -69,7 +69,7 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async getBoards(filters?: BoardFilterDto): Promise<Board[]> {
+  async getBoards(filters?: BoardFilterDto): Promise<JsonBoard[]> {
     try {
       const boards: SelectQueryBuilder<Boards> = await this.createQueryBuilder(
         'boards',
