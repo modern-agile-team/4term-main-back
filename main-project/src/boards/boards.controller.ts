@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
-import { ParticipationDto } from './dto/participation.dto';
+import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { Board } from './interface/boards.interface';
 import { BoardFilterDto } from './dto/board-filter.dto';
@@ -117,7 +117,7 @@ export class BoardsController {
   })
   async createParticipation(
     @Param('boardNo') boardNo: number,
-    @Body() participationDto: ParticipationDto,
+    @Body() participationDto: CreateGuestTeamDto,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
     await this.boardService.createGuestTeam(manager, boardNo, participationDto);

@@ -3,7 +3,7 @@ import { ResultSetHeader } from 'mysql2';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { BoardGuestTeams } from '../entity/board-guest-team.entity';
 import { Boards } from '../entity/board.entity';
-import { CreateResponse, Participation } from '../interface/boards.interface';
+import { GuestTeam } from '../interface/boards.interface';
 
 @EntityRepository(BoardGuestTeams)
 export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
@@ -27,9 +27,7 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
   }
 
   // 생성
-  async createGuestTeam(
-    participation: Participation,
-  ): Promise<ResultSetHeader> {
+  async createGuestTeam(participation: GuestTeam): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()

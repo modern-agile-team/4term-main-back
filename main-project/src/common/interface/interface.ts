@@ -15,5 +15,6 @@ export interface ApiErrorExample {
 }
 
 export interface JsonArray {
-  no: string;
+  no?: string;
+  userNo?: string;
 }

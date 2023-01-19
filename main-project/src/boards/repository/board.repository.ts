@@ -131,7 +131,7 @@ export class BoardsRepository extends Repository<Boards> {
       return boards.getRawMany();
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getAllBoards-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getBoards-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

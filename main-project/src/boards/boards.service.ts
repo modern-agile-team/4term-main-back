@@ -8,10 +8,10 @@ import { NoticeType } from 'src/common/configs/notice-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
-import { ParticipationDto } from './dto/participation.dto';
+import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
 import { Boards } from './entity/board.entity';
-import { Board, Participation } from './interface/boards.interface';
+import { Board, Guest, GuestTeam } from './interface/boards.interface';
 import { BoardBookmarksRepository } from './repository/board-bookmark.repository';
 import { BoardGuestsRepository as BoardGuestsRepository } from './repository/board-guest.repository';
 import { BoardHostsRepository } from './repository/board-host.repository';
@@ -123,67 +123,58 @@ export class BoardsService {
   async createGuestTeam(
     manager: EntityManager,
     boardNo: number,
-    participationDto: ParticipationDto,
+    createGuestTeamDto: CreateGuestTeamDto,
   ): Promise<void> {
-    const board: Board = await this.getBoardByNo(manager, boardNo);
+    const { recruitMale, recruitFemale, hostUserNo, hostMembers }: Board =
+      await this.getBoardByNo(manager, boardNo);
+    const hosts: number[] = JSON.parse(hostMembers);
     // TODO: newGuest user 확인 로직 추가
 
-    const { guests, ...participation }: ParticipationDto = participationDto;
-    const { recruitMale: male, recruitFemale: female }: Board = board;
+    const { guests, ...participation }: CreateGuestTeamDto = createGuestTeamDto;
 
-    if (female + male != guests.length) {
+    if (recruitMale + recruitFemale != guests.length) {
       throw new BadRequestException(
-        `참가 신청(createAplication-service): 신청 인원과 모집인원이 맞지 않습니다.`,
+        `참가 신청(createGuestTeam-service): 신청 인원과 모집인원이 맞지 않습니다.`,
       );
     }
 
-    await this.validateGuests(board, guests);
+    await this.validateGuests(manager, boardNo, hosts, guests);
     const teamNo: number = await this.setGuestTeam(manager, {
       ...participation,
       boardNo,
     });
     await this.setGuests(manager, teamNo, guests);
-
-    await this.saveNoticeParticipation(
-      manager,
-      boardNo,
-      guests[0],
-      board.hostUserNo,
-    );
+    await this.saveNoticeParticipation(manager, boardNo, guests[0], hostUserNo);
   }
 
   private async validateGuests(
-    board: Board,
+    manager: EntityManager,
+    boardNo: number,
+    hosts: number[],
     newGuests: number[],
   ): Promise<void> {
-    const preGuests: Pick<Boards, 'userNo'>[] =
-      await this.boardGuestRepository.getAllGuestsByBoardNo(board.no);
+    await this.usersRepository.getUsersByNums(newGuests);
+    const { userNo }: JsonArray = await manager
+      .getCustomRepository(BoardGuestsRepository)
+      .getAllGuestsByBoardNo(boardNo);
+    const preGuests = JSON.parse(userNo);
 
-    // const hosts = board.hostMembers.map(Number);
-    // const guests = preGuests.map((el) => el.userNo);
-
-    // for (let no in newGuests) {
-    //   if (hosts.includes(newGuests[no]) || guests.includes(newGuests[no])) {
-    //     throw new BadRequestException(
-    //       `참가자 확인(validateGuests-service): ${newGuests[no]}번 참가자의 잘못된 신청.`,
-    //     );
-    //   }
-    // }
+    for (let no in newGuests) {
+      if (hosts.includes(newGuests[no]) || preGuests.includes(newGuests[no])) {
+        throw new BadRequestException(
+          `참가자 확인(validateGuests-service): ${newGuests[no]}번 참가자의 잘못된 신청.`,
+        );
+      }
+    }
   }
 
   private async setGuestTeam(
     manager: EntityManager,
-    participation: Participation,
+    guestTeam: GuestTeam,
   ): Promise<number> {
     const { insertId }: ResultSetHeader = await manager
       .getCustomRepository(BoardGuestTeamsRepository)
-      .createGuestTeam(participation);
-
-    if (!insertId) {
-      throw new InternalServerErrorException(
-        `board-participation 생성(setParticipation-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+      .createGuestTeam(guestTeam);
 
     return insertId;
   }
@@ -193,19 +184,14 @@ export class BoardsService {
     teamNo: number,
     guests: number[],
   ): Promise<void> {
-    const guestArr: object[] = guests.map((el: number) => {
+    const guestArr: Guest[] = guests.map((el: number) => {
       return { teamNo, userNo: el };
     });
+    // TODO: type 정리
 
-    const { affectedRows }: ResultSetHeader = await manager
+    await manager
       .getCustomRepository(BoardGuestsRepository)
       .createGuests(guestArr);
-
-    if (!affectedRows) {
-      throw new InternalServerErrorException(
-        `board-guests 생성(setGuests-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
   }
 
   async createBookmark(boardNo: number, userNo: number): Promise<void> {

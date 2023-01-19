@@ -1,12 +1,6 @@
-import { IntersectionType, OmitType } from '@nestjs/swagger';
-import { UserProfile } from 'src/users/entity/user-profile.entity';
-import { ParticipationDto } from '../dto/participation.dto';
-import { Boards } from '../entity/board.entity';
+import { OmitType } from '@nestjs/swagger';
+import { CreateGuestTeamDto } from '../dto/create-guest-team.dto';
 
-export interface CreateResponse {
-  affectedRows: number;
-  insertId?: number;
-}
 export class Board {
   no?: number;
   hostUserNo?: number;
@@ -23,6 +17,12 @@ export class Board {
   hostMembersNickname?: string;
 }
 
-export class Participation extends OmitType(ParticipationDto, ['guests']) {
+export class GuestTeam extends OmitType(CreateGuestTeamDto, ['guests']) {
   boardNo: number;
+}
+
+export interface Guest {
+  no?: number;
+  teamNo: number;
+  userNo: number;
 }
