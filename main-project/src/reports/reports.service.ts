@@ -5,8 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Boards } from 'src/boards/entity/board.entity';
-import { Board, CreateResponse } from 'src/boards/interface/boards.interface';
+import { Board } from 'src/boards/interface/boards.interface';
 import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { Connection, QueryRunner } from 'typeorm';
 import { CreateReportDto } from './dto/create-reports.dto';
@@ -15,6 +14,7 @@ import { Report } from './interface/reports.interface';
 import { ReportBoardRepository } from './repository/report-board.repository';
 import { ReportRepository } from './repository/reports.repository';
 import { ReportUserRepository } from './repository/report-user.repository';
+import { ResultSetHeader } from 'mysql2';
 
 @Injectable()
 export class ReportsService {
@@ -110,7 +110,7 @@ export class ReportsService {
         createReportDto,
       );
 
-      const { insertId }: CreateResponse = await queryRunner.manager
+      const { insertId }: ResultSetHeader = await queryRunner.manager
         .getCustomRepository(ReportBoardRepository)
         .createBoardReport(reportNo, boardNo);
 
@@ -148,7 +148,7 @@ export class ReportsService {
         createReportDto,
       );
 
-      const { insertId }: CreateResponse = await queryRunner.manager
+      const { insertId }: ResultSetHeader = await queryRunner.manager
         .getCustomRepository(ReportUserRepository)
         .createUserReport(reportNo, userNo);
 
@@ -174,7 +174,7 @@ export class ReportsService {
     queryRunner: QueryRunner,
     createReportDto: CreateReportDto,
   ): Promise<number> {
-    const { insertId }: CreateResponse = await queryRunner.manager
+    const { insertId }: ResultSetHeader = await queryRunner.manager
       .getCustomRepository(ReportRepository)
       .createReport(createReportDto);
 
