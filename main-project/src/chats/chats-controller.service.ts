@@ -50,7 +50,7 @@ export class ChatsControllerService {
     const chatRooms: ChatRoom[] =
       await this.chatUsersRepository.getChatRoomsByUserNo(userNo);
 
-    return chatList;
+    return chatRooms;
   }
 
   async getPreviousChatLog(
