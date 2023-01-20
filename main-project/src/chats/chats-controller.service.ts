@@ -47,7 +47,7 @@ export class ChatsControllerService {
   ) {}
 
   async getChatRoomsByUserNo(userNo: number): Promise<ChatRoom[]> {
-    const chatList: ChatRoom[] =
+    const chatRooms: ChatRoom[] =
       await this.chatUsersRepository.getChatRoomsByUserNo(userNo);
 
     return chatList;
