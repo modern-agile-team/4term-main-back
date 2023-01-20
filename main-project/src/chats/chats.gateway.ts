@@ -18,6 +18,9 @@ import { InitSocketDto } from './dto/init-socket.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
 import { ChatRoom } from './interface/chat.interface';
 import { WebSocketGetUser } from 'src/common/decorator/ws-get-user.decorator';
+import { WebSocketTransactionManager } from 'src/common/decorator/ws-transaction-manager.decorator';
+import { WebSocketTransactionInterceptor } from 'src/common/interceptor/ws-transaction-interceptor';
+import { EntityManager } from 'typeorm';
 
 @WebSocketGateway(4000, { namespace: 'chat' })
 export class ChatsGateway {
@@ -89,16 +92,17 @@ export class ChatsGateway {
     },
   })
   @UseGuards(WebSocketAuthGuard)
-  @UseInterceptors(TransactionInterceptor)
+  @UseInterceptors(WebSocketTransactionInterceptor)
   async handleCreateRoom(
-    @WebSocketGetUser() user,
-    @ConnectedSocket() socket,
+    @WebSocketTransactionManager() manager: EntityManager,
+    @ConnectedSocket() socket: Socket,
+    @WebSocketGetUser() userNo: number,
     @MessageBody() messagePayload: CreateChatDto,
   ): Promise<APIResponse> {
-    const manager = socket.manager;
     const chatRoom: ChatRoom = await this.chatGatewayService.createRoom(
       manager,
       socket,
+      userNo,
       messagePayload,
     );
 
@@ -126,13 +130,15 @@ export class ChatsGateway {
       payload: MessagePayloadDto,
     },
   })
+  @UseInterceptors(WebSocketTransactionInterceptor)
   async handleMessage(
+    @WebSocketTransactionManager() manager: EntityManager,
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: MessagePayloadDto,
   ): Promise<APIResponse> {
     messagePayload.hasOwnProperty('message')
       ? await this.chatGatewayService.sendChat(socket, messagePayload)
-      : await this.chatGatewayService.sendFile(socket, messagePayload);
+      : await this.chatGatewayService.sendFile(socket, messagePayload, manager);
     return { response: { messagePayload } };
   }
 }
