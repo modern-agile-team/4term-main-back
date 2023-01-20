@@ -47,10 +47,10 @@ export class ChatsControllerService {
   ) {}
 
   async getChatRoomsByUserNo(userNo: number): Promise<ChatRoom[]> {
-    const chatList: ChatRoom[] =
+    const chatRooms: ChatRoom[] =
       await this.chatUsersRepository.getChatRoomsByUserNo(userNo);
 
-    return chatList;
+    return chatRooms;
   }
 
   async getPreviousChatLog(
@@ -105,12 +105,11 @@ export class ChatsControllerService {
     }
   }
 
-  private async checkUserInChatRoom(
-    chatUserInfo: ChatUserValidation,
-  ): Promise<ChatUser> {
-    const { userNo, chatRoomNo, isUserNeeded }: ChatUserValidation =
-      chatUserInfo;
-
+  private async checkUserInChatRoom({
+    userNo,
+    chatRoomNo,
+    isUserNeeded,
+  }: ChatUserValidation): Promise<ChatUser> {
     const chatRoom: ChatList = await this.chatListRepository.getChatRoomByNo(
       chatRoomNo,
     );
