@@ -13,15 +13,15 @@ export class JsonBoard {
   recruitMale: number;
   recruitFemale: number;
   isImpromptu: boolean;
-  hostMembers?: string;
+  hostMemberNums?: string;
   hostMembersNickname?: string;
 }
 
 export class Board extends OmitType(JsonBoard, [
-  'hostMembers',
+  'hostMemberNums',
   'hostMembersNickname',
 ]) {
-  hostMembers?: number[];
+  hostMemberNums?: number[];
   hostMembersNickname?: number[];
 }
 

@@ -115,7 +115,7 @@ export class BoardsController {
     summary: '게스트 참가 신청 API',
     description: '',
   })
-  async createParticipation(
+  async createGuestTeam(
     @Param('boardNo') boardNo: number,
     @Body() participationDto: CreateGuestTeamDto,
     @TransactionDecorator() manager: EntityManager,

@@ -70,10 +70,10 @@ export class BoardsService {
   }
 
   async getBoardByNo(manager: EntityManager, boardNo: number): Promise<Board> {
-    const { no, hostMembers, hostMembersNickname, ...jsonBoard }: JsonBoard =
+    const { no, hostMemberNums, hostMembersNickname, ...jsonBoard }: JsonBoard =
       await manager.getCustomRepository(BoardsRepository).getBoardByNo(boardNo);
 
-    const parsingHostMembers: number[] = JSON.parse(hostMembers);
+    const parsingHostMembers: number[] = JSON.parse(hostMemberNums);
     const parsingHostMembersNickname: number[] =
       JSON.parse(hostMembersNickname);
 
@@ -83,7 +83,7 @@ export class BoardsService {
       );
     }
     const board: Board = {
-      hostMembers: parsingHostMembers,
+      hostMemberNums: parsingHostMembers,
       hostMembersNickname: parsingHostMembersNickname,
       ...jsonBoard,
     };
@@ -133,8 +133,7 @@ export class BoardsService {
     createGuestTeamDto: CreateGuestTeamDto,
   ): Promise<void> {
     const { guests, ...participation }: CreateGuestTeamDto = createGuestTeamDto;
-
-    const { recruitMale, recruitFemale, hostUserNo, hostMembers }: Board =
+    const { recruitMale, recruitFemale, hostUserNo, hostMemberNums }: Board =
       await this.getBoardByNo(manager, boardNo);
 
     if (recruitMale + recruitFemale != guests.length) {
@@ -143,14 +142,14 @@ export class BoardsService {
       );
     }
 
-    await this.validateGuests(manager, boardNo, hostMembers, guests);
+    await this.validateGuests(manager, boardNo, hostMemberNums, guests);
 
-    // const teamNo: number = await this.setGuestTeam(manager, {
-    //   ...participation,
-    //   boardNo,
-    // });
-    // await this.setGuests(manager, teamNo, guests);
-    // await this.saveNoticeParticipation(manager, boardNo, guests[0], hostUserNo);
+    const teamNo: number = await this.setGuestTeam(manager, {
+      ...participation,
+      boardNo,
+    });
+    await this.setGuests(manager, teamNo, guests);
+    await this.saveNoticeParticipation(manager, boardNo, guests[0], hostUserNo);
   }
 
   private async validateGuests(
@@ -160,6 +159,7 @@ export class BoardsService {
     newGuests: number[],
   ): Promise<void> {
     await this.validateUsers(manager, newGuests);
+
     const preGuests: number[] = await this.getPreGuests(manager, boardNo);
     const wrongUser: number[] = [];
 
@@ -205,14 +205,13 @@ export class BoardsService {
     teamNo: number,
     guests: number[],
   ): Promise<void> {
-    const guestArr: Guest[] = guests.map((el: number) => {
+    const multipleGuests: Guest[] = guests.map((el: number) => {
       return { teamNo, userNo: el };
     });
-    // TODO: type 정리
 
     await manager
       .getCustomRepository(BoardGuestsRepository)
-      .createGuests(guestArr);
+      .createGuests(multipleGuests);
   }
 
   async createBookmark(boardNo: number, userNo: number): Promise<void> {
@@ -292,18 +291,18 @@ export class BoardsService {
   // function
   private async validateUsers(
     manager: EntityManager,
-    userArr: number[],
+    users: number[],
   ): Promise<void> {
     const { no } = await manager
       .getCustomRepository(UsersRepository)
-      .getUsersByNums(userArr);
+      .getUsersByNums(users);
+    const dbUsers: number[] = JSON.parse(no);
 
-    const users = JSON.parse(no);
+    if (!no) {
+      throw new BadRequestException(`${users}번 유저가 없습니다.`);
+    }
 
-    const isUser = userArr.filter((userNo) => {
-      return !users.includes(userNo);
-    });
-
+    const isUser = users.filter((userNo) => !dbUsers.includes(userNo));
     if (isUser.length) {
       throw new BadRequestException(`${isUser}번 유저가 없습니다.`);
     }

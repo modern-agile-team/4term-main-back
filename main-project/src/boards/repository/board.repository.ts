@@ -54,7 +54,7 @@ export class BoardsRepository extends Repository<Boards> {
           'boards.isImpromptu AS isImpromptu',
           `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
           `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
-          'JSON_ARRAYAGG(hosts.userNo) AS hostMembers',
+          'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
           'JSON_ARRAYAGG(hostProfile.nickname) AS hostMembersNickname',
         ])
         .where('boards.no = :boardNo', { boardNo })
