@@ -1,7 +1,12 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { UserProfile } from 'src/users/entity/user-profile.entity';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { ChatUsers } from '../entity/chat-users.entity';
-import { ChatRoom, ChatUser } from '../interface/chat.interface';
+import {
+  ChatRoom,
+  ChatRoomWithUsers,
+  ChatUser,
+} from '../interface/chat.interface';
 
 @EntityRepository(ChatUsers)
 export class ChatUsersRepository extends Repository<ChatUsers> {
@@ -24,10 +29,30 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
   async getChatRoomsByUserNo(userNo: number): Promise<ChatRoom[]> {
     try {
       const chatRooms = await this.createQueryBuilder('chat_users')
-        .leftJoin('chat_users.chatRoomNo', 'chatRoomNo')
+        .leftJoin('chat_users.chatRoomNo', 'chatRoom')
+        .leftJoin('chat_users.userNo', 'user')
+        .select(['chatRoom.room_name AS roomName', 'chatRoom.no AS chatRoomNo'])
+        .where('chat_users.user_no = :userNo', { userNo })
+        .getRawMany();
+
+      return chatRooms;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error}: 채팅 목록 조회 (getChatRoomList): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getChatRoomByRoomNo(userNo: number[]): Promise<ChatRoom[]> {
+    try {
+      const chatRooms: ChatRoom[] = await this.createQueryBuilder('chat_users')
+        .leftJoin('chat_users.chatRoomNo', 'chatRoom')
+        .leftJoin('chat_users.userNo', 'user')
+        .leftJoin('user.userProfileNo', 'userProfile')
         .select([
-          'chatRoomNo.room_name AS roomName',
-          'chat_users.chat_room_no AS chatRoomNo',
+          'chatRoom.room_name AS roomName',
+          'chatRoom.no AS chatRoomNo',
+          'userProfile.nickname AS nickname',
         ])
         .where('chat_users.user_no = :userNo', { userNo })
         .getRawMany();
@@ -40,7 +65,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
-  async getChatUser(userNo, chatRoomNo): Promise<ChatUser> {
+  async getChatRoomUser(userNo, chatRoomNo): Promise<ChatUser> {
     try {
       const user: ChatUser = await this.createQueryBuilder('chat_users')
         .select([
@@ -78,9 +103,11 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
-  async getChatRoomUsers(chatRoomNo: number) {
+  async getChatRoomUsers(chatRoomNo: number): Promise<ChatRoomWithUsers> {
     try {
-      const users = await this.createQueryBuilder('chat_users')
+      const users: ChatRoomWithUsers = await this.createQueryBuilder(
+        'chat_users',
+      )
         .select('JSON_ARRAYAGG(chat_users.userNo) AS users')
         .where('chat_users.chatRoomNo = :chatRoomNo', { chatRoomNo })
         .getRawOne();

@@ -71,13 +71,14 @@ export class ChatsGateway {
       payload: InitSocketDto,
     },
   })
+  @UseGuards(WebSocketAuthGuard)
   async handleInitSocket(
+    @WebSocketGetUser() userNo: number,
     @ConnectedSocket() socket: Socket,
-    @MessageBody() messagePayload: InitSocketDto,
   ): Promise<APIResponse> {
     const chatRooms: ChatRoom[] = await this.chatGatewayService.initSocket(
       socket,
-      messagePayload,
+      userNo,
     );
 
     return { response: { chatRooms } };
@@ -99,9 +100,9 @@ export class ChatsGateway {
   @UseGuards(WebSocketAuthGuard)
   @UseInterceptors(WebSocketTransactionInterceptor)
   async handleCreateRoom(
+    @WebSocketGetUser() userNo: number,
     @WebSocketTransactionManager() manager: EntityManager,
     @ConnectedSocket() socket: Socket,
-    @WebSocketGetUser() userNo: number,
     @MessageBody() messagePayload: CreateChatDto,
   ): Promise<APIResponse> {
     const chatRoom: ChatRoom = await this.chatGatewayService.createRoom(
@@ -135,15 +136,22 @@ export class ChatsGateway {
       payload: MessagePayloadDto,
     },
   })
+  @UseGuards(WebSocketAuthGuard)
   @UseInterceptors(WebSocketTransactionInterceptor)
-  async handleMessage(
+  async handleSendMessage(
+    @WebSocketGetUser() userNo: number,
     @WebSocketTransactionManager() manager: EntityManager,
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: MessagePayloadDto,
   ): Promise<APIResponse> {
     messagePayload.hasOwnProperty('message')
-      ? await this.chatGatewayService.sendChat(socket, messagePayload)
-      : await this.chatGatewayService.sendFile(socket, messagePayload, manager);
+      ? await this.chatGatewayService.sendChat(socket, messagePayload, userNo)
+      : await this.chatGatewayService.sendFile(
+          userNo,
+          socket,
+          messagePayload,
+          manager,
+        );
     return { response: { messagePayload } };
   }
 }

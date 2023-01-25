@@ -127,7 +127,7 @@ export class MeetingsService {
     userNo: number,
     chatRoomNo: number,
   ): Promise<void> {
-    const chatUser: ChatUser = await this.chatUserRepository.getChatUser(
+    const chatUser: ChatUser = await this.chatUserRepository.getChatRoomUser(
       userNo,
       chatRoomNo,
     );
