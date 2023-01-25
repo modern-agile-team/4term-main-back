@@ -15,7 +15,7 @@ export class NoticeBoards extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @ManyToOne((type) => Boards, (boards) => boards.noticeBoardHosts, {
+  @ManyToOne((type) => Boards, (boards) => boards.noticeBoard, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'board_no' })
