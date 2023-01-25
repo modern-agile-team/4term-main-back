@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Socket } from 'socket.io';
-import { JsonBoard } from 'src/boards/interface/boards.interface';
+import { Board, JsonBoard } from 'src/boards/interface/boards.interface';
 import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
@@ -119,7 +119,7 @@ export class ChatsGatewayService {
   }
 
   private async checkChatRoomExists(boardNo): Promise<void> {
-    const board: JsonBoard = await this.boardRepository.getBoardByNo(boardNo);
+    const board: Board = await this.boardRepository.getBoardByNo(boardNo);
     if (!board.no) {
       throw new NotFoundException(`게시물을 찾지 못했습니다.`);
     }

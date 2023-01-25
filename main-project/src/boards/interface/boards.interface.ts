@@ -23,6 +23,7 @@ export class Board extends OmitType(JsonBoard, [
 ]) {
   hostMemberNums?: number[];
   hostMemberNicknames?: number[];
+  createdDate?: Date;
 }
 
 export class GuestTeam extends OmitType(CreateGuestTeamDto, ['guests']) {

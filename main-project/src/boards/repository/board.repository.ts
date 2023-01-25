@@ -11,19 +11,21 @@ import { BoardFilterDto } from '../dto/board-filter.dto';
 import { CreateBoardDto } from '../dto/create-board.dto';
 import { UpdateBoardDto } from '../dto/update-board.dto';
 import { Boards } from '../entity/board.entity';
-import { JsonBoard } from '../interface/boards.interface';
+import { Board, JsonBoard } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
 export class BoardsRepository extends Repository<Boards> {
   // 게시글 조회 관련
-  async checkDeadline(): Promise<JsonArray> {
+  async checkDeadline(): Promise<number[]> {
     try {
-      const boards = await this.createQueryBuilder()
+      const { no }: JsonArray = await this.createQueryBuilder()
         .select(['JSON_ARRAYAGG(no) AS no'])
         .where('isDone = :isDone', { isDone: false })
         .andWhere('isImpromptu = :isImpromptu', { isImpromptu: true })
         .andWhere('TIMESTAMPDIFF(hour, createdDate, NOW()) >= 24')
         .getRawOne();
+
+      const boards: number[] = JSON.parse(no);
 
       return boards;
     } catch (error) {
@@ -33,33 +35,40 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async getBoardByNo(boardNo: number): Promise<JsonBoard> {
+  async getBoardByNo(boardNo: number): Promise<Board> {
     try {
-      const board: JsonBoard = await this.createQueryBuilder('boards')
-        .leftJoin('boards.userNo', 'users')
-        .leftJoin('users.userProfileNo', 'profile')
-        .leftJoin('boards.hosts', 'hosts')
-        .leftJoin('hosts.userNo', 'hostUsers')
-        .leftJoin('hostUsers.userProfileNo', 'hostProfile')
-        .select([
-          'boards.no AS no',
-          'boards.userNo AS hostUserNo',
-          'profile.nickname AS hostNickname',
-          'boards.title AS title',
-          'boards.description AS description',
-          'boards.location AS location',
-          'boards.isDone AS isDone',
-          'boards.recruitMale AS recruitMale',
-          'boards.recruitFemale AS recruitFemale',
-          'boards.isImpromptu AS isImpromptu',
-          `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
-          `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
-          'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
-          'JSON_ARRAYAGG(hostProfile.nickname) AS hostMemberNicknames',
-        ])
-        .where('boards.no = :boardNo', { boardNo })
-        .andWhere('hosts.boardNo = :boardNo', { boardNo })
-        .getRawOne();
+      const { hostMemberNums, hostMemberNicknames, ...jsonBoard }: JsonBoard =
+        await this.createQueryBuilder('boards')
+          .leftJoin('boards.userNo', 'users')
+          .leftJoin('users.userProfileNo', 'profile')
+          .leftJoin('boards.hosts', 'hosts')
+          .leftJoin('hosts.userNo', 'hostUsers')
+          .leftJoin('hostUsers.userProfileNo', 'hostProfile')
+          .select([
+            'boards.no AS no',
+            'boards.userNo AS hostUserNo',
+            'profile.nickname AS hostNickname',
+            'boards.title AS title',
+            'boards.description AS description',
+            'boards.location AS location',
+            'boards.isDone AS isDone',
+            'boards.recruitMale AS recruitMale',
+            'boards.recruitFemale AS recruitFemale',
+            'boards.isImpromptu AS isImpromptu',
+            `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
+            `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
+            'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
+            'JSON_ARRAYAGG(hostProfile.nickname) AS hostMemberNicknames',
+          ])
+          .where('boards.no = :boardNo', { boardNo })
+          .andWhere('hosts.boardNo = :boardNo', { boardNo })
+          .getRawOne();
+
+      const board: Board = {
+        hostMemberNums: JSON.parse(hostMemberNums),
+        hostMemberNicknames: JSON.parse(hostMemberNicknames),
+        ...jsonBoard,
+      };
 
       return board;
     } catch (error) {
@@ -69,9 +78,9 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async getBoards(filters?: BoardFilterDto): Promise<JsonBoard[]> {
+  async getBoards(filters?: BoardFilterDto): Promise<Board[]> {
     try {
-      const boards: SelectQueryBuilder<Boards> = await this.createQueryBuilder(
+      const boards: SelectQueryBuilder<Boards> = this.createQueryBuilder(
         'boards',
       )
         .leftJoin('boards.userNo', 'users')
@@ -131,7 +140,7 @@ export class BoardsRepository extends Repository<Boards> {
         }
       }
 
-      return boards.getRawMany();
+      return await boards.getRawMany();
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getBoards-repository: 알 수 없는 서버 에러입니다.`,
@@ -177,12 +186,12 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async closeBoard(no: number[]): Promise<void> {
+  async closeBoard(boards: number[]): Promise<void> {
     try {
       await this.createQueryBuilder()
         .update(Boards)
         .set({ isDone: true })
-        .where('no IN (:no)', { no })
+        .where('no IN (:boards)', { boards })
         .execute();
     } catch (error) {
       throw new InternalServerErrorException(

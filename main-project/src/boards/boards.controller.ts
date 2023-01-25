@@ -52,7 +52,7 @@ export class BoardsController {
     @Query() BoardFilterDto: BoardFilterDto,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const boards: JsonBoard[] = await this.boardService.getBoards(
+    const boards: Board[] = await this.boardService.getBoards(
       manager,
       BoardFilterDto,
     );

@@ -122,12 +122,14 @@ export class UsersRepository extends Repository<Users> {
     }
   }
 
-  async getUsersByNums(userNo: number[]): Promise<JsonArray> {
+  async getUsersByNums(userNo: number[]): Promise<number[]> {
     try {
-      const users = await this.createQueryBuilder('users')
+      const { no }: JsonArray = await this.createQueryBuilder('users')
         .select(['JSON_ARRAYAGG(users.no) AS no'])
         .where('no IN (:userNo)', { userNo })
         .getRawOne();
+
+      const users: number[] = JSON.parse(no);
 
       return users;
     } catch (error) {

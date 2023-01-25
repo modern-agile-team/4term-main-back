@@ -9,12 +9,7 @@ import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.rep
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
-import {
-  JsonBoard,
-  Guest,
-  GuestTeam,
-  Board,
-} from './interface/boards.interface';
+import { Guest, GuestTeam, Board } from './interface/boards.interface';
 import { BoardBookmarksRepository } from './repository/board-bookmark.repository';
 import { BoardGuestsRepository as BoardGuestsRepository } from './repository/board-guest.repository';
 import { BoardHostsRepository } from './repository/board-host.repository';
@@ -25,8 +20,6 @@ import { EntityManager } from 'typeorm';
 import { ResultSetHeader } from 'mysql2';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
-import { JsonArray } from 'src/common/interface/interface';
-import { use } from 'passport';
 
 @Injectable()
 export class BoardsService {
@@ -43,21 +36,19 @@ export class BoardsService {
   ) {}
   //cron
   async closeBoard(manager: EntityManager): Promise<void> {
-    const boards: JsonArray = await manager
+    const boards: number[] = await manager
       .getCustomRepository(BoardsRepository)
       .checkDeadline();
 
-    const no: number[] = JSON.parse(boards.no);
-
-    await manager.getCustomRepository(BoardsRepository).closeBoard(no);
+    await manager.getCustomRepository(BoardsRepository).closeBoard(boards);
   }
 
   // 조회 관련
   async getBoards(
     manager: EntityManager,
     filter: BoardFilterDto,
-  ): Promise<JsonBoard[]> {
-    const boards: JsonBoard[] = await manager
+  ): Promise<Board[]> {
+    const boards: Board[] = await manager
       .getCustomRepository(BoardsRepository)
       .getBoards(filter);
 
@@ -71,29 +62,15 @@ export class BoardsService {
   }
 
   async getBoardByNo(manager: EntityManager, boardNo: number): Promise<Board> {
-    const {
-      no,
-      hostMemberNums,
-      hostMemberNicknames: hostMembersNickname,
-      ...jsonBoard
-    }: JsonBoard = await manager
+    const board: Board = await manager
       .getCustomRepository(BoardsRepository)
       .getBoardByNo(boardNo);
 
-    if (!no) {
+    if (!board.no) {
       throw new NotFoundException(
         `게시글 상세 조회(getBoardByNo-service): ${boardNo}번 게시글이 없습니다.`,
       );
     }
-
-    const parsingHostNums: number[] = JSON.parse(hostMemberNums);
-    const parsingHostNicknames: number[] = JSON.parse(hostMembersNickname);
-
-    const board: Board = {
-      hostMemberNums: parsingHostNums,
-      hostMemberNicknames: parsingHostNicknames,
-      ...jsonBoard,
-    };
     return board;
   }
 
@@ -167,7 +144,9 @@ export class BoardsService {
   ): Promise<void> {
     await this.validateUsers(manager, newGuests);
 
-    const preGuests: number[] = await this.getPreGuests(manager, boardNo);
+    const preGuests: number[] = await manager
+      .getCustomRepository(BoardGuestsRepository)
+      .getAllGuestsByBoardNo(boardNo);
     const wrongUser: number[] = [];
 
     for (let no in newGuests) {
@@ -181,19 +160,6 @@ export class BoardsService {
         `참가자 확인(validateGuests-service): ${wrongUser}번 참가자의 잘못된 신청.`,
       );
     }
-  }
-
-  private async getPreGuests(
-    manager: EntityManager,
-    boardNo: number,
-  ): Promise<number[]> {
-    const { userNo }: JsonArray = await manager
-      .getCustomRepository(BoardGuestsRepository)
-      .getAllGuestsByBoardNo(boardNo);
-
-    const preGuests = !userNo ? [] : JSON.parse(userNo);
-
-    return preGuests;
   }
 
   private async setGuestTeam(
@@ -233,7 +199,7 @@ export class BoardsService {
     updateBoardDto: UpdateBoardDto,
   ): Promise<void> {
     await this.validateBoard(manager, boardNo, userNo);
-    const guests: JsonArray = await manager
+    const guests: number[] = await manager
       .getCustomRepository(BoardGuestsRepository)
       .getAllGuestsByBoardNo(boardNo);
     console.log(guests);
@@ -317,15 +283,14 @@ export class BoardsService {
     manager: EntityManager,
     users: number[],
   ): Promise<void> {
-    const { no } = await manager
+    const dbUsers: number[] = await manager
       .getCustomRepository(UsersRepository)
       .getUsersByNums(users);
 
-    if (!no) {
+    if (!dbUsers.length) {
       throw new BadRequestException(`${users}번 유저가 없습니다.`);
     }
 
-    const dbUsers: number[] = JSON.parse(no);
     const isUser = users.filter((userNo) => !dbUsers.includes(userNo));
     if (isUser.length) {
       throw new BadRequestException(`${isUser}번 유저가 없습니다.`);

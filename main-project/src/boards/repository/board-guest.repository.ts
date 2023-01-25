@@ -8,13 +8,15 @@ import { Guest } from '../interface/boards.interface';
 @EntityRepository(BoardGuests)
 export class BoardGuestsRepository extends Repository<BoardGuests> {
   // 조회
-  async getAllGuestsByBoardNo(boardNo: number): Promise<JsonArray> {
+  async getAllGuestsByBoardNo(boardNo: number): Promise<number[]> {
     try {
-      const guests: JsonArray = await this.createQueryBuilder('boardGuest')
+      const { userNo }: JsonArray = await this.createQueryBuilder('boardGuest')
         .leftJoin('boardGuest.teamNo', 'team')
         .select('JSON_ARRAYAGG(boardGuest.userNo) AS userNo')
         .where('team.boardNo = :boardNo', { boardNo })
         .getRawOne();
+
+      const guests: number[] = JSON.parse(userNo);
 
       return guests;
     } catch (error) {
