@@ -119,7 +119,7 @@ export class ChatsGatewayService {
   }
 
   private async checkChatRoomExists(boardNo): Promise<void> {
-    const board: Board = await this.boardRepository.getBoardByNo(boardNo);
+    const board: Board = await this.boardRepository.getBoard(boardNo);
     if (!board.no) {
       throw new NotFoundException(`게시물을 찾지 못했습니다.`);
     }

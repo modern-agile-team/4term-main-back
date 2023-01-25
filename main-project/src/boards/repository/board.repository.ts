@@ -35,7 +35,7 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async getBoardByNo(boardNo: number): Promise<Board> {
+  async getBoard(boardNo: number): Promise<Board> {
     try {
       const { hostMemberNums, hostMemberNicknames, ...jsonBoard }: JsonBoard =
         await this.createQueryBuilder('boards')
@@ -73,7 +73,7 @@ export class BoardsRepository extends Repository<Boards> {
       return board;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getBoardByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getBoard-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

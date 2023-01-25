@@ -98,7 +98,7 @@ export class ReportsService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const board: Board = await this.boardRepository.getBoardByNo(boardNo);
+      const board: Board = await this.boardRepository.getBoard(boardNo);
       if (!board.no) {
         throw new BadRequestException(`
         게시글 신고 생성(createBoardReport): ${boardNo}번 게시글을 찾을 수 없습니다.

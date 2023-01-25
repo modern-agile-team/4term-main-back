@@ -61,14 +61,14 @@ export class BoardsService {
     return boards;
   }
 
-  async getBoardByNo(manager: EntityManager, boardNo: number): Promise<Board> {
+  async getBoard(manager: EntityManager, boardNo: number): Promise<Board> {
     const board: Board = await manager
       .getCustomRepository(BoardsRepository)
-      .getBoardByNo(boardNo);
+      .getBoard(boardNo);
 
     if (!board.no) {
       throw new NotFoundException(
-        `게시글 상세 조회(getBoardByNo-service): ${boardNo}번 게시글이 없습니다.`,
+        `게시글 상세 조회(getBoard-service): ${boardNo}번 게시글이 없습니다.`,
       );
     }
     return board;
@@ -118,7 +118,7 @@ export class BoardsService {
   ): Promise<void> {
     const { guests, ...participation }: CreateGuestTeamDto = createGuestTeamDto;
     const { recruitMale, recruitFemale, hostUserNo, hostMemberNums }: Board =
-      await this.getBoardByNo(manager, boardNo);
+      await this.getBoard(manager, boardNo);
 
     if (recruitMale + recruitFemale != guests.length) {
       throw new BadRequestException(
@@ -198,27 +198,19 @@ export class BoardsService {
     userNo: number,
     updateBoardDto: UpdateBoardDto,
   ): Promise<void> {
-    await this.validateBoard(manager, boardNo, userNo);
-    const guests: number[] = await manager
-      .getCustomRepository(BoardGuestsRepository)
-      .getAllGuestsByBoardNo(boardNo);
-    console.log(guests);
-
-    // await this.updateBoard(manager, boardNo, updateBoardDto);
+    await this.validateBoardInfo(manager, boardNo, userNo, updateBoardDto);
+    await this.updateBoard(manager, boardNo, updateBoardDto);
   }
 
-  private async validateBoard(
+  private async validateBoardInfo(
     manager: EntityManager,
     boardNo: number,
     userNo: number,
+    updateBoardDto: UpdateBoardDto,
   ): Promise<void> {
-    const { hostUserNo }: Board = await this.getBoardByNo(manager, boardNo);
-
-    if (userNo != hostUserNo) {
-      throw new BadRequestException(
-        `게시글 수정(editBoard-service): 게시글 작성자와 수정자가 맞지 않습니다.`,
-      );
-    }
+    const board: Board = await this.getBoard(manager, boardNo);
+    await this.validateHost(board.hostUserNo, userNo);
+    await this.validateRecruits(manager, board, updateBoardDto);
   }
 
   private async updateBoard(
@@ -231,21 +223,12 @@ export class BoardsService {
       .updateBoard(boardNo, updateBoardDto);
   }
 
-  private async deleteHosts(
-    manager: EntityManager,
-    boardNo: number,
-  ): Promise<void> {
-    await manager
-      .getCustomRepository(BoardHostsRepository)
-      .deleteHosts(boardNo);
-  }
-
   // 삭제 관련
   async deleteBoardByNo(
     manager: EntityManager,
     boardNo: number,
   ): Promise<void> {
-    await this.getBoardByNo(manager, boardNo);
+    await this.getBoard(manager, boardNo);
 
     await this.boardRepository.deleteBoard(boardNo);
   }
@@ -255,7 +238,7 @@ export class BoardsService {
     boardNo: number,
     userNo: number,
   ): Promise<void> {
-    await this.getBoardByNo(manager, boardNo);
+    await this.getBoard(manager, boardNo);
     // TODO: user확인 메서드
     await this.boardBookmarkRepository.cancelBookmark(boardNo, userNo);
   }
@@ -286,7 +269,6 @@ export class BoardsService {
     const dbUsers: number[] = await manager
       .getCustomRepository(UsersRepository)
       .getUsersByNums(users);
-
     if (!dbUsers.length) {
       throw new BadRequestException(`${users}번 유저가 없습니다.`);
     }
@@ -294,6 +276,37 @@ export class BoardsService {
     const isUser = users.filter((userNo) => !dbUsers.includes(userNo));
     if (isUser.length) {
       throw new BadRequestException(`${isUser}번 유저가 없습니다.`);
+    }
+  }
+
+  private async validateHost(
+    hostUserNo: number,
+    userNo: number,
+  ): Promise<void> {
+    if (userNo != hostUserNo) {
+      throw new BadRequestException(
+        `작성자 검증 (validateHost-service): 작성자와 사용자가 일치하지 않습니다.`,
+      );
+    }
+  }
+
+  private async validateRecruits(
+    manager: EntityManager,
+    board: Board,
+    updateBoardDto: UpdateBoardDto,
+  ): Promise<void> {
+    const guests: number[] = await manager
+      .getCustomRepository(BoardGuestsRepository)
+      .getAllGuestsByBoardNo(board.no);
+
+    if (
+      guests.length &&
+      (updateBoardDto.recruitFemale != board.recruitFemale ||
+        updateBoardDto.recruitMale != board.recruitMale)
+    ) {
+      throw new BadRequestException(
+        '모집인원 검증(validateRecruits-service): 참가 신청이 존재 시 모집인원을 변경할 수 없습니다.',
+      );
     }
   }
 }

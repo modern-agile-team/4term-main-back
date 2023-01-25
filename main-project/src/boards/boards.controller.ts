@@ -29,7 +29,7 @@ import { UpdateBoardDto } from './dto/update-board.dto';
 @Controller('boards')
 @ApiTags('게시글 API')
 export class BoardsController {
-  constructor(private boardService: BoardsService) {}
+  constructor(private readonly boardService: BoardsService) {}
   //Cron
   @Cron(CronExpression.EVERY_HOUR)
   @UseInterceptors(TransactionInterceptor)
@@ -71,7 +71,7 @@ export class BoardsController {
     @Param('boardNo') boardNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const board: Board = await this.boardService.getBoardByNo(manager, boardNo);
+    const board: Board = await this.boardService.getBoard(manager, boardNo);
 
     return { response: { board } };
   }
