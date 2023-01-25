@@ -146,17 +146,18 @@ export class BoardsController {
 
   // Delete Methods
   @Delete('/:boardNo')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '게시글 삭제 API',
-    description: '게시글 번호를 사용해 게시글, 게시글 멤버 정보을 삭제한다.',
+    description: '게시글 번호를 사용해 게시글관련 정보들을 삭제한다.',
   })
   async deleteBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    // TODO: userNo -> jwt
-    await this.boardService.deleteBoardByNo(manager, boardNo);
+    await this.boardService.deleteBoard(manager, boardNo, userNo);
 
     return { msg: '게시글 삭제 성공' };
   }

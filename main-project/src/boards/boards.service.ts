@@ -224,13 +224,21 @@ export class BoardsService {
   }
 
   // 삭제 관련
-  async deleteBoardByNo(
+  async deleteBoard(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+  ): Promise<void> {
+    const { hostUserNo }: Board = await this.getBoard(manager, boardNo);
+    await this.validateHost(hostUserNo, userNo);
+    await this.removeBoard(manager, boardNo);
+  }
+
+  private async removeBoard(
     manager: EntityManager,
     boardNo: number,
   ): Promise<void> {
-    await this.getBoard(manager, boardNo);
-
-    await this.boardRepository.deleteBoard(boardNo);
+    await manager.getCustomRepository(BoardsRepository).deleteBoard(boardNo);
   }
 
   async cancelBookmark(
