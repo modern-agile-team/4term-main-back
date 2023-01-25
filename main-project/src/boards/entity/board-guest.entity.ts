@@ -13,7 +13,7 @@ export class BoardGuests extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @ManyToOne((type) => Users, (users) => users.guestMembers, {
+  @ManyToOne((type) => Users, (users) => users.boardGuest, {
     onDelete: 'CASCADE',
     nullable: false,
   })

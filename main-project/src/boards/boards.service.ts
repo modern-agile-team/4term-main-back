@@ -22,6 +22,8 @@ import { UpdateBoardDto } from './dto/update-board.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { FriendsRepository } from 'src/friends/repository/friends.repository';
 import { Friend } from 'src/friends/interface/friend.interface';
+import { NoticeBoardHosts } from 'src/notices/entity/notice-board-host.entity';
+import { NoticeBoardHostsRepository } from 'src/notices/repository/notices-board-host.repository';
 
 @Injectable()
 export class BoardsService {
