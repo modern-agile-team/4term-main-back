@@ -4,7 +4,6 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
@@ -30,19 +29,9 @@ import { ChatUsersRepository } from './repository/chat-users.repository';
 @Injectable()
 export class ChatsControllerService {
   constructor(
-    @InjectRepository(ChatUsersRepository)
     private readonly chatUsersRepository: ChatUsersRepository,
-
-    @InjectRepository(ChatLogRepository)
     private readonly chatLogRepository: ChatLogRepository,
-
-    @InjectRepository(ChatListRepository)
     private readonly chatListRepository: ChatListRepository,
-
-    @InjectRepository(NoticesRepository)
-    private readonly noticesRepository: NoticesRepository,
-
-    @InjectRepository(NoticeChatsRepository)
     private readonly noticeChatsRepository: NoticeChatsRepository,
   ) {}
 
@@ -117,7 +106,7 @@ export class ChatsControllerService {
       throw new NotFoundException('존재하지 않는 채팅방입니다.');
     }
 
-    const user: ChatUser = await this.chatUsersRepository.getChatUser(
+    const user: ChatUser = await this.chatUsersRepository.getChatRoomUser(
       userNo,
       chatRoomNo,
     );

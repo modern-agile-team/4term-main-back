@@ -11,7 +11,6 @@ import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { EntityManager, InsertResult } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
-import { InitSocketDto } from './dto/init-socket.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
 import { ChatList } from './entity/chat-list.entity';
 import {
@@ -36,9 +35,8 @@ export class ChatsGatewayService {
     private readonly boardRepository: BoardRepository,
   ) {}
 
-  async initSocket(socket, messagePayload: InitSocketDto): Promise<ChatRoom[]> {
-    const { userNo } = messagePayload;
-    const chatRooms: ChatRoom[] = await this.getChatRoomsByUserNo(userNo);
+  async initSocket(socket, userNo: number): Promise<ChatRoom[]> {
+    const chatRooms: ChatRoom[] = await this.getChatRooms(userNo);
     if (chatRooms) {
       chatRooms.forEach((chatRoom) => {
         socket.join(`${chatRoom.chatRoomNo}`);
@@ -116,22 +114,34 @@ export class ChatsGatewayService {
       throw new BadRequestException('이미 생성된 채팅방 입니다.');
     }
   }
-
-  async getChatRoomsByUserNo(userNo: number): Promise<ChatRoom[]> {
+  async getChatRooms(userNo: number): Promise<ChatRoom[]> {
     const chatRooms: ChatRoom[] =
       await this.chatUsersRepository.getChatRoomsByUserNo(userNo);
     if (!chatRooms.length) {
       throw new BadRequestException('채팅방이 존재하지 않습니다.');
     }
 
-    return chatRooms;
+    const chatRoomWithUsers: ChatRoom[] = await chatRooms.reduce(
+      async (values, chatRoom): Promise<ChatRoom[]> => {
+        const { users }: ChatRoomWithUsers =
+          await this.chatUsersRepository.getChatRoomUsers(chatRoom.chatRoomNo);
+        const chatRoomUsers: number[] = JSON.parse(users);
+        (await values).push({ ...chatRoom, chatRoomUsers });
+
+        return values;
+      },
+      Promise.resolve([]),
+    );
+
+    return chatRoomWithUsers;
   }
 
   async sendChat(
     socket: Socket,
     messagePayload: MessagePayloadDto,
+    userNo: number,
   ): Promise<void> {
-    const { userNo, chatRoomNo, message }: MessagePayloadDto = messagePayload;
+    const { chatRoomNo, message }: MessagePayloadDto = messagePayload;
 
     await this.checkChatRoom(chatRoomNo, userNo);
 
@@ -145,12 +155,12 @@ export class ChatsGatewayService {
   }
 
   async sendFile(
+    userNo: number,
     socket: Socket,
     messagePayload: MessagePayloadDto,
     manager: EntityManager,
   ): Promise<void> {
-    const { userNo, chatRoomNo, uploadedFileUrls }: MessagePayloadDto =
-      messagePayload;
+    const { chatRoomNo, uploadedFileUrls }: MessagePayloadDto = messagePayload;
 
     await this.checkChatRoom(chatRoomNo, userNo);
 
