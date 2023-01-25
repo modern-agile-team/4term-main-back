@@ -20,6 +20,8 @@ import { EntityManager } from 'typeorm';
 import { ResultSetHeader } from 'mysql2';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
+import { FriendsRepository } from 'src/friends/repository/friends.repository';
+import { Friend } from 'src/friends/interface/friend.interface';
 
 @Injectable()
 export class BoardsService {
@@ -33,6 +35,7 @@ export class BoardsService {
     private readonly noticeBoardsRepository: NoticeBoardsRepository,
 
     private readonly usersRepository: UsersRepository,
+    private readonly friendsRepository: FriendsRepository,
   ) {}
   //cron
   async closeBoard(manager: EntityManager): Promise<void> {
@@ -82,9 +85,7 @@ export class BoardsService {
   ): Promise<void> {
     await this.validateUsers(manager, hostMembers);
     const boardNo: number = await this.setBoard(manager, userNo, board);
-
-    hostMembers.push(userNo);
-    await this.setHosts(manager, boardNo, hostMembers);
+    await this.setHosts(manager, boardNo, userNo, hostMembers);
   }
 
   private async setBoard(
@@ -102,8 +103,11 @@ export class BoardsService {
   private async setHosts(
     manager: EntityManager,
     boardNo: number,
+    userNo: number,
     hostArr: number[],
   ): Promise<void> {
+    await this.validateFriends(manager, userNo, hostArr);
+
     const hosts = hostArr.map((userNo) => {
       return { boardNo, userNo };
     });
@@ -284,6 +288,30 @@ export class BoardsService {
     const isUser = users.filter((userNo) => !dbUsers.includes(userNo));
     if (isUser.length) {
       throw new BadRequestException(`${isUser}번 유저가 없습니다.`);
+    }
+  }
+
+  private async validateFriends(
+    manager: EntityManager,
+    userNo: number,
+    friends: number[],
+  ): Promise<void> {
+    if (friends.includes(userNo)) {
+      throw new BadRequestException(`친구 목록에 작성자가 담겨있습니다.`);
+    }
+    const dbfriends: Friend[] = await manager
+      .getCustomRepository(FriendsRepository)
+      .getAllFriendList(userNo);
+
+    if (!dbfriends.length) {
+      throw new BadRequestException(`${userNo}번 유저는 친구가 없습니다...`);
+    }
+
+    const isFreidns = friends.filter(
+      (userNo) => !dbfriends.includes({ userNo }),
+    );
+    if (isFreidns.length) {
+      throw new BadRequestException(`${isFreidns}번 사용자랑 친구가 아닙니다.`);
     }
   }
 

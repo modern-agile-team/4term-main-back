@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { FriendsRepository } from 'src/friends/repository/friends.repository';
 import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { UsersRepository } from 'src/users/repository/users.repository';
@@ -20,6 +21,7 @@ import { BoardsRepository } from './repository/board.repository';
       UsersRepository,
       NoticesRepository,
       NoticeBoardsRepository,
+      FriendsRepository,
     ]),
   ],
   providers: [BoardsService],
