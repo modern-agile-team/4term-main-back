@@ -22,7 +22,12 @@ import { WebSocketTransactionManager } from 'src/common/decorator/ws-transaction
 import { WebSocketTransactionInterceptor } from 'src/common/interceptor/ws-transaction-interceptor';
 import { EntityManager } from 'typeorm';
 
-@WebSocketGateway(4000, { namespace: 'chat' })
+@WebSocketGateway(4000, {
+  namespace: 'chat',
+  cors: {
+    origin: ['http://localhost:3001'],
+  },
+})
 export class ChatsGateway {
   constructor(private readonly chatGatewayService: ChatsGatewayService) {}
 
