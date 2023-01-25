@@ -14,15 +14,15 @@ export class JsonBoard {
   recruitFemale: number;
   isImpromptu: boolean;
   hostMemberNums?: string;
-  hostMembersNickname?: string;
+  hostMemberNicknames?: string;
 }
 
 export class Board extends OmitType(JsonBoard, [
   'hostMemberNums',
-  'hostMembersNickname',
+  'hostMemberNicknames',
 ]) {
   hostMemberNums?: number[];
-  hostMembersNickname?: number[];
+  hostMemberNicknames?: number[];
 }
 
 export class GuestTeam extends OmitType(CreateGuestTeamDto, ['guests']) {

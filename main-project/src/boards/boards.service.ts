@@ -26,6 +26,7 @@ import { ResultSetHeader } from 'mysql2';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { JsonArray } from 'src/common/interface/interface';
+import { use } from 'passport';
 
 @Injectable()
 export class BoardsService {
@@ -70,21 +71,27 @@ export class BoardsService {
   }
 
   async getBoardByNo(manager: EntityManager, boardNo: number): Promise<Board> {
-    const { no, hostMemberNums, hostMembersNickname, ...jsonBoard }: JsonBoard =
-      await manager.getCustomRepository(BoardsRepository).getBoardByNo(boardNo);
-
-    const parsingHostMembers: number[] = JSON.parse(hostMemberNums);
-    const parsingHostMembersNickname: number[] =
-      JSON.parse(hostMembersNickname);
+    const {
+      no,
+      hostMemberNums,
+      hostMemberNicknames: hostMembersNickname,
+      ...jsonBoard
+    }: JsonBoard = await manager
+      .getCustomRepository(BoardsRepository)
+      .getBoardByNo(boardNo);
 
     if (!no) {
       throw new NotFoundException(
         `게시글 상세 조회(getBoardByNo-service): ${boardNo}번 게시글이 없습니다.`,
       );
     }
+
+    const parsingHostNums: number[] = JSON.parse(hostMemberNums);
+    const parsingHostNicknames: number[] = JSON.parse(hostMembersNickname);
+
     const board: Board = {
-      hostMemberNums: parsingHostMembers,
-      hostMembersNickname: parsingHostMembersNickname,
+      hostMemberNums: parsingHostNums,
+      hostMemberNicknames: parsingHostNicknames,
       ...jsonBoard,
     };
     return board;
@@ -149,7 +156,7 @@ export class BoardsService {
       boardNo,
     });
     await this.setGuests(manager, teamNo, guests);
-    await this.saveNoticeParticipation(manager, boardNo, guests[0], hostUserNo);
+    await this.saveNoticeGuestTeam(manager, boardNo, guests[0], hostUserNo);
   }
 
   private async validateGuests(
@@ -225,10 +232,27 @@ export class BoardsService {
     userNo: number,
     updateBoardDto: UpdateBoardDto,
   ): Promise<void> {
-    await this.getBoardByNo(manager, boardNo);
-    // 사용자 확인 로직
+    await this.validateBoard(manager, boardNo, userNo);
+    const guests: JsonArray = await manager
+      .getCustomRepository(BoardGuestsRepository)
+      .getAllGuestsByBoardNo(boardNo);
+    console.log(guests);
 
-    await this.updateBoard(manager, boardNo, updateBoardDto);
+    // await this.updateBoard(manager, boardNo, updateBoardDto);
+  }
+
+  private async validateBoard(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+  ): Promise<void> {
+    const { hostUserNo }: Board = await this.getBoardByNo(manager, boardNo);
+
+    if (userNo != hostUserNo) {
+      throw new BadRequestException(
+        `게시글 수정(editBoard-service): 게시글 작성자와 수정자가 맞지 않습니다.`,
+      );
+    }
   }
 
   private async updateBoard(
@@ -271,13 +295,13 @@ export class BoardsService {
   }
 
   // 알람 생성
-  private async saveNoticeParticipation(
+  private async saveNoticeGuestTeam(
     manager: EntityManager,
     boardNo: number,
     userNo: number,
     targetUserNo: number,
   ): Promise<void> {
-    const type = NoticeType.GUEST_APPLICATION;
+    const type = NoticeType.GUEST_REQUEST;
 
     const { insertId }: InsertRaw = await manager
       .getCustomRepository(NoticesRepository)
@@ -296,12 +320,12 @@ export class BoardsService {
     const { no } = await manager
       .getCustomRepository(UsersRepository)
       .getUsersByNums(users);
-    const dbUsers: number[] = JSON.parse(no);
 
     if (!no) {
       throw new BadRequestException(`${users}번 유저가 없습니다.`);
     }
 
+    const dbUsers: number[] = JSON.parse(no);
     const isUser = users.filter((userNo) => !dbUsers.includes(userNo));
     if (isUser.length) {
       throw new BadRequestException(`${isUser}번 유저가 없습니다.`);

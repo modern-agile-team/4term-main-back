@@ -55,7 +55,7 @@ export class BoardsRepository extends Repository<Boards> {
           `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
           `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
           'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
-          'JSON_ARRAYAGG(hostProfile.nickname) AS hostMembersNickname',
+          'JSON_ARRAYAGG(hostProfile.nickname) AS hostMemberNicknames',
         ])
         .where('boards.no = :boardNo', { boardNo })
         .andWhere('hosts.boardNo = :boardNo', { boardNo })
@@ -106,9 +106,12 @@ export class BoardsRepository extends Repository<Boards> {
               break;
 
             case 'people':
-              boards.andWhere('boards.male + boards.female = :people', {
-                people: filters[el],
-              });
+              boards.andWhere(
+                'boards.recruitMale + boards.recruitFemale = :people',
+                {
+                  people: filters[el],
+                },
+              );
 
               break;
 
@@ -117,7 +120,7 @@ export class BoardsRepository extends Repository<Boards> {
 
               break;
 
-            case 'isThunder':
+            case 'isImpromptu':
               boards.andWhere(`boards.${el} = :${el}`, { [el]: filters[el] });
 
               break;
