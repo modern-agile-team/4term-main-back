@@ -21,7 +21,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
       return raw.affectedRows;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error}: 채팅방 유저 정보 설정(setRoomUsers): 알 수 없는 서버 에러입니다.`,
+        `${error}: 채팅방 유저 정보 생성(createChatUsers): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -38,29 +38,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
       return chatRooms;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error}: 채팅 목록 조회 (getChatRoomList): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async getChatRoomByRoomNo(userNo: number[]): Promise<ChatRoom[]> {
-    try {
-      const chatRooms: ChatRoom[] = await this.createQueryBuilder('chat_users')
-        .leftJoin('chat_users.chatRoomNo', 'chatRoom')
-        .leftJoin('chat_users.userNo', 'user')
-        .leftJoin('user.userProfileNo', 'userProfile')
-        .select([
-          'chatRoom.room_name AS roomName',
-          'chatRoom.no AS chatRoomNo',
-          'userProfile.nickname AS nickname',
-        ])
-        .where('chat_users.user_no = :userNo', { userNo })
-        .getRawMany();
-
-      return chatRooms;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error}: 채팅 목록 조회 (getChatRoomList): 알 수 없는 서버 에러입니다.`,
+        `${error}: 채팅 목록 조회 (getChatRoomsByUserNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -82,7 +60,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
       return user;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error}: 유저 정보 조회(checkUserInChatRoom): 알 수 없는 서버 에러입니다`,
+        `${error}: 유저 정보 조회(getChatRoomUser): 알 수 없는 서버 에러입니다`,
       );
     }
   }
