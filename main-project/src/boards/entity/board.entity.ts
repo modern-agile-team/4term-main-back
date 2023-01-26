@@ -44,6 +44,14 @@ export class Boards extends BaseEntity {
   })
   isImpromptu: boolean;
 
+  @Column({
+    type: 'tinyint',
+    width: 1,
+    default: false,
+    nullable: true,
+  })
+  isAccepted: boolean;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 

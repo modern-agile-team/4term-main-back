@@ -85,7 +85,7 @@ export class BoardsService {
     userNo: number,
     { hostMembers, ...board }: CreateBoardDto,
   ): Promise<void> {
-    await this.validateUsers(manager, hostMembers);
+    // await this.validateUsers(manager, hostMembers);
     const boardNo: number = await this.setBoard(manager, userNo, board);
     await this.setHosts(manager, boardNo, userNo, hostMembers);
   }
@@ -110,11 +110,11 @@ export class BoardsService {
   ): Promise<void> {
     await this.validateFriends(manager, userNo, hostArr);
 
-    const hosts = hostArr.map((userNo) => {
-      return { boardNo, userNo };
-    });
+    // const hosts = hostArr.map((userNo) => {
+    //   return { boardNo, userNo };
+    // });
 
-    await manager.getCustomRepository(BoardHostsRepository).createHosts(hosts);
+    // await manager.getCustomRepository(BoardHostsRepository).createHosts(hosts);
   }
 
   async createGuestTeam(
@@ -301,17 +301,21 @@ export class BoardsService {
     if (friends.includes(userNo)) {
       throw new BadRequestException(`친구 목록에 작성자가 담겨있습니다.`);
     }
-    const dbfriends: Friend[] = await manager
+    const dbFriends: Friend[] = await manager
       .getCustomRepository(FriendsRepository)
       .getAllFriendList(userNo);
 
-    if (!dbfriends.length) {
+    if (!dbFriends.length) {
       throw new BadRequestException(`${userNo}번 유저는 친구가 없습니다...`);
     }
+    const dbFriendNums: number[] = dbFriends.map(
+      (friend) => friend.friendUserNo,
+    );
 
     const isFreidns = friends.filter(
-      (userNo) => !dbfriends.includes({ userNo }),
+      (userNo) => !dbFriendNums.includes(userNo),
     );
+
     if (isFreidns.length) {
       throw new BadRequestException(`${isFreidns}번 사용자랑 친구가 아닙니다.`);
     }
