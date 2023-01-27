@@ -22,6 +22,9 @@ import { TransactionInterceptor } from 'src/common/interceptor/transaction-inter
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { EntityManager } from 'typeorm';
 import { ChatRoom } from './interface/chat.interface';
+import { UseGuards } from '@nestjs/common/decorators';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { GetUser } from 'src/common/decorator/get-user.decorator';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -49,14 +52,17 @@ export class ChatsController {
     summary: '이전 채팅 내역 API',
     description: '이전 채팅 내역 조회',
   })
+  @UseGuards(JwtAuthGuard)
   async getPreviousChatLog(
+    @GetUser() userNo: number,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body() getChatLogDto: GetChatLogDTO,
+    @Body() chatLogDto: GetChatLogDTO,
   ): Promise<APIResponse> {
     const previousChatLog: ChatLog[] =
       await this.chatControllerService.getPreviousChatLog(
-        getChatLogDto,
+        userNo,
         chatRoomNo,
+        chatLogDto,
       );
 
     return { response: { previousChatLog } };
@@ -67,15 +73,13 @@ export class ChatsController {
     summary: '현재 채팅 내역 API',
     description: '채팅방에 들어갔을때 가장 최신 채팅 내역 조회',
   })
+  @UseGuards(JwtAuthGuard)
   async getCurrentChatLog(
+    @GetUser() userNo: number,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body() getChatLogDto: GetChatLogDTO,
   ): Promise<APIResponse> {
     const currentChatLog: ChatLog[] =
-      await this.chatControllerService.getCurrentChatLog(
-        getChatLogDto,
-        chatRoomNo,
-      );
+      await this.chatControllerService.getCurrentChatLog(userNo, chatRoomNo);
 
     return { response: { currentChatLog } };
   }
@@ -85,13 +89,16 @@ export class ChatsController {
     summary: '채팅방 초대 API',
     description: '알람을 통해 채팅방 초대',
   })
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   async inviteUser(
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() inviteUser: InviteUserDTO,
   ): Promise<APIResponse> {
     await this.chatControllerService.inviteUser(
+      userNo,
       manager,
       inviteUser,
       chatRoomNo,
@@ -107,11 +114,14 @@ export class ChatsController {
     summary: '채팅방 초대 수락 API',
     description: '유저 번호, 타입, 채팅방 번호를 통해 초대 수락',
   })
+  @UseGuards(JwtAuthGuard)
   async acceptInvitation(
+    @GetUser() userNo: number,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() invitationInfo: AcceptInvitationDTO,
   ): Promise<APIResponse> {
     await this.chatControllerService.acceptInvitation(
+      userNo,
       chatRoomNo,
       invitationInfo,
     );

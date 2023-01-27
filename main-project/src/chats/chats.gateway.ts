@@ -16,7 +16,7 @@ import { ChatsGatewayService } from './chats-gateway.service';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { InitSocketDto } from './dto/init-socket.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
-import { ChatRoom } from './interface/chat.interface';
+import { ChatRoom, ChatRoomWithUsers } from './interface/chat.interface';
 import { WebSocketGetUser } from 'src/common/decorator/ws-get-user.decorator';
 import { WebSocketTransactionManager } from 'src/common/decorator/ws-transaction-manager.decorator';
 import { WebSocketTransactionInterceptor } from 'src/common/interceptor/ws-transaction-interceptor';
@@ -76,18 +76,11 @@ export class ChatsGateway {
     @WebSocketGetUser() userNo: number,
     @ConnectedSocket() socket: Socket,
   ): Promise<APIResponse> {
-    const chatRooms: ChatRoom[] = await this.chatGatewayService.initSocket(
-      socket,
-      userNo,
-    );
+    const chatRooms = await this.chatGatewayService.initSocket(socket, userNo);
 
     return { response: { chatRooms } };
   }
 
-  /**
-   *
-   * @todo: 채팅방 생성시 soft delete 구분
-   */
   @SubscribeMessage('create-room')
   @AsyncApiSub({
     description: `채팅방 생성 

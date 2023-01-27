@@ -4,6 +4,7 @@ export interface ChatRoom {
   userNo?: number;
   boardNo?: number;
   chatRoomUsers?: number[];
+  roomNo?: string;
 }
 
 export interface ChatRoomOfBoard extends Partial<ChatRoom> {
@@ -14,9 +15,11 @@ export interface ChatRoomOfBoard extends Partial<ChatRoom> {
 }
 export interface ChatRoomBeforeCreate extends Partial<ChatRoom> {}
 
-export interface ChatRoomWithUsers extends Pick<ChatRoom, 'chatRoomNo'> {
+export interface ChatRoomWithUsers extends Partial<ChatRoom> {
   users: string;
   userType?: number;
+  chatUsers?: number[];
+  nickname?: string;
 }
 
 export interface ChatUser extends Partial<ChatRoom> {

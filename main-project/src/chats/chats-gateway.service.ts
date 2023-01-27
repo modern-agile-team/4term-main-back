@@ -35,13 +35,13 @@ export class ChatsGatewayService {
     private readonly boardRepository: BoardRepository,
   ) {}
 
-  async initSocket(socket, userNo: number): Promise<ChatRoom[]> {
-    const chatRooms: ChatRoom[] = await this.getChatRooms(userNo);
-    if (chatRooms) {
-      chatRooms.forEach((chatRoom) => {
-        socket.join(`${chatRoom.chatRoomNo}`);
-      });
-    }
+  async initSocket(socket, userNo: number): Promise<any> {
+    const chatRooms: any = await this.getChatRooms(userNo);
+    const chatRoomsNo = Object.keys(chatRooms);
+
+    chatRoomsNo.forEach((chatRoomNo) => {
+      socket.join(`${chatRoomNo}`);
+    });
 
     return chatRooms;
   }
@@ -114,26 +114,31 @@ export class ChatsGatewayService {
       throw new BadRequestException('이미 생성된 채팅방 입니다.');
     }
   }
-  async getChatRooms(userNo: number): Promise<ChatRoom[]> {
-    const chatRooms: ChatRoom[] =
-      await this.chatUsersRepository.getChatRoomsByUserNo(userNo);
-    if (!chatRooms.length) {
+
+  async getChatRooms(userNo: number): Promise<any> {
+    const roomNo = await this.chatUsersRepository.getChatRoomNoByUserNo(userNo);
+    if (!roomNo) {
       throw new BadRequestException('채팅방이 존재하지 않습니다.');
     }
+    const chatRoomNo = roomNo.split(',').map(Number);
+    const chatRoomsWithUsers: ChatRoomWithUsers[] =
+      await this.chatUsersRepository.getChatRoomsWithUsers(chatRoomNo);
 
-    const chatRoomWithUsers: ChatRoom[] = await chatRooms.reduce(
-      async (values, chatRoom): Promise<ChatRoom[]> => {
-        const { users }: ChatRoomWithUsers =
-          await this.chatUsersRepository.getChatRoomUsers(chatRoom.chatRoomNo);
-        const chatRoomUsers: number[] = JSON.parse(users);
-        (await values).push({ ...chatRoom, chatRoomUsers });
+    const chatRooms = chatRoomsWithUsers.reduce((chatRooms, chatRoom) => {
+      const { chatRoomNo } = chatRoom;
 
-        return values;
-      },
-      Promise.resolve([]),
-    );
+      if (!chatRooms[chatRoomNo]) {
+        chatRooms[chatRoomNo] = [{ roomName: chatRoom.roomName }];
+      }
+      chatRooms[chatRoomNo].push({
+        userNo: chatRoom.userNo,
+        nickname: chatRoom.nickname,
+      });
 
-    return chatRoomWithUsers;
+      return chatRooms;
+    }, {});
+
+    return chatRooms;
   }
 
   async sendChat(
