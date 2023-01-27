@@ -186,6 +186,20 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
+  async updateBoardAccepted(boardNo: number): Promise<void> {
+    try {
+      await this.createQueryBuilder()
+        .update(Boards)
+        .set({ isAccepted: true })
+        .where('no = :boardNo', { boardNo })
+        .execute();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} updateBoardAccepted-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async closeBoard(boards: number[]): Promise<void> {
     try {
       await this.createQueryBuilder()

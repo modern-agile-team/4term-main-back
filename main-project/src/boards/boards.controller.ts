@@ -145,12 +145,15 @@ export class BoardsController {
     return { msg: '게시글 수정 성공' };
   }
 
-  @Patch('/:boardNo/accept')
+  @Patch('/:boardNo/invite')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
-    summary: '게시글 호스트멤버 초대 수락 API',
-    description: '등산할 땐 수락산ㅋㅋㅋ',
+    summary: '게시글 호스트멤버 초대 수락 / 거절 API',
+    description: `게시글 작성 시 초대한 멤버가 알람에서 수락 시 
+    알람에 수락처리 및 전체 수락됬는지 확인 후 전체 수락 시 
+    게시글 보여지게 전환, 거절 시 게시글, 알람 삭제 및 작성자에게 
+    거절 알람 전송`,
   })
   async acceptHostInvite(
     @Param('boardNo', ParseIntPipe) boardNo: number,
@@ -158,14 +161,14 @@ export class BoardsController {
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    await this.boardService.acceptHostInvite(
+    await this.boardService.validateHostInvite(
       manager,
       boardNo,
       userNo,
       isAccepted,
     );
 
-    return { msg: '게시글 초대 수락 성공' };
+    return { msg: '게시글 수락 / 거절 처리 성공' };
   }
 
   // Delete Methods

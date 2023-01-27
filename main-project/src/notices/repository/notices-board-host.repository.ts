@@ -15,20 +15,40 @@ export class NoticeBoardHostsRepository extends Repository<NoticeBoardHosts> {
     boardNo: number,
     userNo: number,
   ): Promise<NoticeBoardHosts> {
-    const notice: NoticeBoardHosts = await this.createQueryBuilder(
-      'noticeBoardHosts',
-    )
-      .leftJoin('noticeBoardHosts.noticeNo', 'notices')
-      .select([
-        'noticeBoardHosts.no AS no',
-        'noticeBoardHosts.isAccepted AS isAccepted',
-      ])
-      .where('noticeBoardHosts.boardNo = :boardNo', { boardNo })
-      .andWhere('notices.targetUserNo = :userNo', { userNo })
-      .getRawOne();
+    try {
+      const notice: NoticeBoardHosts = await this.createQueryBuilder(
+        'noticeBoardHosts',
+      )
+        .leftJoin('noticeBoardHosts.noticeNo', 'notices')
+        .where('noticeBoardHosts.boardNo = :boardNo', { boardNo })
+        .andWhere('notices.targetUserNo = :userNo', { userNo })
+        .getOne();
 
-    return notice;
+      return notice;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 알람 조회 에러(getInviteNotcie-repository): 알 수 없는 서버 오류입니다.`,
+      );
+    }
   }
+
+  async getIsAcceptedsByBoardNo(boardNo: number): Promise<number[]> {
+    try {
+      const { isAccepted }: JsonArray = await this.createQueryBuilder()
+        .select(['JSON_ARRAYAGG(isAccepted) AS isAccepted'])
+        .where('board_no = :boardNo', { boardNo })
+        .getRawOne();
+
+      const isAccepteds: number[] = JSON.parse(isAccepted);
+
+      return isAccepteds;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 알람 조회 에러(getIsAcceptedsByBoardNo-repository): 알 수 없는 서버 오류입니다.`,
+      );
+    }
+  }
+
   // 생성
   async saveNoticeBoardHosts(noticeNo: number, boardNo: number): Promise<void> {
     try {
@@ -45,7 +65,7 @@ export class NoticeBoardHostsRepository extends Repository<NoticeBoardHosts> {
   }
 
   // 수정
-  async acceptInvite(no: number): Promise<void> {
+  async updateNoticeBoardHosts(no: number): Promise<void> {
     try {
       await this.createQueryBuilder()
         .update()
@@ -54,7 +74,7 @@ export class NoticeBoardHostsRepository extends Repository<NoticeBoardHosts> {
         .execute();
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} 게시글 호스트멤버 초대 수락(acceptInvite-repository): 알 수 없는 서버 오류입니다.`,
+        `${error} 게시글 호스트멤버 초대 수락(updateNoticeBoardHosts-repository): 알 수 없는 서버 오류입니다.`,
       );
     }
   }

@@ -24,6 +24,7 @@ import { FriendsRepository } from 'src/friends/repository/friends.repository';
 import { Friend } from 'src/friends/interface/friend.interface';
 import { NoticeBoardHostsRepository } from 'src/notices/repository/notices-board-host.repository';
 import { NoticeBoardHosts } from 'src/notices/entity/notice-board-host.entity';
+import { use } from 'passport';
 
 @Injectable()
 export class BoardsService {
@@ -232,32 +233,78 @@ export class BoardsService {
       .updateBoard(boardNo, updateBoardDto);
   }
 
-  async acceptHostInvite(
+  async validateHostInvite(
     manager: EntityManager,
     boardNo: number,
     userNo: number,
     isAccepted: boolean,
   ): Promise<void> {
     await this.getBoard(manager, boardNo);
-    const hosts: number[] = await this.getHosts(manager, boardNo);
-    await this.validateHostMembers(hosts, userNo);
+    await this.validateIsHostMember(manager, boardNo, userNo);
 
-    // 수락 거절 분기처리
-    await this.inviteAccept(manager, boardNo, userNo);
-  }
-
-  private async inviteAccept(
-    manager: EntityManager,
-    boardNo: number,
-    userNo: number,
-  ): Promise<void> {
     const { no }: NoticeBoardHosts = await manager
       .getCustomRepository(NoticeBoardHostsRepository)
       .getInviteNotcie(boardNo, userNo);
 
+    !isAccepted
+      ? await this.rejectHostInvite(manager, boardNo)
+      : await this.acceptHostInvite(manager, no, boardNo);
+  }
+
+  private async rejectHostInvite(
+    manager: EntityManager,
+    boardNo: number,
+  ): Promise<void> {
+    // await this.removeBoard(manager, boardNo);
+    // await this;
+  }
+
+  /**
+   * 초대 수락으로 알람 변경
+   * 알람 전체 조회 수 전체 수락 확인
+   * 전체 수락 시 게시글 보이게 수정
+   * 전체 수락 알람 전송
+   * @param manager
+   * @param noticeNo
+   */
+  private async acceptHostInvite(
+    manager: EntityManager,
+    noticeNo: number,
+    boardNo: number,
+  ): Promise<void> {
+    await this.updateNoticeBoardHosts(manager, noticeNo);
+    const isAllAccepted: boolean = await this.validateAllAccept(
+      manager,
+      boardNo,
+    );
+
+    if (isAllAccepted) {
+      await manager
+        .getCustomRepository(BoardsRepository)
+        .updateBoardAccepted(boardNo);
+    }
+  }
+
+  private async validateAllAccept(
+    manager: EntityManager,
+    boardNo: number,
+  ): Promise<boolean> {
+    const isAccepteds: number[] = await manager
+      .getCustomRepository(NoticeBoardHostsRepository)
+      .getIsAcceptedsByBoardNo(boardNo);
+
+    const isAllAccepted: boolean = isAccepteds.includes(0) ? false : true;
+
+    return isAllAccepted;
+  }
+
+  private async updateNoticeBoardHosts(
+    manager: EntityManager,
+    noticeNo: number,
+  ): Promise<void> {
     await manager
       .getCustomRepository(NoticeBoardHostsRepository)
-      .acceptInvite(no);
+      .updateNoticeBoardHosts(noticeNo);
   }
 
   // 삭제 관련
@@ -383,11 +430,13 @@ export class BoardsService {
     }
   }
 
-  private async validateHostMembers(
-    hostMembers: number[],
+  private async validateIsHostMember(
+    manager: EntityManager,
+    boardNo: number,
     userNo: number,
   ): Promise<void> {
-    if (!hostMembers.includes(userNo)) {
+    const hosts: number[] = await this.getHosts(manager, boardNo);
+    if (!hosts.includes(userNo)) {
       throw new BadRequestException(
         `사용자 검증 (validateHostMembers-service): 사용자는 해당 게시글에 초대받지 않았습니다.`,
       );
@@ -412,5 +461,15 @@ export class BoardsService {
         '모집인원 검증(validateRecruits-service): 참가 신청이 존재 시 모집인원을 변경할 수 없습니다.',
       );
     }
+  }
+
+  private async validateIsAnswered(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+  ): Promise<void> {
+    await manager
+      .getCustomRepository(NoticeBoardHostsRepository)
+      .getInviteNotcie(boardNo, userNo);
   }
 }
