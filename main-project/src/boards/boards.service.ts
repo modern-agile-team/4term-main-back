@@ -233,78 +233,42 @@ export class BoardsService {
       .updateBoard(boardNo, updateBoardDto);
   }
 
-  async validateHostInvite(
-    manager: EntityManager,
-    boardNo: number,
-    userNo: number,
-    isAccepted: boolean,
-  ): Promise<void> {
-    await this.getBoard(manager, boardNo);
-    await this.validateIsHostMember(manager, boardNo, userNo);
-
-    const { no }: NoticeBoardHosts = await manager
-      .getCustomRepository(NoticeBoardHostsRepository)
-      .getInviteNotcie(boardNo, userNo);
-
-    !isAccepted
-      ? await this.rejectHostInvite(manager, boardNo)
-      : await this.acceptHostInvite(manager, no, boardNo);
-  }
-
   private async rejectHostInvite(
     manager: EntityManager,
     boardNo: number,
+    userNo: number,
+    targetUserNo: number,
   ): Promise<void> {
-    // await this.removeBoard(manager, boardNo);
-    // await this;
+    await this.saveNoticeInviteReject(manager, userNo, targetUserNo);
+    await this.removeBoard(manager, boardNo);
   }
 
-  /**
-   * 초대 수락으로 알람 변경
-   * 알람 전체 조회 수 전체 수락 확인
-   * 전체 수락 시 게시글 보이게 수정
-   * 전체 수락 알람 전송
-   * @param manager
-   * @param noticeNo
-   */
   private async acceptHostInvite(
     manager: EntityManager,
     noticeNo: number,
     boardNo: number,
   ): Promise<void> {
-    await this.updateNoticeBoardHosts(manager, noticeNo);
+    await manager
+      .getCustomRepository(NoticeBoardHostsRepository)
+      .updateNoticeBoardHosts(noticeNo);
+
     const isAllAccepted: boolean = await this.validateAllAccept(
       manager,
       boardNo,
     );
 
     if (isAllAccepted) {
-      await manager
-        .getCustomRepository(BoardsRepository)
-        .updateBoardAccepted(boardNo);
+      await this.updateBoardAccepted(manager, boardNo);
     }
   }
 
-  private async validateAllAccept(
+  private async updateBoardAccepted(
     manager: EntityManager,
     boardNo: number,
-  ): Promise<boolean> {
-    const isAccepteds: number[] = await manager
-      .getCustomRepository(NoticeBoardHostsRepository)
-      .getIsAcceptedsByBoardNo(boardNo);
-
-    const isAllAccepted: boolean = isAccepteds.includes(0) ? false : true;
-
-    return isAllAccepted;
-  }
-
-  private async updateNoticeBoardHosts(
-    manager: EntityManager,
-    noticeNo: number,
   ): Promise<void> {
     await manager
-      .getCustomRepository(NoticeBoardHostsRepository)
-      .updateNoticeBoardHosts(noticeNo);
+      .getCustomRepository(BoardsRepository)
+      .updateBoardAccepted(boardNo);
   }
 
   // 삭제 관련
@@ -371,6 +335,18 @@ export class BoardsService {
         .getCustomRepository(NoticeBoardHostsRepository)
         .saveNoticeBoardHosts(insertId, boardNo);
     }
+  }
+
+  private async saveNoticeInviteReject(
+    manager: EntityManager,
+    userNo: number,
+    targetUserNo: number,
+  ): Promise<void> {
+    const type = NoticeType.HOST_REQUEST_REJECTED;
+
+    await manager
+      .getCustomRepository(NoticesRepository)
+      .saveNotice({ userNo, targetUserNo, type });
   }
 
   // function
@@ -471,5 +447,36 @@ export class BoardsService {
     await manager
       .getCustomRepository(NoticeBoardHostsRepository)
       .getInviteNotcie(boardNo, userNo);
+  }
+
+  private async validateAllAccept(
+    manager: EntityManager,
+    boardNo: number,
+  ): Promise<boolean> {
+    const isAccepteds: number[] = await manager
+      .getCustomRepository(NoticeBoardHostsRepository)
+      .getIsAcceptedsByBoardNo(boardNo);
+
+    const isAllAccepted: boolean = isAccepteds.includes(0) ? false : true;
+
+    return isAllAccepted;
+  }
+
+  async validateHostInvite(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+    isAccepted: boolean,
+  ): Promise<void> {
+    const { hostUserNo }: Board = await this.getBoard(manager, boardNo);
+    await this.validateIsHostMember(manager, boardNo, userNo);
+
+    const { no }: NoticeBoardHosts = await manager
+      .getCustomRepository(NoticeBoardHostsRepository)
+      .getInviteNotcie(boardNo, userNo);
+
+    !isAccepted
+      ? await this.rejectHostInvite(manager, boardNo, userNo, hostUserNo)
+      : await this.acceptHostInvite(manager, no, boardNo);
   }
 }
