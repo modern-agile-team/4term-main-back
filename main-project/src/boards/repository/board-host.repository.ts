@@ -1,9 +1,27 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { JsonArray } from 'src/common/interface/interface';
 import { EntityRepository, Repository } from 'typeorm';
 import { BoardHosts } from '../entity/board-host.entity';
 
 @EntityRepository(BoardHosts)
 export class BoardHostsRepository extends Repository<BoardHosts> {
+  // 조회
+  async getHosts(boardNo: number): Promise<number[]> {
+    try {
+      const { userNo }: JsonArray = await this.createQueryBuilder()
+        .select('JSON_ARRAYAGG(user_no) AS userNo')
+        .where('board_no = :boardNo', { boardNo })
+        .getRawOne();
+
+      const hosts: number[] = JSON.parse(userNo);
+
+      return hosts;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getHosts-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
   // 생성
   async createHosts(
     hosts: Pick<BoardHosts, 'boardNo' | 'userNo'>[],

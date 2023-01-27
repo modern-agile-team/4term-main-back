@@ -25,6 +25,7 @@ import { EntityManager } from 'typeorm';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { UpdateBoardDto } from './dto/update-board.dto';
+import { HostInviteDto } from './dto/host-invite.dto';
 
 @Controller('boards')
 @ApiTags('게시글 API')
@@ -49,8 +50,8 @@ export class BoardsController {
     description: '게시글 필터링해서 내림차순으로 조회한다.',
   })
   async getBoards(
-    @Query() BoardFilterDto: BoardFilterDto,
     @TransactionDecorator() manager: EntityManager,
+    @Query() BoardFilterDto?: BoardFilterDto,
   ): Promise<APIResponse> {
     const boards: Board[] = await this.boardService.getBoards(
       manager,
@@ -142,6 +143,29 @@ export class BoardsController {
     await this.boardService.editBoard(manager, boardNo, userNo, updateBoardDto);
 
     return { msg: '게시글 수정 성공' };
+  }
+
+  @Patch('/:boardNo/accept')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiOperation({
+    summary: '게시글 호스트멤버 초대 수락 API',
+    description: '등산할 땐 수락산ㅋㅋㅋ',
+  })
+  async acceptHostInvite(
+    @Param('boardNo', ParseIntPipe) boardNo: number,
+    @Body() { isAccepted }: HostInviteDto,
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<APIResponse> {
+    await this.boardService.acceptHostInvite(
+      manager,
+      boardNo,
+      userNo,
+      isAccepted,
+    );
+
+    return { msg: '게시글 초대 수락 성공' };
   }
 
   // Delete Methods

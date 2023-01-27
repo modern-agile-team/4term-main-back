@@ -26,12 +26,4 @@ export class NoticeBoards extends BaseEntity {
   })
   @JoinColumn({ name: 'notice_no' })
   noticeNo: number;
-
-  @Column({
-    type: 'tinyint',
-    width: 1,
-    default: false,
-    nullable: true,
-  })
-  type: number;
 }

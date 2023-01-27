@@ -22,22 +22,13 @@ import { UpdateBoardDto } from './dto/update-board.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { FriendsRepository } from 'src/friends/repository/friends.repository';
 import { Friend } from 'src/friends/interface/friend.interface';
-import { NoticeBoardHosts } from 'src/notices/entity/notice-board-host.entity';
 import { NoticeBoardHostsRepository } from 'src/notices/repository/notices-board-host.repository';
+import { NoticeBoardHosts } from 'src/notices/entity/notice-board-host.entity';
 
 @Injectable()
 export class BoardsService {
   constructor(
     private readonly boardBookmarkRepository: BoardBookmarksRepository,
-    private readonly boardGuestRepository: BoardGuestsRepository,
-    private readonly boardHostRepository: BoardHostsRepository,
-    private readonly boardRepository: BoardsRepository,
-
-    private readonly noticeRepository: NoticesRepository,
-    private readonly noticeBoardsRepository: NoticeBoardsRepository,
-
-    private readonly usersRepository: UsersRepository,
-    private readonly friendsRepository: FriendsRepository,
   ) {}
   //cron
   async closeBoard(manager: EntityManager): Promise<void> {
@@ -79,15 +70,27 @@ export class BoardsService {
     return board;
   }
 
+  private async getHosts(
+    manager: EntityManager,
+    boardNo: number,
+  ): Promise<number[]> {
+    const hosts: number[] = await manager
+      .getCustomRepository(BoardHostsRepository)
+      .getHosts(boardNo);
+
+    return hosts;
+  }
+
   // 생성 관련
   async createBoard(
     manager: EntityManager,
     userNo: number,
     { hostMembers, ...board }: CreateBoardDto,
   ): Promise<void> {
-    // await this.validateUsers(manager, hostMembers);
+    await this.validateUsers(manager, hostMembers);
     const boardNo: number = await this.setBoard(manager, userNo, board);
     await this.setHosts(manager, boardNo, userNo, hostMembers);
+    await this.saveNoticeHostTeam(manager, boardNo, userNo, hostMembers);
   }
 
   private async setBoard(
@@ -110,11 +113,11 @@ export class BoardsService {
   ): Promise<void> {
     await this.validateFriends(manager, userNo, hostArr);
 
-    // const hosts = hostArr.map((userNo) => {
-    //   return { boardNo, userNo };
-    // });
+    const hosts = hostArr.map((userNo) => {
+      return { boardNo, userNo };
+    });
 
-    // await manager.getCustomRepository(BoardHostsRepository).createHosts(hosts);
+    await manager.getCustomRepository(BoardHostsRepository).createHosts(hosts);
   }
 
   async createGuestTeam(
@@ -229,6 +232,34 @@ export class BoardsService {
       .updateBoard(boardNo, updateBoardDto);
   }
 
+  async acceptHostInvite(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+    isAccepted: boolean,
+  ): Promise<void> {
+    await this.getBoard(manager, boardNo);
+    const hosts: number[] = await this.getHosts(manager, boardNo);
+    await this.validateHostMembers(hosts, userNo);
+
+    // 수락 거절 분기처리
+    await this.inviteAccept(manager, boardNo, userNo);
+  }
+
+  private async inviteAccept(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+  ): Promise<void> {
+    const { no }: NoticeBoardHosts = await manager
+      .getCustomRepository(NoticeBoardHostsRepository)
+      .getInviteNotcie(boardNo, userNo);
+
+    await manager
+      .getCustomRepository(NoticeBoardHostsRepository)
+      .acceptInvite(no);
+  }
+
   // 삭제 관련
   async deleteBoard(
     manager: EntityManager,
@@ -253,8 +284,9 @@ export class BoardsService {
     userNo: number,
   ): Promise<void> {
     await this.getBoard(manager, boardNo);
-    // TODO: user확인 메서드
-    await this.boardBookmarkRepository.cancelBookmark(boardNo, userNo);
+    await manager
+      .getCustomRepository(BoardBookmarksRepository)
+      .cancelBookmark(boardNo, userNo);
   }
 
   // 알람 생성
@@ -273,6 +305,25 @@ export class BoardsService {
     await manager
       .getCustomRepository(NoticeBoardsRepository)
       .saveNoticeBoard(insertId, boardNo);
+  }
+
+  private async saveNoticeHostTeam(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+    hosts: number[],
+  ): Promise<void> {
+    const type = NoticeType.GUEST_REQUEST;
+
+    for (let idx in hosts) {
+      const { insertId }: InsertRaw = await manager
+        .getCustomRepository(NoticesRepository)
+        .saveNotice({ userNo, targetUserNo: hosts[idx], type });
+
+      await manager
+        .getCustomRepository(NoticeBoardHostsRepository)
+        .saveNoticeBoardHosts(insertId, boardNo);
+    }
   }
 
   // function
@@ -328,6 +379,17 @@ export class BoardsService {
     if (userNo != hostUserNo) {
       throw new BadRequestException(
         `작성자 검증 (validateHost-service): 작성자와 사용자가 일치하지 않습니다.`,
+      );
+    }
+  }
+
+  private async validateHostMembers(
+    hostMembers: number[],
+    userNo: number,
+  ): Promise<void> {
+    if (!hostMembers.includes(userNo)) {
+      throw new BadRequestException(
+        `사용자 검증 (validateHostMembers-service): 사용자는 해당 게시글에 초대받지 않았습니다.`,
       );
     }
   }
