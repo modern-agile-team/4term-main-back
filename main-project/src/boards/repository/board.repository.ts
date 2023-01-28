@@ -89,7 +89,7 @@ export class BoardsRepository extends Repository<Boards> {
         .leftJoin('hosts.userNo', 'hostUsers')
         .leftJoin('hostUsers.userProfileNo', 'hostProfile')
         .select([
-          'boards.no AS no',
+          'DISTINCT boards.no AS no',
           'boards.userNo AS hostUserNo',
           'profiles.nickname AS hostNickname',
           'boards.title AS title',
@@ -104,39 +104,37 @@ export class BoardsRepository extends Repository<Boards> {
         ])
         .orderBy('boards.no', 'DESC');
 
-      if (filters) {
-        for (let el in filters) {
-          switch (el) {
-            case 'gender':
-              boards.andWhere(`boards.${filters[el]} = :${filters[el]}`, {
-                [filters[el]]: 0,
-              });
+      for (let idx in filters) {
+        switch (idx) {
+          case 'gender':
+            boards.andWhere(`boards.${filters[idx]} = :${filters[idx]}`, {
+              [filters[idx]]: 0,
+            });
+            break;
 
-              break;
+          case 'people':
+            boards.andWhere(
+              'boards.recruitMale + boards.recruitFemale = :people',
+              {
+                people: filters[idx],
+              },
+            );
+            break;
 
-            case 'people':
-              boards.andWhere(
-                'boards.recruitMale + boards.recruitFemale = :people',
-                {
-                  people: filters[el],
-                },
-              );
+          case 'isDone':
+            boards.andWhere(`boards.${idx} = :${idx}`, { [idx]: filters[idx] });
+            break;
 
-              break;
+          case 'isImpromptu':
+            boards.andWhere(`boards.${idx} = :${idx}`, { [idx]: filters[idx] });
+            break;
 
-            case 'isDone':
-              boards.andWhere(`boards.${el} = :${el}`, { [el]: filters[el] });
+          case 'page':
+            boards.limit(10).offset(filters[idx] * 10);
+            break;
 
-              break;
-
-            case 'isImpromptu':
-              boards.andWhere(`boards.${el} = :${el}`, { [el]: filters[el] });
-
-              break;
-
-            default:
-              break;
-          }
+          default:
+            break;
         }
       }
 

@@ -26,6 +26,16 @@ export class BoardFilterDto {
   people: number;
 
   @ApiProperty({
+    example: '23',
+    description: '페이지 번호',
+    required: false,
+  })
+  @IsNumber()
+  @Type(() => Number)
+  @IsOptional()
+  page: number;
+
+  @ApiProperty({
     example: '0 or false / 1 or true ',
     description: '모집 현황 - 0 or false / 1 or true',
     required: false,
