@@ -46,8 +46,9 @@ export class BoardsController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
-    summary: '게시글 필터링 API',
-    description: '게시글 필터링해서 내림차순으로 조회한다.',
+    summary: '게시글 필터링 검색 or 전체검색 API',
+    description:
+      '검색조건이 있으면 필터링을 통한 검색 / 조건이 없으면 전체검색을 한다',
   })
   async getBoards(
     @TransactionDecorator() manager: EntityManager,
