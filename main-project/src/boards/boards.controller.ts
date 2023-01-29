@@ -15,7 +15,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { Board, JsonBoard } from './interface/boards.interface';
+import { Board } from './interface/boards.interface';
 import { BoardFilterDto } from './dto/board-filter.dto';
 import { Cron, CronExpression } from '@nestjs/schedule/dist';
 import { APIResponse } from 'src/common/interface/interface';
@@ -96,17 +96,19 @@ export class BoardsController {
     return { msg: '게시글 생성 성공' };
   }
 
-  @Post('/:boardNo/:userNo/bookmark')
+  @Post('/:boardNo/bookmark')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '북마크 생성 API',
     description: '게시글 번호를 통해 해당 User의 북마크를 생성한다.',
   })
   async createBookmark(
-    @Param() params: { [key: string]: number },
+    @Param() boardNo: number,
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    // TODO: userNo -> jwt
-    const { boardNo, userNo } = params;
-    await this.boardService.createBookmark(boardNo, userNo);
+    await this.boardService.createBookmark(manager, boardNo, userNo);
 
     return { msg: '북마크 생성 성공' };
   }

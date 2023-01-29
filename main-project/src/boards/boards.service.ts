@@ -197,8 +197,23 @@ export class BoardsService {
       .createGuests(multipleGuests);
   }
 
-  async createBookmark(boardNo: number, userNo: number): Promise<void> {
-    await this.boardBookmarkRepository.createBookmark(boardNo, userNo);
+  async createBookmark(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+  ): Promise<void> {
+    await this.getBoard(manager, boardNo);
+    await this.setBookmark(manager, boardNo, userNo);
+  }
+
+  async setBookmark(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+  ): Promise<void> {
+    await manager
+      .getCustomRepository(BoardBookmarksRepository)
+      .createBookmark(boardNo, userNo);
   }
 
   // 수정 관련
