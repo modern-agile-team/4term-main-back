@@ -4,6 +4,22 @@ import { BoardBookmarks } from '../entity/board-bookmark.entity';
 
 @EntityRepository(BoardBookmarks)
 export class BoardBookmarksRepository extends Repository<BoardBookmarks> {
+  // 조회
+  async getBookmark(boardNo: number, userNo: number): Promise<BoardBookmarks> {
+    try {
+      const bookmark: BoardBookmarks = await this.createQueryBuilder()
+        .where('board_no = :boardNo', { boardNo })
+        .andWhere('user_no = :userNo', { userNo })
+        .getOne();
+
+      return bookmark;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getBookmark-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   // 생성
   async createBookmark(boardNo: number, userNo: number): Promise<void> {
     try {

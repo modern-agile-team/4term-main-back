@@ -24,20 +24,20 @@ import { FriendsRepository } from 'src/friends/repository/friends.repository';
 import { Friend } from 'src/friends/interface/friend.interface';
 import { NoticeBoardHostsRepository } from 'src/notices/repository/notices-board-host.repository';
 import { NoticeBoardHosts } from 'src/notices/entity/notice-board-host.entity';
-import { use } from 'passport';
+import { BoardBookmarks } from './entity/board-bookmark.entity';
 
 @Injectable()
 export class BoardsService {
-  constructor(
-    private readonly boardBookmarkRepository: BoardBookmarksRepository,
-  ) {}
+  constructor() {}
   //cron
   async closeBoard(manager: EntityManager): Promise<void> {
     const boards: number[] = await manager
       .getCustomRepository(BoardsRepository)
       .checkDeadline();
 
-    await manager.getCustomRepository(BoardsRepository).closeBoard(boards);
+    if (boards) {
+      await manager.getCustomRepository(BoardsRepository).closeBoard(boards);
+    }
   }
 
   // 조회 관련
@@ -80,6 +80,18 @@ export class BoardsService {
       .getHosts(boardNo);
 
     return hosts;
+  }
+
+  private async getBookmark(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+  ): Promise<BoardBookmarks> {
+    const bookmark: BoardBookmarks = await manager
+      .getCustomRepository(BoardBookmarksRepository)
+      .getBookmark(boardNo, userNo);
+
+    return bookmark;
   }
 
   // 생성 관련
@@ -203,7 +215,12 @@ export class BoardsService {
     userNo: number,
   ): Promise<void> {
     await this.getBoard(manager, boardNo);
-    await this.setBookmark(manager, boardNo, userNo);
+    const bookmark = await this.getBookmark(manager, boardNo, userNo);
+    if (bookmark) {
+      throw new BadRequestException('이미 북마크처리가 됬습니다.');
+    }
+
+    // await this.setBookmark(manager, boardNo, userNo);
   }
 
   async setBookmark(

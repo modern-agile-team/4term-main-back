@@ -32,13 +32,15 @@ import { HostInviteDto } from './dto/host-invite.dto';
 export class BoardsController {
   constructor(private readonly boardService: BoardsService) {}
   //Cron
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_SECOND)
   @UseInterceptors(TransactionInterceptor)
   @Patch()
-  async closingThunder(
+  async closeBoard(
     @TransactionDecorator() manager: EntityManager,
-  ): Promise<void> {
+  ): Promise<APIResponse> {
     await this.boardService.closeBoard(manager);
+
+    return { msg: 'cron : closeBoard' };
   }
 
   //Get Methods
@@ -104,7 +106,7 @@ export class BoardsController {
     description: '게시글 번호를 통해 해당 User의 북마크를 생성한다.',
   })
   async createBookmark(
-    @Param() boardNo: number,
+    @Param('boardNo') boardNo: number,
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {

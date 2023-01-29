@@ -22,7 +22,7 @@ export class BoardsRepository extends Repository<Boards> {
         .select(['JSON_ARRAYAGG(no) AS no'])
         .where('isDone = :isDone', { isDone: false })
         .andWhere('isImpromptu = :isImpromptu', { isImpromptu: true })
-        .andWhere('TIMESTAMPDIFF(hour, createdDate, NOW()) >= 24')
+        .andWhere('TIMESTAMPDIFF(hour, created_date, NOW()) >= 24')
         .getRawOne();
 
       const boards: number[] = JSON.parse(no);
@@ -35,7 +35,7 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async getBoard(boardNo: number): Promise<Board> {
+  async getBoard(no: number): Promise<Board> {
     try {
       const { hostMemberNums, hostMemberNicknames, ...jsonBoard }: JsonBoard =
         await this.createQueryBuilder('boards')
@@ -60,8 +60,8 @@ export class BoardsRepository extends Repository<Boards> {
             'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
             'JSON_ARRAYAGG(hostProfile.nickname) AS hostMemberNicknames',
           ])
-          .where('boards.no = :boardNo', { boardNo })
-          .andWhere('hosts.boardNo = :boardNo', { boardNo })
+          .where('boards.no = :no', { no })
+          .andWhere('hosts.board_no = :no', { no })
           .getRawOne();
 
       const board: Board = {
