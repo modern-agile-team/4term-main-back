@@ -198,12 +198,14 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async closeBoard(boards: number[]): Promise<void> {
+  async closeBoard(): Promise<void> {
     try {
       await this.createQueryBuilder()
         .update(Boards)
         .set({ isDone: true })
-        .where('no IN (:boards)', { boards })
+        .where('isDone = :isDone', { isDone: false })
+        .andWhere('isImpromptu = :isImpromptu', { isImpromptu: true })
+        .andWhere('TIMESTAMPDIFF(hour, created_date, NOW()) >= 24')
         .execute();
     } catch (error) {
       throw new InternalServerErrorException(

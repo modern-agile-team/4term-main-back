@@ -32,13 +32,10 @@ import { HostInviteDto } from './dto/host-invite.dto';
 export class BoardsController {
   constructor(private readonly boardService: BoardsService) {}
   //Cron
-  @Cron(CronExpression.EVERY_10_HOURS)
-  @UseInterceptors(TransactionInterceptor)
+  @Cron(CronExpression.EVERY_HOUR)
   @Patch()
-  async closeBoard(
-    @TransactionDecorator() manager: EntityManager,
-  ): Promise<APIResponse> {
-    await this.boardService.closeBoard(manager);
+  async closeBoard(): Promise<APIResponse> {
+    await this.boardService.closeBoard();
 
     return { msg: 'cron : closeBoard' };
   }

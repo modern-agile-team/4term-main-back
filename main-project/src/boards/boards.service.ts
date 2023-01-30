@@ -16,7 +16,7 @@ import { BoardHostsRepository } from './repository/board-host.repository';
 import { BoardsRepository } from './repository/board.repository';
 import { BoardGuestTeamsRepository } from './repository/board-guest-team.repository';
 import { BoardFilterDto } from './dto/board-filter.dto';
-import { EntityManager } from 'typeorm';
+import { Connection, EntityManager, QueryRunner } from 'typeorm';
 import { ResultSetHeader } from 'mysql2';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
@@ -28,15 +28,24 @@ import { BoardBookmarks } from './entity/board-bookmark.entity';
 
 @Injectable()
 export class BoardsService {
-  constructor() {}
+  constructor(private readonly connection: Connection) {}
   //cron
-  async closeBoard(manager: EntityManager): Promise<void> {
-    const boards: number[] = await manager
-      .getCustomRepository(BoardsRepository)
-      .checkDeadline();
+  async closeBoard(): Promise<void> {
+    const queryRunner: QueryRunner = this.connection.createQueryRunner();
 
-    if (boards) {
-      await manager.getCustomRepository(BoardsRepository).closeBoard(boards);
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      await queryRunner.manager
+        .getCustomRepository(BoardsRepository)
+        .closeBoard();
+      await queryRunner.commitTransaction();
+    } catch (error) {
+      await queryRunner?.rollbackTransaction();
+
+      throw error;
+    } finally {
+      await queryRunner?.release();
     }
   }
 
