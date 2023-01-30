@@ -90,6 +90,7 @@ export class BoardsService {
     const bookmark: BoardBookmarks = await manager
       .getCustomRepository(BoardBookmarksRepository)
       .getBookmark(boardNo, userNo);
+    console.log(bookmark);
 
     return bookmark;
   }
@@ -220,7 +221,7 @@ export class BoardsService {
       throw new BadRequestException('이미 북마크처리가 됬습니다.');
     }
 
-    // await this.setBookmark(manager, boardNo, userNo);
+    await this.setBookmark(manager, boardNo, userNo);
   }
 
   async setBookmark(
@@ -327,6 +328,17 @@ export class BoardsService {
     userNo: number,
   ): Promise<void> {
     await this.getBoard(manager, boardNo);
+    const bookmark: BoardBookmarks = await this.getBookmark(
+      manager,
+      boardNo,
+      userNo,
+    );
+    if (!bookmark) {
+      throw new BadRequestException(
+        `북마크 취소(cancelBookmark-service): 해당 북마크가 없습니다.`,
+      );
+    }
+
     await manager
       .getCustomRepository(BoardBookmarksRepository)
       .cancelBookmark(boardNo, userNo);

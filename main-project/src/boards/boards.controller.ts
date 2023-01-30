@@ -32,7 +32,7 @@ import { HostInviteDto } from './dto/host-invite.dto';
 export class BoardsController {
   constructor(private readonly boardService: BoardsService) {}
   //Cron
-  @Cron(CronExpression.EVERY_SECOND)
+  @Cron(CronExpression.EVERY_10_HOURS)
   @UseInterceptors(TransactionInterceptor)
   @Patch()
   async closeBoard(
@@ -194,18 +194,18 @@ export class BoardsController {
     return { msg: '게시글 삭제 성공' };
   }
 
-  @Delete('/:boardNo/:userNo/bookmark')
+  @Delete('/:boardNo/bookmark')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '북마크 취소 API',
     description: '게시글 번호를 사용해 해당 User의 북마크를 취소한다.',
   })
   async cancelBookmark(
-    @Param() params: { [key: string]: number },
+    @Param('boardNo') boardNo: number,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const { boardNo, userNo } = params;
-    // TODO: userNo -> jwt
     await this.boardService.cancelBookmark(manager, boardNo, userNo);
 
     return { msg: '북마크 취소 성공' };
