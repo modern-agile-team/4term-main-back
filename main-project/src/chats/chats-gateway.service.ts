@@ -33,7 +33,7 @@ export class ChatsGatewayService {
     private readonly chatListRepository: ChatListRepository,
     private readonly chatUsersRepository: ChatUsersRepository,
     private readonly chatLogRepository: ChatLogRepository,
-    private readonly boardRepository: BoardRepository,
+    private readonly boardRepository: BoardsRepository,
   ) {}
 
   async initSocket(socket, messagePayload: InitSocketDto): Promise<ChatRoom[]> {
