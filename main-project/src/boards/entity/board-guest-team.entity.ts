@@ -11,8 +11,8 @@ import {
 import { BoardGuests } from './board-guest.entity';
 import { Boards } from './board.entity';
 
-@Entity('board_participation')
-export class BoardParticipation extends BaseEntity {
+@Entity('board_guest_teams')
+export class BoardGuestTeams extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 

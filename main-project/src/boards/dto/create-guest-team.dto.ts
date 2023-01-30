@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsNumber, IsString, Length } from 'class-validator';
 
-export class ParticipationDto {
+export class CreateGuestTeamDto {
   @ApiProperty({
     example: [3, 2, 98],
-    description: 'guest_members_userNo',
+    description: '신청자들 userNo',
   })
   @IsNumber({}, { each: true })
   @IsNotEmpty()

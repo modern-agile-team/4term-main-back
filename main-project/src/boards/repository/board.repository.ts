@@ -1,33 +1,34 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import { ChatRoomOfBoard } from 'src/chats/interface/chat.interface';
-import { Users } from 'src/users/entity/user.entity';
-import { UsersRepository } from 'src/users/repository/users.repository';
+import { JsonArray } from 'src/common/interface/interface';
 import {
-  DeleteResult,
   EntityRepository,
-  In,
   InsertResult,
   Repository,
-  UpdateResult,
+  SelectQueryBuilder,
 } from 'typeorm';
 import { BoardFilterDto } from '../dto/board-filter.dto';
-import { BoardDto } from '../dto/board.dto';
+import { CreateBoardDto } from '../dto/create-board.dto';
+import { UpdateBoardDto } from '../dto/update-board.dto';
 import { Boards } from '../entity/board.entity';
-import { Board } from '../interface/boards.interface';
+import { Board, JsonBoard } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
-export class BoardRepository extends Repository<Boards> {
+export class BoardsRepository extends Repository<Boards> {
   // 게시글 조회 관련
-  async checkDeadline(): Promise<{ no: string }> {
+  async checkDeadline(): Promise<number[]> {
     try {
-      const thunders = await this.createQueryBuilder('boards')
+      const { no }: JsonArray = await this.createQueryBuilder()
         .select(['JSON_ARRAYAGG(no) AS no'])
         .where('isDone = :isDone', { isDone: false })
-        .andWhere('isThunder = :isThunder', { isThunder: true })
-        .andWhere('TIMESTAMPDIFF(hour, boards.createdDate, NOW()) >= 24')
+        .andWhere('isImpromptu = :isImpromptu', { isImpromptu: true })
+        .andWhere('TIMESTAMPDIFF(hour, created_date, NOW()) >= 24')
         .getRawOne();
 
-      return thunders;
+      const boards: number[] = JSON.parse(no);
+
+      return boards;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} checkDeadline-repository: 알 수 없는 서버 에러입니다.`,
@@ -35,96 +36,113 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async getBoardByNo(boardNo: number): Promise<Board> {
+  async getBoardByNo(no: number): Promise<Board> {
     try {
-      const board = await this.createQueryBuilder('boards')
-        .leftJoin('boards.userNo', 'users')
-        .leftJoin('users.userProfileNo', 'profile')
-        .leftJoin('boards.hosts', 'hosts')
-        .leftJoin('hosts.userNo', 'hostUsers')
-        .leftJoin('hostUsers.userProfileNo', 'hostProfile')
-        .select([
-          'boards.no AS no',
-          'boards.userNo AS userNo',
-          'profile.nickname AS nickname',
-          'boards.title AS title',
-          'boards.description AS description',
-          'boards.location AS location',
-          'boards.meetingTime AS meetingTime',
-          'boards.isDone AS isDone',
-          'boards.male AS male',
-          'boards.female AS female',
-          'boards.isThunder AS isThunder',
-          'GROUP_CONCAT(hosts.userNo) AS hostUserNums',
-          'GROUP_CONCAT(hostProfile.nickname) AS hostNicknames',
-        ])
-        .where('boards.no = :boardNo', { boardNo })
-        .where('hosts.boardNo = :boardNo', { boardNo })
-        .getRawOne();
+      const { hostMemberNums, hostMemberNicknames, ...jsonBoard }: JsonBoard =
+        await this.createQueryBuilder('boards')
+          .leftJoin('boards.userNo', 'users')
+          .leftJoin('users.userProfileNo', 'profile')
+          .leftJoin('boards.hosts', 'hosts')
+          .leftJoin('hosts.userNo', 'hostUsers')
+          .leftJoin('hostUsers.userProfileNo', 'hostProfile')
+          .select([
+            'boards.no AS no',
+            'boards.userNo AS hostUserNo',
+            'profile.nickname AS hostNickname',
+            'boards.title AS title',
+            'boards.description AS description',
+            'boards.location AS location',
+            'boards.isDone AS isDone',
+            'boards.recruitMale AS recruitMale',
+            'boards.recruitFemale AS recruitFemale',
+            'boards.isImpromptu AS isImpromptu',
+            `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
+            `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
+            'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
+            'JSON_ARRAYAGG(hostProfile.nickname) AS hostMemberNicknames',
+          ])
+          .where('boards.no = :no', { no })
+          .andWhere('hosts.board_no = :no', { no })
+          .getRawOne();
+
+      const board: Board = {
+        hostMemberNums: JSON.parse(hostMemberNums),
+        hostMemberNicknames: JSON.parse(hostMemberNicknames),
+        ...jsonBoard,
+      };
 
       return board;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getBoardByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getBoard-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
   async getBoards(filters?: BoardFilterDto): Promise<Board[]> {
     try {
-      const boards = await this.createQueryBuilder('boards')
+      const boards: SelectQueryBuilder<Boards> = this.createQueryBuilder(
+        'boards',
+      )
         .leftJoin('boards.userNo', 'users')
+        .leftJoin('users.userProfileNo', 'profiles')
+        .leftJoin('boards.hosts', 'hosts')
+        .leftJoin('hosts.userNo', 'hostUsers')
+        .leftJoin('hostUsers.userProfileNo', 'hostProfile')
         .select([
-          'boards.no AS no',
-          'boards.userNo AS user_no',
+          'DISTINCT boards.no AS no',
+          'boards.userNo AS hostUserNo',
+          'profiles.nickname AS hostNickname',
           'boards.title AS title',
           'boards.description AS description',
           'boards.location AS location',
-          'boards.meetingTime AS meeting_time',
           'boards.isDone AS isDone',
-          'boards.isThunder AS isThunder',
-          'boards.male AS male',
-          'boards.female AS female',
+          'boards.isImpromptu AS isImpromptu',
+          'boards.recruitMale AS recruitMale',
+          'boards.recruitFemale AS recruitFemale',
+          `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
+          `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
         ])
         .orderBy('boards.no', 'DESC');
 
-      if (filters) {
-        for (let el in filters) {
-          switch (el) {
-            case 'gender':
-              boards.andWhere(`boards.${filters[el]} = :${filters[el]}`, {
-                [filters[el]]: 0,
-              });
+      for (let idx in filters) {
+        switch (idx) {
+          case 'gender':
+            boards.andWhere(`boards.${filters[idx]} = :${filters[idx]}`, {
+              [filters[idx]]: 0,
+            });
+            break;
 
-              break;
+          case 'people':
+            boards.andWhere(
+              'boards.recruitMale + boards.recruitFemale = :people',
+              {
+                people: filters[idx],
+              },
+            );
+            break;
 
-            case 'people':
-              boards.andWhere('boards.male + boards.female = :people', {
-                people: filters[el],
-              });
+          case 'isDone':
+            boards.andWhere(`boards.${idx} = :${idx}`, { [idx]: filters[idx] });
+            break;
 
-              break;
+          case 'isImpromptu':
+            boards.andWhere(`boards.${idx} = :${idx}`, { [idx]: filters[idx] });
+            break;
 
-            case 'isDone':
-              boards.andWhere(`boards.${el} = :${el}`, { [el]: filters[el] });
+          case 'page':
+            boards.limit(10).offset(filters[idx] * 10);
+            break;
 
-              break;
-
-            case 'isThunder':
-              boards.andWhere(`boards.${el} = :${el}`, { [el]: filters[el] });
-
-              break;
-
-            default:
-              break;
-          }
+          default:
+            break;
         }
       }
 
-      return boards.getRawMany();
+      return await boards.getRawMany();
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getAllBoards-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getBoards-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -132,16 +150,16 @@ export class BoardRepository extends Repository<Boards> {
   //게시글 생성 관련
   async createBoard(
     userNo: number,
-    newBoard: Partial<BoardDto>,
-  ): Promise<number> {
+    board: Omit<CreateBoardDto, 'hostMembers'>,
+  ): Promise<ResultSetHeader> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder('boards')
+      const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
         .into(Boards)
-        .values({ userNo, ...newBoard })
+        .values({ userNo, ...board })
         .execute();
 
-      return raw.insertId;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
@@ -152,16 +170,14 @@ export class BoardRepository extends Repository<Boards> {
   //게시글 수정 관련
   async updateBoard(
     boardNo: number,
-    newBoard: Partial<BoardDto>,
-  ): Promise<number> {
+    updateBoardDto: UpdateBoardDto,
+  ): Promise<void> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder('boards')
+      await this.createQueryBuilder()
         .update(Boards)
-        .set(newBoard)
+        .set(updateBoardDto)
         .where('no = :boardNo', { boardNo })
         .execute();
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
@@ -169,14 +185,29 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async closeBoard(no: number[]): Promise<UpdateResult> {
+  async updateBoardAccepted(boardNo: number): Promise<void> {
     try {
-      const deadline = await this.createQueryBuilder('boards')
+      await this.createQueryBuilder()
+        .update(Boards)
+        .set({ isAccepted: true })
+        .where('no = :boardNo', { boardNo })
+        .execute();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} updateBoardAccepted-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async closeBoard(): Promise<void> {
+    try {
+      await this.createQueryBuilder()
         .update(Boards)
         .set({ isDone: true })
-        .where('no IN (:no)', { no });
-
-      return deadline.execute();
+        .where('isDone = :isDone', { isDone: false })
+        .andWhere('isImpromptu = :isImpromptu', { isImpromptu: true })
+        .andWhere('TIMESTAMPDIFF(hour, created_date, NOW()) >= 24')
+        .execute();
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
@@ -185,15 +216,13 @@ export class BoardRepository extends Repository<Boards> {
   }
 
   // 게시글 삭제 관련
-  async deleteBoard(boardNo: number): Promise<number> {
+  async deleteBoard(boardNo: number): Promise<void> {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder('boards')
+      await this.createQueryBuilder('boards')
         .delete()
         .from(Boards)
         .where('no = :boardNo', { boardNo })
         .execute();
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,

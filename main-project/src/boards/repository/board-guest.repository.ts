@@ -1,21 +1,22 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { EntityRepository, InsertResult, Repository } from 'typeorm';
+import { JsonArray } from 'src/common/interface/interface';
+import { EntityRepository, Repository } from 'typeorm';
 import { BoardGuests } from '../entity/board-guest.entity';
 import { Boards } from '../entity/board.entity';
-import { CreateResponse } from '../interface/boards.interface';
+import { Guest } from '../interface/boards.interface';
 
 @EntityRepository(BoardGuests)
-export class BoardGuestRepository extends Repository<BoardGuests> {
+export class BoardGuestsRepository extends Repository<BoardGuests> {
   // 조회
-  async getAllGuestsByBoardNo(
-    boardNo: number,
-  ): Promise<Pick<Boards, 'userNo'>[]> {
+  async getAllGuestsByBoardNo(boardNo: number): Promise<number[]> {
     try {
-      const guests = await this.createQueryBuilder('boardGuest')
+      const { userNo }: JsonArray = await this.createQueryBuilder('boardGuest')
         .leftJoin('boardGuest.teamNo', 'team')
-        .select('boardGuest.userNo AS userNo')
+        .select('JSON_ARRAYAGG(boardGuest.userNo) AS userNo')
         .where('team.boardNo = :boardNo', { boardNo })
-        .getRawMany();
+        .getRawOne();
+
+      const guests: number[] = JSON.parse(userNo);
 
       return guests;
     } catch (error) {
@@ -26,20 +27,16 @@ export class BoardGuestRepository extends Repository<BoardGuests> {
   }
 
   // 생성
-  async createGuests(guests: object[]): Promise<CreateResponse> {
+  async createGuests(guests: Guest[]): Promise<void> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder(
-        'board_guests',
-      )
+      await this.createQueryBuilder()
         .insert()
         .into(BoardGuests)
         .values(guests)
         .execute();
-
-      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createGuestMembers-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createGuests-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

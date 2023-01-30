@@ -1,5 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
+import { JsonArray } from 'src/common/interface/interface';
 import {
   EntityRepository,
   InsertResult,
@@ -138,6 +139,23 @@ export class UsersRepository extends Repository<Users> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 가입 완료된 조회 에러(getConfirmedUserByNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getUsersByNums(userNo: number[]): Promise<number[]> {
+    try {
+      const { no }: JsonArray = await this.createQueryBuilder('users')
+        .select(['JSON_ARRAYAGG(users.no) AS no'])
+        .where('no IN (:userNo)', { userNo })
+        .getRawOne();
+
+      const users: number[] = JSON.parse(no);
+
+      return users;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 유저 조회 에러(getUsersByNo): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

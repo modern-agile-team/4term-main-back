@@ -1,45 +1,56 @@
-import { InternalServerErrorException } from "@nestjs/common";
-import { DeleteResult, EntityRepository, InsertResult, Repository, UpdateResult } from "typeorm";
-import { BoardHosts } from "../entity/board-host.entity";
-import { CreateResponse } from "../interface/boards.interface";
+import { InternalServerErrorException } from '@nestjs/common';
+import { JsonArray } from 'src/common/interface/interface';
+import { EntityRepository, Repository } from 'typeorm';
+import { BoardHosts } from '../entity/board-host.entity';
 
 @EntityRepository(BoardHosts)
-export class BoardHostRepository extends Repository<BoardHosts> {
-    // 생성
-    async createHosts(
-        hosts: object[],
-    ): Promise<CreateResponse> {
-        try {
-            const { raw }: InsertResult = await this.createQueryBuilder(
-                'board_hosts',
-            )
-                .insert()
-                .into(BoardHosts)
-                .values(hosts)
-                .execute();
+export class BoardHostsRepository extends Repository<BoardHosts> {
+  // 조회
+  async getHosts(boardNo: number): Promise<number[]> {
+    try {
+      const { userNo }: JsonArray = await this.createQueryBuilder()
+        .select('JSON_ARRAYAGG(user_no) AS userNo')
+        .where('board_no = :boardNo', { boardNo })
+        .getRawOne();
 
-            return raw;
-        } catch (error) {
-            throw new InternalServerErrorException(
-                `${error} createHosts-repository: 알 수 없는 서버 에러입니다.`,
-            );
-        }
+      const hosts: number[] = JSON.parse(userNo);
+
+      return hosts;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getHosts-repository: 알 수 없는 서버 에러입니다.`,
+      );
     }
-
-    // 삭제
-    async deleteHosts(boardNo: number): Promise<number> {
-        try {
-            const { affected }: DeleteResult = await this.createQueryBuilder('boardHosts')
-                .delete()
-                .from(BoardHosts)
-                .where('boardNo = :boardNo', { boardNo })
-                .execute();
-
-            return affected;
-        } catch (error) {
-            throw new InternalServerErrorException(
-                `${error} deleteHosts-repository: 알 수 없는 서버 에러입니다.`,
-            );
-        }
+  }
+  // 생성
+  async createHosts(
+    hosts: Pick<BoardHosts, 'boardNo' | 'userNo'>[],
+  ): Promise<void> {
+    try {
+      await this.createQueryBuilder()
+        .insert()
+        .into(BoardHosts)
+        .values(hosts)
+        .execute();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} createHosts-repository: 알 수 없는 서버 에러입니다.`,
+      );
     }
+  }
+
+  // 삭제
+  async deleteHosts(boardNo: number): Promise<void> {
+    try {
+      await this.createQueryBuilder()
+        .delete()
+        .from(BoardHosts)
+        .where('boardNo = :boardNo', { boardNo })
+        .execute();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteHosts-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
 }
