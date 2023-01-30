@@ -23,13 +23,15 @@ import { UsersRepository } from 'src/users/repository/users.repository';
 import { FriendsRepository } from 'src/friends/repository/friends.repository';
 import { Friend } from 'src/friends/interface/friend.interface';
 import { NoticeBoardHostsRepository } from 'src/notices/repository/notices-board-host.repository';
-import { NoticeBoardHosts } from 'src/notices/entity/notice-board-host.entity';
 import { BoardBookmarks } from './entity/board-bookmark.entity';
-import { JsonArray } from 'src/common/interface/interface';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class BoardsService {
-  constructor(private readonly connection: Connection) {}
+  constructor(
+    private readonly connection: Connection,
+    private readonly configService: ConfigService,
+  ) {}
   //cron
   async closeBoard(): Promise<void> {
     const queryRunner: QueryRunner = this.connection.createQueryRunner();
@@ -301,6 +303,7 @@ export class BoardsService {
 
     if (isAllAccepted) {
       await this.updateBoardAccepted(manager, boardNo);
+      await this.saveNoticeHostAccepted(manager, boardNo);
     }
   }
 
@@ -350,7 +353,7 @@ export class BoardsService {
 
     await manager
       .getCustomRepository(BoardBookmarksRepository)
-      .cancelBookmark(boardNo, userNo);
+      .deleteBookmark(boardNo, userNo);
   }
 
   // 알람 생성
@@ -377,12 +380,36 @@ export class BoardsService {
     userNo: number,
     hosts: number[],
   ): Promise<void> {
-    const type = NoticeType.GUEST_REQUEST;
+    const type: number = NoticeType.GUEST_REQUEST;
 
     for (let idx in hosts) {
       const { insertId }: InsertRaw = await manager
         .getCustomRepository(NoticesRepository)
         .saveNotice({ userNo, targetUserNo: hosts[idx], type });
+
+      await manager
+        .getCustomRepository(NoticeBoardHostsRepository)
+        .saveNoticeBoardHosts(insertId, boardNo);
+    }
+  }
+
+  private async saveNoticeHostAccepted(
+    manager: EntityManager,
+    boardNo: number,
+  ) {
+    const { hostUserNo }: Board = await this.getBoard(manager, boardNo);
+    const { userNo: hosts }: Host = await this.getHosts(manager, boardNo);
+    const type: number = NoticeType.HOST_REQUEST_ALL_ACCEPTED;
+    hosts.push(hostUserNo);
+
+    for (let idx in hosts) {
+      const { insertId }: InsertRaw = await manager
+        .getCustomRepository(NoticesRepository)
+        .saveNotice({
+          userNo: this.configService.get<number>('ADMIN_USER'),
+          targetUserNo: hosts[idx],
+          type,
+        });
 
       await manager
         .getCustomRepository(NoticeBoardHostsRepository)

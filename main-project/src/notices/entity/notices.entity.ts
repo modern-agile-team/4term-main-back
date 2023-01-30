@@ -43,12 +43,15 @@ export class Notices extends BaseEntity {
   })
   createdDate: Date;
 
-  @OneToOne((type) => NoticeBoards, (noticeBoards) => noticeBoards.noticeNo)
+  @OneToOne((type) => NoticeBoards, (noticeBoards) => noticeBoards.noticeNo, {
+    onDelete: 'CASCADE',
+  })
   noticeBoards: NoticeBoards;
 
   @OneToOne(
     (type) => NoticeBoardHosts,
     (noticeBoardHost) => noticeBoardHost.noticeNo,
+    { onDelete: 'CASCADE' },
   )
   noticeBoardHost: NoticeBoardHosts;
 
