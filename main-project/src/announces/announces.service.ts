@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ResultSetHeader } from 'mysql2';
-import { CreateResponse } from 'src/boards/interface/boards.interface';
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { AnnouncesDto } from './dto/announce.dto';
 import { AnnouncesImages } from './entity/announce-images.entity';
@@ -49,7 +48,7 @@ export class AnnouncesService {
       return { announcesNo, imageUrl: url };
     });
 
-    const { insertId }: CreateResponse =
+    const { insertId }: ResultSetHeader =
       await this.announcesImagesRepository.uploadAnnouncesimagesUrl(images);
 
     if (!insertId) {

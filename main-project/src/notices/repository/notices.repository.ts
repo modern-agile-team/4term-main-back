@@ -106,7 +106,7 @@ export class NoticesRepository extends Repository<Notices> {
             WHEN notices.type = ${NoticeType.FRIEND_REQUEST}
             OR notices.type = ${NoticeType.FRIEND_REQUEST_ACCEPTED}
               THEN JSON_OBJECT("friendNo", noticeFriends.friendNo)
-            WHEN notices.type = ${NoticeType.GUEST_APPLICATION}
+            WHEN notices.type = ${NoticeType.GUEST_REQUEST}
               THEN JSON_OBJECT("boardNo", noticeBoards.boardNo)
           END
           AS value`,

@@ -1,5 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { CreateResponse } from 'src/boards/interface/boards.interface';
+import { ResultSetHeader } from 'mysql2';
 import {
   DeleteResult,
   EntityRepository,
@@ -53,7 +53,7 @@ export class EventsRepository extends Repository<Events> {
   }
 
   // 생성 관련
-  async createEvents(eventsDto: EventDto): Promise<CreateResponse> {
+  async createEvents(eventsDto: EventDto): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('events')
         .insert()

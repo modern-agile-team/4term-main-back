@@ -1,71 +1,39 @@
-export interface MeetingMembersList {
-  hostUserNo: number[];
-  guestUserNo: number[];
-}
-
-export interface ChatToCreate {
+export interface ChatRoom {
+  chatRoomNo: number;
+  roomName: string;
   userNo?: number;
-  boardNo: number;
-  roomName?: string;
+  boardNo?: number;
 }
 
-export interface ChatRoomUsers {
+export interface ChatRoomOfBoard extends Partial<ChatRoom> {
+  hostsNickname: string;
+  guestsNickname: string;
+  hostsUserNo: string;
+  guestsUserNo: string;
+}
+export interface ChatRoomBeforeCreate extends Partial<ChatRoom> {}
+
+export interface ChatRoomWithUsers extends Pick<ChatRoom, 'chatRoomNo'> {
   users: string;
   userType: number;
-  chatRoomNo: number;
 }
 
-export interface JoinChatRoom {
-  userNo: number;
-  chatRoomNo: number;
+export interface ChatUser extends Partial<ChatRoom> {
+  userType: number;
+  nickname?: string;
 }
 
-export interface FileUrlDetail {
-  chatLogNo: number;
-  fileUrl: string;
+export interface ChatUserValidation extends Partial<ChatRoom> {
+  isUserNeeded: boolean;
 }
 
-export interface ChatRoomToSet {
-  guestNickname?: string;
-  hostNickname?: string;
-  roomName?: string;
-  userNo?: string;
-  guestUserNo?: string;
-  hostUserNo?: string;
-}
-
-export interface ChatRoomUser {
-  chatRoomNo: number;
-  nickname: string;
-  roomName: string;
-  meetingNo: number;
-  userNo: number;
-}
-
-export interface ChatRoom {
-  roomName: string;
-  chatRoomNo: number;
-}
-
-export interface PreviousChatLog {
-  userNo: number;
-  chatRoomNo: number;
-  currentChatLogNo?: number;
-  message?: string;
-  timeStamp?: Date;
-}
-
-export interface ChatUserInfo {
-  userNo: number;
-  chatRoomNo: number;
+export interface ChatRoomInvitation extends Partial<ChatRoom> {
+  targetUserNo: number;
   userType?: number;
-  targetUserNo?: number;
   type?: number;
 }
 
-export interface UserValidation {
-  userNo: number;
-  chatRoomNo: number;
-  isUserNeeded: boolean;
-  target: string;
+export interface FileUrl {
+  chatLogNo: number;
+  fileUrl: string;
 }

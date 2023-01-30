@@ -69,13 +69,4 @@ export class CreateBoardDto {
   @IsNumber({}, { each: true })
   @IsNotEmpty()
   hostMembers: number[];
-
-  // 삭제 예정
-  @ApiProperty({
-    example: 'host userNo -> jwt로 빠질 예정',
-    description: 'host user_no',
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  userNo: number;
 }
