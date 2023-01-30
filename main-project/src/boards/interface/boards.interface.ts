@@ -35,3 +35,8 @@ export interface Guest {
   teamNo: number;
   userNo: number;
 }
+
+export interface Host {
+  userNo: number[];
+  isAccepted: number[];
+}

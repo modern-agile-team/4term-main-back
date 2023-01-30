@@ -9,7 +9,7 @@ import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.rep
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { Guest, GuestTeam, Board } from './interface/boards.interface';
+import { Guest, GuestTeam, Board, Host } from './interface/boards.interface';
 import { BoardBookmarksRepository } from './repository/board-bookmark.repository';
 import { BoardGuestsRepository as BoardGuestsRepository } from './repository/board-guest.repository';
 import { BoardHostsRepository } from './repository/board-host.repository';
@@ -25,6 +25,7 @@ import { Friend } from 'src/friends/interface/friend.interface';
 import { NoticeBoardHostsRepository } from 'src/notices/repository/notices-board-host.repository';
 import { NoticeBoardHosts } from 'src/notices/entity/notice-board-host.entity';
 import { BoardBookmarks } from './entity/board-bookmark.entity';
+import { JsonArray } from 'src/common/interface/interface';
 
 @Injectable()
 export class BoardsService {
@@ -83,8 +84,8 @@ export class BoardsService {
   private async getHosts(
     manager: EntityManager,
     boardNo: number,
-  ): Promise<number[]> {
-    const hosts: number[] = await manager
+  ): Promise<Host> {
+    const hosts: Host = await manager
       .getCustomRepository(BoardHostsRepository)
       .getHosts(boardNo);
 
@@ -99,7 +100,6 @@ export class BoardsService {
     const bookmark: BoardBookmarks = await manager
       .getCustomRepository(BoardBookmarksRepository)
       .getBookmark(boardNo, userNo);
-    console.log(bookmark);
 
     return bookmark;
   }
@@ -287,12 +287,12 @@ export class BoardsService {
 
   private async acceptHostInvite(
     manager: EntityManager,
-    noticeNo: number,
+    userNo: number,
     boardNo: number,
   ): Promise<void> {
     await manager
-      .getCustomRepository(NoticeBoardHostsRepository)
-      .updateNoticeBoardHosts(noticeNo);
+      .getCustomRepository(BoardHostsRepository)
+      .acceptInvite(boardNo, userNo);
 
     const isAllAccepted: boolean = await this.validateAllAccept(
       manager,
@@ -464,8 +464,8 @@ export class BoardsService {
     boardNo: number,
     userNo: number,
   ): Promise<void> {
-    const hosts: number[] = await this.getHosts(manager, boardNo);
-    if (!hosts.includes(userNo)) {
+    const hosts: Host = await this.getHosts(manager, boardNo);
+    if (!hosts.userNo.includes(userNo)) {
       throw new BadRequestException(
         `사용자 검증 (validateHostMembers-service): 사용자는 해당 게시글에 초대받지 않았습니다.`,
       );
@@ -492,25 +492,15 @@ export class BoardsService {
     }
   }
 
-  private async validateIsAnswered(
-    manager: EntityManager,
-    boardNo: number,
-    userNo: number,
-  ): Promise<void> {
-    await manager
-      .getCustomRepository(NoticeBoardHostsRepository)
-      .getInviteNotcie(boardNo, userNo);
-  }
-
   private async validateAllAccept(
     manager: EntityManager,
     boardNo: number,
   ): Promise<boolean> {
-    const isAccepteds: number[] = await manager
-      .getCustomRepository(NoticeBoardHostsRepository)
-      .getIsAcceptedsByBoardNo(boardNo);
+    const { isAccepted }: Host = await manager
+      .getCustomRepository(BoardHostsRepository)
+      .getHosts(boardNo);
 
-    const isAllAccepted: boolean = isAccepteds.includes(0) ? false : true;
+    const isAllAccepted: boolean = isAccepted.includes(0) ? false : true;
 
     return isAllAccepted;
   }
@@ -523,13 +513,24 @@ export class BoardsService {
   ): Promise<void> {
     const { hostUserNo }: Board = await this.getBoard(manager, boardNo);
     await this.validateIsHostMember(manager, boardNo, userNo);
-
-    const { no }: NoticeBoardHosts = await manager
-      .getCustomRepository(NoticeBoardHostsRepository)
-      .getInviteNotcie(boardNo, userNo);
+    await this.validateIsAnswered(manager, boardNo, userNo);
 
     !isAccepted
       ? await this.rejectHostInvite(manager, boardNo, userNo, hostUserNo)
-      : await this.acceptHostInvite(manager, no, boardNo);
+      : await this.acceptHostInvite(manager, userNo, boardNo);
+  }
+
+  private async validateIsAnswered(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+  ) {
+    const isAnswered: boolean = await manager
+      .getCustomRepository(BoardHostsRepository)
+      .getAnswer(boardNo, userNo);
+
+    if (isAnswered) {
+      throw new BadRequestException('이미 초대 수락한 알람입니다.');
+    }
   }
 }

@@ -2,18 +2,25 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { JsonArray } from 'src/common/interface/interface';
 import { EntityRepository, Repository } from 'typeorm';
 import { BoardHosts } from '../entity/board-host.entity';
+import { Host } from '../interface/boards.interface';
 
 @EntityRepository(BoardHosts)
 export class BoardHostsRepository extends Repository<BoardHosts> {
   // 조회
-  async getHosts(boardNo: number): Promise<number[]> {
+  async getHosts(boardNo: number): Promise<Host> {
     try {
-      const { userNo }: JsonArray = await this.createQueryBuilder()
-        .select('JSON_ARRAYAGG(user_no) AS userNo')
+      const { userNo, isAccepted }: JsonArray = await this.createQueryBuilder()
+        .select([
+          'JSON_ARRAYAGG(user_no) AS userNo',
+          'JSON_ARRAYAGG(is_accepted) AS isAccepted',
+        ])
         .where('board_no = :boardNo', { boardNo })
         .getRawOne();
 
-      const hosts: number[] = JSON.parse(userNo);
+      const hosts: Host = {
+        userNo: JSON.parse(userNo),
+        isAccepted: JSON.parse(isAccepted),
+      };
 
       return hosts;
     } catch (error) {
@@ -22,6 +29,23 @@ export class BoardHostsRepository extends Repository<BoardHosts> {
       );
     }
   }
+
+  async getAnswer(boardNo: number, userNo: number): Promise<boolean> {
+    try {
+      const { isAnswered }: BoardHosts = await this.createQueryBuilder()
+        .select(['is_answered AS isAnswered'])
+        .where('board_no = :boardNo', { boardNo })
+        .andWhere('user_no = :userNo', { userNo })
+        .getRawOne();
+
+      return isAnswered;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getAnswer-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   // 생성
   async createHosts(
     hosts: Pick<BoardHosts, 'boardNo' | 'userNo'>[],
@@ -35,6 +59,22 @@ export class BoardHostsRepository extends Repository<BoardHosts> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createHosts-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  // 수정
+  async acceptInvite(boardNo: number, userNo: number): Promise<void> {
+    try {
+      await this.createQueryBuilder()
+        .update(BoardHosts)
+        .set({ isAccepted: true, isAnswered: true })
+        .where('boardNo = :boardNo', { boardNo })
+        .andWhere('userNo = :userNo', { userNo })
+        .execute();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 게시글 호스트멤버 초대 수락(acceptInvite-repository): 알 수 없는 서버 오류입니다.`,
       );
     }
   }
