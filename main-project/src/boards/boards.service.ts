@@ -70,7 +70,7 @@ export class BoardsService {
   async getBoard(manager: EntityManager, boardNo: number): Promise<Board> {
     const board: Board = await manager
       .getCustomRepository(BoardsRepository)
-      .getBoard(boardNo);
+      .getBoardByNo(boardNo);
 
     if (!board.no) {
       throw new NotFoundException(
