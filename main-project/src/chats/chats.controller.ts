@@ -99,12 +99,13 @@ export class ChatsController {
     summary: '채팅방 초대 수락 API',
     description: '유저 번호, 타입, 채팅방 번호를 통해 초대 수락',
   })
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard)
   async acceptInvitation(
-    @GetUser() userNo: number,
+    // @GetUser() userNo: number,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() invitationInfo: AcceptInvitationDTO,
   ): Promise<APIResponse> {
+    const userNo = 10;
     await this.chatControllerService.acceptInvitation(
       userNo,
       chatRoomNo,

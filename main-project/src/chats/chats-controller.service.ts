@@ -194,7 +194,7 @@ export class ChatsControllerService {
     if (userNo !== targetUserNo) {
       throw new BadRequestException(`초대받은 유저만 수락할 수 있습니다.`);
     }
-    if (type !== NoticeType.INVITE_HOST || NoticeType.INVITE_GUEST) {
+    if (type !== NoticeType.INVITE_HOST && type !== NoticeType.INVITE_GUEST) {
       throw new BadRequestException(`잘못된 Notice 타입입니다.`);
     }
     const userType =
