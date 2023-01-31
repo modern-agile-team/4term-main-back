@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -21,7 +20,6 @@ import { APIResponse } from 'src/common/interface/interface';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { EntityManager } from 'typeorm';
-import { ChatRoom } from './interface/chat.interface';
 import { UseGuards } from '@nestjs/common/decorators';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
