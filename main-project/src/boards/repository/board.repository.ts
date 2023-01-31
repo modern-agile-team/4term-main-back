@@ -236,19 +236,19 @@ export class BoardsRepository extends Repository<Boards> {
   ): Promise<ChatRoomOfBoard> {
     try {
       const users: ChatRoomOfBoard = await this.createQueryBuilder('boards')
-        .leftJoin('boards.hosts', 'hostList')
-        .leftJoin('boards.teamNo', 'guestParticipation')
-        .leftJoin('guestParticipation.boardGuest', 'guestList')
-        .leftJoin('hostList.userNo', 'hostUser')
-        .leftJoin('guestList.userNo', 'guestUser')
+        .leftJoin('boards.hosts', 'hostTeam')
+        .leftJoin('boards.teamNo', 'team')
+        .leftJoin('team.boardGuest', 'guestTeam')
+        .leftJoin('hostTeam.userNo', 'hostUser')
+        .leftJoin('guestTeam.userNo', 'guestUser')
         .leftJoin('hostUser.userProfileNo', 'hostProfile')
         .leftJoin('guestUser.userProfileNo', 'guestProfile')
         .select([
           'boards.no AS boardNo',
           'GROUP_CONCAT(DISTINCT hostProfile.nickname) AS hostsNickname',
           'GROUP_CONCAT(DISTINCT guestProfile.nickname) AS guestsNickname',
-          'GROUP_CONCAT(DISTINCT hostList.user_no) AS hostsUserNo',
-          'GROUP_CONCAT(DISTINCT guestList.user_no) AS guestsUserNo',
+          'GROUP_CONCAT(DISTINCT hostTeam.user_no) AS hostsUserNo',
+          'GROUP_CONCAT(DISTINCT guestTeam.user_no) AS guestsUserNo',
         ])
         .where('boards.no = :boardNo AND boards.user_no = :userNo', {
           boardNo,
@@ -267,7 +267,7 @@ export class BoardsRepository extends Repository<Boards> {
   async getBoard(boardNo: number): Promise<Boards> {
     try {
       const board: Boards = await this.createQueryBuilder('boards')
-        .select('user_no AS userNo')
+        .select('user_no AS hostUserNo')
         .where('no = :boardNo ', { boardNo })
         .getRawOne();
 

@@ -34,19 +34,6 @@ export class ChatsController {
     private readonly awsService: AwsService,
   ) {}
 
-  @Get('/:userNo')
-  @ApiOperation({
-    summary: '채팅방 목록 API',
-    description: '채팅방 목록 조회',
-  })
-  async getChatRoomList(@Param('userNo') userNo: number): Promise<APIResponse> {
-    const chatRooms: ChatRoom[] =
-      await this.chatControllerService.getChatRoomsByUserNo(userNo);
-    return {
-      response: { chatRooms },
-    };
-  }
-
   @Get('/:chatRoomNo/previous-chat-log')
   @ApiOperation({
     summary: '이전 채팅 내역 API',

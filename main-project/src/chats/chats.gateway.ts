@@ -64,8 +64,8 @@ export class ChatsGateway {
 
   @SubscribeMessage('init-socket')
   @AsyncApiSub({
-    description: `소켓 초기화 
-    response: [{ roomName: string, chatRoomNo: number }] 반환`,
+    description: `소켓 초기화 socket auth 헤더 token으로 전달 
+    response: [{ roomName: string, chatRoomNo: number, users:[{userNo:number, nickname:string, profileImage:string}] }] 반환`,
     channel: 'init-socket',
     message: {
       payload: InitSocketDto,
