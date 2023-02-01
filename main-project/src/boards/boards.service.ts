@@ -64,11 +64,10 @@ export class BoardsService {
     const boards: Board<void>[] = await manager
       .getCustomRepository(BoardsRepository)
       .getBoards(filter);
-    console.log(boards);
 
     if (!boards.length) {
       throw new NotFoundException(
-        `게시글 전체 조회(getAllBoards-service): 게시글이 없습니다.`,
+        `게시글 전체 조회(getAllBoards-service): 조건에 맞는 게시글이 없습니다.`,
       );
     }
 
@@ -85,7 +84,7 @@ export class BoardsService {
 
     if (!board.no) {
       throw new NotFoundException(
-        `게시글 상세 조회(getBoard-service): ${boardNo}번 게시글이 없습니다.`,
+        `게시글 상세 조회(getBoard-service): 존재하지 않는 게시글 번호입니다.`,
       );
     }
     return board;
@@ -268,7 +267,9 @@ export class BoardsService {
     await this.getBoard(manager, boardNo);
     const bookmark = await this.getBookmark(manager, boardNo, userNo);
     if (bookmark) {
-      throw new BadRequestException('이미 북마크처리가 됬습니다.');
+      throw new BadRequestException(
+        '북마크 생성(createBookmark-service): 이미 생성된 북마크입니다.',
+      );
     }
 
     await this.setBookmark(manager, boardNo, userNo);
@@ -415,10 +416,18 @@ export class BoardsService {
     );
     if (!bookmark) {
       throw new BadRequestException(
-        `북마크 취소(cancelBookmark-service): 해당 북마크가 없습니다.`,
+        `북마크 취소(cancelBookmark-service): 존재하지 않는 북마크입니다.`,
       );
     }
 
+    await this.deleteBookmark(manager, boardNo, userNo);
+  }
+
+  private async deleteBookmark(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+  ): Promise<void> {
     await manager
       .getCustomRepository(BoardBookmarksRepository)
       .deleteBookmark(boardNo, userNo);
@@ -561,12 +570,16 @@ export class BoardsService {
       .getUsersByNums(users);
 
     if (!dbUsers.length) {
-      throw new BadRequestException(`${users}번 유저가 없습니다.`);
+      throw new BadRequestException(
+        '사용자 확인(validateUsers-service): 존재하지 않는 사용자들 입니다',
+      );
     }
 
     const isUser = users.filter((userNo) => !dbUsers.includes(userNo));
     if (isUser.length) {
-      throw new BadRequestException(`${isUser}번 유저가 없습니다.`);
+      throw new BadRequestException(
+        `사용자 확인(validateUsers-service): ${isUser}번 사용자가 존재하지 않습니다.`,
+      );
     }
   }
 
@@ -576,7 +589,9 @@ export class BoardsService {
     friends: number[],
   ): Promise<void> {
     if (friends.includes(userNo)) {
-      throw new BadRequestException(`친구 목록에 작성자가 담겨있습니다.`);
+      throw new BadRequestException(
+        `친구 확인(validateFriends-service): 작성자가 친구목록에 담겨있습니다.`,
+      );
     }
 
     const dbFriends: Friend[] = await manager
@@ -584,7 +599,9 @@ export class BoardsService {
       .getAllFriendList(userNo);
 
     if (!dbFriends.length) {
-      throw new BadRequestException(`${userNo}번 유저는 친구가 없습니다...`);
+      throw new BadRequestException(
+        `친구 확인(validateFriends-service): 사용자는 친구가 없습니다...`,
+      );
     }
     const dbFriendNums: number[] = dbFriends.map(
       (friend) => friend.friendUserNo,
@@ -595,7 +612,9 @@ export class BoardsService {
     );
 
     if (isFreidns.length) {
-      throw new BadRequestException(`${isFreidns}번 사용자랑 친구가 아닙니다.`);
+      throw new BadRequestException(
+        `친구확인(validateFriends-service): ${isFreidns}번 사용자랑 친구가 아닙니다.`,
+      );
     }
   }
 
@@ -700,7 +719,9 @@ export class BoardsService {
       .getAnswer(boardNo, userNo);
 
     if (isAnswered) {
-      throw new BadRequestException('이미 초대 수락한 알람입니다.');
+      throw new BadRequestException(
+        '호스트 수락 확인(validateHostIsAnswered-service): 이미 초대 수락한 알람입니다.',
+      );
     }
   }
 
@@ -714,7 +735,9 @@ export class BoardsService {
       .getAnswer(boardNo, userNo);
 
     if (isAnswered) {
-      throw new BadRequestException('이미 초대 수락한 알람입니다.');
+      throw new BadRequestException(
+        '게스트 수락 확인(validateGuestIsAnswered-service): 이미 초대 수락한 알람입니다.',
+      );
     }
   }
 
@@ -744,7 +767,9 @@ export class BoardsService {
     );
 
     if (!preGuest.includes(userNo)) {
-      throw new BadRequestException('해당 게시글에 대한 참가신청이 없습니다.');
+      throw new BadRequestException(
+        '게스트 확인(validateIsGuest-service): 해당 게시글에 대한 참가신청이 없습니다.',
+      );
     }
   }
 

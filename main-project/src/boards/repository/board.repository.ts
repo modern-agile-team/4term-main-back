@@ -68,9 +68,9 @@ export class BoardsRepository extends Repository<Boards> {
         .getRawOne();
 
       const board: Board<number[]> = {
+        ...jsonBoard,
         hostMemberNums: JSON.parse(hostMemberNums),
         hostMemberNicknames: JSON.parse(hostMemberNicknames),
-        ...jsonBoard,
       };
 
       return board;
