@@ -150,6 +150,52 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
+  async getBoardsByUser(userNo: number, type: number): Promise<Board<void>[]> {
+    try {
+      const boards: SelectQueryBuilder<Boards> = this.createQueryBuilder(
+        'boards',
+      )
+        .leftJoin('boards.userNo', 'users')
+        .leftJoin('users.userProfileNo', 'profiles')
+        .leftJoin('boards.hosts', 'hosts')
+        .leftJoin('hosts.userNo', 'hostUsers')
+        .leftJoin('hostUsers.userProfileNo', 'hostProfile')
+        .select([
+          'DISTINCT boards.no AS no',
+          'boards.userNo AS hostUserNo',
+          'profiles.nickname AS hostNickname',
+          'boards.title AS title',
+          'boards.description AS description',
+          'boards.location AS location',
+          'boards.isDone AS isDone',
+          'boards.isImpromptu AS isImpromptu',
+          'boards.recruitMale AS recruitMale',
+          'boards.recruitFemale AS recruitFemale',
+          `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
+          `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
+        ])
+        .orderBy('boards.no', 'DESC');
+
+      // switch (type) {
+      //   case value1:
+      //     statement1;
+      //     break;
+      //   case value2:
+      //     statement2;
+      //     break;
+      //   ...
+      //   default:
+      //     statement3;
+      // }
+
+      return await boards.getRawMany();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getBoardsByUser-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   //게시글 생성 관련
   async createBoard(
     userNo: number,

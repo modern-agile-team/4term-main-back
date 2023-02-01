@@ -8,18 +8,18 @@ export class BoardHostsRepository extends Repository<BoardHosts> {
   // 조회
   async getHosts(boardNo: number): Promise<Host<number[]>> {
     try {
-      const { userNo, isAccepted }: Host<string> =
+      const { users, acceptedResults }: Host<string> =
         await this.createQueryBuilder()
           .select([
-            'JSON_ARRAYAGG(user_no) AS userNo',
-            'JSON_ARRAYAGG(is_accepted) AS isAccepted',
+            'JSON_ARRAYAGG(user_no) AS users',
+            'JSON_ARRAYAGG(is_accepted) AS acceptedResults',
           ])
           .where('board_no = :boardNo', { boardNo })
           .getRawOne();
 
       const hosts: Host<number[]> = {
-        userNo: JSON.parse(userNo),
-        isAccepted: JSON.parse(isAccepted),
+        users: JSON.parse(users),
+        acceptedResults: JSON.parse(acceptedResults),
       };
 
       return hosts;

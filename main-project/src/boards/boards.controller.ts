@@ -11,7 +11,7 @@ import {
   UseInterceptors,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
@@ -82,6 +82,24 @@ export class BoardsController {
     );
 
     return { msg: '게시글 상세조회 성공', response: { board } };
+  }
+
+  @Get('/my-page/:type')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetBoard()
+  async getBoardByUser(
+    @Param('type') type: number,
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<APIResponse> {
+    const boards: Board<void>[] = await this.boardService.getBoardsByUser(
+      manager,
+      userNo,
+      type,
+    );
+
+    return { msg: '게시글 상세조회 성공', response: { boards } };
   }
 
   // Post Methods

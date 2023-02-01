@@ -74,6 +74,18 @@ export class BoardsService {
     return boards;
   }
 
+  async getBoardsByUser(
+    manager: EntityManager,
+    userNo: number,
+    type: number,
+  ): Promise<Board<void>[]> {
+    const boards: Board<void>[] = await manager
+      .getCustomRepository(BoardsRepository)
+      .getBoardsByUser(userNo, type);
+
+    return boards;
+  }
+
   async getBoard(
     manager: EntityManager,
     boardNo: number,
@@ -513,19 +525,16 @@ export class BoardsService {
       manager,
       boardNo,
     );
-    const { userNo: hosts }: Host<number[]> = await this.getHosts(
-      manager,
-      boardNo,
-    );
+    const { users }: Host<number[]> = await this.getHosts(manager, boardNo);
     const type: number = NoticeType.HOST_REQUEST_ALL_ACCEPTED;
-    hosts.push(hostUserNo);
+    users.push(hostUserNo);
 
-    for (let idx in hosts) {
+    for (let idx in users) {
       const { insertId }: InsertRaw = await manager
         .getCustomRepository(NoticesRepository)
         .saveNotice({
           userNo: this.ADMIN_USER,
-          targetUserNo: hosts[idx],
+          targetUserNo: users[idx],
           type,
         });
 
@@ -635,7 +644,7 @@ export class BoardsService {
     userNo: number,
   ): Promise<void> {
     const hosts: Host<number[]> = await this.getHosts(manager, boardNo);
-    if (!hosts.userNo.includes(userNo)) {
+    if (!hosts.users.includes(userNo)) {
       throw new BadRequestException(
         `사용자 검증 (validateHostMembers-service): 사용자는 해당 게시글에 초대받지 않았습니다.`,
       );
@@ -667,12 +676,12 @@ export class BoardsService {
     manager: EntityManager,
     boardNo: number,
   ): Promise<boolean> {
-    const { isAccepted }: Host<number[]> = await this.getHosts(
+    const { acceptedResults }: Host<number[]> = await this.getHosts(
       manager,
       boardNo,
     );
 
-    const isAllAccepted: boolean = isAccepted.includes(0) ? false : true;
+    const isAllAccepted: boolean = acceptedResults.includes(0) ? false : true;
 
     return isAllAccepted;
   }
