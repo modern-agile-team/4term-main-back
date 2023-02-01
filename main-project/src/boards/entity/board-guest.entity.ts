@@ -1,6 +1,7 @@
 import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
+  Column,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -30,4 +31,22 @@ export class BoardGuests extends BaseEntity {
   )
   @JoinColumn({ name: 'team_no' })
   teamNo: number;
+
+  @Column({
+    type: 'tinyint',
+    width: 1,
+    default: false,
+    nullable: true,
+    name: 'is_accepted',
+  })
+  isAccepted: boolean;
+
+  @Column({
+    type: 'tinyint',
+    width: 1,
+    default: false,
+    nullable: true,
+    name: 'is_answered',
+  })
+  isAnswered: boolean;
 }

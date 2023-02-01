@@ -49,6 +49,7 @@ export class Boards extends BaseEntity {
     width: 1,
     default: false,
     nullable: true,
+    name: 'is_accepted',
   })
   isAccepted: boolean;
 

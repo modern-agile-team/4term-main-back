@@ -2,7 +2,6 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { JsonArray } from 'src/common/interface/interface';
 import { EntityRepository, Repository } from 'typeorm';
 import { BoardGuests } from '../entity/board-guest.entity';
-import { Boards } from '../entity/board.entity';
 import { Guest } from '../interface/boards.interface';
 
 @EntityRepository(BoardGuests)
@@ -26,8 +25,43 @@ export class BoardGuestsRepository extends Repository<BoardGuests> {
     }
   }
 
+  async getAnswer(boardNo: number, userNo: number): Promise<boolean> {
+    try {
+      const { isAnswered }: Guest<boolean> = await this.createQueryBuilder(
+        'guests',
+      )
+        .leftJoin('guests.teamNo', 'team')
+        .select(['guests.is_answered AS isAnswered'])
+        .where('team.board_no = :boardNo', { boardNo })
+        .andWhere('guests.user_no = :userNo', { userNo })
+        .getRawOne();
+
+      return isAnswered;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getAnswer-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  // 수정
+  async accpetGuestInvite(teamNo: number, userNo: number): Promise<void> {
+    try {
+      await this.createQueryBuilder()
+        .update()
+        .set({ isAccepted: true, isAnswered: true })
+        .where('teamNo = :teamNo', { teamNo })
+        .andWhere('userNo = :userNo', { userNo })
+        .execute();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} accpetGuestInvite-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   // 생성
-  async createGuests(guests: Guest[]): Promise<void> {
+  async createGuests(guests: Guest<boolean>[]): Promise<void> {
     try {
       await this.createQueryBuilder()
         .insert()

@@ -113,6 +113,7 @@ export class BoardsController {
   }
 
   @Post('/:boardNo/participation')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '게스트 참가 신청 API',
@@ -120,10 +121,16 @@ export class BoardsController {
   })
   async createGuestTeam(
     @Param('boardNo') boardNo: number,
+    @GetUser() userNo: number,
     @Body() participationDto: CreateGuestTeamDto,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    await this.boardService.createGuestTeam(manager, boardNo, participationDto);
+    await this.boardService.createGuestTeam(
+      manager,
+      userNo,
+      boardNo,
+      participationDto,
+    );
 
     return { msg: '참가신청 성공' };
   }
@@ -147,7 +154,7 @@ export class BoardsController {
     return { msg: '게시글 수정 성공' };
   }
 
-  @Patch('/:boardNo/invite')
+  @Patch('/:boardNo/invite/host')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
@@ -164,6 +171,29 @@ export class BoardsController {
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
     await this.boardService.validateHostInvite(
+      manager,
+      boardNo,
+      userNo,
+      isAccepted,
+    );
+
+    return { msg: '게시글 수락 / 거절 처리 성공' };
+  }
+
+  @Patch('/:boardNo/invite/guest')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiOperation({
+    summary: '게시글 게스트 멤버 초대 수락 / 거절 API',
+    description: `여름 참가 신청멤버로 초대받은 게스트 들의 초대 수락 / 거절 API`,
+  })
+  async acceptGuestInvite(
+    @Param('boardNo', ParseIntPipe) boardNo: number,
+    @Body() { isAccepted }: HostInviteDto,
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<APIResponse> {
+    await this.boardService.validateGuestInvite(
       manager,
       boardNo,
       userNo,

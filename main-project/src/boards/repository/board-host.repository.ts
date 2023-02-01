@@ -64,7 +64,7 @@ export class BoardHostsRepository extends Repository<BoardHosts> {
   }
 
   // 수정
-  async acceptInvite(boardNo: number, userNo: number): Promise<void> {
+  async acceptHostInvite(boardNo: number, userNo: number): Promise<void> {
     try {
       await this.createQueryBuilder()
         .update(BoardHosts)
