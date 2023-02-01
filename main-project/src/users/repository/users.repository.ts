@@ -1,6 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
-import { JsonArray } from 'src/common/interface/interface';
 import {
   EntityRepository,
   InsertResult,
@@ -145,12 +144,12 @@ export class UsersRepository extends Repository<Users> {
 
   async getUsersByNums(userNo: number[]): Promise<number[]> {
     try {
-      const { no }: JsonArray = await this.createQueryBuilder('users')
+      const user: Users = await this.createQueryBuilder('users')
         .select(['JSON_ARRAYAGG(users.no) AS no'])
         .where('no IN (:userNo)', { userNo })
         .getRawOne();
 
-      const users: number[] = JSON.parse(no);
+      const users: number[] = JSON.parse(String(user.no));
 
       return users;
     } catch (error) {

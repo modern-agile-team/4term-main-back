@@ -53,7 +53,7 @@ export class BoardsController {
     @TransactionDecorator() manager: EntityManager,
     @Query() BoardFilterDto?: BoardFilterDto,
   ): Promise<APIResponse> {
-    const boards: Board[] = await this.boardService.getBoards(
+    const boards: Board<void>[] = await this.boardService.getBoards(
       manager,
       BoardFilterDto,
     );
@@ -72,7 +72,10 @@ export class BoardsController {
     @Param('boardNo') boardNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const board: Board = await this.boardService.getBoard(manager, boardNo);
+    const board: Board<number[]> = await this.boardService.getBoard(
+      manager,
+      boardNo,
+    );
 
     return { response: { board } };
   }

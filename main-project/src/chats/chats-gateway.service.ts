@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Socket } from 'socket.io';
-import { Board, JsonBoard } from 'src/boards/interface/boards.interface';
+import { Boards } from 'src/boards/entity/board.entity';
 import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
@@ -102,11 +102,11 @@ export class ChatsGatewayService {
     boardNo: number,
     userNo: number,
   ): Promise<void> {
-    const board: Board = await this.boardRepository.getBoard(boardNo);
+    const board: Boards = await this.boardRepository.getBoard(boardNo);
     if (!board) {
       throw new NotFoundException('게시물을 찾지 못했습니다.');
     }
-    if (board.hostUserNo !== userNo) {
+    if (board.userNo !== userNo) {
       throw new BadRequestException('게시글의 작성자만 수락할 수 있습니다.');
     }
 

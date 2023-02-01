@@ -60,10 +60,11 @@ export class BoardsService {
   async getBoards(
     manager: EntityManager,
     filter: BoardFilterDto,
-  ): Promise<Board[]> {
-    const boards: Board[] = await manager
+  ): Promise<Board<void>[]> {
+    const boards: Board<void>[] = await manager
       .getCustomRepository(BoardsRepository)
       .getBoards(filter);
+    console.log(boards);
 
     if (!boards.length) {
       throw new NotFoundException(
@@ -74,8 +75,11 @@ export class BoardsService {
     return boards;
   }
 
-  async getBoard(manager: EntityManager, boardNo: number): Promise<Board> {
-    const board: Board = await manager
+  async getBoard(
+    manager: EntityManager,
+    boardNo: number,
+  ): Promise<Board<number[]>> {
+    const board: Board<number[]> = await manager
       .getCustomRepository(BoardsRepository)
       .getBoardByNo(boardNo);
 
@@ -90,8 +94,8 @@ export class BoardsService {
   private async getHosts(
     manager: EntityManager,
     boardNo: number,
-  ): Promise<Host> {
-    const hosts: Host = await manager
+  ): Promise<Host<number[]>> {
+    const hosts: Host<number[]> = await manager
       .getCustomRepository(BoardHostsRepository)
       .getHosts(boardNo);
 
@@ -177,7 +181,7 @@ export class BoardsService {
     boardNo: number,
     { guests, ...participation }: CreateGuestTeamDto,
   ): Promise<void> {
-    const { recruitMale, recruitFemale, hostMemberNums }: Board =
+    const { recruitMale, recruitFemale, hostMemberNums }: Board<number[]> =
       await this.getBoard(manager, boardNo);
 
     if (recruitMale + recruitFemale != Number(guests.length + 1)) {
@@ -383,7 +387,10 @@ export class BoardsService {
     boardNo: number,
     userNo: number,
   ): Promise<void> {
-    const { hostUserNo }: Board = await this.getBoard(manager, boardNo);
+    const { hostUserNo }: Board<number[]> = await this.getBoard(
+      manager,
+      boardNo,
+    );
     await this.validateHost(hostUserNo, userNo);
     await this.removeBoard(manager, boardNo);
   }
@@ -493,8 +500,14 @@ export class BoardsService {
     manager: EntityManager,
     boardNo: number,
   ) {
-    const { hostUserNo }: Board = await this.getBoard(manager, boardNo);
-    const { userNo: hosts }: Host = await this.getHosts(manager, boardNo);
+    const { hostUserNo }: Board<number[]> = await this.getBoard(
+      manager,
+      boardNo,
+    );
+    const { userNo: hosts }: Host<number[]> = await this.getHosts(
+      manager,
+      boardNo,
+    );
     const type: number = NoticeType.HOST_REQUEST_ALL_ACCEPTED;
     hosts.push(hostUserNo);
 
@@ -546,6 +559,7 @@ export class BoardsService {
     const dbUsers: number[] = await manager
       .getCustomRepository(UsersRepository)
       .getUsersByNums(users);
+
     if (!dbUsers.length) {
       throw new BadRequestException(`${users}번 유저가 없습니다.`);
     }
@@ -601,7 +615,7 @@ export class BoardsService {
     boardNo: number,
     userNo: number,
   ): Promise<void> {
-    const hosts: Host = await this.getHosts(manager, boardNo);
+    const hosts: Host<number[]> = await this.getHosts(manager, boardNo);
     if (!hosts.userNo.includes(userNo)) {
       throw new BadRequestException(
         `사용자 검증 (validateHostMembers-service): 사용자는 해당 게시글에 초대받지 않았습니다.`,
@@ -611,7 +625,7 @@ export class BoardsService {
 
   private async validateRecruits(
     manager: EntityManager,
-    board: Board,
+    board: Board<number[]>,
     updateBoardDto: UpdateBoardDto,
   ): Promise<void> {
     const guests: number[] = await this.getAllGuestsByBoardNo(
@@ -634,9 +648,10 @@ export class BoardsService {
     manager: EntityManager,
     boardNo: number,
   ): Promise<boolean> {
-    const { isAccepted }: Host = await manager
-      .getCustomRepository(BoardHostsRepository)
-      .getHosts(boardNo);
+    const { isAccepted }: Host<number[]> = await this.getHosts(
+      manager,
+      boardNo,
+    );
 
     const isAllAccepted: boolean = isAccepted.includes(0) ? false : true;
 
@@ -662,7 +677,10 @@ export class BoardsService {
     userNo: number,
     isAccepted: boolean,
   ): Promise<void> {
-    const { hostUserNo }: Board = await this.getBoard(manager, boardNo);
+    const { hostUserNo }: Board<number[]> = await this.getBoard(
+      manager,
+      boardNo,
+    );
 
     await this.validateIsHostMember(manager, boardNo, userNo);
     await this.validateHostIsAnswered(manager, boardNo, userNo);
@@ -736,7 +754,7 @@ export class BoardsService {
     userNo: number,
     updateBoardDto: UpdateBoardDto,
   ): Promise<void> {
-    const board: Board = await this.getBoard(manager, boardNo);
+    const board: Board<number[]> = await this.getBoard(manager, boardNo);
 
     await this.validateHost(board.hostUserNo, userNo);
     await this.validateRecruits(manager, board, updateBoardDto);

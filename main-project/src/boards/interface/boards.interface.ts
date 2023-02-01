@@ -1,7 +1,4 @@
-import { OmitType } from '@nestjs/swagger';
-import { CreateGuestTeamDto } from '../dto/create-guest-team.dto';
-
-export class JsonBoard {
+export class Board<T> {
   no?: number;
   hostUserNo?: number;
   hostNickname?: string;
@@ -13,16 +10,8 @@ export class JsonBoard {
   recruitMale: number;
   recruitFemale: number;
   isImpromptu: boolean;
-  hostMemberNums?: string;
-  hostMemberNicknames?: string;
-}
-
-export class Board extends OmitType(JsonBoard, [
-  'hostMemberNums',
-  'hostMemberNicknames',
-]) {
-  hostMemberNums?: number[];
-  hostMemberNicknames?: number[];
+  hostMemberNums?: T;
+  hostMemberNicknames?: T;
   createdDate?: Date;
 }
 
@@ -34,9 +23,9 @@ export interface Guest<T> {
   isAccepted?: T;
 }
 
-export interface Host {
-  userNo: number[];
-  isAccepted: number[];
+export interface Host<T> {
+  userNo: T;
+  isAccepted: T;
 }
 
 export interface GuestTeam<T> {

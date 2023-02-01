@@ -1,5 +1,4 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { JsonArray } from 'src/common/interface/interface';
 import { EntityRepository, Repository } from 'typeorm';
 import { BoardHosts } from '../entity/board-host.entity';
 import { Host } from '../interface/boards.interface';
@@ -7,17 +6,18 @@ import { Host } from '../interface/boards.interface';
 @EntityRepository(BoardHosts)
 export class BoardHostsRepository extends Repository<BoardHosts> {
   // 조회
-  async getHosts(boardNo: number): Promise<Host> {
+  async getHosts(boardNo: number): Promise<Host<number[]>> {
     try {
-      const { userNo, isAccepted }: JsonArray = await this.createQueryBuilder()
-        .select([
-          'JSON_ARRAYAGG(user_no) AS userNo',
-          'JSON_ARRAYAGG(is_accepted) AS isAccepted',
-        ])
-        .where('board_no = :boardNo', { boardNo })
-        .getRawOne();
+      const { userNo, isAccepted }: Host<string> =
+        await this.createQueryBuilder()
+          .select([
+            'JSON_ARRAYAGG(user_no) AS userNo',
+            'JSON_ARRAYAGG(is_accepted) AS isAccepted',
+          ])
+          .where('board_no = :boardNo', { boardNo })
+          .getRawOne();
 
-      const hosts: Host = {
+      const hosts: Host<number[]> = {
         userNo: JSON.parse(userNo),
         isAccepted: JSON.parse(isAccepted),
       };
