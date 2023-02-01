@@ -1,4 +1,7 @@
-import { InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
 import { ChatRoomOfBoard } from 'src/chats/interface/chat.interface';
 import {
@@ -158,6 +161,8 @@ export class BoardsRepository extends Repository<Boards> {
         .leftJoin('boards.userNo', 'users')
         .leftJoin('users.userProfileNo', 'profiles')
         .leftJoin('boards.hosts', 'hosts')
+        .leftJoin('boards.teamNo', 'guestTeam')
+        .leftJoin('guestTeam.boardGuest', 'guests')
         .leftJoin('hosts.userNo', 'hostUsers')
         .leftJoin('hostUsers.userProfileNo', 'hostProfile')
         .select([
@@ -176,17 +181,21 @@ export class BoardsRepository extends Repository<Boards> {
         ])
         .orderBy('boards.no', 'DESC');
 
-      // switch (type) {
-      //   case value1:
-      //     statement1;
-      //     break;
-      //   case value2:
-      //     statement2;
-      //     break;
-      //   ...
-      //   default:
-      //     statement3;
-      // }
+      switch (type) {
+        case 1:
+          boards.where('boards.userNo = :userNo', { userNo });
+          break;
+        case 2:
+          boards.where('hosts.userNo = :userNo', { userNo });
+          break;
+        case 3:
+          boards.where('guests.userNo = :userNo', { userNo });
+          break;
+        default:
+          throw new BadRequestException(
+            '유저별 게시글 검색(getBoardsByUser-repository): type을 잘못 입력했습니다.',
+          );
+      }
 
       return await boards.getRawMany();
     } catch (error) {
