@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ChatRoomOfBoard } from 'src/chats/interface/chat.interface';
 import { Users } from 'src/users/entity/user.entity';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import {
@@ -200,9 +201,12 @@ export class BoardRepository extends Repository<Boards> {
     }
   }
 
-  async getUserListByBoardNo(boardNo: number) {
+  async getUsersByBoardNo(
+    boardNo: number,
+    userNo: number,
+  ): Promise<ChatRoomOfBoard> {
     try {
-      const userList = await this.createQueryBuilder('boards')
+      const users: ChatRoomOfBoard = await this.createQueryBuilder('boards')
         .leftJoin('boards.hosts', 'hostList')
         .leftJoin('boards.teamNo', 'guestParticipation')
         .leftJoin('guestParticipation.boardGuest', 'guestList')
@@ -211,15 +215,38 @@ export class BoardRepository extends Repository<Boards> {
         .leftJoin('hostUser.userProfileNo', 'hostProfile')
         .leftJoin('guestUser.userProfileNo', 'guestProfile')
         .select([
-          'GROUP_CONCAT(DISTINCT hostProfile.nickname) AS hostNickname',
-          'GROUP_CONCAT(DISTINCT guestProfile.nickname) AS guestNickname',
-          'GROUP_CONCAT(DISTINCT hostList.user_no) AS hostUserNo',
-          'GROUP_CONCAT(DISTINCT guestList.user_no) AS guestUserNo',
+          'boards.no AS boardNo',
+          'GROUP_CONCAT(DISTINCT hostProfile.nickname) AS hostsNickname',
+          'GROUP_CONCAT(DISTINCT guestProfile.nickname) AS guestsNickname',
+          'GROUP_CONCAT(DISTINCT hostList.user_no) AS hostsUserNo',
+          'GROUP_CONCAT(DISTINCT guestList.user_no) AS guestsUserNo',
         ])
-        .where('boards.no = :boardNo', { boardNo })
+        .where('boards.no = :boardNo AND boards.user_no = :userNo', {
+          boardNo,
+          userNo,
+        })
         .getRawOne();
 
-      return userList;
-    } catch (error) {}
+      return users;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getUserListByBoardNo: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getBoard(boardNo: number): Promise<Boards> {
+    try {
+      const board: Boards = await this.createQueryBuilder('boards')
+        .select('user_no AS userNo')
+        .where('no = :boardNo ', { boardNo })
+        .getRawOne();
+
+      return board;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getBoard: 알 수 없는 서버 에러입니다.`,
+      );
+    }
   }
 }

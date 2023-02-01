@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import { CreateResponse } from 'src/boards/interface/boards.interface';
 import {
   DeleteResult,
@@ -15,16 +16,16 @@ export class AnnouncesRepository extends Repository<Announces> {
   //  조회 관련
   async getAllAnnounces(): Promise<Announces[]> {
     try {
-      const announces = this.createQueryBuilder('announces')
+      const announces: Announces[] = await this.createQueryBuilder('announces')
         .select([
           'announces.no AS no',
           'announces.title AS title',
           'announces.description AS description',
-          'announces.type AS type',
         ])
-        .orderBy('no', 'DESC');
+        .orderBy('no', 'DESC')
+        .getRawMany();
 
-      return announces.getRawMany();
+      return announces;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getAllAnnounces-repository: 알 수 없는 서버 에러입니다.`,
@@ -34,13 +35,13 @@ export class AnnouncesRepository extends Repository<Announces> {
 
   async getAnnouncesByNo(announcesNo: number): Promise<Announces> {
     try {
-      const announces = this.createQueryBuilder('announces')
+      const announces: Announces = await this.createQueryBuilder('announces')
         .leftJoin('announces.announcesImages', 'images')
         .select([
           'announces.no AS no',
           'announces.title AS title',
           'announces.description AS description',
-          'JSON_ARRAYAGG(images.imageUrl) AS imgs',
+          'JSON_ARRAYAGG(images.imageUrl) AS images',
         ])
         .where('announces.no = :announcesNo', { announcesNo })
         .getRawOne();
@@ -54,7 +55,7 @@ export class AnnouncesRepository extends Repository<Announces> {
   }
 
   // 생성 관련
-  async createAnnounces(announcesDto: AnnouncesDto): Promise<CreateResponse> {
+  async createAnnounces(announcesDto: AnnouncesDto): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('announces')
         .insert()
@@ -74,15 +75,15 @@ export class AnnouncesRepository extends Repository<Announces> {
   async updateAnnounces(
     announcesNo: number,
     announcesDto: AnnouncesDto,
-  ): Promise<number> {
+  ): Promise<UpdateResult> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder('boards')
+      const raw: UpdateResult = await this.createQueryBuilder('boards')
         .update(Announces)
         .set(announcesDto)
         .where('no = :announcesNo', { announcesNo })
         .execute();
 
-      return affected;
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateAnnounces-repository: 알 수 없는 서버 에러입니다.`,

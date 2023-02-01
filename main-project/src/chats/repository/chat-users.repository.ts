@@ -1,11 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { ChatUsers } from '../entity/chat-users.entity';
-import { ChatRoomList, ChatUserInfo } from '../interface/chat.interface';
+import { ChatRoom, ChatUser } from '../interface/chat.interface';
 
 @EntityRepository(ChatUsers)
 export class ChatUsersRepository extends Repository<ChatUsers> {
-  async setChatRoomUsers(roomUsers: ChatUserInfo[]): Promise<number> {
+  async createChatUsers(roomUsers: ChatUser[]): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('chat_users')
         .insert()
@@ -21,9 +21,9 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
-  async getChatRoomList(userNo: number): Promise<ChatRoomList[]> {
+  async getChatRoomsByUserNo(userNo: number): Promise<ChatRoom[]> {
     try {
-      const chatRoomList = await this.createQueryBuilder('chat_users')
+      const chatRooms = await this.createQueryBuilder('chat_users')
         .leftJoin('chat_users.chatRoomNo', 'chatRoomNo')
         .select([
           'chatRoomNo.room_name AS roomName',
@@ -32,7 +32,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
         .where('chat_users.user_no = :userNo', { userNo })
         .getRawMany();
 
-      return chatRoomList;
+      return chatRooms;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error}: 채팅 목록 조회 (getChatRoomList): 알 수 없는 서버 에러입니다.`,
@@ -40,15 +40,18 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
-  async checkUserInChatRoom(chatUserInfo: ChatUserInfo): Promise<ChatUserInfo> {
+  async getChatUser(userNo, chatRoomNo): Promise<ChatUser> {
     try {
-      const user: ChatUserInfo = await this.createQueryBuilder('chat_users')
+      const user: ChatUser = await this.createQueryBuilder('chat_users')
         .select([
           'chat_users.user_no AS userNo',
           'chat_users.chat_room_no AS chatRoomNo',
           'chat_users.user_type AS userType',
         ])
-        .where('user_no = :userNo AND chat_room_no = :chatRoomNo', chatUserInfo)
+        .where('user_no = :userNo AND chat_room_no = :chatRoomNo', {
+          userNo,
+          chatRoomNo,
+        })
         .getRawOne();
 
       return user;
@@ -59,7 +62,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     }
   }
 
-  async inviteUserByUserNo(chatUserInfo: ChatUserInfo): Promise<InsertResult> {
+  async inviteUserByUserNo(chatUserInfo: ChatUser): Promise<InsertResult> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('chat_users')
         .insert()
