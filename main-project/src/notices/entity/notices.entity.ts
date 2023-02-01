@@ -9,6 +9,7 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { NoticeBoardHosts } from './notice-board-host.entity';
 import { NoticeBoards } from './notice-board.entity';
 import { NoticeChats } from './notice-chat.entity';
 import { NoticeFriends } from './notice-friend.entity';
@@ -42,8 +43,17 @@ export class Notices extends BaseEntity {
   })
   createdDate: Date;
 
-  @OneToOne((type) => NoticeBoards, (noticeBoards) => noticeBoards.noticeNo)
+  @OneToOne((type) => NoticeBoards, (noticeBoards) => noticeBoards.noticeNo, {
+    onDelete: 'CASCADE',
+  })
   noticeBoards: NoticeBoards;
+
+  @OneToOne(
+    (type) => NoticeBoardHosts,
+    (noticeBoardHost) => noticeBoardHost.noticeNo,
+    { onDelete: 'CASCADE' },
+  )
+  noticeBoardHost: NoticeBoardHosts;
 
   @OneToOne((type) => NoticeChats, (noticeChats) => noticeChats.noticeNo)
   noticeChats: NoticeChats;

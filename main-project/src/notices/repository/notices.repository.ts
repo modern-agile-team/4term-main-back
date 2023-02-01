@@ -17,7 +17,9 @@ import {
 
 @EntityRepository(Notices)
 export class NoticesRepository extends Repository<Notices> {
-  async saveNotice(noticeInfo: SavedNotice): Promise<InsertRaw> {
+  async saveNotice(
+    noticeInfo: SavedNotice | SavedNotice[],
+  ): Promise<InsertRaw> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('notices')
         .insert()
@@ -106,7 +108,7 @@ export class NoticesRepository extends Repository<Notices> {
             WHEN notices.type = ${NoticeType.FRIEND_REQUEST}
             OR notices.type = ${NoticeType.FRIEND_REQUEST_ACCEPTED}
               THEN JSON_OBJECT("friendNo", noticeFriends.friendNo)
-            WHEN notices.type = ${NoticeType.GUEST_APPLICATION}
+            WHEN notices.type = ${NoticeType.GUEST_REQUEST}
               THEN JSON_OBJECT("boardNo", noticeBoards.boardNo)
           END
           AS value`,

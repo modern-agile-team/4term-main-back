@@ -48,10 +48,10 @@ export class Users extends BaseEntity {
   deletedDate: Date;
 
   @OneToMany((type) => BoardGuests, (boardGuests) => boardGuests.userNo)
-  guestMembers: BoardGuests[];
+  boardGuest: BoardGuests[];
 
   @OneToMany((type) => BoardHosts, (boardHosts) => boardHosts.userNo)
-  hostMembers: BoardHosts[];
+  boardHost: BoardHosts[];
 
   @OneToMany((type) => BoardBookmarks, (boardBookmark) => boardBookmark.userNo)
   boardBookmark: BoardBookmarks;

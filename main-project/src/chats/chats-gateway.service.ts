@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { Boards } from 'src/boards/entity/board.entity';
-import { BoardRepository } from 'src/boards/repository/board.repository';
+import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { EntityManager, InsertResult } from 'typeorm';
@@ -33,7 +33,7 @@ export class ChatsGatewayService {
     private readonly chatListRepository: ChatListRepository,
     private readonly chatUsersRepository: ChatUsersRepository,
     private readonly chatLogRepository: ChatLogRepository,
-    private readonly boardRepository: BoardRepository,
+    private readonly boardRepository: BoardsRepository,
   ) {}
 
   async initSocket(socket, messagePayload: InitSocketDto): Promise<ChatRoom[]> {
