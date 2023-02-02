@@ -14,7 +14,7 @@ import { Announce } from '../interface/announces.interface';
 @EntityRepository(Announces)
 export class AnnouncesRepository extends Repository<Announces> {
   //  조회 관련
-  async getAllAnnounces(): Promise<Announce<string[]>[]> {
+  async getAnnounces(): Promise<Announce<string[]>[]> {
     try {
       const announces: Announce<string>[] = await this.createQueryBuilder(
         'announces',
@@ -44,28 +44,35 @@ export class AnnouncesRepository extends Repository<Announces> {
       return convertAnnounces;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getAllAnnounces-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getAnnounces-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
-  async getAnnouncesByNo(announcesNo: number): Promise<Announces> {
+  async getAnnounce(announceNo: number): Promise<Announce<string[]>> {
     try {
-      const announces: Announces = await this.createQueryBuilder('announces')
-        .leftJoin('announces.announcesImages', 'images')
-        .select([
-          'announces.no AS no',
-          'announces.title AS title',
-          'announces.description AS description',
-          'JSON_ARRAYAGG(images.imageUrl) AS images',
-        ])
-        .where('announces.no = :announcesNo', { announcesNo })
-        .getRawOne();
+      const { imageUrls, ...announceInfo }: Announce<string> =
+        await this.createQueryBuilder('announces')
+          .leftJoin('announces.announcesImages', 'images')
+          .select([
+            'announces.no AS no',
+            'announces.title AS title',
+            'announces.description AS description',
+            'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
+          ])
+          .orderBy('no', 'DESC')
+          .where('announces.no = :announceNo', { announceNo })
+          .getRawOne();
 
-      return announces;
+      const convertAnnounce: Announce<string[]> = {
+        ...announceInfo,
+        imageUrls: JSON.parse(imageUrls),
+      };
+
+      return convertAnnounce;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getAnnouncesByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getAnnounce-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

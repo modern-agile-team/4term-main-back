@@ -26,7 +26,10 @@ export class AnnouncesService {
     private readonly announcesImagesRepository: AnnouncesImagesRepository,
   ) {}
   // 생성 관련
-  async createAnnounces(announcesDto: AnnouncesDto): Promise<void> {
+  async createAnnounces(
+    manager: EntityManager,
+    announcesDto: AnnouncesDto,
+  ): Promise<void> {
     const { affectedRows }: ResultSetHeader =
       await this.announcesRepository.createAnnounces(announcesDto);
 
@@ -38,10 +41,11 @@ export class AnnouncesService {
   }
 
   async uploadAnnouncesimagesUrl(
+    manager: EntityManager,
     announcesNo: number,
     uploadedImagesUrlList: string[],
   ): Promise<string> {
-    await this.getAnnouncesByNo(announcesNo);
+    await this.getAnnounce(manager, announcesNo);
     if (uploadedImagesUrlList.length === 0) {
       throw new BadRequestException('사진이 없습니다.');
     }
@@ -62,54 +66,44 @@ export class AnnouncesService {
   }
 
   // 조회 관련
-  async getAllAnnounces(manager: EntityManager): Promise<Announce<string[]>[]> {
+  async getAnnounces(manager: EntityManager): Promise<Announce<string[]>[]> {
     const announces: Announce<string[]>[] = await manager
       .getCustomRepository(AnnouncesRepository)
-      .getAllAnnounces();
+      .getAnnounces();
 
     if (!announces.length) {
       throw new NotFoundException(
-        `공지사항 조회(getAllAnnounces-service): 공지사항이 없습니다.`,
+        `공지사항 조회(getAnnounces-service): 공지사항이 없습니다.`,
       );
     }
 
     return announces;
   }
 
-  async getAnnouncesImages(announcesNo: number): Promise<string[]> {
-    const { imageUrl }: AnnouncesImages =
-      await this.announcesImagesRepository.getAnnouncesImages(announcesNo);
+  async getAnnounce(
+    manager: EntityManager,
+    announceNo: number,
+  ): Promise<Announce<string[]>> {
+    const announce: Announce<string[]> = await manager
+      .getCustomRepository(AnnouncesRepository)
+      .getAnnounce(announceNo);
 
-    if (!imageUrl) {
+    if (!announce.no) {
       throw new NotFoundException(
-        `이미지 조회(getImages-service): 이미지가 없습니다.`,
+        `공지사항 상세 조회(getAnnounce-service): ${announceNo}번 공지사항이 없습니다.`,
       );
     }
 
-    const images = JSON.parse(imageUrl);
-
-    return images;
-  }
-
-  async getAnnouncesByNo(announcesNo: number): Promise<Announces> {
-    const announces: Announces =
-      await this.announcesRepository.getAnnouncesByNo(announcesNo);
-
-    if (!announces) {
-      throw new NotFoundException(
-        `공지사항 상세 조회(getBoardByNo-service): ${announcesNo}번 공지사항이 없습니다.`,
-      );
-    }
-
-    return announces;
+    return announce;
   }
 
   // 수정 관련
   async updateAnnounces(
+    manager: EntityManager,
     announcesNo: number,
     announcesDto: AnnouncesDto,
   ): Promise<void> {
-    await this.getAnnouncesByNo(announcesNo);
+    await this.getAnnounce(manager, announcesNo);
 
     const { affected }: UpdateResult =
       await this.announcesRepository.updateAnnounces(announcesNo, announcesDto);
@@ -122,8 +116,11 @@ export class AnnouncesService {
   }
 
   // 삭제 관련
-  async deleteAnnouncesByNo(announcesNo: number): Promise<string> {
-    await this.getAnnouncesByNo(announcesNo);
+  async deleteAnnouncesByNo(
+    manager: EntityManager,
+    announcesNo: number,
+  ): Promise<string> {
+    await this.getAnnounce(manager, announcesNo);
 
     const { affected }: DeleteResult =
       await this.announcesRepository.deleteAnnouncesByNo(announcesNo);
@@ -137,8 +134,11 @@ export class AnnouncesService {
     return `${announcesNo}번 공지사항 삭제 성공`;
   }
 
-  async deleteAnnouncesImages(announcesNo: number): Promise<string> {
-    await this.getAnnouncesByNo(announcesNo);
+  async deleteAnnouncesImages(
+    manager: EntityManager,
+    announcesNo: number,
+  ): Promise<string> {
+    await this.getAnnounce(manager, announcesNo);
 
     const { affected }: DeleteResult =
       await this.announcesImagesRepository.deleteAnnouncesImages(announcesNo);
