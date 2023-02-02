@@ -1,18 +1,21 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { ChatList } from '../entity/chat-list.entity';
-import { ChatRoomUser, CreateChat } from '../interface/chat.interface';
+import {
+  ChatRoom,
+  ChatRoomBeforeCreate,
+  ChatUser,
+} from '../interface/chat.interface';
 
 @EntityRepository(ChatList)
 export class ChatListRepository extends Repository<ChatList> {
-  async checkRoomExistByBoardNo(boardNo: number): Promise<ChatList> {
+  async getChatRoomByBoardNo(boardNo: number): Promise<ChatList> {
     try {
-      const result = await this.createQueryBuilder('chat_list')
-        .select(['chat_list.board_no AS boardNo'])
+      const chatRoom: ChatList = await this.createQueryBuilder('chat_list')
         .where(`board_no = :boardNo`, { boardNo })
-        .getRawOne();
+        .getOne();
 
-      return result;
+      return chatRoom;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error}: 채팅방 중복 확인 (checkRoomExist): 알 수 없는 서버 에러입니다.`,
@@ -20,7 +23,7 @@ export class ChatListRepository extends Repository<ChatList> {
     }
   }
 
-  async createChatRoom(createChat: CreateChat): Promise<number> {
+  async createChatRoom(createChat: ChatRoomBeforeCreate): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('chat_list')
         .insert()
@@ -36,12 +39,9 @@ export class ChatListRepository extends Repository<ChatList> {
     }
   }
 
-  async isUserInChatRoom(
-    chatRoomNo: number,
-    userNo: number,
-  ): Promise<ChatRoomUser> {
+  async getUser(chatRoomNo: number, userNo: number): Promise<ChatUser> {
     try {
-      const result = await this.createQueryBuilder('chat_list')
+      const result: ChatUser = await this.createQueryBuilder('chat_list')
         .leftJoin('chat_list.chatUserNo', 'chatUser')
         .leftJoin('chatUser.userNo', 'user')
         .leftJoin('user.userProfileNo', 'userProfile')
@@ -62,14 +62,13 @@ export class ChatListRepository extends Repository<ChatList> {
       );
     }
   }
-  async checkRoomExistsByChatRoomNo(chatRoomNo: number): Promise<ChatList> {
+  async getChatRoomByNo(chatRoomNo: number): Promise<ChatList> {
     try {
-      const result = await this.createQueryBuilder('chat_list')
-        .select(['chat_list.no AS chatRoomNo'])
+      const chatRoom = await this.createQueryBuilder('chat_list')
         .where(`no = :chatRoomNo`, { chatRoomNo })
-        .getRawOne();
+        .getOne();
 
-      return result;
+      return chatRoom;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error}: 채팅방 중복 확인 (checkRoomExist): 알 수 없는 서버 에러입니다.`,

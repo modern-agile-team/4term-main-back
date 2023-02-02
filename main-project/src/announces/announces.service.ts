@@ -5,11 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateResponse } from 'src/boards/interface/boards.interface';
-import { DeleteResult } from 'typeorm';
+import { ResultSetHeader } from 'mysql2';
+import { DeleteResult, EntityManager, UpdateResult } from 'typeorm';
 import { AnnouncesDto } from './dto/announce.dto';
 import { AnnouncesImages } from './entity/announce-images.entity';
 import { Announces } from './entity/announce.entity';
+import { Announce } from './interface/announces.interface';
 import { AnnouncesRepository } from './repository/announce.repository';
 import { AnnouncesImagesRepository } from './repository/announces-images.repository';
 
@@ -25,17 +26,15 @@ export class AnnouncesService {
     private readonly announcesImagesRepository: AnnouncesImagesRepository,
   ) {}
   // 생성 관련
-  async createAnnounces(manager, announcesDto: AnnouncesDto): Promise<string> {
-    const { insertId }: CreateResponse =
+  async createAnnounces(announcesDto: AnnouncesDto): Promise<void> {
+    const { affectedRows }: ResultSetHeader =
       await this.announcesRepository.createAnnounces(announcesDto);
 
-    if (!insertId) {
+    if (!affectedRows) {
       throw new InternalServerErrorException(
         `공지사항 생성(createAnnouncement-service): 알 수 없는 서버 에러입니다.`,
       );
     }
-
-    return `${insertId}번 공지사항 생성 성공`;
   }
 
   async uploadAnnouncesimagesUrl(
@@ -50,7 +49,7 @@ export class AnnouncesService {
       return { announcesNo, imageUrl: url };
     });
 
-    const { insertId }: CreateResponse =
+    const { insertId }: ResultSetHeader =
       await this.announcesImagesRepository.uploadAnnouncesimagesUrl(images);
 
     if (!insertId) {
@@ -63,13 +62,14 @@ export class AnnouncesService {
   }
 
   // 조회 관련
-  async getAllAnnounces(): Promise<Announces[]> {
-    const announces: Announces[] =
-      await this.announcesRepository.getAllAnnounces();
+  async getAllAnnounces(manager: EntityManager): Promise<Announce<string[]>[]> {
+    const announces: Announce<string[]>[] = await manager
+      .getCustomRepository(AnnouncesRepository)
+      .getAllAnnounces();
 
-    if (announces.length === 0) {
+    if (!announces.length) {
       throw new NotFoundException(
-        `공지사항 조회(getAnnouncements-service): 조건에 맞는 공지사항이 없습니다.`,
+        `공지사항 조회(getAllAnnounces-service): 공지사항이 없습니다.`,
       );
     }
 
@@ -77,7 +77,7 @@ export class AnnouncesService {
   }
 
   async getAnnouncesImages(announcesNo: number): Promise<string[]> {
-    const { imageUrl } =
+    const { imageUrl }: AnnouncesImages =
       await this.announcesImagesRepository.getAnnouncesImages(announcesNo);
 
     if (!imageUrl) {
@@ -108,21 +108,17 @@ export class AnnouncesService {
   async updateAnnounces(
     announcesNo: number,
     announcesDto: AnnouncesDto,
-  ): Promise<string> {
+  ): Promise<void> {
     await this.getAnnouncesByNo(announcesNo);
 
-    const affectedRows: number = await this.announcesRepository.updateAnnounces(
-      announcesNo,
-      announcesDto,
-    );
+    const { affected }: UpdateResult =
+      await this.announcesRepository.updateAnnounces(announcesNo, announcesDto);
 
-    if (!affectedRows) {
+    if (!affected) {
       throw new InternalServerErrorException(
         `공지사항 수정(updateAnnouncement-service): 알 수 없는 서버 에러입니다.`,
       );
     }
-
-    return `${announcesNo}번 공지사항이 수정되었습니다.`;
   }
 
   // 삭제 관련
@@ -146,8 +142,6 @@ export class AnnouncesService {
 
     const { affected }: DeleteResult =
       await this.announcesImagesRepository.deleteAnnouncesImages(announcesNo);
-
-    console.log(affected);
 
     if (!affected) {
       throw new BadRequestException(

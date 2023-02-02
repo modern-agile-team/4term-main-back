@@ -1,5 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { CreateResponse } from 'src/boards/interface/boards.interface';
+import { ResultSetHeader } from 'mysql2';
 import {
   DeleteResult,
   EntityRepository,
@@ -13,7 +13,9 @@ export class AnnouncesImagesRepository extends Repository<AnnouncesImages> {
   // 조회 관련
   async getAnnouncesImages(announcesNo: number): Promise<AnnouncesImages> {
     try {
-      const images = this.createQueryBuilder('announcesImages')
+      const images: AnnouncesImages = await this.createQueryBuilder(
+        'announcesImages',
+      )
         .select(['JSON_ARRAYAGG(announcesImages.imageUrl) AS imageUrl'])
         .where('announcesImages.announcesNo = :announcesNo', { announcesNo })
         .getRawOne();
@@ -28,7 +30,7 @@ export class AnnouncesImagesRepository extends Repository<AnnouncesImages> {
   // 생성 관련
   async uploadAnnouncesimagesUrl(
     images: { announcesNo: number; imageUrl: string }[],
-  ): Promise<CreateResponse> {
+  ): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder(
         'announcesImages',

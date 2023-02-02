@@ -20,6 +20,6 @@ export class AnnouncesImages extends BaseEntity {
   @ManyToOne((type) => Announces, (announces) => announces.announcesImages, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'announces_no' })
-  announcesNo: number;
+  @JoinColumn({ name: 'announce_no' })
+  announceNo: number;
 }
