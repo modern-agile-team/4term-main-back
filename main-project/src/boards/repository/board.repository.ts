@@ -325,7 +325,7 @@ export class BoardsRepository extends Repository<Boards> {
   async getBoard(boardNo: number): Promise<Boards> {
     try {
       const board: Boards = await this.createQueryBuilder('boards')
-        .select('user_no AS hostUserNo')
+        .select('user_no AS userNo')
         .where('no = :boardNo ', { boardNo })
         .getRawOne();
 
