@@ -11,6 +11,7 @@ import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { Connection, EntityManager, getConnection, QueryRunner } from 'typeorm';
 import { CreateFriendRequestDto } from './dto/create-friend.dto';
 import { DeleteFriendDto } from './dto/delete-friend.dto';
+import { FriendRequestDto } from './dto/friend-request.dto';
 import { Friends } from './entity/friend.entity';
 import {
   Friend,
@@ -30,10 +31,14 @@ export class FriendsService {
   ) {}
 
   async createFriendRequest(
+    userNo: number,
     manager: EntityManager,
     createFriendDto: CreateFriendRequestDto,
   ): Promise<void> {
     const { senderNo, receiverNo }: CreateFriendRequestDto = createFriendDto;
+    if (userNo !== senderNo) {
+      throw new BadRequestException(`잘못된 요청입니다.`);
+    }
     await this.checkRequest({
       senderNo,
       receiverNo,
@@ -61,10 +66,9 @@ export class FriendsService {
   }
 
   async acceptFriendRequest(
-    friendRequest: FriendRequestValidation,
+    userNo: number,
+    { senderNo, friendNo }: FriendRequestDto,
   ): Promise<void> {
-    const { userNo, senderNo, friendNo } = friendRequest;
-
     const request = await this.checkRequest({
       receiverNo: userNo,
       senderNo,
