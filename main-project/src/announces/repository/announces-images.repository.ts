@@ -1,19 +1,14 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { ResultSetHeader } from 'mysql2';
-import {
-  DeleteResult,
-  EntityRepository,
-  InsertResult,
-  Repository,
-} from 'typeorm';
-import { AnnouncesImages } from '../entity/announce-images.entity';
+import { DeleteResult, EntityRepository, Repository } from 'typeorm';
+import { AnnounceImages } from '../entity/announce-images.entity';
+import { AnnounceImage } from '../interface/announces.interface';
 
-@EntityRepository(AnnouncesImages)
-export class AnnouncesImagesRepository extends Repository<AnnouncesImages> {
+@EntityRepository(AnnounceImages)
+export class AnnouncesImagesRepository extends Repository<AnnounceImages> {
   // 조회 관련
-  async getAnnouncesImages(announcesNo: number): Promise<AnnouncesImages> {
+  async getAnnouncesImages(announcesNo: number): Promise<AnnounceImages> {
     try {
-      const images: AnnouncesImages = await this.createQueryBuilder(
+      const images: AnnounceImages = await this.createQueryBuilder(
         'announcesImages',
       )
         .select(['JSON_ARRAYAGG(announcesImages.imageUrl) AS imageUrl'])
@@ -28,22 +23,16 @@ export class AnnouncesImagesRepository extends Repository<AnnouncesImages> {
     }
   }
   // 생성 관련
-  async uploadAnnouncesimagesUrl(
-    images: { announcesNo: number; imageUrl: string }[],
-  ): Promise<ResultSetHeader> {
+  async createAnnounceImages(images: AnnounceImage[]): Promise<void> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder(
-        'announcesImages',
-      )
+      await this.createQueryBuilder()
         .insert()
-        .into(AnnouncesImages)
+        .into(AnnounceImages)
         .values(images)
         .execute();
-
-      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} uploadAnnouncesimagesUrl-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createAnnounceImages-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -55,7 +44,7 @@ export class AnnouncesImagesRepository extends Repository<AnnouncesImages> {
         'announcesImages',
       )
         .delete()
-        .from(AnnouncesImages)
+        .from(AnnounceImages)
         .where('announcesNo = :announcesNo', { announcesNo })
         .execute();
 

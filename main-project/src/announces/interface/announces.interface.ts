@@ -4,3 +4,8 @@ export interface Announce<T> {
   description: string;
   imageUrls: T;
 }
+
+export interface AnnounceImage {
+  imageUrl: string;
+  announceNo: number;
+}

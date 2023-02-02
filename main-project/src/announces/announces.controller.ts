@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AnnouncesService } from './announces.service';
-import { AnnouncesDto } from './dto/announce.dto';
+import { AnnounceDto } from './dto/announce.dto';
 import { Announces } from './entity/announce.entity';
 import { APIResponse } from 'src/common/interface/interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -23,12 +23,13 @@ import { EntityManager } from 'typeorm';
 import { Announce } from './interface/announces.interface';
 import { ApiGetAnnounces } from './swagger-decorator/get-annoucnes.decorator';
 import { ApiGetAnnounce } from './swagger-decorator/get-announce.decorator';
+import { ApiCreateAnnounce } from './swagger-decorator/create-announce.decorator';
 
 @Controller('announces')
 @ApiTags('공지사항 API')
 export class AnnouncesController {
   constructor(
-    private announcesService: AnnouncesService,
+    private readonly announcesService: AnnouncesService,
     private readonly awsService: AwsService,
   ) {}
   //Get Methods
@@ -59,42 +60,17 @@ export class AnnouncesController {
 
   // Post Methods
   @Post()
-  @ApiOperation({
-    summary: '공지사항 생성 API',
-    description: '입력한 정보로 공지사항을 생성한다.',
-  })
+  @ApiCreateAnnounce()
   @UseInterceptors(TransactionInterceptor)
   @UseInterceptors(FilesInterceptor('files', 10))
-  async createAnnounces(
+  async createAnnounce(
     @TransactionDecorator() manager: EntityManager,
-    @Body() announcesDto: AnnouncesDto,
-  ): Promise<APIResponse> {
-    await this.announcesService.createAnnounces(manager, announcesDto);
-
-    return { response: { msg: '공지사항 생성 성공' } };
-  }
-
-  @Post('/images/:announcesNo')
-  @ApiOperation({
-    summary: '공지사항 이미지 업로드 API',
-    description: 's3에 이미지 업로드 후 DB에 image 정보 생성.',
-  })
-  @UseInterceptors(TransactionInterceptor)
-  @UseInterceptors(FilesInterceptor('files', 10))
-  async uploadAnnouncesImages(
-    @TransactionDecorator() manager: EntityManager,
-    @Param('announcesNo', ParseIntPipe) announcesNo: number,
+    @Body() announcesDto: AnnounceDto,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
-    const imageURLs = await this.awsService.uploadImages(files, 'announces');
+    await this.announcesService.createAnnounces(manager, announcesDto, files);
 
-    await this.announcesService.uploadAnnouncesimagesUrl(
-      manager,
-      announcesNo,
-      imageURLs,
-    );
-
-    return { response: { msg: '이미지 업로드 성공' } };
+    return { response: { msg: '공지사항 생성 성공' } };
   }
 
   // Patch Methods
@@ -107,7 +83,7 @@ export class AnnouncesController {
   async updateAnnounces(
     @TransactionDecorator() manager: EntityManager,
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
-    @Body() announcesDto: AnnouncesDto,
+    @Body() announcesDto: AnnounceDto,
   ): Promise<APIResponse> {
     await this.announcesService.updateAnnounces(
       manager,

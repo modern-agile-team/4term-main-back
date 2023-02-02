@@ -6,63 +6,62 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ResultSetHeader } from 'mysql2';
+import { AwsService } from 'src/aws/aws.service';
 import { DeleteResult, EntityManager, UpdateResult } from 'typeorm';
-import { AnnouncesDto } from './dto/announce.dto';
-import { AnnouncesImages } from './entity/announce-images.entity';
-import { Announces } from './entity/announce.entity';
-import { Announce } from './interface/announces.interface';
+import { AnnounceDto } from './dto/announce.dto';
+import { Announce, AnnounceImage } from './interface/announces.interface';
 import { AnnouncesRepository } from './repository/announce.repository';
 import { AnnouncesImagesRepository } from './repository/announces-images.repository';
 
 @Injectable()
 export class AnnouncesService {
-  private readonly s3: AWS.S3;
-
   constructor(
     @InjectRepository(AnnouncesRepository)
     private readonly announcesRepository: AnnouncesRepository,
 
     @InjectRepository(AnnouncesImagesRepository)
     private readonly announcesImagesRepository: AnnouncesImagesRepository,
+
+    private readonly awsService: AwsService,
   ) {}
   // 생성 관련
   async createAnnounces(
     manager: EntityManager,
-    announcesDto: AnnouncesDto,
+    announcesDto: AnnounceDto,
+    files: Express.Multer.File[],
   ): Promise<void> {
-    const { affectedRows }: ResultSetHeader =
-      await this.announcesRepository.createAnnounces(announcesDto);
+    const announceNo: number = await this.setAnnounce(manager, announcesDto);
 
-    if (!affectedRows) {
-      throw new InternalServerErrorException(
-        `공지사항 생성(createAnnouncement-service): 알 수 없는 서버 에러입니다.`,
-      );
+    if (files.length) {
+      const imageUrls: string[] = await this.uploadImages(files);
+      await this.setAnnounceImages(manager, imageUrls, announceNo);
     }
   }
 
-  async uploadAnnouncesimagesUrl(
+  private async setAnnounce(
     manager: EntityManager,
-    announcesNo: number,
-    uploadedImagesUrlList: string[],
-  ): Promise<string> {
-    await this.getAnnounce(manager, announcesNo);
-    if (uploadedImagesUrlList.length === 0) {
-      throw new BadRequestException('사진이 없습니다.');
-    }
-    const images = uploadedImagesUrlList.map((url) => {
-      return { announcesNo, imageUrl: url };
-    });
+    announcesDto: AnnounceDto,
+  ): Promise<number> {
+    const { insertId }: ResultSetHeader = await manager
+      .getCustomRepository(AnnouncesRepository)
+      .createAnnounce(announcesDto);
 
-    const { insertId }: ResultSetHeader =
-      await this.announcesImagesRepository.uploadAnnouncesimagesUrl(images);
+    return insertId;
+  }
 
-    if (!insertId) {
-      throw new InternalServerErrorException(
-        `이미지 업로드(uploadimagesUrl-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+  private async setAnnounceImages(
+    manager: EntityManager,
+    imageUrls: string[],
+    announceNo: number,
+  ): Promise<void> {
+    const images: AnnounceImage[] = await this.convertImageArray(
+      announceNo,
+      imageUrls,
+    );
 
-    return `이미지 업로드 성공`;
+    await manager
+      .getCustomRepository(AnnouncesImagesRepository)
+      .createAnnounceImages(images);
   }
 
   // 조회 관련
@@ -101,7 +100,7 @@ export class AnnouncesService {
   async updateAnnounces(
     manager: EntityManager,
     announcesNo: number,
-    announcesDto: AnnouncesDto,
+    announcesDto: AnnounceDto,
   ): Promise<void> {
     await this.getAnnounce(manager, announcesNo);
 
@@ -150,5 +149,27 @@ export class AnnouncesService {
     }
 
     return `이미지 삭제 성공`;
+  }
+
+  // functions
+  private async convertImageArray(
+    announceNo: number,
+    imageUrls: string[],
+  ): Promise<AnnounceImage[]> {
+    const images: AnnounceImage[] = imageUrls.map((imageUrl: string) => {
+      return { announceNo, imageUrl };
+    });
+
+    return images;
+  }
+
+  // s3
+  private async uploadImages(files: Express.Multer.File[]): Promise<string[]> {
+    const imageUrls: string[] = await this.awsService.uploadImages(
+      files,
+      'announce',
+    );
+
+    return imageUrls;
   }
 }

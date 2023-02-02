@@ -7,7 +7,7 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { AnnouncesDto } from '../dto/announce.dto';
+import { AnnounceDto } from '../dto/announce.dto';
 import { Announces } from '../entity/announce.entity';
 import { Announce } from '../interface/announces.interface';
 
@@ -78,7 +78,7 @@ export class AnnouncesRepository extends Repository<Announces> {
   }
 
   // 생성 관련
-  async createAnnounces(announcesDto: AnnouncesDto): Promise<ResultSetHeader> {
+  async createAnnounce(announcesDto: AnnounceDto): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('announces')
         .insert()
@@ -89,7 +89,7 @@ export class AnnouncesRepository extends Repository<Announces> {
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createAnnounces-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createAnnounce-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -97,7 +97,7 @@ export class AnnouncesRepository extends Repository<Announces> {
   // 수정 관련
   async updateAnnounces(
     announcesNo: number,
-    announcesDto: AnnouncesDto,
+    announcesDto: AnnounceDto,
   ): Promise<UpdateResult> {
     try {
       const raw: UpdateResult = await this.createQueryBuilder('boards')
