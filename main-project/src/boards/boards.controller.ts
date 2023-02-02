@@ -11,7 +11,7 @@ import {
   UseInterceptors,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
@@ -26,6 +26,18 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { UpdateBoardDto } from './dto/update-board.dto';
 import { HostInviteDto } from './dto/host-invite.dto';
+import { ApiGetBoard } from './swagger-decorator/get-board.decorator';
+import { ApiCreateBoard } from './swagger-decorator/create-board.decorator';
+import { ApiGetBoards } from './swagger-decorator/get-boards.decorator';
+import { ApiCreateBookmark } from './swagger-decorator/create-bookmark.decorator';
+import { ApiCreateGuestTeam } from './swagger-decorator/create-guest-team.decorator';
+import { ApiUpdateBoard } from './swagger-decorator/update-board.decorator';
+import { ApiAcceptHostInvite } from './swagger-decorator/accept-host-iInvite.decorator';
+import { ApiAcceptGuestInvite } from './swagger-decorator/accept-guest-invite.decorator';
+import { GuestInviteDto } from './dto/guest-invite.dto';
+import { ApiDeleteBoard } from './swagger-decorator/delete-board.decorator';
+import { ApiDeleteBookmark } from './swagger-decorator/delete-bookmark.decorator';
+import { ApiGetBoardsByUser } from './swagger-decorator/get- boards-by-user.decorator';
 
 @Controller('boards')
 @ApiTags('게시글 API')
@@ -44,47 +56,58 @@ export class BoardsController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '게시글 필터링 검색 or 전체검색 API',
-    description:
-      '검색조건이 있으면 필터링을 통한 검색 / 조건이 없으면 전체검색을 한다',
-  })
+  @ApiGetBoards()
   async getBoards(
     @TransactionDecorator() manager: EntityManager,
     @Query() BoardFilterDto?: BoardFilterDto,
   ): Promise<APIResponse> {
-    const boards: Board[] = await this.boardService.getBoards(
+    const boards: Board<void>[] = await this.boardService.getBoards(
       manager,
       BoardFilterDto,
     );
 
-    return { response: { boards } };
+    return { msg: '게시글 필터/전체 조회 성공', response: { boards } };
   }
 
   @Get('/:boardNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '게시글 상세조회 API',
-    description: '게시글 번호를 사용해 상세조회한다.',
-  })
+  @ApiGetBoard()
   async getBoardByNo(
     @Param('boardNo') boardNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const board: Board = await this.boardService.getBoard(manager, boardNo);
+    const board: Board<number[]> = await this.boardService.getBoard(
+      manager,
+      boardNo,
+    );
 
-    return { response: { board } };
+    return { msg: '게시글 상세조회 성공', response: { board } };
+  }
+
+  @Get('/my-page/:type')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetBoardsByUser()
+  async getBoardByUser(
+    @Param('type') type: number,
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<APIResponse> {
+    const boards: Board<void>[] = await this.boardService.getBoardsByUser(
+      manager,
+      userNo,
+      type,
+    );
+
+    return { msg: '유저별 게시글 조회 성공', response: { boards } };
   }
 
   // Post Methods
   @Post()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '게시글 생성 API',
-    description: '입력한 정보로 게시글, 멤버 정보을 생성한다.',
-  })
+  @ApiCreateBoard()
   async createBoard(
     @Body() createBoarddto: CreateBoardDto,
     @GetUser() userNo: number,
@@ -98,10 +121,7 @@ export class BoardsController {
   @Post('/:boardNo/bookmark')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '북마크 생성 API',
-    description: '게시글 번호를 통해 해당 User의 북마크를 생성한다.',
-  })
+  @ApiCreateBookmark()
   async createBookmark(
     @Param('boardNo') boardNo: number,
     @GetUser() userNo: number,
@@ -112,18 +132,22 @@ export class BoardsController {
     return { msg: '북마크 생성 성공' };
   }
 
-  @Post('/:boardNo/participation')
+  @Post('/:boardNo/join')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '게스트 참가 신청 API',
-    description: '',
-  })
+  @ApiCreateGuestTeam()
   async createGuestTeam(
     @Param('boardNo') boardNo: number,
-    @Body() participationDto: CreateGuestTeamDto,
+    @GetUser() userNo: number,
+    @Body() createGuestTeamDto: CreateGuestTeamDto,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    await this.boardService.createGuestTeam(manager, boardNo, participationDto);
+    await this.boardService.createGuestTeam(
+      manager,
+      userNo,
+      boardNo,
+      createGuestTeamDto,
+    );
 
     return { msg: '참가신청 성공' };
   }
@@ -132,10 +156,7 @@ export class BoardsController {
   @Patch('/:boardNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '게시글 수정 API',
-    description: '입력한 정보로 게시글, 멤버 정보을 수정한다.',
-  })
+  @ApiUpdateBoard()
   async updateBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body() updateBoardDto: UpdateBoardDto,
@@ -147,16 +168,10 @@ export class BoardsController {
     return { msg: '게시글 수정 성공' };
   }
 
-  @Patch('/:boardNo/invite')
+  @Patch('/:boardNo/invite/host')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '게시글 호스트멤버 초대 수락 / 거절 API',
-    description: `게시글 작성 시 초대한 멤버가 알람에서 수락 시 
-    알람에 수락처리 및 전체 수락됬는지 확인 후 전체 수락 시 
-    게시글 보여지게 전환, 거절 시 게시글, 알람 삭제 및 작성자에게 
-    거절 알람 전송`,
-  })
+  @ApiAcceptHostInvite()
   async acceptHostInvite(
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @Body() { isAccepted }: HostInviteDto,
@@ -170,17 +185,34 @@ export class BoardsController {
       isAccepted,
     );
 
-    return { msg: '게시글 수락 / 거절 처리 성공' };
+    return { msg: '게시글 수락/거절 처리 성공' };
+  }
+
+  @Patch('/:boardNo/invite/guest')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiAcceptGuestInvite()
+  async acceptGuestInvite(
+    @Param('boardNo', ParseIntPipe) boardNo: number,
+    @Body() { isAccepted }: GuestInviteDto,
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<APIResponse> {
+    await this.boardService.validateGuestInvite(
+      manager,
+      boardNo,
+      userNo,
+      isAccepted,
+    );
+
+    return { msg: '게시글 수락/거절 처리 성공' };
   }
 
   // Delete Methods
   @Delete('/:boardNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '게시글 삭제 API',
-    description: '게시글 번호를 사용해 게시글관련 정보들을 삭제한다.',
-  })
+  @ApiDeleteBoard()
   async deleteBoard(
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @GetUser() userNo: number,
@@ -194,10 +226,7 @@ export class BoardsController {
   @Delete('/:boardNo/bookmark')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '북마크 취소 API',
-    description: '게시글 번호를 사용해 해당 User의 북마크를 취소한다.',
-  })
+  @ApiDeleteBookmark()
   async cancelBookmark(
     @Param('boardNo') boardNo: number,
     @GetUser() userNo: number,
