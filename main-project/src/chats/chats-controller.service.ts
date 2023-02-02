@@ -11,9 +11,9 @@ import { NoticeChats } from 'src/notices/entity/notice-chat.entity';
 import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { EntityManager } from 'typeorm';
-import { AcceptInvitationDTO } from './dto/accept-invitation.dto';
-import { GetChatLogDTO } from './dto/get-chat-log.dto';
-import { InviteUserDTO } from './dto/invite-user.dto';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto';
+import { GetChatLogDto } from './dto/get-chat-log.dto';
+import { InviteUserDto } from './dto/invite-user.dto';
 import { ChatList } from './entity/chat-list.entity';
 import { ChatLog } from './entity/chat-log.entity';
 import {
@@ -38,7 +38,7 @@ export class ChatsControllerService {
   async getPreviousChatLog(
     userNo: number,
     chatRoomNo: number,
-    { currentChatLogNo }: GetChatLogDTO,
+    { currentChatLogNo }: GetChatLogDto,
   ): Promise<ChatLog[]> {
     await this.checkChatRoomExists(chatRoomNo);
 
@@ -115,7 +115,7 @@ export class ChatsControllerService {
   async inviteUser(
     userNo: number,
     manager: EntityManager,
-    { targetUserNo }: InviteUserDTO,
+    { targetUserNo }: InviteUserDto,
     chatRoomNo: number,
   ): Promise<void> {
     await this.checkChatRoomExists(chatRoomNo);
@@ -187,9 +187,9 @@ export class ChatsControllerService {
   async acceptInvitation(
     userNo: number,
     chatRoomNo: number,
-    invitationInfo: AcceptInvitationDTO,
+    invitationInfo: AcceptInvitationDto,
   ): Promise<void> {
-    const { inviterNo, targetUserNo, type }: AcceptInvitationDTO =
+    const { inviterNo, targetUserNo, type }: AcceptInvitationDto =
       invitationInfo;
     if (userNo !== targetUserNo) {
       throw new BadRequestException(`초대받은 유저만 수락할 수 있습니다.`);

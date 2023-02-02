@@ -11,11 +11,11 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChatsControllerService } from './chats-controller.service';
-import { GetChatLogDTO } from './dto/get-chat-log.dto';
-import { InviteUserDTO } from './dto/invite-user.dto';
+import { GetChatLogDto } from './dto/get-chat-log.dto';
+import { InviteUserDto } from './dto/invite-user.dto';
 import { AwsService } from 'src/aws/aws.service';
 import { ChatLog } from './entity/chat-log.entity';
-import { AcceptInvitationDTO } from './dto/accept-invitation.dto';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto';
 import { APIResponse } from 'src/common/interface/interface';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
@@ -41,7 +41,7 @@ export class ChatsController {
   async getPreviousChatLog(
     @GetUser() userNo: number,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body() chatLogDto: GetChatLogDTO,
+    @Body() chatLogDto: GetChatLogDto,
   ): Promise<APIResponse> {
     const previousChatLog: ChatLog[] =
       await this.chatControllerService.getPreviousChatLog(
@@ -80,7 +80,7 @@ export class ChatsController {
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body() inviteUser: InviteUserDTO,
+    @Body() inviteUser: InviteUserDto,
   ): Promise<APIResponse> {
     await this.chatControllerService.inviteUser(
       userNo,
@@ -103,7 +103,7 @@ export class ChatsController {
   async acceptInvitation(
     @GetUser() userNo: number,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body() invitationInfo: AcceptInvitationDTO,
+    @Body() invitationInfo: AcceptInvitationDto,
   ): Promise<APIResponse> {
     await this.chatControllerService.acceptInvitation(
       userNo,

@@ -116,13 +116,13 @@ export class ChatsGatewayService {
   }
 
   async getChatRooms(userNo: number): Promise<ChatRoomWithUsers[]> {
-    const roomNo = await this.chatUsersRepository.getChatRoomNoByUserNo(userNo);
-    if (!roomNo) {
+    const rooms = await this.chatUsersRepository.getChatRoomNoByUserNo(userNo);
+    if (!rooms) {
       throw new BadRequestException('채팅방이 존재하지 않습니다.');
     }
-    const chatRoomNo = roomNo.split(',').map(Number);
+    const chatRooms = JSON.parse(rooms);
     const chatRoomsWithUsers: ChatRoomWithUsers[] =
-      await this.chatUsersRepository.getChatRoomsWithUsers(chatRoomNo);
+      await this.chatUsersRepository.getChatRoomsWithUsers(chatRooms);
 
     chatRoomsWithUsers.forEach((chatRoom) => {
       chatRoom.users = JSON.parse(chatRoom.users);
