@@ -103,12 +103,7 @@ export class ChatsGatewayService {
     if (!board) {
       throw new NotFoundException('게시물을 찾지 못했습니다.');
     }
-<<<<<<< HEAD
-
-    if (board.hostUserNo !== userNo) {
-=======
     if (board.userNo !== userNo) {
->>>>>>> e4d953c65b971059c717eb841fa8084d8390eef2
       throw new BadRequestException('게시글의 작성자만 수락할 수 있습니다.');
     }
 
