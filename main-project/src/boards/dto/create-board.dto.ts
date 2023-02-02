@@ -7,12 +7,16 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
 export class CreateBoardDto {
   @ApiProperty({
     example: '크리스마스를 즐기자',
     description: '게시글 제목',
   })
+  @MaxLength(255)
+  @MinLength(2)
   @IsString()
   @IsNotEmpty()
   title: string;
@@ -21,17 +25,11 @@ export class CreateBoardDto {
     example: '산타와 함께 크리스마스를 즐길 사람 급구@@@@@@',
     description: '게시글 내용',
   })
+  @MaxLength(255)
+  @MinLength(2)
   @IsString()
   @IsNotEmpty()
   description: string;
-
-  @ApiProperty({
-    example: 0,
-    description: '약속 성사 표시, 진행 중 : 0, 성사완료 : 1, optional 변수',
-  })
-  @IsBoolean()
-  @IsOptional()
-  isDone: boolean;
 
   @ApiProperty({
     example: 0,
@@ -43,6 +41,8 @@ export class CreateBoardDto {
 
   @ApiProperty({ example: '노원 술먹구 가', description: '약속 장소' })
   @IsString()
+  @MaxLength(255)
+  @MinLength(2)
   @IsNotEmpty()
   location: string;
 
@@ -54,12 +54,12 @@ export class CreateBoardDto {
 
   @ApiProperty({ example: 2, description: '남자 인원수' })
   @IsNumber()
-  @IsNotEmpty()
+  @IsOptional()
   recruitMale: number;
 
   @ApiProperty({ example: 2, description: '여자 인원수' })
   @IsNumber()
-  @IsNotEmpty()
+  @IsOptional()
   recruitFemale: number;
 
   @ApiProperty({

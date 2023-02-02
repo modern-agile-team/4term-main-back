@@ -17,7 +17,9 @@ import {
 
 @EntityRepository(Notices)
 export class NoticesRepository extends Repository<Notices> {
-  async saveNotice(noticeInfo: SavedNotice): Promise<InsertRaw> {
+  async saveNotice(
+    noticeInfo: SavedNotice | SavedNotice[],
+  ): Promise<InsertRaw> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('notices')
         .insert()

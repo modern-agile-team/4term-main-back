@@ -33,6 +33,7 @@ export class Boards extends BaseEntity {
     width: 1,
     default: false,
     nullable: true,
+    name: 'is_done',
   })
   isDone: boolean;
 
@@ -41,6 +42,7 @@ export class Boards extends BaseEntity {
     width: 1,
     default: false,
     nullable: true,
+    name: 'is_impromptu',
   })
   isImpromptu: boolean;
 
@@ -49,6 +51,7 @@ export class Boards extends BaseEntity {
     width: 1,
     default: false,
     nullable: true,
+    name: 'is_accepted',
   })
   isAccepted: boolean;
 

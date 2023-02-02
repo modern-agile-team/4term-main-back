@@ -1,4 +1,3 @@
-import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
   Column,
@@ -33,4 +32,13 @@ export class BoardGuestTeams extends BaseEntity {
 
   @Column({ type: 'varchar', length: 255 })
   description: string;
+
+  @Column({
+    type: 'tinyint',
+    width: 1,
+    default: false,
+    nullable: true,
+    name: 'is_accepted',
+  })
+  isAccepted: boolean;
 }

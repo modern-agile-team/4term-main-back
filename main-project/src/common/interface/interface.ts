@@ -13,9 +13,3 @@ export interface ApiErrorExample {
   response?: any;
   success?: boolean;
 }
-
-export interface JsonArray {
-  no?: string;
-  userNo?: string;
-  isAccepted?: string;
-}

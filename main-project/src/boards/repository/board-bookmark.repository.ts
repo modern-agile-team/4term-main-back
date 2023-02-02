@@ -36,7 +36,7 @@ export class BoardBookmarksRepository extends Repository<BoardBookmarks> {
   }
 
   // 삭제
-  async cancelBookmark(boardNo: number, userNo: number): Promise<void> {
+  async deleteBookmark(boardNo: number, userNo: number): Promise<void> {
     try {
       await this.createQueryBuilder()
         .delete()
@@ -46,7 +46,7 @@ export class BoardBookmarksRepository extends Repository<BoardBookmarks> {
         .execute();
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} deleteBoard-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} deleteBookmark-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

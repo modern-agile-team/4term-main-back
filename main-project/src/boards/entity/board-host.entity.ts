@@ -1,10 +1,10 @@
 import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
+  Column,
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Boards } from './board.entity';
@@ -27,4 +27,22 @@ export class BoardHosts extends BaseEntity {
   })
   @JoinColumn({ name: 'board_no' })
   boardNo: number;
+
+  @Column({
+    type: 'tinyint',
+    width: 1,
+    default: false,
+    nullable: true,
+    name: 'is_accepted',
+  })
+  isAccepted: boolean;
+
+  @Column({
+    type: 'tinyint',
+    width: 1,
+    default: false,
+    nullable: true,
+    name: 'is_answered',
+  })
+  isAnswered: boolean;
 }
