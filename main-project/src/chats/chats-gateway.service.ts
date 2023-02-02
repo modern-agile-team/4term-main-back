@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Socket } from 'socket.io';
 import { Boards } from 'src/boards/entity/board.entity';
-import { BoardRepository } from 'src/boards/repository/board.repository';
+import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { EntityManager, InsertResult } from 'typeorm';
@@ -32,16 +32,15 @@ export class ChatsGatewayService {
     private readonly chatListRepository: ChatListRepository,
     private readonly chatUsersRepository: ChatUsersRepository,
     private readonly chatLogRepository: ChatLogRepository,
-    private readonly boardRepository: BoardRepository,
+    private readonly boardRepository: BoardsRepository,
   ) {}
 
-  async initSocket(socket, userNo: number): Promise<ChatRoom[]> {
-    const chatRooms: ChatRoom[] = await this.getChatRooms(userNo);
-    if (chatRooms) {
-      chatRooms.forEach((chatRoom) => {
-        socket.join(`${chatRoom.chatRoomNo}`);
-      });
-    }
+  async initSocket(socket, userNo: number): Promise<any> {
+    const chatRooms: ChatRoomWithUsers[] = await this.getChatRooms(userNo);
+
+    chatRooms.forEach((chatRoom) => {
+      socket.join(`${chatRoom.chatRoomNo}`);
+    });
 
     return chatRooms;
   }
@@ -104,6 +103,7 @@ export class ChatsGatewayService {
     if (!board) {
       throw new NotFoundException('게시물을 찾지 못했습니다.');
     }
+
     if (board.userNo !== userNo) {
       throw new BadRequestException('게시글의 작성자만 수락할 수 있습니다.');
     }
@@ -114,26 +114,21 @@ export class ChatsGatewayService {
       throw new BadRequestException('이미 생성된 채팅방 입니다.');
     }
   }
-  async getChatRooms(userNo: number): Promise<ChatRoom[]> {
-    const chatRooms: ChatRoom[] =
-      await this.chatUsersRepository.getChatRoomsByUserNo(userNo);
-    if (!chatRooms.length) {
+
+  async getChatRooms(userNo: number): Promise<ChatRoomWithUsers[]> {
+    const roomNo = await this.chatUsersRepository.getChatRoomNoByUserNo(userNo);
+    if (!roomNo) {
       throw new BadRequestException('채팅방이 존재하지 않습니다.');
     }
+    const chatRoomNo = roomNo.split(',').map(Number);
+    const chatRoomsWithUsers: ChatRoomWithUsers[] =
+      await this.chatUsersRepository.getChatRoomsWithUsers(chatRoomNo);
 
-    const chatRoomWithUsers: ChatRoom[] = await chatRooms.reduce(
-      async (values, chatRoom): Promise<ChatRoom[]> => {
-        const { users }: ChatRoomWithUsers =
-          await this.chatUsersRepository.getChatRoomUsers(chatRoom.chatRoomNo);
-        const chatRoomUsers: number[] = JSON.parse(users);
-        (await values).push({ ...chatRoom, chatRoomUsers });
+    chatRoomsWithUsers.forEach((chatRoom) => {
+      chatRoom.users = JSON.parse(chatRoom.users);
+    });
 
-        return values;
-      },
-      Promise.resolve([]),
-    );
-
-    return chatRoomWithUsers;
+    return chatRoomsWithUsers;
   }
 
   async sendChat(

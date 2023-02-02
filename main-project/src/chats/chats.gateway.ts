@@ -10,13 +10,12 @@ import { UseGuards } from '@nestjs/common/decorators';
 import { AsyncApiSub } from 'nestjs-asyncapi';
 import { Namespace, Socket } from 'socket.io';
 import { WebSocketAuthGuard } from 'src/common/guards/ws-jwt-auth.guard';
-import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { APIResponse } from 'src/common/interface/interface';
 import { ChatsGatewayService } from './chats-gateway.service';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { InitSocketDto } from './dto/init-socket.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
-import { ChatRoom } from './interface/chat.interface';
+import { ChatRoom, ChatRoomWithUsers } from './interface/chat.interface';
 import { WebSocketGetUser } from 'src/common/decorator/ws-get-user.decorator';
 import { WebSocketTransactionManager } from 'src/common/decorator/ws-transaction-manager.decorator';
 import { WebSocketTransactionInterceptor } from 'src/common/interceptor/ws-transaction-interceptor';
@@ -64,8 +63,8 @@ export class ChatsGateway {
 
   @SubscribeMessage('init-socket')
   @AsyncApiSub({
-    description: `소켓 초기화 
-    response: [{ roomName: string, chatRoomNo: number }] 반환`,
+    description: `소켓 초기화 socket auth 헤더 token으로 전달 
+    response: [{ roomName: string, chatRoomNo: number, users:[{userNo:number, nickname:string, profileImage:string}] }] 반환`,
     channel: 'init-socket',
     message: {
       payload: InitSocketDto,
@@ -76,18 +75,11 @@ export class ChatsGateway {
     @WebSocketGetUser() userNo: number,
     @ConnectedSocket() socket: Socket,
   ): Promise<APIResponse> {
-    const chatRooms: ChatRoom[] = await this.chatGatewayService.initSocket(
-      socket,
-      userNo,
-    );
+    const chatRooms = await this.chatGatewayService.initSocket(socket, userNo);
 
     return { response: { chatRooms } };
   }
 
-  /**
-   *
-   * @todo: 채팅방 생성시 soft delete 구분
-   */
   @SubscribeMessage('create-room')
   @AsyncApiSub({
     description: `채팅방 생성 

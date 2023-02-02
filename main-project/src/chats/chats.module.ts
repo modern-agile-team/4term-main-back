@@ -10,7 +10,7 @@ import { ChatLogRepository } from './repository/chat-log.repository';
 import { ChatsControllerService } from './chats-controller.service';
 import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
-import { BoardRepository } from 'src/boards/repository/board.repository';
+import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { AwsService } from 'src/aws/aws.service';
 import { ChatFileUrlsRepository } from './repository/chat-file-urls.repository';
 import { jwtModule } from 'src/common/configs/jwt-module.config';
@@ -25,7 +25,7 @@ import { jwtModule } from 'src/common/configs/jwt-module.config';
       ChatLogRepository,
       NoticeChatsRepository,
       NoticesRepository,
-      BoardRepository,
+      BoardsRepository,
     ]),
     jwtModule,
   ],

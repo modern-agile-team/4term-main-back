@@ -35,19 +35,11 @@ export class ChatsControllerService {
     private readonly noticeChatsRepository: NoticeChatsRepository,
   ) {}
 
-  async getChatRoomsByUserNo(userNo: number): Promise<ChatRoom[]> {
-    const chatRooms: ChatRoom[] =
-      await this.chatUsersRepository.getChatRoomsByUserNo(userNo);
-
-    return chatRooms;
-  }
-
   async getPreviousChatLog(
-    getChatLogDto: GetChatLogDTO,
+    userNo: number,
     chatRoomNo: number,
+    { currentChatLogNo }: GetChatLogDTO,
   ): Promise<ChatLog[]> {
-    const { userNo, currentChatLogNo }: GetChatLogDTO = getChatLogDto;
-
     await this.checkChatRoomExists(chatRoomNo);
 
     await this.checkUserInChatRoom({
@@ -66,11 +58,9 @@ export class ChatsControllerService {
   }
 
   async getCurrentChatLog(
-    getChatLogDto: GetChatLogDTO,
+    userNo: number,
     chatRoomNo: number,
   ): Promise<ChatLog[]> {
-    const { userNo }: GetChatLogDTO = getChatLogDto;
-
     await this.checkChatRoomExists(chatRoomNo);
 
     await this.checkUserInChatRoom({
@@ -123,12 +113,11 @@ export class ChatsControllerService {
   }
 
   async inviteUser(
+    userNo: number,
     manager: EntityManager,
-    inviteUser: InviteUserDTO,
+    { targetUserNo }: InviteUserDTO,
     chatRoomNo: number,
   ): Promise<void> {
-    const { userNo, targetUserNo }: InviteUserDTO = inviteUser;
-
     await this.checkChatRoomExists(chatRoomNo);
 
     const user: ChatUser = await this.checkUserInChatRoom({
@@ -196,11 +185,18 @@ export class ChatsControllerService {
   }
 
   async acceptInvitation(
+    userNo: number,
     chatRoomNo: number,
     invitationInfo: AcceptInvitationDTO,
   ): Promise<void> {
     const { inviterNo, targetUserNo, type }: AcceptInvitationDTO =
       invitationInfo;
+    if (userNo !== targetUserNo) {
+      throw new BadRequestException(`초대받은 유저만 수락할 수 있습니다.`);
+    }
+    if (type !== NoticeType.INVITE_HOST && type !== NoticeType.INVITE_GUEST) {
+      throw new BadRequestException(`잘못된 Notice 타입입니다.`);
+    }
     const userType =
       type === NoticeType.INVITE_HOST ? UserType.HOST : UserType.GUEST;
 
