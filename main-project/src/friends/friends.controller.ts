@@ -35,12 +35,12 @@ export class FriendsController {
   })
   @UseGuards(JwtAuthGuard)
   async getFriendList(@GetUser() userNo: number): Promise<APIResponse> {
-    const friendList = await this.friendsService.getFriendList(userNo);
+    const friends = await this.friendsService.getFriends(userNo);
 
-    return { response: { friendList } };
+    return { response: { friends } };
   }
 
-  @Post('/request')
+  @Post('/requests/:receiverNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
@@ -50,67 +50,66 @@ export class FriendsController {
   async sendFriendRequest(
     @GetUser() userNo,
     @TransactionDecorator() manager: EntityManager,
-    @Body() createFriendDto: CreateFriendRequestDto,
+    @Param('receiverNo') receiverNo: number,
   ): Promise<APIResponse> {
-    await this.friendsService.createFriendRequest(
-      userNo,
-      manager,
-      createFriendDto,
-    );
+    await this.friendsService.sendFriendRequest(userNo, manager, receiverNo);
 
     return {
       msg: '친구 신청이 완료되었습니다.',
     };
   }
 
-  @Patch('/accept')
+  @Patch('/requests/:friendNo/:senderNo')
   @ApiOperation({
     summary: '친구  요청 수락 API',
-    description: '토큰의 userNo와 body로 받은 senderNo',
+    description: '토큰의 userNo와 Param으로 받은 friendNo,senderNo',
   })
   @UseGuards(JwtAuthGuard)
   async acceptFriendRequest(
     @GetUser() userNo: number,
-    @Body() friendRequest: FriendRequestDto,
+    @Param('friendNo', ParseIntPipe) friendNo: number,
+    @Param('senderNo', ParseIntPipe) senderNo: number,
   ): Promise<APIResponse> {
-    await this.friendsService.acceptFriendRequest(userNo, friendRequest);
+    await this.friendsService.acceptFriendRequest(userNo, friendNo, senderNo);
 
     return {
       msg: '친구 신청을 수락했습니다.',
     };
   }
 
-  @Get('/request/received')
+  @Get('/requests/received')
   @ApiOperation({
     summary: '받은 친구 신청 목록 조회 API',
     description: '유저가 받은 친구 신청 전체 조회',
   })
   @UseGuards(JwtAuthGuard)
-  async getAllReceiveFriendRequest(
+  async getReceiveFriendRequest(
     @GetUser('userNo') receiverNo: number,
   ): Promise<APIResponse> {
-    const receivedRequestList =
-      await this.friendsService.getAllReceivedFriendRequest(receiverNo);
+    const receivedRequests = await this.friendsService.getReceivedFriendRequest(
+      receiverNo,
+    );
 
-    return { response: { receivedRequestList } };
+    return { response: { receivedRequests } };
   }
 
-  @Get('/request/send')
+  @Get('/requests/sent')
   @ApiOperation({
     summary: '보낸 친구 신청 목록 조회 API',
     description: '유저가 보낸 친구 신청 전체조회',
   })
   @UseGuards(JwtAuthGuard)
-  async getAllSendFriendRequest(
+  async getSentFriendRequests(
     @GetUser('userNo') senderNo: number,
   ): Promise<APIResponse> {
-    const sendedRequestList =
-      await this.friendsService.getAllSendedFriendRequest(senderNo);
+    const sentFriendRequests = await this.friendsService.getSentFriendRequests(
+      senderNo,
+    );
 
-    return { response: { sendedRequestList } };
+    return { response: { sentFriendRequests } };
   }
 
-  @Delete('/request/refuse/:userNo')
+  @Delete('/request/:friendNo/:senderNo')
   @ApiOperation({
     summary: '친구 신청 거절 API',
     description: '친구 신청 거절 API',
@@ -118,17 +117,21 @@ export class FriendsController {
   @UseGuards(JwtAuthGuard)
   async refuseRequest(
     @GetUser('userNo') receiverNo: number,
-    @Body() friendRequest: FriendRequestDto,
+    @Param('friendNo') friendNo: number,
+    @Param('senderNo') senderNo: number,
   ): Promise<APIResponse> {
-    await this.friendsService.refuseRequest({ receiverNo, ...friendRequest });
+    await this.friendsService.refuseRequest({
+      receiverNo,
+      friendNo,
+      senderNo,
+    });
 
     return {
       msg: '친구 요청을 거절했습니다.',
     };
   }
 
-  // 추후 토큰의 유저no와 friendNo 확인 후 삭제
-  @Delete('/delete/:userNo')
+  @Delete('/:friendNo/:friendUserNo')
   @ApiOperation({
     summary: '친구 삭제 API',
     description: '친구 삭제 API',
@@ -136,16 +139,17 @@ export class FriendsController {
   @UseGuards(JwtAuthGuard)
   async deleteFriend(
     @GetUser() userNo: number,
-    @Body() deleteFriendDto: DeleteFriendDto,
+    @Param('friendNo') friendNo: number,
+    @Param('friendUserNo') friendUserNo: number,
   ): Promise<APIResponse> {
-    await this.friendsService.deleteFriend({ userNo, ...deleteFriendDto });
+    await this.friendsService.deleteFriend(userNo, friendNo, friendUserNo);
 
     return {
       msg: '친구삭제가 완료되었습니다.',
     };
   }
 
-  @Get('/search/:nickname')
+  @Get('/:nickname')
   @ApiOperation({
     summary: '친구 검색 API',
     description: '닉네임으로 친구 검색',

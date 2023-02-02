@@ -18,16 +18,23 @@ import {
 
 @EntityRepository(Friends)
 export class FriendsRepository extends Repository<Friends> {
-  async getAllFriendList(userNo: number): Promise<Friend[]> {
+  async getFriends(userNo: number): Promise<Friend[]> {
     try {
-      const result = await this.createQueryBuilder('friends')
+      const friends = await this.createQueryBuilder('friends')
         .leftJoin('friends.receiverNo', 'receiverUser')
         .leftJoin('receiverUser.userProfileNo', 'receiverUserProfile')
+        .leftJoin(
+          'receiverUserProfile.profileImage',
+          'receiverUserProfileImage',
+        )
         .leftJoin('friends.senderNo', 'senderUser')
         .leftJoin('senderUser.userProfileNo', 'senderUserProfile')
+        .leftJoin('senderUserProfile.profileImage', 'senderUserProfileImage')
+
         .select([
           `IF(friends.receiver_no = ${userNo} , friends.sender_no, friends.receiver_no) AS friendUserNo`,
           `IF(friends.receiver_no = ${userNo} , senderUserProfile.nickname, receiverUserProfile.nickname) AS friendNickname`,
+          `IF(friends.receiver_no = ${userNo} , senderUserProfileImage.image_url, receiverUserProfileImage.image_url) AS friendProfileImage`,
         ])
         .where(
           'receiver_no = :userNo AND is_accept = 1 AND senderUserProfile.nickname IS NOT NULL',
@@ -39,7 +46,7 @@ export class FriendsRepository extends Repository<Friends> {
         )
         .getRawMany();
 
-      return result;
+      return friends;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error}: 친구 목록 조회(getAllFriendList): 알 수 없는 서버 에러입니다.`,
@@ -69,7 +76,7 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async getAllSendFriendReq(senderNo: number): Promise<Friends[]> {
+  async getSentFriendRequests(senderNo: number): Promise<Friends[]> {
     try {
       const result = await this.createQueryBuilder('friends')
         .leftJoin('friends.receiverNo', 'receiverUser')
@@ -115,9 +122,7 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async checkRequestByUsersNo(
-    friendDetail: Friend,
-  ): Promise<FriendRequestStatus> {
+  async getRequest(friendDetail: Friend): Promise<FriendRequestStatus> {
     try {
       const request: FriendRequestStatus = await this.createQueryBuilder(
         'friends',
@@ -238,21 +243,21 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async refuseRequestByNo(refuseFriendNo: Friend): Promise<number> {
+  async deleteRequest(request: Friend): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()
         .from(Friends)
         .where(
           'no = :friendNo AND receiver_no = :receiverNo AND sender_no = :senderNo',
-          refuseFriendNo,
+          request,
         )
         .execute();
 
       return affected;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error}: 친구 거절(refuseRequestByNo): 알 수 없는 서버 에러입니다. `,
+        `${error}: 친구 거절(deleteRequest): 알 수 없는 서버 에러입니다. `,
       );
     }
   }

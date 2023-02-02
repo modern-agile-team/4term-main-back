@@ -605,7 +605,7 @@ export class BoardsService {
 
     const dbFriends: Friend[] = await manager
       .getCustomRepository(FriendsRepository)
-      .getAllFriendList(userNo);
+      .getFriends(userNo);
 
     if (!dbFriends.length) {
       throw new BadRequestException(
