@@ -78,7 +78,7 @@ export class AuthService {
     manager: EntityManager,
   ): Promise<User> {
     await this.validateUserNotCreated(email);
-    // await this.validateEmail(email, code);
+    await this.validateEmail(email, code);
 
     const user: User = await this.saveUser(email, manager);
     await this.saveAuthentication({ userNo: user.userNo, password }, manager);

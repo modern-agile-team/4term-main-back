@@ -19,7 +19,7 @@ export class AnnouncesRepository extends Repository<Announces> {
       const announces: Announce<string>[] = await this.createQueryBuilder(
         'announces',
       )
-        .leftJoin('announces.announcesImages', 'images')
+        .leftJoin('announces.announceImage', 'images')
         .select([
           'announces.no AS no',
           'announces.title AS title',
@@ -53,7 +53,7 @@ export class AnnouncesRepository extends Repository<Announces> {
     try {
       const { imageUrls, ...announceInfo }: Announce<string> =
         await this.createQueryBuilder('announces')
-          .leftJoin('announces.announcesImages', 'images')
+          .leftJoin('announces.announceImage', 'images')
           .select([
             'announces.no AS no',
             'announces.title AS title',

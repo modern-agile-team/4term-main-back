@@ -4,9 +4,11 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ResultSetHeader } from 'mysql2';
 import { AwsService } from 'src/aws/aws.service';
+import { UsersRepository } from 'src/users/repository/users.repository';
 import { DeleteResult, EntityManager, UpdateResult } from 'typeorm';
 import { AnnounceDto } from './dto/announce.dto';
 import { Announce, AnnounceImage } from './interface/announces.interface';
@@ -23,13 +25,16 @@ export class AnnouncesService {
     private readonly announcesImagesRepository: AnnouncesImagesRepository,
 
     private readonly awsService: AwsService,
+    private readonly configService: ConfigService,
   ) {}
   // 생성 관련
   async createAnnounces(
     manager: EntityManager,
     announcesDto: AnnounceDto,
     files: Express.Multer.File[],
+    userNo: number,
   ): Promise<void> {
+    await this.validateAdmin(manager, userNo);
     const announceNo: number = await this.setAnnounce(manager, announcesDto);
 
     if (files.length) {
@@ -161,6 +166,19 @@ export class AnnouncesService {
     });
 
     return images;
+  }
+
+  private async validateAdmin(manager: EntityManager, userNo: number) {
+    const ADMIN_USER = this.configService.get<number>('ADMIN_USER');
+    const { no } = await manager
+      .getCustomRepository(UsersRepository)
+      .getUserByNo(userNo);
+
+    if (no !== ADMIN_USER) {
+      throw new BadRequestException(
+        '관리자 검증(validateAdmin-service): 관리자가 아닙니다.',
+      );
+    }
   }
 
   // s3

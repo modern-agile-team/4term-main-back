@@ -8,12 +8,12 @@ import {
   Patch,
   Post,
   UploadedFiles,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AnnouncesService } from './announces.service';
 import { AnnounceDto } from './dto/announce.dto';
-import { Announces } from './entity/announce.entity';
 import { APIResponse } from 'src/common/interface/interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AwsService } from 'src/aws/aws.service';
@@ -24,6 +24,8 @@ import { Announce } from './interface/announces.interface';
 import { ApiGetAnnounces } from './swagger-decorator/get-annoucnes.decorator';
 import { ApiGetAnnounce } from './swagger-decorator/get-announce.decorator';
 import { ApiCreateAnnounce } from './swagger-decorator/create-announce.decorator';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { GetUser } from 'src/common/decorator/get-user.decorator';
 
 @Controller('announces')
 @ApiTags('공지사항 API')
@@ -35,6 +37,7 @@ export class AnnouncesController {
   //Get Methods
   @Get()
   @UseInterceptors(TransactionInterceptor)
+  @UseGuards(JwtAuthGuard)
   @ApiGetAnnounces()
   async getAnnounces(
     @TransactionDecorator() manager: EntityManager,
@@ -47,6 +50,7 @@ export class AnnouncesController {
 
   @Get('/:announceNo')
   @UseInterceptors(TransactionInterceptor)
+  @UseGuards(JwtAuthGuard)
   @ApiGetAnnounce()
   async getAnnounce(
     @TransactionDecorator() manager: EntityManager,
@@ -61,14 +65,21 @@ export class AnnouncesController {
   // Post Methods
   @Post()
   @ApiCreateAnnounce()
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @UseInterceptors(FilesInterceptor('files', 10))
   async createAnnounce(
     @TransactionDecorator() manager: EntityManager,
+    @GetUser() userNo: number,
     @Body() announcesDto: AnnounceDto,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
-    await this.announcesService.createAnnounces(manager, announcesDto, files);
+    await this.announcesService.createAnnounces(
+      manager,
+      announcesDto,
+      files,
+      userNo,
+    );
 
     return { response: { msg: '공지사항 생성 성공' } };
   }
