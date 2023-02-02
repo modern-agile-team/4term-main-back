@@ -30,7 +30,7 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
     try {
       const { roomNo }: ChatRoom = await this.createQueryBuilder('chat_users')
         .leftJoin('chat_users.chatRoomNo', 'chatRoom')
-        .select(['GROUP_CONCAT(chatRoom.no) AS roomNo'])
+        .select(['JSON_ARRAYAGG(chatRoom.no) AS roomNo'])
         .where('chat_users.user_no = :userNo', { userNo })
         .getRawOne();
 
