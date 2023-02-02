@@ -1,6 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
-import { CreateResponse } from 'src/boards/interface/boards.interface';
 import {
   DeleteResult,
   EntityRepository,

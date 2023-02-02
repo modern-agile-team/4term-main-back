@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateResponse } from 'src/boards/interface/boards.interface';
+import { ResultSetHeader } from 'mysql2';
 import { DeleteResult } from 'typeorm';
 import { EventDto } from './dto/event.dto';
 import { Events } from './entity/events.entity';
@@ -25,7 +25,7 @@ export class EventsService {
   ) {}
   // 생성 관련
   async createEvent(eventsDto: EventDto): Promise<string> {
-    const { insertId }: CreateResponse =
+    const { insertId }: ResultSetHeader =
       await this.eventsRepository.createEvents(eventsDto);
 
     if (!insertId) {
@@ -50,7 +50,7 @@ export class EventsService {
       return { eventNo, imageUrl: url };
     });
 
-    const { insertId }: CreateResponse =
+    const { insertId }: ResultSetHeader =
       await this.eventsImagesRepository.uploadEventImagesUrl(images);
 
     if (!insertId) {

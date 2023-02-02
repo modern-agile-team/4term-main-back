@@ -142,6 +142,23 @@ export class UsersRepository extends Repository<Users> {
     }
   }
 
+  async getUsersByNums(userNo: number[]): Promise<number[]> {
+    try {
+      const user: Users = await this.createQueryBuilder('users')
+        .select(['JSON_ARRAYAGG(users.no) AS no'])
+        .where('no IN (:userNo)', { userNo })
+        .getRawOne();
+
+      const users: number[] = JSON.parse(String(user.no));
+
+      return users;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 유저 조회 에러(getUsersByNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async getDeletedUsersImages(): Promise<UserImages> {
     try {
       const userImages: UserImages = await this.createQueryBuilder('users')
