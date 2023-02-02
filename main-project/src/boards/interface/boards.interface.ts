@@ -24,8 +24,8 @@ export interface Guest<T> {
 }
 
 export interface Host<T> {
-  userNo: T;
-  isAccepted: T;
+  users: T;
+  acceptedResults: T;
 }
 
 export interface GuestTeam<T> {

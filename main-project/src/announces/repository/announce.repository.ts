@@ -9,22 +9,39 @@ import {
 } from 'typeorm';
 import { AnnouncesDto } from '../dto/announce.dto';
 import { Announces } from '../entity/announce.entity';
+import { Announce } from '../interface/announces.interface';
 
 @EntityRepository(Announces)
 export class AnnouncesRepository extends Repository<Announces> {
   //  조회 관련
-  async getAllAnnounces(): Promise<Announces[]> {
+  async getAllAnnounces(): Promise<Announce<string[]>[]> {
     try {
-      const announces: Announces[] = await this.createQueryBuilder('announces')
+      const announces: Announce<string>[] = await this.createQueryBuilder(
+        'announces',
+      )
+        .leftJoin('announces.announcesImages', 'images')
         .select([
           'announces.no AS no',
           'announces.title AS title',
           'announces.description AS description',
+          'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
         ])
         .orderBy('no', 'DESC')
+        .groupBy('announces.no')
         .getRawMany();
 
-      return announces;
+      const convertAnnounces: Announce<string[]>[] = announces.map(
+        ({ imageUrls, ...announceInfo }) => {
+          const announce: Announce<string[]> = {
+            ...announceInfo,
+            imageUrls: JSON.parse(imageUrls),
+          };
+
+          return announce;
+        },
+      );
+
+      return convertAnnounces;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getAllAnnounces-repository: 알 수 없는 서버 에러입니다.`,

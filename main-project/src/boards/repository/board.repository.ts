@@ -1,4 +1,7 @@
-import { InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
 import { ChatRoomOfBoard } from 'src/chats/interface/chat.interface';
 import {
@@ -146,6 +149,58 @@ export class BoardsRepository extends Repository<Boards> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getBoards-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getBoardsByUser(userNo: number, type: number): Promise<Board<void>[]> {
+    try {
+      const boards: SelectQueryBuilder<Boards> = this.createQueryBuilder(
+        'boards',
+      )
+        .leftJoin('boards.userNo', 'users')
+        .leftJoin('users.userProfileNo', 'profiles')
+        .leftJoin('boards.hosts', 'hosts')
+        .leftJoin('boards.teamNo', 'guestTeam')
+        .leftJoin('guestTeam.boardGuest', 'guests')
+        .leftJoin('hosts.userNo', 'hostUsers')
+        .leftJoin('hostUsers.userProfileNo', 'hostProfile')
+        .select([
+          'DISTINCT boards.no AS no',
+          'boards.userNo AS hostUserNo',
+          'profiles.nickname AS hostNickname',
+          'boards.title AS title',
+          'boards.description AS description',
+          'boards.location AS location',
+          'boards.isDone AS isDone',
+          'boards.isImpromptu AS isImpromptu',
+          'boards.recruitMale AS recruitMale',
+          'boards.recruitFemale AS recruitFemale',
+          `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
+          `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
+        ])
+        .orderBy('boards.no', 'DESC');
+
+      switch (type) {
+        case 1:
+          boards.where('boards.userNo = :userNo', { userNo });
+          break;
+        case 2:
+          boards.where('hosts.userNo = :userNo', { userNo });
+          break;
+        case 3:
+          boards.where('guests.userNo = :userNo', { userNo });
+          break;
+        default:
+          throw new BadRequestException(
+            '유저별 게시글 검색(getBoardsByUser-repository): type을 잘못 입력했습니다.',
+          );
+      }
+
+      return await boards.getRawMany();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getBoardsByUser-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

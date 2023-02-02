@@ -6,10 +6,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ResultSetHeader } from 'mysql2';
-import { DeleteResult, UpdateResult } from 'typeorm';
+import { DeleteResult, EntityManager, UpdateResult } from 'typeorm';
 import { AnnouncesDto } from './dto/announce.dto';
 import { AnnouncesImages } from './entity/announce-images.entity';
 import { Announces } from './entity/announce.entity';
+import { Announce } from './interface/announces.interface';
 import { AnnouncesRepository } from './repository/announce.repository';
 import { AnnouncesImagesRepository } from './repository/announces-images.repository';
 
@@ -61,13 +62,14 @@ export class AnnouncesService {
   }
 
   // 조회 관련
-  async getAllAnnounces(): Promise<Announces[]> {
-    const announces: Announces[] =
-      await this.announcesRepository.getAllAnnounces();
+  async getAllAnnounces(manager: EntityManager): Promise<Announce<string[]>[]> {
+    const announces: Announce<string[]>[] = await manager
+      .getCustomRepository(AnnouncesRepository)
+      .getAllAnnounces();
 
-    if (announces.length === 0) {
+    if (!announces.length) {
       throw new NotFoundException(
-        `공지사항 조회(getAnnouncements-service): 조건에 맞는 공지사항이 없습니다.`,
+        `공지사항 조회(getAllAnnounces-service): 공지사항이 없습니다.`,
       );
     }
 

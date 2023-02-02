@@ -11,7 +11,7 @@ import {
   UseInterceptors,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
@@ -37,6 +37,7 @@ import { ApiAcceptGuestInvite } from './swagger-decorator/accept-guest-invite.de
 import { GuestInviteDto } from './dto/guest-invite.dto';
 import { ApiDeleteBoard } from './swagger-decorator/delete-board.decorator';
 import { ApiDeleteBookmark } from './swagger-decorator/delete-bookmark.decorator';
+import { ApiGetBoardsByUser } from './swagger-decorator/get- boards-by-user.decorator';
 
 @Controller('boards')
 @ApiTags('게시글 API')
@@ -82,6 +83,24 @@ export class BoardsController {
     );
 
     return { msg: '게시글 상세조회 성공', response: { board } };
+  }
+
+  @Get('/my-page/:type')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetBoardsByUser()
+  async getBoardByUser(
+    @Param('type') type: number,
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<APIResponse> {
+    const boards: Board<void>[] = await this.boardService.getBoardsByUser(
+      manager,
+      userNo,
+      type,
+    );
+
+    return { msg: '유저별 게시글 조회 성공', response: { boards } };
   }
 
   // Post Methods

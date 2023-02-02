@@ -34,7 +34,7 @@ export class Announces extends BaseEntity {
 
   @OneToMany(
     (type) => AnnouncesImages,
-    (announcesImages) => announcesImages.announcesNo,
+    (announcesImages) => announcesImages.announceNo,
   )
   announcesImages: AnnouncesImages;
 }

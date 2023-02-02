@@ -17,7 +17,11 @@ import { Announces } from './entity/announce.entity';
 import { APIResponse } from 'src/common/interface/interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AwsService } from 'src/aws/aws.service';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
+import { EntityManager } from 'typeorm';
+import { Announce } from './interface/announces.interface';
+import { ApiGetAllAnnounces } from './swagger-decorator/get-all-annoucnes.decorator';
 
 @Controller('announces')
 @ApiTags('공지사항 API')
@@ -28,15 +32,15 @@ export class AnnouncesController {
   ) {}
   //Get Methods
   @Get()
-  @ApiOperation({
-    summary: '공지사항 전체조회 API',
-    description: '공지사항을 내림차순으로 전체 조회한다.',
-  })
-  async getAllAnnounces(): Promise<APIResponse> {
-    const announces: Announces[] =
-      await this.announcesService.getAllAnnounces();
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetAllAnnounces()
+  async getAllAnnounces(
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<APIResponse> {
+    const announces: Announce<string[]>[] =
+      await this.announcesService.getAllAnnounces(manager);
 
-    return { response: announces };
+    return { msg: '공지사항 전체조회 성공', response: { announces } };
   }
 
   @Get('/:announcesNo')
@@ -75,7 +79,7 @@ export class AnnouncesController {
     summary: '공지사항 생성 API',
     description: '입력한 정보로 공지사항을 생성한다.',
   })
-  @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
+  @UseInterceptors(FilesInterceptor('files', 10))
   async createAnnounces(
     @Body() announcesDto: AnnouncesDto,
   ): Promise<APIResponse> {
@@ -89,7 +93,7 @@ export class AnnouncesController {
     summary: '공지사항 이미지 업로드 API',
     description: 's3에 이미지 업로드 후 DB에 image 정보 생성.',
   })
-  @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
+  @UseInterceptors(FilesInterceptor('files', 10))
   async uploadAnnouncesImages(
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
     @UploadedFiles() files: Express.Multer.File[],
