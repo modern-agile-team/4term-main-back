@@ -4,7 +4,6 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
@@ -12,9 +11,9 @@ import { NoticeChats } from 'src/notices/entity/notice-chat.entity';
 import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { EntityManager } from 'typeorm';
-import { AcceptInvitationDTO } from './dto/accept-invitation.dto';
-import { GetChatLogDTO } from './dto/get-chat-log.dto';
-import { InviteUserDTO } from './dto/invite-user.dto';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto';
+import { GetChatLogDto } from './dto/get-chat-log.dto';
+import { InviteUserDto } from './dto/invite-user.dto';
 import { ChatList } from './entity/chat-list.entity';
 import { ChatLog } from './entity/chat-log.entity';
 import {
@@ -30,35 +29,17 @@ import { ChatUsersRepository } from './repository/chat-users.repository';
 @Injectable()
 export class ChatsControllerService {
   constructor(
-    @InjectRepository(ChatUsersRepository)
     private readonly chatUsersRepository: ChatUsersRepository,
-
-    @InjectRepository(ChatLogRepository)
     private readonly chatLogRepository: ChatLogRepository,
-
-    @InjectRepository(ChatListRepository)
     private readonly chatListRepository: ChatListRepository,
-
-    @InjectRepository(NoticesRepository)
-    private readonly noticesRepository: NoticesRepository,
-
-    @InjectRepository(NoticeChatsRepository)
     private readonly noticeChatsRepository: NoticeChatsRepository,
   ) {}
 
-  async getChatRoomsByUserNo(userNo: number): Promise<ChatRoom[]> {
-    const chatRooms: ChatRoom[] =
-      await this.chatUsersRepository.getChatRoomsByUserNo(userNo);
-
-    return chatRooms;
-  }
-
   async getPreviousChatLog(
-    getChatLogDto: GetChatLogDTO,
+    userNo: number,
     chatRoomNo: number,
+    { currentChatLogNo }: GetChatLogDto,
   ): Promise<ChatLog[]> {
-    const { userNo, currentChatLogNo }: GetChatLogDTO = getChatLogDto;
-
     await this.checkChatRoomExists(chatRoomNo);
 
     await this.checkUserInChatRoom({
@@ -77,11 +58,9 @@ export class ChatsControllerService {
   }
 
   async getCurrentChatLog(
-    getChatLogDto: GetChatLogDTO,
+    userNo: number,
     chatRoomNo: number,
   ): Promise<ChatLog[]> {
-    const { userNo }: GetChatLogDTO = getChatLogDto;
-
     await this.checkChatRoomExists(chatRoomNo);
 
     await this.checkUserInChatRoom({
@@ -117,7 +96,7 @@ export class ChatsControllerService {
       throw new NotFoundException('존재하지 않는 채팅방입니다.');
     }
 
-    const user: ChatUser = await this.chatUsersRepository.getChatUser(
+    const user: ChatUser = await this.chatUsersRepository.getChatRoomUser(
       userNo,
       chatRoomNo,
     );
@@ -134,12 +113,11 @@ export class ChatsControllerService {
   }
 
   async inviteUser(
+    userNo: number,
     manager: EntityManager,
-    inviteUser: InviteUserDTO,
+    { targetUserNo }: InviteUserDto,
     chatRoomNo: number,
   ): Promise<void> {
-    const { userNo, targetUserNo }: InviteUserDTO = inviteUser;
-
     await this.checkChatRoomExists(chatRoomNo);
 
     const user: ChatUser = await this.checkUserInChatRoom({
@@ -207,11 +185,18 @@ export class ChatsControllerService {
   }
 
   async acceptInvitation(
+    userNo: number,
     chatRoomNo: number,
-    invitationInfo: AcceptInvitationDTO,
+    invitationInfo: AcceptInvitationDto,
   ): Promise<void> {
-    const { inviterNo, targetUserNo, type }: AcceptInvitationDTO =
+    const { inviterNo, targetUserNo, type }: AcceptInvitationDto =
       invitationInfo;
+    if (userNo !== targetUserNo) {
+      throw new BadRequestException(`초대받은 유저만 수락할 수 있습니다.`);
+    }
+    if (type !== NoticeType.INVITE_HOST && type !== NoticeType.INVITE_GUEST) {
+      throw new BadRequestException(`잘못된 Notice 타입입니다.`);
+    }
     const userType =
       type === NoticeType.INVITE_HOST ? UserType.HOST : UserType.GUEST;
 

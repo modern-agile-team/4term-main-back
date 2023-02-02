@@ -11,7 +11,6 @@ import { UserType } from 'src/common/configs/user-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { EntityManager, InsertResult } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
-import { InitSocketDto } from './dto/init-socket.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
 import { ChatList } from './entity/chat-list.entity';
 import {
@@ -36,14 +35,12 @@ export class ChatsGatewayService {
     private readonly boardRepository: BoardsRepository,
   ) {}
 
-  async initSocket(socket, messagePayload: InitSocketDto): Promise<ChatRoom[]> {
-    const { userNo } = messagePayload;
-    const chatRooms: ChatRoom[] = await this.getChatRoomsByUserNo(userNo);
-    if (chatRooms) {
-      chatRooms.forEach((chatRoom) => {
-        socket.join(`${chatRoom.chatRoomNo}`);
-      });
-    }
+  async initSocket(socket, userNo: number): Promise<any> {
+    const chatRooms: ChatRoomWithUsers[] = await this.getChatRooms(userNo);
+
+    chatRooms.forEach((chatRoom) => {
+      socket.join(`${chatRoom.chatRoomNo}`);
+    });
 
     return chatRooms;
   }
@@ -106,6 +103,7 @@ export class ChatsGatewayService {
     if (!board) {
       throw new NotFoundException('게시물을 찾지 못했습니다.');
     }
+
     if (board.userNo !== userNo) {
       throw new BadRequestException('게시글의 작성자만 수락할 수 있습니다.');
     }
@@ -117,21 +115,28 @@ export class ChatsGatewayService {
     }
   }
 
-  async getChatRoomsByUserNo(userNo: number): Promise<ChatRoom[]> {
-    const chatRooms: ChatRoom[] =
-      await this.chatUsersRepository.getChatRoomsByUserNo(userNo);
-    if (!chatRooms.length) {
+  async getChatRooms(userNo: number): Promise<ChatRoomWithUsers[]> {
+    const rooms = await this.chatUsersRepository.getChatRoomNoByUserNo(userNo);
+    if (!rooms) {
       throw new BadRequestException('채팅방이 존재하지 않습니다.');
     }
+    const chatRooms = JSON.parse(rooms);
+    const chatRoomsWithUsers: ChatRoomWithUsers[] =
+      await this.chatUsersRepository.getChatRoomsWithUsers(chatRooms);
 
-    return chatRooms;
+    chatRoomsWithUsers.forEach((chatRoom) => {
+      chatRoom.users = JSON.parse(chatRoom.users);
+    });
+
+    return chatRoomsWithUsers;
   }
 
   async sendChat(
     socket: Socket,
     messagePayload: MessagePayloadDto,
+    userNo: number,
   ): Promise<void> {
-    const { userNo, chatRoomNo, message }: MessagePayloadDto = messagePayload;
+    const { chatRoomNo, message }: MessagePayloadDto = messagePayload;
 
     await this.checkChatRoom(chatRoomNo, userNo);
 
@@ -145,12 +150,12 @@ export class ChatsGatewayService {
   }
 
   async sendFile(
+    userNo: number,
     socket: Socket,
     messagePayload: MessagePayloadDto,
     manager: EntityManager,
   ): Promise<void> {
-    const { userNo, chatRoomNo, uploadedFileUrls }: MessagePayloadDto =
-      messagePayload;
+    const { chatRoomNo, uploadedFileUrls }: MessagePayloadDto = messagePayload;
 
     await this.checkChatRoom(chatRoomNo, userNo);
 
