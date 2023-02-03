@@ -3,4 +3,10 @@ export interface Announce<T> {
   title: string;
   description: string;
   imageUrls: T;
+  createdDate?: Date;
+}
+
+export interface AnnounceImage<T> {
+  imageUrl: T;
+  announceNo?: number;
 }
