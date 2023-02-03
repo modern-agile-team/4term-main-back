@@ -8,10 +8,11 @@ import { EventDto } from './dto/event.dto';
 import { Events } from './entity/events.entity';
 import { EventImagesRepository } from './repository/events-image.repository';
 import { EventsRepository } from './repository/events.repository';
+import { Event } from './interface/events.interface';
 
 @Injectable()
 export class EventsService {
-  constructor(private readonly eventsImagesRepository: EventImagesRepository) {}
+  constructor() {}
   // 생성 관련
   async createEvent(
     eventsDto: EventDto,
@@ -40,8 +41,8 @@ export class EventsService {
   }
 
   // 조회 관련
-  async getEvents(manager: EntityManager): Promise<Events[]> {
-    const events: Events[] = await manager
+  async getEvents(manager: EntityManager): Promise<Event<string[]>[]> {
+    const events: Event<string[]>[] = await manager
       .getCustomRepository(EventsRepository)
       .getEvents();
 

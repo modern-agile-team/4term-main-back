@@ -11,6 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { Event } from './interface/events.interface';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { APIResponse } from 'src/common/interface/interface';
@@ -41,7 +42,9 @@ export class EventsController {
   async getEvents(
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const events: Events[] = await this.eventsService.getEvents(manager);
+    const events: Event<string[]>[] = await this.eventsService.getEvents(
+      manager,
+    );
 
     return { response: { events } };
   }
