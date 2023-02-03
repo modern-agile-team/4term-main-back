@@ -49,19 +49,21 @@ export class FriendsRepository extends Repository<Friends> {
       return friends;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error}: 친구 목록 조회(getAllFriendList): 알 수 없는 서버 에러입니다.`,
+        `${error}: 친구 목록 조회(getFriends): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
-  async getAllReceiveFriendReq(receiverNo: number): Promise<Friends[]> {
+  async getReceivedRequests(receiverNo: number): Promise<Friends[]> {
     try {
       const result = await this.createQueryBuilder('friends')
         .leftJoin('friends.senderNo', 'senderUser')
         .leftJoin('senderUser.userProfileNo', 'senderUserProfile')
+        .leftJoin('senderUserProfile.profileImage', 'senderUserProfileImage')
         .select([
           'friends.sender_no AS senderUserNo',
           'senderUserProfile.nickname AS senderUserNickname',
+          'senderUserProfileImage.image_url AS senderUserProfileImage',
         ])
         .where('receiver_no = :receiverNo', { receiverNo })
         .andWhere('is_accept = 0')
@@ -71,19 +73,24 @@ export class FriendsRepository extends Repository<Friends> {
       return result;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error}: 친구 신청 조회(getAllReceiveFriendReq): 알 수 없는 서버 에러입니다.`,
+        `${error}: 친구 신청 조회(getReceiveFriendRequests): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
-  async getSentFriendRequests(senderNo: number): Promise<Friends[]> {
+  async getSentRequests(senderNo: number): Promise<Friends[]> {
     try {
       const result = await this.createQueryBuilder('friends')
         .leftJoin('friends.receiverNo', 'receiverUser')
         .leftJoin('receiverUser.userProfileNo', 'receiverUserProfile')
+        .leftJoin(
+          'receiverUserProfile.profileImage',
+          'receiverUserProfileImage',
+        )
         .select([
           'friends.receiver_no AS receiverUserNo',
           'receiverUserProfile.nickname AS receiverUserNickname',
+          'receiverUserProfileImage.image_url AS receiverUserProfileImage',
         ])
         .where('sender_no = :senderNo', { senderNo })
         .andWhere('is_accept = 0')
@@ -94,30 +101,6 @@ export class FriendsRepository extends Repository<Friends> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error}: 보낸 친구 신청 조회(getAllSendFriendReq): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async checkFriend(friendDetail: Friend): Promise<FriendRequestStatus> {
-    try {
-      const result: FriendRequestStatus = await this.createQueryBuilder(
-        'friends',
-      )
-        .select(['friends.is_accept AS isAccept'])
-        .where(
-          'receiver_no = :receiverNo AND sender_no = :senderNo',
-          friendDetail,
-        )
-        .orWhere(
-          'receiver_no = :senderNo AND sender_no = :receiverNo',
-          friendDetail,
-        )
-        .getRawOne();
-
-      return result;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error}: 친구 목록 조회(checkFriend): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -141,24 +124,7 @@ export class FriendsRepository extends Repository<Friends> {
       return request;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error}: 특정 친구 신청 목록 조회(checkRequest): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async checkRequestByFriendNo(friendNo: number): Promise<FriendRequestStatus> {
-    try {
-      const result: FriendRequestStatus = await this.createQueryBuilder(
-        'friends',
-      )
-        .select(['friends.is_accept AS isAccept'])
-        .where('no = :friendNo', { friendNo })
-        .getRawOne();
-
-      return result;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error}: 특정 친구 신청 목록 조회(checkRequest): 알 수 없는 서버 에러입니다.`,
+        `${error}: 특정 친구 신청 목록 조회(getRequest): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

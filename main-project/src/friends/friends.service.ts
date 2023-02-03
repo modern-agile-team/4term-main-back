@@ -8,8 +8,6 @@ import { NoticeType } from 'src/common/configs/notice-type.config';
 import { NoticeFriendsRepository } from 'src/notices/repository/notices-friend.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { EntityManager } from 'typeorm';
-import { DeleteFriendDto } from './dto/delete-friend.dto';
-import { FriendRequestDto } from './dto/friend-request.dto';
 import { Friends } from './entity/friend.entity';
 import {
   Friend,
@@ -53,6 +51,7 @@ export class FriendsService {
     if (!raw.affectedRows) {
       throw new InternalServerErrorException(`friend request 생성 오류입니다.`);
     }
+
     return raw.insertId;
   }
 
@@ -110,9 +109,9 @@ export class FriendsService {
     }
   }
 
-  async getReceivedFriendRequest(receiverNo: number): Promise<Friends[]> {
+  async getReceivedRequests(receiverNo: number): Promise<Friends[]> {
     const receivedRequests: Friends[] =
-      await this.friendsRepository.getAllReceiveFriendReq(receiverNo);
+      await this.friendsRepository.getReceivedRequests(receiverNo);
     if (!receivedRequests.length) {
       throw new NotFoundException(`받은 친구 신청이 없습니다.`);
     }
@@ -120,9 +119,9 @@ export class FriendsService {
     return receivedRequests;
   }
 
-  async getSentFriendRequests(senderNo: number): Promise<Friends[]> {
+  async getSentRequests(senderNo: number): Promise<Friends[]> {
     const sentRequests: Friends[] =
-      await this.friendsRepository.getSentFriendRequests(senderNo);
+      await this.friendsRepository.getSentRequests(senderNo);
     if (!sentRequests.length) {
       throw new NotFoundException(`보낸 친구 신청이 없습니다.`);
     }
@@ -132,10 +131,6 @@ export class FriendsService {
 
   async getFriends(userNo: number): Promise<Friend[]> {
     const friends: Friend[] = await this.friendsRepository.getFriends(userNo);
-
-    if (!friends.length) {
-      throw new NotFoundException('친구 목록이 없습니다.');
-    }
 
     return friends;
   }
@@ -187,23 +182,6 @@ export class FriendsService {
     });
 
     return searchResult;
-  }
-
-  private async findFriendByNo(
-    friendDetail: Friend,
-  ): Promise<FriendRequestStatus> {
-    const friendRequest: FriendRequestStatus =
-      await this.friendsRepository.checkFriend(friendDetail);
-
-    if (!friendRequest) {
-      throw new NotFoundException('친구 목록에 없는 유저입니다.');
-    }
-
-    if (!friendRequest.isAccept) {
-      throw new BadRequestException('친구 관계가 아닙니다.');
-    }
-
-    return friendRequest;
   }
 
   private async deleteRequest(request: Friend): Promise<void> {

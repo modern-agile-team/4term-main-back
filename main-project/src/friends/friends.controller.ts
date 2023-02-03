@@ -79,10 +79,10 @@ export class FriendsController {
     description: '유저가 받은 친구 신청 전체 조회',
   })
   @UseGuards(JwtAuthGuard)
-  async getReceiveFriendRequest(
-    @GetUser('userNo', ParseIntPipe) receiverNo: number,
+  async getReceivedRequests(
+    @GetUser('userNo') receiverNo: number,
   ): Promise<APIResponse> {
-    const receivedRequests = await this.friendsService.getReceivedFriendRequest(
+    const receivedRequests = await this.friendsService.getReceivedRequests(
       receiverNo,
     );
 
@@ -95,10 +95,12 @@ export class FriendsController {
     description: '유저가 보낸 친구 신청 전체조회',
   })
   @UseGuards(JwtAuthGuard)
-  async getSentFriendRequests(
-    @GetUser('userNo', ParseIntPipe) senderNo: number,
+  async getSentRequests(
+    @GetUser('userNo') senderNo: number,
   ): Promise<APIResponse> {
-    const sentFriendRequests = await this.friendsService.getSentFriendRequests(
+    console.log(senderNo);
+
+    const sentFriendRequests = await this.friendsService.getSentRequests(
       senderNo,
     );
 
