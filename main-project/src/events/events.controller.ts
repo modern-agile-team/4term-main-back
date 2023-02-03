@@ -31,10 +31,10 @@ export class EventsController {
     summary: '이벤트 전체조회 API',
     description: '이벤트을 내림차순으로 전체 조회한다.',
   })
-  async getAllEvents(): Promise<APIResponse> {
-    const events: Events[] = await this.eventsService.getAllEvents();
+  async getEvents(): Promise<APIResponse> {
+    const events: Events[] = await this.eventsService.getEvents();
 
-    return { response: events };
+    return { response: { events } };
   }
 
   @Get('/:eventNo')
