@@ -24,6 +24,7 @@ export class AnnouncesRepository extends Repository<Announces> {
           'announces.no AS no',
           'announces.title AS title',
           'announces.description AS description',
+          'DATE_FORMAT(announces.createdDate, "%Y.%m.%d %T") AS createdDate',
           'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
         ])
         .orderBy('no', 'DESC')
@@ -59,6 +60,7 @@ export class AnnouncesRepository extends Repository<Announces> {
             'announces.title AS title',
             'announces.description AS description',
             'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
+            'DATE_FORMAT(announces.createdDate, "%Y.%m.%d %T") AS createdDate',
           ])
           .orderBy('no', 'DESC')
           .where('announces.no = :announceNo', { announceNo })
