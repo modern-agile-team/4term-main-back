@@ -11,16 +11,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { userInfo } from 'os';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { APIResponse } from 'src/common/interface/interface';
 import { EntityManager } from 'typeorm';
-import { CreateFriendRequestDto } from './dto/create-friend.dto';
-import { DeleteFriendDto } from './dto/delete-friend.dto';
-import { FriendRequestDto } from './dto/friend-request.dto';
 import { FriendsService } from './friends.service';
 
 @Controller('friends')
@@ -50,7 +46,7 @@ export class FriendsController {
   async sendFriendRequest(
     @GetUser() userNo,
     @TransactionDecorator() manager: EntityManager,
-    @Param('receiverNo') receiverNo: number,
+    @Param('receiverNo', ParseIntPipe) receiverNo: number,
   ): Promise<APIResponse> {
     await this.friendsService.sendFriendRequest(userNo, manager, receiverNo);
 
@@ -84,7 +80,7 @@ export class FriendsController {
   })
   @UseGuards(JwtAuthGuard)
   async getReceiveFriendRequest(
-    @GetUser('userNo') receiverNo: number,
+    @GetUser('userNo', ParseIntPipe) receiverNo: number,
   ): Promise<APIResponse> {
     const receivedRequests = await this.friendsService.getReceivedFriendRequest(
       receiverNo,
@@ -100,7 +96,7 @@ export class FriendsController {
   })
   @UseGuards(JwtAuthGuard)
   async getSentFriendRequests(
-    @GetUser('userNo') senderNo: number,
+    @GetUser('userNo', ParseIntPipe) senderNo: number,
   ): Promise<APIResponse> {
     const sentFriendRequests = await this.friendsService.getSentFriendRequests(
       senderNo,
@@ -109,7 +105,7 @@ export class FriendsController {
     return { response: { sentFriendRequests } };
   }
 
-  @Delete('/request/:friendNo/:senderNo')
+  @Delete('/requests/:friendNo/:senderNo')
   @ApiOperation({
     summary: '친구 신청 거절 API',
     description: '친구 신청 거절 API',
@@ -117,8 +113,8 @@ export class FriendsController {
   @UseGuards(JwtAuthGuard)
   async refuseRequest(
     @GetUser('userNo') receiverNo: number,
-    @Param('friendNo') friendNo: number,
-    @Param('senderNo') senderNo: number,
+    @Param('friendNo', ParseIntPipe) friendNo: number,
+    @Param('senderNo', ParseIntPipe) senderNo: number,
   ): Promise<APIResponse> {
     await this.friendsService.refuseRequest({
       receiverNo,
@@ -139,8 +135,8 @@ export class FriendsController {
   @UseGuards(JwtAuthGuard)
   async deleteFriend(
     @GetUser() userNo: number,
-    @Param('friendNo') friendNo: number,
-    @Param('friendUserNo') friendUserNo: number,
+    @Param('friendNo', ParseIntPipe) friendNo: number,
+    @Param('friendUserNo', ParseIntPipe) friendUserNo: number,
   ): Promise<APIResponse> {
     await this.friendsService.deleteFriend(userNo, friendNo, friendUserNo);
 
