@@ -4,40 +4,67 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
-import { EventDto } from './dto/event.dto';
+import { CreateEventDto } from './dto/create-event.dto';
 import { EventImagesRepository } from './repository/events-image.repository';
 import { EventsRepository } from './repository/events.repository';
-import { Event } from './interface/events.interface';
+import { Event, EventImage } from './interface/events.interface';
 import { EventFilterDto } from './dto/event-filter.dto';
+import { UsersRepository } from 'src/users/repository/users.repository';
+import { Users } from 'src/users/entity/user.entity';
+import { ConfigService } from '@nestjs/config';
+import { ResultSetHeader } from 'mysql2';
+import { AwsService } from 'src/aws/aws.service';
 
 @Injectable()
 export class EventsService {
-  constructor() {}
+  constructor(
+    private readonly awsService: AwsService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  ADMIN_USER: number = Number(this.configService.get<number>('ADMIN_USER'));
+
   // 생성 관련
   async createEvent(
-    eventsDto: EventDto,
+    createEventDto: CreateEventDto,
+    userNo: number,
+    files: Express.Multer.File[],
     manager: EntityManager,
   ): Promise<void> {
-    await manager.getCustomRepository(EventsRepository).createEvent(eventsDto);
+    await this.validateAdmin(manager, userNo);
+
+    const eventNo: number = await this.setEvent(createEventDto, manager);
+
+    if (files.length) {
+      const imageUrls: string[] = await this.uploadImages(files);
+      await this.setEventImages(manager, imageUrls, eventNo);
+    }
   }
 
-  async uploadImageUrls(
-    eventNo: number,
-    imageUrls: string[],
+  private async setEvent(
+    eventsDto: CreateEventDto,
     manager: EntityManager,
-  ): Promise<void> {
-    await this.getEvent(eventNo, manager);
+  ): Promise<number> {
+    const { insertId }: ResultSetHeader = await manager
+      .getCustomRepository(EventsRepository)
+      .createEvent(eventsDto);
 
-    if (!imageUrls.length) {
-      throw new BadRequestException('사진이 없습니다.');
-    }
-    const images = imageUrls.map((url) => {
-      return { eventNo, imageUrl: url };
-    });
+    return insertId;
+  }
+
+  private async setEventImages(
+    manager: EntityManager,
+    imageUrls: string[],
+    eventNo: number,
+  ): Promise<void> {
+    const images: EventImage<string>[] = await this.convertImageArray(
+      eventNo,
+      imageUrls,
+    );
 
     await manager
       .getCustomRepository(EventImagesRepository)
-      .uploadEventImagesUrl(images);
+      .createEventImages(images);
   }
 
   // 조회 관련
@@ -78,7 +105,7 @@ export class EventsService {
   // 수정 관련
   async updateEvent(
     eventNo: number,
-    eventsDto: EventDto,
+    eventsDto: CreateEventDto,
     manager: EntityManager,
   ): Promise<void> {
     await this.getEvent(eventNo, manager);
@@ -104,5 +131,41 @@ export class EventsService {
     await manager
       .getCustomRepository(EventImagesRepository)
       .deleteEventImages(eventNo);
+  }
+
+  // functions
+  private async validateAdmin(manager: EntityManager, userNo: number) {
+    const { no }: Users = await manager
+      .getCustomRepository(UsersRepository)
+      .getUserByNo(userNo);
+
+    console.log(no, this.ADMIN_USER);
+
+    if (no !== this.ADMIN_USER) {
+      throw new BadRequestException(
+        '관리자 검증(validateAdmin-service): 관리자가 아닙니다.',
+      );
+    }
+  }
+
+  private async convertImageArray(
+    eventNo: number,
+    imageUrls: string[],
+  ): Promise<EventImage<string>[]> {
+    const images: EventImage<string>[] = imageUrls.map((imageUrl: string) => {
+      return { eventNo, imageUrl };
+    });
+
+    return images;
+  }
+
+  // s3
+  private async uploadImages(files: Express.Multer.File[]): Promise<string[]> {
+    const imageUrls: string[] = await this.awsService.uploadImages(
+      files,
+      'event',
+    );
+
+    return imageUrls;
   }
 }

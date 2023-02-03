@@ -6,3 +6,8 @@ export interface Event<T> {
   isDone: boolean;
   imageUrls: T;
 }
+
+export interface EventImage<T> {
+  imageUrl: T;
+  eventNo?: number;
+}

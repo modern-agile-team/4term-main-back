@@ -1,9 +1,15 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { EntityRepository, Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  EntityRepository,
+  InsertResult,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { EventFilterDto } from '../dto/event-filter.dto';
-import { EventDto } from '../dto/event.dto';
+import { CreateEventDto } from '../dto/create-event.dto';
 import { Events } from '../entity/events.entity';
 import { Event } from '../interface/events.interface';
+import { ResultSetHeader } from 'mysql2';
 
 @EntityRepository(Events)
 export class EventsRepository extends Repository<Events> {
@@ -84,13 +90,15 @@ export class EventsRepository extends Repository<Events> {
   }
 
   // 생성 관련
-  async createEvent(eventsDto: EventDto): Promise<void> {
+  async createEvent(eventsDto: CreateEventDto): Promise<ResultSetHeader> {
     try {
-      await this.createQueryBuilder('events')
+      const { raw }: InsertResult = await this.createQueryBuilder('events')
         .insert()
         .into(Events)
         .values(eventsDto)
         .execute();
+
+      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createEvent-repository: 알 수 없는 서버 에러입니다.`,
@@ -99,7 +107,7 @@ export class EventsRepository extends Repository<Events> {
   }
 
   // 수정 관련
-  async updateEvent(eventNo: number, eventsDto: EventDto): Promise<void> {
+  async updateEvent(eventNo: number, eventsDto: CreateEventDto): Promise<void> {
     try {
       await this.createQueryBuilder('events')
         .update(Events)

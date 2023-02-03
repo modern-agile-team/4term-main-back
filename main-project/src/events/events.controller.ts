@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -16,14 +17,15 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { APIResponse } from 'src/common/interface/interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { AwsService } from 'src/aws/aws.service';
-import { EventDto } from './dto/event.dto';
+import { CreateEventDto } from './dto/create-event.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { EntityManager } from 'typeorm';
 import { EventFilterDto } from './dto/event-filter.dto';
 import { ApiGetEvents } from './swagger-decorator/get-events.decorator';
+import { ApiCreateEvent } from './swagger-decorator/create-event.decorator';
+import { GetUser } from 'src/common/decorator/get-user.decorator';
 
 @Controller('events')
 @ApiTags('이벤트 API')
@@ -69,16 +71,20 @@ export class EventsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '이벤트 생성 API',
-    description: '입력한 정보로 이벤트을 생성한다.',
-  })
-  @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
+  @ApiCreateEvent()
+  @UseInterceptors(FilesInterceptor('files', 10))
   async createEvent(
     @TransactionDecorator() manager: EntityManager,
-    @Body() eventsDto: EventDto,
+    @GetUser() userNo: number,
+    @Body() createEventDto: CreateEventDto,
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
-    await this.eventsService.createEvent(eventsDto, manager);
+    await this.eventsService.createEvent(
+      createEventDto,
+      userNo,
+      files,
+      manager,
+    );
 
     return { msg: '이벤트 생성 성공' };
   }
@@ -94,7 +100,7 @@ export class EventsController {
   async updateEvent(
     @Param('eventNo', ParseIntPipe) eventNo: number,
     @TransactionDecorator() manager: EntityManager,
-    @Body() eventsDto: EventDto,
+    @Body() eventsDto: CreateEventDto,
   ): Promise<APIResponse> {
     await this.eventsService.updateEvent(eventNo, eventsDto, manager);
 

@@ -20,8 +20,6 @@ import { AnnouncesImagesRepository } from './repository/announces-images.reposit
 export class AnnouncesService {
   constructor(
     @InjectRepository(AnnouncesRepository)
-    private readonly announcesRepository: AnnouncesRepository,
-
     private readonly awsService: AwsService,
     private readonly configService: ConfigService,
   ) {}
