@@ -5,7 +5,7 @@ export interface Announce<T> {
   imageUrls: T;
 }
 
-export interface AnnounceImage {
-  imageUrl: string;
-  announceNo: number;
+export interface AnnounceImage<T> {
+  imageUrl: T;
+  announceNo?: number;
 }

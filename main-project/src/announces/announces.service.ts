@@ -11,7 +11,7 @@ import { AwsService } from 'src/aws/aws.service';
 import { Users } from 'src/users/entity/user.entity';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { EntityManager, UpdateResult } from 'typeorm';
-import { AnnounceDto } from './dto/announce.dto';
+import { CreateAnnounceDto } from './dto/create-announce.dto';
 import { Announce, AnnounceImage } from './interface/announces.interface';
 import { AnnouncesRepository } from './repository/announce.repository';
 import { AnnouncesImagesRepository } from './repository/announces-images.repository';
@@ -31,7 +31,7 @@ export class AnnouncesService {
   // 생성 관련
   async createAnnounces(
     manager: EntityManager,
-    announcesDto: AnnounceDto,
+    announcesDto: CreateAnnounceDto,
     files: Express.Multer.File[],
     userNo: number,
   ): Promise<void> {
@@ -46,7 +46,7 @@ export class AnnouncesService {
 
   private async setAnnounce(
     manager: EntityManager,
-    announcesDto: AnnounceDto,
+    announcesDto: CreateAnnounceDto,
   ): Promise<number> {
     const { insertId }: ResultSetHeader = await manager
       .getCustomRepository(AnnouncesRepository)
@@ -60,7 +60,7 @@ export class AnnouncesService {
     imageUrls: string[],
     announceNo: number,
   ): Promise<void> {
-    const images: AnnounceImage[] = await this.convertImageArray(
+    const images: AnnounceImage<string>[] = await this.convertImageArray(
       announceNo,
       imageUrls,
     );
@@ -103,25 +103,55 @@ export class AnnouncesService {
   }
 
   // 수정 관련
-  async updateAnnounces(
+  async editAnnounce(
     manager: EntityManager,
+    userNo: number,
     announcesNo: number,
-    announcesDto: AnnounceDto,
+    announcesDto: CreateAnnounceDto,
+    files: Express.Multer.File[],
   ): Promise<void> {
-    await this.getAnnounce(manager, announcesNo);
+    await this.validateAdmin(manager, userNo);
+    const { imageUrls }: Announce<string[]> = await this.getAnnounce(
+      manager,
+      announcesNo,
+    );
 
-    const { affected }: UpdateResult =
-      await this.announcesRepository.updateAnnounces(announcesNo, announcesDto);
+    await this.editAnnounceImages(manager, files, announcesNo);
+    await this.updateAnnounce(manager, announcesNo, announcesDto);
+  }
 
-    if (!affected) {
-      throw new InternalServerErrorException(
-        `공지사항 수정(updateAnnouncement-service): 알 수 없는 서버 에러입니다.`,
-      );
+  private async editAnnounceImages(
+    manager: EntityManager,
+    files: Express.Multer.File[],
+    announceNo: number,
+  ): Promise<void> {
+    const { imageUrls }: Announce<string[]> = await this.getAnnounce(
+      manager,
+      announceNo,
+    );
+
+    if (!imageUrls.includes(null)) {
+      await this.deleteAnnounceImages(manager, announceNo);
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    if (files.length) {
+      const images: string[] = await this.uploadImages(files);
+      await this.setAnnounceImages(manager, images, announceNo);
     }
   }
 
+  private async updateAnnounce(
+    manager: EntityManager,
+    announceNo: number,
+    announcesDto: CreateAnnounceDto,
+  ) {
+    await manager
+      .getCustomRepository(AnnouncesRepository)
+      .updateAnnounces(announceNo, announcesDto);
+  }
+
   // 삭제 관련
-  async deleteAnnouncesByNo(
+  async deleteAnnounceByNo(
     manager: EntityManager,
     announceNo: number,
     userNo: number,
@@ -147,14 +177,25 @@ export class AnnouncesService {
       .deleteAnnouncesByNo(announceNo);
   }
 
+  private async deleteAnnounceImages(
+    manager: EntityManager,
+    announceNo: number,
+  ): Promise<void> {
+    await manager
+      .getCustomRepository(AnnouncesImagesRepository)
+      .deleteAnnounceImages(announceNo);
+  }
+
   // functions
   private async convertImageArray(
     announceNo: number,
     imageUrls: string[],
-  ): Promise<AnnounceImage[]> {
-    const images: AnnounceImage[] = imageUrls.map((imageUrl: string) => {
-      return { announceNo, imageUrl };
-    });
+  ): Promise<AnnounceImage<string>[]> {
+    const images: AnnounceImage<string>[] = imageUrls.map(
+      (imageUrl: string) => {
+        return { announceNo, imageUrl };
+      },
+    );
 
     return images;
   }

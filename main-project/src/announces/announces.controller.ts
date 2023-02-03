@@ -13,10 +13,9 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AnnouncesService } from './announces.service';
-import { AnnounceDto } from './dto/announce.dto';
+import { CreateAnnounceDto } from './dto/create-announce.dto';
 import { APIResponse } from 'src/common/interface/interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { AwsService } from 'src/aws/aws.service';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { EntityManager } from 'typeorm';
@@ -27,14 +26,13 @@ import { ApiCreateAnnounce } from './swagger-decorator/create-announce.decorator
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { ApiDeleteAnnounce } from './swagger-decorator/delete-announce.decorator';
+import { UpdateAnnounceDto } from './dto/update-announce.dto';
+import { ApiUpdateAnnounce } from './swagger-decorator/update-announce.decorator';
 
 @Controller('announces')
 @ApiTags('공지사항 API')
 export class AnnouncesController {
-  constructor(
-    private readonly announcesService: AnnouncesService,
-    private readonly awsService: AwsService,
-  ) {}
+  constructor(private readonly announcesService: AnnouncesService) {}
   //Get Methods
   @Get()
   @UseInterceptors(TransactionInterceptor)
@@ -72,12 +70,12 @@ export class AnnouncesController {
   async createAnnounce(
     @TransactionDecorator() manager: EntityManager,
     @GetUser() userNo: number,
-    @Body() announcesDto: AnnounceDto,
+    @Body() createAnnounceDto: CreateAnnounceDto,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
     await this.announcesService.createAnnounces(
       manager,
-      announcesDto,
+      createAnnounceDto,
       files,
       userNo,
     );
@@ -87,20 +85,23 @@ export class AnnouncesController {
 
   // Patch Methods
   @Patch('/:announcesNo')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '공지사항 수정 API',
-    description: '입력한 정보로 공지사항을 수정한다.',
-  })
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @ApiUpdateAnnounce()
   async updateAnnounces(
     @TransactionDecorator() manager: EntityManager,
+    @GetUser() userNo: number,
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
-    @Body() announcesDto: AnnounceDto,
+    @Body() updateAnnounceDto: UpdateAnnounceDto,
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
-    await this.announcesService.updateAnnounces(
+    await this.announcesService.editAnnounce(
       manager,
+      userNo,
       announcesNo,
-      announcesDto,
+      updateAnnounceDto,
+      files,
     );
 
     return { response: { msg: '공지사항 수정 성공' } };
@@ -116,7 +117,7 @@ export class AnnouncesController {
     @GetUser() userNo: number,
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
   ): Promise<APIResponse> {
-    await this.announcesService.deleteAnnouncesByNo(
+    await this.announcesService.deleteAnnounceByNo(
       manager,
       announcesNo,
       userNo,

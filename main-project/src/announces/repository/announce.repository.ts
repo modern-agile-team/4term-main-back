@@ -7,7 +7,7 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { AnnounceDto } from '../dto/announce.dto';
+import { CreateAnnounceDto } from '../dto/create-announce.dto';
 import { Announces } from '../entity/announce.entity';
 import { Announce } from '../interface/announces.interface';
 
@@ -78,7 +78,9 @@ export class AnnouncesRepository extends Repository<Announces> {
   }
 
   // 생성 관련
-  async createAnnounce(announcesDto: AnnounceDto): Promise<ResultSetHeader> {
+  async createAnnounce(
+    announcesDto: CreateAnnounceDto,
+  ): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('announces')
         .insert()
@@ -97,7 +99,7 @@ export class AnnouncesRepository extends Repository<Announces> {
   // 수정 관련
   async updateAnnounces(
     announcesNo: number,
-    announcesDto: AnnounceDto,
+    announcesDto: CreateAnnounceDto,
   ): Promise<UpdateResult> {
     try {
       const raw: UpdateResult = await this.createQueryBuilder('boards')
