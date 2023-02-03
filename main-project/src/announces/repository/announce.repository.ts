@@ -101,20 +101,10 @@ export class AnnouncesRepository extends Repository<Announces> {
   // 수정 관련
   async updateAnnounces(
     announcesNo: number,
-<<<<<<< HEAD
-    announcesDto: AnnouncesDto,
-<<<<<<< HEAD
-  ): Promise<ResultSetHeader> {
-    try {
-      const { raw }: UpdateResult = await this.createQueryBuilder('boards')
-=======
-=======
     announcesDto: CreateAnnounceDto,
->>>>>>> 44f7cbffe7e221adab85db634a646f1daa9bd42f
   ): Promise<UpdateResult> {
     try {
       const raw: UpdateResult = await this.createQueryBuilder('boards')
->>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
         .update(Announces)
         .set(announcesDto)
         .where('no = :announcesNo', { announcesNo })
@@ -129,9 +119,9 @@ export class AnnouncesRepository extends Repository<Announces> {
   }
 
   // 삭제 관련
-  async deleteAnnouncesByNo(announcesNo: number): Promise<ResultSetHeader> {
+  async deleteAnnouncesByNo(announcesNo: number): Promise<DeleteResult> {
     try {
-      const { raw }: DeleteResult = await this.createQueryBuilder('announces')
+      const raw: DeleteResult = await this.createQueryBuilder('announces')
         .delete()
         .from(Announces)
         .where('no = :announcesNo', { announcesNo })

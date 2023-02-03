@@ -73,7 +73,7 @@ export class EventsService {
   }
 
   async getEventByNo(eventNo: number): Promise<Events> {
-    const event: Events = await this.eventsRepository.getEventByNo(eventNo);
+    const event: Events = await this.eventsRepository.getEvent(eventNo);
 
     if (!event.no) {
       throw new NotFoundException(
@@ -88,28 +88,14 @@ export class EventsService {
   async updateEvent(eventNo: number, eventsDto: EventDto): Promise<void> {
     await this.getEventByNo(eventNo);
 
-    const { affectedRows }: ResultSetHeader =
-      await this.eventsRepository.updateEvent(eventNo, eventsDto);
-
-    if (!affectedRows) {
-      throw new InternalServerErrorException(
-        `이벤트 수정(updateEvent-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+    await this.eventsRepository.updateEvents(eventNo, eventsDto);
   }
 
   // 삭제 관련
   async deleteEventByNo(eventNo: number): Promise<void> {
     await this.getEventByNo(eventNo);
 
-    const { affectedRows }: ResultSetHeader =
-      await this.eventsRepository.deleteEventByNo(eventNo);
-
-    if (!affectedRows) {
-      throw new BadRequestException(
-        `이벤트 삭제(deleteEventByNo-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+    await this.eventsRepository.deleteEvent(eventNo);
   }
 
   async deleteEventImages(eventNo: number): Promise<void> {
