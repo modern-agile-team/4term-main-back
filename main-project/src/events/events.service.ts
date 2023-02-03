@@ -116,9 +116,27 @@ export class EventsService {
   }
 
   // 삭제 관련
-  async deleteEvent(eventNo: number, manager: EntityManager): Promise<void> {
-    await this.getEvent(eventNo, manager);
+  async deleteEvent(
+    eventNo: number,
+    userNo: number,
+    manager: EntityManager,
+  ): Promise<void> {
+    await this.validateAdmin(manager, userNo);
+    const { imageUrls }: Event<string[]> = await this.getEvent(
+      eventNo,
+      manager,
+    );
 
+    if (!imageUrls.includes(null)) {
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    await this.removeEvent(eventNo, manager);
+  }
+
+  private async removeEvent(
+    eventNo: number,
+    manager: EntityManager,
+  ): Promise<void> {
     await manager.getCustomRepository(EventsRepository).deleteEvent(eventNo);
   }
 
@@ -138,8 +156,6 @@ export class EventsService {
     const { no }: Users = await manager
       .getCustomRepository(UsersRepository)
       .getUserByNo(userNo);
-
-    console.log(no, this.ADMIN_USER);
 
     if (no !== this.ADMIN_USER) {
       throw new BadRequestException(

@@ -26,6 +26,7 @@ import { EventFilterDto } from './dto/event-filter.dto';
 import { ApiGetEvents } from './swagger-decorator/get-events.decorator';
 import { ApiCreateEvent } from './swagger-decorator/create-event.decorator';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
+import { ApiDeleteEvent } from './swagger-decorator/delete-event.decorator';
 
 @Controller('events')
 @ApiTags('이벤트 API')
@@ -111,15 +112,13 @@ export class EventsController {
   @Delete('/:eventNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '이벤트 삭제 API',
-    description: '이벤트 번호를 사용해 이벤트을 삭제한다.',
-  })
+  @ApiDeleteEvent()
   async deleteEvent(
     @Param('eventNo', ParseIntPipe) eventNo: number,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    await this.eventsService.deleteEvent(eventNo, manager);
+    await this.eventsService.deleteEvent(eventNo, userNo, manager);
 
     return { msg: '이벤트 삭제 성공' };
   }
