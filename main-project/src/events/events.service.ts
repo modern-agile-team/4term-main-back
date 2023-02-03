@@ -1,10 +1,9 @@
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { ResultSetHeader } from 'mysql2';
+import { EntityManager } from 'typeorm';
 import { EventDto } from './dto/event.dto';
 import { Events } from './entity/events.entity';
 import { EventImagesRepository } from './repository/events-image.repository';
@@ -12,26 +11,21 @@ import { EventsRepository } from './repository/events.repository';
 
 @Injectable()
 export class EventsService {
-  private readonly s3: AWS.S3;
-
-  constructor(
-    private readonly eventsRepository: EventsRepository,
-    private readonly eventsImagesRepository: EventImagesRepository,
-  ) {}
+  constructor(private readonly eventsImagesRepository: EventImagesRepository) {}
   // 생성 관련
-  async createEvent(eventsDto: EventDto): Promise<void> {
-    const { affectedRows }: ResultSetHeader =
-      await this.eventsRepository.createEvent(eventsDto);
-
-    if (!affectedRows) {
-      throw new InternalServerErrorException(
-        `이벤트 생성(createEvent-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+  async createEvent(
+    eventsDto: EventDto,
+    manager: EntityManager,
+  ): Promise<void> {
+    await manager.getCustomRepository(EventsRepository).createEvent(eventsDto);
   }
 
-  async uploadImageUrls(eventNo: number, imageUrls: string[]): Promise<void> {
-    await this.getEventByNo(eventNo);
+  async uploadImageUrls(
+    eventNo: number,
+    imageUrls: string[],
+    manager: EntityManager,
+  ): Promise<void> {
+    await this.getEvent(eventNo, manager);
 
     if (!imageUrls.length) {
       throw new BadRequestException('사진이 없습니다.');
@@ -40,12 +34,16 @@ export class EventsService {
       return { eventNo, imageUrl: url };
     });
 
-    await this.eventsImagesRepository.uploadEventImagesUrl(images);
+    await manager
+      .getCustomRepository(EventImagesRepository)
+      .uploadEventImagesUrl(images);
   }
 
   // 조회 관련
-  async getEvents(): Promise<Events[]> {
-    const events: Events[] = await this.eventsRepository.getEvents();
+  async getEvents(manager: EntityManager): Promise<Events[]> {
+    const events: Events[] = await manager
+      .getCustomRepository(EventsRepository)
+      .getEvents();
 
     if (!events.length) {
       throw new NotFoundException(
@@ -56,10 +54,13 @@ export class EventsService {
     return events;
   }
 
-  async getEventImages(eventNo: number): Promise<string[]> {
-    const { imageUrl } = await this.eventsImagesRepository.getEventImages(
-      eventNo,
-    );
+  async getEventImages(
+    eventNo: number,
+    manager: EntityManager,
+  ): Promise<string[]> {
+    const { imageUrl } = await manager
+      .getCustomRepository(EventImagesRepository)
+      .getEventImages(eventNo);
 
     if (!imageUrl) {
       throw new NotFoundException(
@@ -72,12 +73,14 @@ export class EventsService {
     return images;
   }
 
-  async getEventByNo(eventNo: number): Promise<Events> {
-    const event: Events = await this.eventsRepository.getEvent(eventNo);
+  async getEvent(eventNo: number, manager: EntityManager): Promise<Events> {
+    const event: Events = await manager
+      .getCustomRepository(EventsRepository)
+      .getEvent(eventNo);
 
     if (!event.no) {
       throw new NotFoundException(
-        `이벤트 상세 조회(getEventByNo-service): ${eventNo}번 이벤트이 없습니다.`,
+        `이벤트 상세 조회(getEvent-service): ${eventNo}번 이벤트이 없습니다.`,
       );
     }
 
@@ -85,30 +88,34 @@ export class EventsService {
   }
 
   // 수정 관련
-  async updateEvent(eventNo: number, eventsDto: EventDto): Promise<void> {
-    await this.getEventByNo(eventNo);
+  async updateEvent(
+    eventNo: number,
+    eventsDto: EventDto,
+    manager: EntityManager,
+  ): Promise<void> {
+    await this.getEvent(eventNo, manager);
 
-    await this.eventsRepository.updateEvents(eventNo, eventsDto);
+    await manager
+      .getCustomRepository(EventsRepository)
+      .updateEvent(eventNo, eventsDto);
   }
 
   // 삭제 관련
-  async deleteEventByNo(eventNo: number): Promise<void> {
-    await this.getEventByNo(eventNo);
+  async deleteEvent(eventNo: number, manager: EntityManager): Promise<void> {
+    await this.getEvent(eventNo, manager);
 
-    await this.eventsRepository.deleteEvent(eventNo);
+    await manager.getCustomRepository(EventsRepository).deleteEvent(eventNo);
   }
 
-  async deleteEventImages(eventNo: number): Promise<void> {
-    await this.getEventByNo(eventNo);
-    await this.getEventImages(eventNo);
+  async deleteEventImages(
+    eventNo: number,
+    manager: EntityManager,
+  ): Promise<void> {
+    await this.getEvent(eventNo, manager);
+    await this.getEventImages(eventNo, manager);
 
-    const { affectedRows }: ResultSetHeader =
-      await this.eventsImagesRepository.deleteEventImages(eventNo);
-
-    if (!affectedRows) {
-      throw new BadRequestException(
-        `이미지 삭제(deleteEventImages-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+    await manager
+      .getCustomRepository(EventImagesRepository)
+      .deleteEventImages(eventNo);
   }
 }

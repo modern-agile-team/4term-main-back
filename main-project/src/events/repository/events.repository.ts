@@ -26,7 +26,7 @@ export class EventsRepository extends Repository<Events> {
       return events.getRawMany();
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getAllEvents-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getEvents-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -47,58 +47,52 @@ export class EventsRepository extends Repository<Events> {
       return events;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getEventByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getEvent-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
   // 생성 관련
-  async createEvent(eventsDto: EventDto): Promise<ResultSetHeader> {
+  async createEvent(eventsDto: EventDto): Promise<void> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder('events')
+      await this.createQueryBuilder('events')
         .insert()
         .into(Events)
         .values(eventsDto)
         .execute();
-
-      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createEvents-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createEvent-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
   // 수정 관련
-  async updateEvents(eventNo: number, eventsDto: EventDto): Promise<number> {
+  async updateEvent(eventNo: number, eventsDto: EventDto): Promise<void> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder('events')
+      await this.createQueryBuilder('events')
         .update(Events)
         .set(eventsDto)
         .where('no = :eventNo', { eventNo })
         .execute();
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} updateEvents-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} updateEvent-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
   // 삭제 관련
-  async deleteEvent(eventNo: number): Promise<DeleteResult> {
+  async deleteEvent(eventNo: number): Promise<void> {
     try {
-      const raw: DeleteResult = await this.createQueryBuilder('events')
+      await this.createQueryBuilder('events')
         .delete()
         .from(Events)
         .where('no = :eventNo', { eventNo })
         .execute();
-
-      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} deleteEventsByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} deleteEvent-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
