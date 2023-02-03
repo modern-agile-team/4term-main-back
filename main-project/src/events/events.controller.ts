@@ -7,10 +7,12 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { Event } from './interface/events.interface';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { APIResponse } from 'src/common/interface/interface';
@@ -22,6 +24,8 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { EntityManager } from 'typeorm';
+import { EventFilterDto } from './dto/event-filter.dto';
+import { ApiGetEvents } from './swagger-decorator/get-events.decorator';
 
 @Controller('events')
 @ApiTags('이벤트 API')
@@ -34,16 +38,17 @@ export class EventsController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '이벤트 전체조회 API',
-    description: '이벤트을 내림차순으로 전체 조회한다.',
-  })
+  @ApiGetEvents()
   async getEvents(
     @TransactionDecorator() manager: EntityManager,
+    @Query() eventFilterDto: EventFilterDto,
   ): Promise<APIResponse> {
-    const events: Events[] = await this.eventsService.getEvents(manager);
+    const events: Event<string[]>[] = await this.eventsService.getEvents(
+      manager,
+      eventFilterDto,
+    );
 
-    return { response: { events } };
+    return { msg: '이벤트 전체조회 성공', response: { events } };
   }
 
   @Get('/:eventNo')

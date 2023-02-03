@@ -39,9 +39,9 @@ export function ApiGetEvents() {
     ApiNotFoundResponse(
       SwaggerApiResponse.exception([
         {
-          name: 'announcesNotFound',
+          name: 'eventNotFound',
           example: {
-            msg: `이벤트 조회(getAnnounces-service): 공지사항이 없습니다.`,
+            msg: `이벤트 조회(getEvents-service): 이벤트가 없습니다.`,
           },
         },
       ]),
