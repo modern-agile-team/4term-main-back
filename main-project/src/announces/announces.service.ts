@@ -8,8 +8,9 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ResultSetHeader } from 'mysql2';
 import { AwsService } from 'src/aws/aws.service';
+import { Users } from 'src/users/entity/user.entity';
 import { UsersRepository } from 'src/users/repository/users.repository';
-import { DeleteResult, EntityManager, UpdateResult } from 'typeorm';
+import { EntityManager, UpdateResult } from 'typeorm';
 import { AnnounceDto } from './dto/announce.dto';
 import { Announce, AnnounceImage } from './interface/announces.interface';
 import { AnnouncesRepository } from './repository/announce.repository';
@@ -21,12 +22,12 @@ export class AnnouncesService {
     @InjectRepository(AnnouncesRepository)
     private readonly announcesRepository: AnnouncesRepository,
 
-    @InjectRepository(AnnouncesImagesRepository)
-    private readonly announcesImagesRepository: AnnouncesImagesRepository,
-
     private readonly awsService: AwsService,
     private readonly configService: ConfigService,
   ) {}
+
+  ADMIN_USER: number = Number(this.configService.get<number>('ADMIN_USER'));
+
   // 생성 관련
   async createAnnounces(
     manager: EntityManager,
@@ -122,38 +123,28 @@ export class AnnouncesService {
   // 삭제 관련
   async deleteAnnouncesByNo(
     manager: EntityManager,
-    announcesNo: number,
-  ): Promise<string> {
-    await this.getAnnounce(manager, announcesNo);
+    announceNo: number,
+    userNo: number,
+  ): Promise<void> {
+    await this.validateAdmin(manager, userNo);
+    const { imageUrls }: Announce<string[]> = await this.getAnnounce(
+      manager,
+      announceNo,
+    );
 
-    const { affected }: DeleteResult =
-      await this.announcesRepository.deleteAnnouncesByNo(announcesNo);
-
-    if (!affected) {
-      throw new BadRequestException(
-        `공지사항 삭제(deleteAnnouncesByNo-service): 알 수 없는 서버 에러입니다.`,
-      );
+    if (!imageUrls.includes(null)) {
+      await this.awsService.deleteFiles(imageUrls);
     }
-
-    return `${announcesNo}번 공지사항 삭제 성공`;
+    await this.removeAnnounce(manager, announceNo);
   }
 
-  async deleteAnnouncesImages(
+  private async removeAnnounce(
     manager: EntityManager,
-    announcesNo: number,
-  ): Promise<string> {
-    await this.getAnnounce(manager, announcesNo);
-
-    const { affected }: DeleteResult =
-      await this.announcesImagesRepository.deleteAnnouncesImages(announcesNo);
-
-    if (!affected) {
-      throw new BadRequestException(
-        `이미지 삭제(deleteAnnouncesImages-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-
-    return `이미지 삭제 성공`;
+    announceNo: number,
+  ): Promise<void> {
+    await manager
+      .getCustomRepository(AnnouncesRepository)
+      .deleteAnnouncesByNo(announceNo);
   }
 
   // functions
@@ -169,12 +160,11 @@ export class AnnouncesService {
   }
 
   private async validateAdmin(manager: EntityManager, userNo: number) {
-    const ADMIN_USER = this.configService.get<number>('ADMIN_USER');
-    const { no } = await manager
+    const { no }: Users = await manager
       .getCustomRepository(UsersRepository)
       .getUserByNo(userNo);
 
-    if (no !== ADMIN_USER) {
+    if (no !== this.ADMIN_USER) {
       throw new BadRequestException(
         '관리자 검증(validateAdmin-service): 관리자가 아닙니다.',
       );

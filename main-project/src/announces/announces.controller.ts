@@ -26,6 +26,7 @@ import { ApiGetAnnounce } from './swagger-decorator/get-announce.decorator';
 import { ApiCreateAnnounce } from './swagger-decorator/create-announce.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
+import { ApiDeleteAnnounce } from './swagger-decorator/delete-announce.decorator';
 
 @Controller('announces')
 @ApiTags('공지사항 API')
@@ -108,49 +109,19 @@ export class AnnouncesController {
   // Delete Methods
   @Delete('/:announcesNo')
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '공지사항 삭제 API',
-    description: '공지사항 번호를 사용해 공지사항을 삭제한다.',
-  })
+  @UseGuards(JwtAuthGuard)
+  @ApiDeleteAnnounce()
   async deleteAnnounces(
     @TransactionDecorator() manager: EntityManager,
+    @GetUser() userNo: number,
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
   ): Promise<APIResponse> {
-    const announces: string = await this.announcesService.deleteAnnouncesByNo(
+    await this.announcesService.deleteAnnouncesByNo(
       manager,
       announcesNo,
+      userNo,
     );
 
-    await this.announcesService.deleteAnnouncesImages(manager, announcesNo);
-
-    // const imagesUrlList = await this.announcesService.getAnnouncesImages(
-    //   announcesNo,
-    // );
-
-    // await this.awsService.deleteFiles(imagesUrlList);
-
     return { response: { msg: '공지사항 삭제 성공' } };
-  }
-
-  // Delete Methods
-  @Delete('/images/:announcesNo')
-  @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '공지사항 이미지 삭제 API',
-    description: '공지사항 번호를 사용해 이미지를 삭제한다.',
-  })
-  async deleteAnnouncesimages(
-    @TransactionDecorator() manager: EntityManager,
-    @Param('announcesNo', ParseIntPipe) announcesNo: number,
-  ): Promise<APIResponse> {
-    // const imagesUrlList = await this.announcesService.getAnnouncesImages(
-    //   announcesNo,
-    // );
-
-    await this.announcesService.deleteAnnouncesImages(manager, announcesNo);
-
-    // await this.awsService.deleteFiles(imagesUrlList);
-
-    return { response: { msg: '이미지 삯제 성공' } };
   }
 }
