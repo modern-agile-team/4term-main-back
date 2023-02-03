@@ -58,7 +58,8 @@ export class FriendsService {
 
   async acceptFriendRequest(
     userNo: number,
-    { friendNo, senderNo }: FriendRequestDto,
+    friendNo: number,
+    senderNo: number,
   ): Promise<void> {
     const request = await this.checkRequest({
       receiverNo: userNo,
@@ -156,7 +157,8 @@ export class FriendsService {
 
   async deleteFriend(
     userNo: number,
-    { friendNo, friendUserNo }: DeleteFriendDto,
+    friendNo: number,
+    friendUserNo: number,
   ): Promise<void> {
     const request: FriendRequestStatus = await this.checkRequest({
       receiverNo: userNo,

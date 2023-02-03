@@ -17,9 +17,6 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { APIResponse } from 'src/common/interface/interface';
 import { EntityManager } from 'typeorm';
-import { CreateFriendRequestDto } from './dto/create-friend.dto';
-import { DeleteFriendDto } from './dto/delete-friend.dto';
-import { FriendRequestDto } from './dto/friend-request.dto';
 import { FriendsService } from './friends.service';
 
 @Controller('friends')
@@ -39,7 +36,7 @@ export class FriendsController {
     return { response: { friends } };
   }
 
-  @Post('/requests')
+  @Post('/requests/:receiverNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
@@ -49,7 +46,7 @@ export class FriendsController {
   async sendFriendRequest(
     @GetUser() userNo,
     @TransactionDecorator() manager: EntityManager,
-    @Body() { receiverNo }: CreateFriendRequestDto,
+    @Param('receiverNo', ParseIntPipe) receiverNo: number,
   ): Promise<APIResponse> {
     await this.friendsService.sendFriendRequest(userNo, manager, receiverNo);
 
@@ -58,7 +55,7 @@ export class FriendsController {
     };
   }
 
-  @Patch('/requests')
+  @Patch('/requests/:friendNo/:senderNo')
   @ApiOperation({
     summary: '친구  요청 수락 API',
     description: '토큰의 userNo와 Param으로 받은 friendNo,senderNo',
@@ -66,9 +63,10 @@ export class FriendsController {
   @UseGuards(JwtAuthGuard)
   async acceptFriendRequest(
     @GetUser() userNo: number,
-    @Body() friendRequest: FriendRequestDto,
+    @Param('friendNo', ParseIntPipe) friendNo: number,
+    @Param('senderNo', ParseIntPipe) senderNo: number,
   ): Promise<APIResponse> {
-    await this.friendsService.acceptFriendRequest(userNo, friendRequest);
+    await this.friendsService.acceptFriendRequest(userNo, friendNo, senderNo);
 
     return {
       msg: '친구 신청을 수락했습니다.',
@@ -107,7 +105,7 @@ export class FriendsController {
     return { response: { sentFriendRequests } };
   }
 
-  @Delete('/requests')
+  @Delete('/requests/:friendNo/:senderNo')
   @ApiOperation({
     summary: '친구 신청 거절 API',
     description: '친구 신청 거절 API',
@@ -115,11 +113,13 @@ export class FriendsController {
   @UseGuards(JwtAuthGuard)
   async refuseRequest(
     @GetUser('userNo') receiverNo: number,
-    @Body() friendRequest: FriendRequestDto,
+    @Param('friendNo', ParseIntPipe) friendNo: number,
+    @Param('senderNo', ParseIntPipe) senderNo: number,
   ): Promise<APIResponse> {
     await this.friendsService.refuseRequest({
       receiverNo,
-      ...friendRequest,
+      friendNo,
+      senderNo,
     });
 
     return {
@@ -135,9 +135,10 @@ export class FriendsController {
   @UseGuards(JwtAuthGuard)
   async deleteFriend(
     @GetUser() userNo: number,
-    @Body() friend: DeleteFriendDto,
+    @Param('friendNo', ParseIntPipe) friendNo: number,
+    @Param('friendUserNo', ParseIntPipe) friendUserNo: number,
   ): Promise<APIResponse> {
-    await this.friendsService.deleteFriend(userNo, friend);
+    await this.friendsService.deleteFriend(userNo, friendNo, friendUserNo);
 
     return {
       msg: '친구삭제가 완료되었습니다.',
