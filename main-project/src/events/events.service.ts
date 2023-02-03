@@ -14,6 +14,7 @@ import { Users } from 'src/users/entity/user.entity';
 import { ConfigService } from '@nestjs/config';
 import { ResultSetHeader } from 'mysql2';
 import { AwsService } from 'src/aws/aws.service';
+import { UpdateEventDto } from './dto/update-evet.dto';
 
 @Injectable()
 export class EventsService {
@@ -103,16 +104,47 @@ export class EventsService {
   }
 
   // 수정 관련
-  async updateEvent(
+  async editEvent(
     eventNo: number,
-    eventsDto: CreateEventDto,
+    updateEventDto: UpdateEventDto,
+    userNo: number,
+    files: Express.Multer.File[],
     manager: EntityManager,
   ): Promise<void> {
-    await this.getEvent(eventNo, manager);
+    await this.validateAdmin(manager, userNo);
+    const { imageUrls }: Event<string[]> = await this.getEvent(
+      eventNo,
+      manager,
+    );
 
+    await this.updateEvent(eventNo, updateEventDto, manager);
+    await this.editEventImages(eventNo, files, manager, imageUrls);
+  }
+
+  private async editEventImages(
+    eventNo: number,
+    files: Express.Multer.File[],
+    manager: EntityManager,
+    imageUrls: string[],
+  ): Promise<void> {
+    if (!imageUrls.includes(null)) {
+      await this.deleteEventImages(manager, eventNo);
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    if (files.length) {
+      const images: string[] = await this.uploadImages(files);
+      await this.setEventImages(manager, images, eventNo);
+    }
+  }
+
+  private async updateEvent(
+    eventNo: number,
+    updateEventDto: UpdateEventDto,
+    manager: EntityManager,
+  ): Promise<void> {
     await manager
       .getCustomRepository(EventsRepository)
-      .updateEvent(eventNo, eventsDto);
+      .updateEvent(eventNo, updateEventDto);
   }
 
   // 삭제 관련
@@ -140,12 +172,10 @@ export class EventsService {
     await manager.getCustomRepository(EventsRepository).deleteEvent(eventNo);
   }
 
-  async deleteEventImages(
-    eventNo: number,
+  private async deleteEventImages(
     manager: EntityManager,
+    eventNo: number,
   ): Promise<void> {
-    await this.getEvent(eventNo, manager);
-
     await manager
       .getCustomRepository(EventImagesRepository)
       .deleteEventImages(eventNo);

@@ -114,20 +114,16 @@ export class AnnouncesService {
       announcesNo,
     );
 
-    await this.editAnnounceImages(manager, files, announcesNo);
     await this.updateAnnounce(manager, announcesNo, announcesDto);
+    await this.editAnnounceImages(manager, files, announcesNo, imageUrls);
   }
 
   private async editAnnounceImages(
     manager: EntityManager,
     files: Express.Multer.File[],
     announceNo: number,
+    imageUrls: string[],
   ): Promise<void> {
-    const { imageUrls }: Announce<string[]> = await this.getAnnounce(
-      manager,
-      announceNo,
-    );
-
     if (!imageUrls.includes(null)) {
       await this.deleteAnnounceImages(manager, announceNo);
       await this.awsService.deleteFiles(imageUrls);

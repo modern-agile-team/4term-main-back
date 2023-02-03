@@ -27,15 +27,13 @@ export class EventImagesRepository extends Repository<EventImages> {
   }
 
   // 삭제 관련
-  async deleteEventImages(eventNo: number): Promise<ResultSetHeader> {
+  async deleteEventImages(eventNo: number): Promise<void> {
     try {
-      const { raw }: DeleteResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .delete()
         .from(EventImages)
         .where('eventNo = :eventNo', { eventNo })
         .execute();
-
-      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteEventImages-repository: 알 수 없는 서버 에러입니다.`,
