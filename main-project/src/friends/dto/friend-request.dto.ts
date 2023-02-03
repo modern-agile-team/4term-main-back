@@ -13,16 +13,8 @@ export class FriendRequestDto {
   @IsOptional()
   @IsNumber()
   @ApiProperty({
-    example: 1,
-    description: '요청을 받은 유저no',
-  })
-  receiverNo: number;
-
-  @IsOptional()
-  @IsNumber()
-  @ApiProperty({
     example: 2,
-    description: '친구 신청을 보낼 유저의 no => receiverNo',
+    description: 'friends의 No',
   })
   friendNo: number;
 }

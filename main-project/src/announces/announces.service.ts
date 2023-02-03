@@ -1,111 +1,152 @@
 import {
+  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateResponse } from 'src/boards/interface/boards.interface';
-import { Connection, QueryRunner } from 'typeorm';
-import { AnnouncesFilterDto } from './dto/announce-filter.dto';
+import { ResultSetHeader } from 'mysql2';
+import { DeleteResult, UpdateResult } from 'typeorm';
 import { AnnouncesDto } from './dto/announce.dto';
+import { AnnouncesImages } from './entity/announce-images.entity';
 import { Announces } from './entity/announce.entity';
 import { AnnouncesRepository } from './repository/announce.repository';
+import { AnnouncesImagesRepository } from './repository/announces-images.repository';
 
 @Injectable()
 export class AnnouncesService {
+  private readonly s3: AWS.S3;
+
   constructor(
     @InjectRepository(AnnouncesRepository)
     private readonly announcesRepository: AnnouncesRepository,
 
-    private readonly connection: Connection,
+    @InjectRepository(AnnouncesImagesRepository)
+    private readonly announcesImagesRepository: AnnouncesImagesRepository,
   ) {}
-  // 공지사항 생성 관련
-  async createAnnouncement(announcementDto: AnnouncesDto): Promise<string> {
-    const queryRunner: QueryRunner = this.connection.createQueryRunner();
+  // 생성 관련
+  async createAnnounces(announcesDto: AnnouncesDto): Promise<void> {
+    const { affectedRows }: ResultSetHeader =
+      await this.announcesRepository.createAnnounces(announcesDto);
 
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      const { insertId }: CreateResponse = await queryRunner.manager
-        .getCustomRepository(AnnouncesRepository)
-        .createAnnouncement(announcementDto);
-
-      if (!insertId) {
-        throw new InternalServerErrorException(
-          `공지사항 생성(createAnnouncement-service): 알 수 없는 서버 에러입니다.`,
-        );
-      }
-
-      await queryRunner.commitTransaction();
-
-      return `${insertId}번 공지사항 생성 성공`;
-    } catch (error) {
-      await queryRunner?.rollbackTransaction();
-
-      throw error;
-    } finally {
-      await queryRunner?.release();
+    if (!affectedRows) {
+      throw new InternalServerErrorException(
+        `공지사항 생성(createAnnouncement-service): 알 수 없는 서버 에러입니다.`,
+      );
     }
   }
 
-  // 공지사항 조회 관련
-  async getAnnouncements({ type }: AnnouncesFilterDto): Promise<Announces[]> {
-    const announcements: Announces[] =
-      await this.announcesRepository.getAnnouncements(type);
+  async uploadAnnouncesimagesUrl(
+    announcesNo: number,
+    uploadedImagesUrlList: string[],
+  ): Promise<string> {
+    await this.getAnnouncesByNo(announcesNo);
+    if (uploadedImagesUrlList.length === 0) {
+      throw new BadRequestException('사진이 없습니다.');
+    }
+    const images = uploadedImagesUrlList.map((url) => {
+      return { announcesNo, imageUrl: url };
+    });
 
-    if (announcements.length === 0) {
+    const { insertId }: ResultSetHeader =
+      await this.announcesImagesRepository.uploadAnnouncesimagesUrl(images);
+
+    if (!insertId) {
+      throw new InternalServerErrorException(
+        `이미지 업로드(uploadimagesUrl-service): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+
+    return `이미지 업로드 성공`;
+  }
+
+  // 조회 관련
+  async getAllAnnounces(): Promise<Announces[]> {
+    const announces: Announces[] =
+      await this.announcesRepository.getAllAnnounces();
+
+    if (announces.length === 0) {
       throw new NotFoundException(
         `공지사항 조회(getAnnouncements-service): 조건에 맞는 공지사항이 없습니다.`,
       );
     }
 
-    return announcements;
+    return announces;
   }
 
-  async getAnnouncementByNo(announcementNo: number): Promise<Announces> {
-    const announcement: Announces =
-      await this.announcesRepository.getAnnouncementByNo(announcementNo);
+  async getAnnouncesImages(announcesNo: number): Promise<string[]> {
+    const { imageUrl }: AnnouncesImages =
+      await this.announcesImagesRepository.getAnnouncesImages(announcesNo);
 
-    if (!announcement) {
+    if (!imageUrl) {
       throw new NotFoundException(
-        `공지사항 상세 조회(getBoardByNo-service): ${announcementNo}번 공지사항이 없습니다.`,
+        `이미지 조회(getImages-service): 이미지가 없습니다.`,
       );
     }
 
-    return announcement;
+    const images = JSON.parse(imageUrl);
+
+    return images;
   }
 
-  // 공지사항 수정 관련
-  async updateAnnouncement(
-    announcementNo: number,
-    announcementDto: AnnouncesDto,
-  ): Promise<string> {
-    const queryRunner: QueryRunner = this.connection.createQueryRunner();
+  async getAnnouncesByNo(announcesNo: number): Promise<Announces> {
+    const announces: Announces =
+      await this.announcesRepository.getAnnouncesByNo(announcesNo);
 
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-    try {
-      await this.getAnnouncementByNo(announcementNo);
-
-      const affectedRows: number = await queryRunner.manager
-        .getCustomRepository(AnnouncesRepository)
-        .updateAnnouncement(announcementNo, announcementDto);
-
-      if (!affectedRows) {
-        throw new InternalServerErrorException(
-          `공지사항 수정(updateAnnouncement-service): 알 수 없는 서버 에러입니다.`,
-        );
-      }
-
-      await queryRunner.commitTransaction();
-
-      return `${announcementNo}번 공지사항이 수정되었습니다.`;
-    } catch (error) {
-      await queryRunner?.rollbackTransaction();
-
-      throw error;
-    } finally {
-      await queryRunner?.release();
+    if (!announces) {
+      throw new NotFoundException(
+        `공지사항 상세 조회(getBoardByNo-service): ${announcesNo}번 공지사항이 없습니다.`,
+      );
     }
+
+    return announces;
+  }
+
+  // 수정 관련
+  async updateAnnounces(
+    announcesNo: number,
+    announcesDto: AnnouncesDto,
+  ): Promise<void> {
+    await this.getAnnouncesByNo(announcesNo);
+
+    const { affected }: UpdateResult =
+      await this.announcesRepository.updateAnnounces(announcesNo, announcesDto);
+
+    if (!affected) {
+      throw new InternalServerErrorException(
+        `공지사항 수정(updateAnnouncement-service): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  // 삭제 관련
+  async deleteAnnouncesByNo(announcesNo: number): Promise<string> {
+    await this.getAnnouncesByNo(announcesNo);
+
+    const { affected }: DeleteResult =
+      await this.announcesRepository.deleteAnnouncesByNo(announcesNo);
+
+    if (!affected) {
+      throw new BadRequestException(
+        `공지사항 삭제(deleteAnnouncesByNo-service): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+
+    return `${announcesNo}번 공지사항 삭제 성공`;
+  }
+
+  async deleteAnnouncesImages(announcesNo: number): Promise<string> {
+    await this.getAnnouncesByNo(announcesNo);
+
+    const { affected }: DeleteResult =
+      await this.announcesImagesRepository.deleteAnnouncesImages(announcesNo);
+
+    if (!affected) {
+      throw new BadRequestException(
+        `이미지 삭제(deleteAnnouncesImages-service): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+
+    return `이미지 삭제 성공`;
   }
 }
