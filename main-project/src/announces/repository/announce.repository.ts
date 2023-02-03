@@ -74,9 +74,15 @@ export class AnnouncesRepository extends Repository<Announces> {
   async updateAnnounces(
     announcesNo: number,
     announcesDto: AnnouncesDto,
+<<<<<<< HEAD
   ): Promise<ResultSetHeader> {
     try {
       const { raw }: UpdateResult = await this.createQueryBuilder('boards')
+=======
+  ): Promise<UpdateResult> {
+    try {
+      const raw: UpdateResult = await this.createQueryBuilder('boards')
+>>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
         .update(Announces)
         .set(announcesDto)
         .where('no = :announcesNo', { announcesNo })

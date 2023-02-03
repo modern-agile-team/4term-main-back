@@ -50,7 +50,11 @@ export class EventsRepository extends Repository<Events> {
   }
 
   // 생성 관련
+<<<<<<< HEAD
   async createEvent(eventsDto: EventDto): Promise<ResultSetHeader> {
+=======
+  async createEvents(eventsDto: EventDto): Promise<ResultSetHeader> {
+>>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()

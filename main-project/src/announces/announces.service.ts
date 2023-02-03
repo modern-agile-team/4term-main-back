@@ -6,7 +6,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ResultSetHeader } from 'mysql2';
+<<<<<<< HEAD
 import { CreateResponse } from 'src/boards/interface/boards.interface';
+=======
+>>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
 import { DeleteResult, UpdateResult } from 'typeorm';
 import { AnnouncesDto } from './dto/announce.dto';
 import { AnnouncesImages } from './entity/announce-images.entity';
@@ -23,17 +26,15 @@ export class AnnouncesService {
     private readonly announcesImagesRepository: AnnouncesImagesRepository,
   ) {}
   // 생성 관련
-  async createAnnounces(manager, announcesDto: AnnouncesDto): Promise<string> {
-    const { insertId }: CreateResponse =
+  async createAnnounces(announcesDto: AnnouncesDto): Promise<void> {
+    const { affectedRows }: ResultSetHeader =
       await this.announcesRepository.createAnnounces(announcesDto);
 
-    if (!insertId) {
+    if (!affectedRows) {
       throw new InternalServerErrorException(
         `공지사항 생성(createAnnouncement-service): 알 수 없는 서버 에러입니다.`,
       );
     }
-
-    return `${insertId}번 공지사항 생성 성공`;
   }
 
   async uploadImageUrls(
@@ -48,8 +49,13 @@ export class AnnouncesService {
       return { announcesNo, imageUrl: url };
     });
 
+<<<<<<< HEAD
     const { insertId }: CreateResponse =
       await this.announcesImagesRepository.uploadImageUrls(images);
+=======
+    const { insertId }: ResultSetHeader =
+      await this.announcesImagesRepository.uploadAnnouncesimagesUrl(images);
+>>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
 
     if (!insertId) {
       throw new InternalServerErrorException(
@@ -106,19 +112,21 @@ export class AnnouncesService {
   async updateAnnounces(
     announcesNo: number,
     announcesDto: AnnouncesDto,
-  ): Promise<string> {
+  ): Promise<void> {
     await this.getAnnouncesByNo(announcesNo);
 
+<<<<<<< HEAD
     const { affectedRows }: ResultSetHeader =
+=======
+    const { affected }: UpdateResult =
+>>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
       await this.announcesRepository.updateAnnounces(announcesNo, announcesDto);
 
-    if (!affectedRows) {
+    if (!affected) {
       throw new InternalServerErrorException(
         `공지사항 수정(updateAnnounces-service): 알 수 없는 서버 에러입니다.`,
       );
     }
-
-    return `${announcesNo}번 공지사항이 수정되었습니다.`;
   }
 
   // 삭제 관련
@@ -141,7 +149,11 @@ export class AnnouncesService {
     const { affectedRows }: ResultSetHeader =
       await this.announcesImagesRepository.deleteAnnouncesImages(announcesNo);
 
+<<<<<<< HEAD
     if (!affectedRows) {
+=======
+    if (!affected) {
+>>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
       throw new BadRequestException(
         `이미지 삭제(deleteAnnouncesImages-service): 알 수 없는 서버 에러입니다.`,
       );
