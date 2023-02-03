@@ -8,7 +8,6 @@ import {
   Patch,
   Post,
   Query,
-  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -18,7 +17,6 @@ import { EventsService } from './events.service';
 import { APIResponse } from 'src/common/interface/interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { AwsService } from 'src/aws/aws.service';
-import { Events } from './entity/events.entity';
 import { EventDto } from './dto/event.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
@@ -30,10 +28,7 @@ import { ApiGetEvents } from './swagger-decorator/get-events.decorator';
 @Controller('events')
 @ApiTags('이벤트 API')
 export class EventsController {
-  constructor(
-    private readonly eventsService: EventsService,
-    private readonly awsService: AwsService,
-  ) {}
+  constructor(private readonly eventsService: EventsService) {}
   //Get Methods
   @Get()
   @UseGuards(JwtAuthGuard)
@@ -62,28 +57,12 @@ export class EventsController {
     @TransactionDecorator() manager: EntityManager,
     @Param('eventNo', ParseIntPipe) eventNo: number,
   ): Promise<APIResponse> {
-    const event: Events = await this.eventsService.getEvent(eventNo, manager);
-
-    return { response: { event } };
-  }
-
-  @Get('/images/:eventNo')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '특정 이벤트 이미지 조회 API',
-    description: '번호를 통해 해당 이벤트의 이미지을 조회한다.',
-  })
-  async getEventImages(
-    @TransactionDecorator() manager: EntityManager,
-    @Param('eventNo', ParseIntPipe) eventNo: number,
-  ): Promise<APIResponse> {
-    const imageUrl: string[] = await this.eventsService.getEventImages(
+    const event: Event<string[]> = await this.eventsService.getEvent(
       eventNo,
       manager,
     );
 
-    return { response: imageUrl };
+    return { response: { event } };
   }
 
   // Post Methods
@@ -102,29 +81,6 @@ export class EventsController {
     await this.eventsService.createEvent(eventsDto, manager);
 
     return { msg: '이벤트 생성 성공' };
-  }
-
-  @Post('/images/:eventNo')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '이벤트 이미지 업로드 API',
-    description: 's3에 이미지 업로드 후 DB에 image 정보 생성.',
-  })
-  @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
-  async uploadEventImages(
-    @Param('eventNo', ParseIntPipe) eventNo: number,
-    @TransactionDecorator() manager: EntityManager,
-    @UploadedFiles() files: Express.Multer.File[],
-  ): Promise<APIResponse> {
-    const imageUrls: string[] = await this.awsService.uploadImages(
-      files,
-      'events',
-    );
-
-    await this.eventsService.uploadImageUrls(eventNo, imageUrls, manager);
-
-    return { msg: '이미지 업로드 성공' };
   }
 
   // Patch Methods
@@ -157,12 +113,6 @@ export class EventsController {
     @Param('eventNo', ParseIntPipe) eventNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const images: string[] = await this.eventsService.getEventImages(
-      eventNo,
-      manager,
-    );
-
-    await this.awsService.deleteFiles(images);
     await this.eventsService.deleteEvent(eventNo, manager);
 
     return { msg: '이벤트 삭제 성공' };
@@ -180,12 +130,6 @@ export class EventsController {
     @TransactionDecorator() manager: EntityManager,
     @Param('eventNo', ParseIntPipe) eventNo: number,
   ): Promise<APIResponse> {
-    const imagesUrls = await this.eventsService.getEventImages(
-      eventNo,
-      manager,
-    );
-
-    await this.awsService.deleteFiles(imagesUrls);
     await this.eventsService.deleteEventImages(eventNo, manager);
 
     return { msg: '이벤트 이미지 삭제 성공' };

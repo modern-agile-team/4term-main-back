@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { EntityManager } from 'typeorm';
 import { EventDto } from './dto/event.dto';
-import { Events } from './entity/events.entity';
 import { EventImagesRepository } from './repository/events-image.repository';
 import { EventsRepository } from './repository/events.repository';
 import { Event } from './interface/events.interface';
@@ -59,27 +58,11 @@ export class EventsService {
     return events;
   }
 
-  async getEventImages(
+  async getEvent(
     eventNo: number,
     manager: EntityManager,
-  ): Promise<string[]> {
-    const { imageUrl } = await manager
-      .getCustomRepository(EventImagesRepository)
-      .getEventImages(eventNo);
-
-    if (!imageUrl) {
-      throw new NotFoundException(
-        `이미지 조회(getEventsImages-service): 이미지가 없습니다.`,
-      );
-    }
-
-    const images = JSON.parse(imageUrl);
-
-    return images;
-  }
-
-  async getEvent(eventNo: number, manager: EntityManager): Promise<Events> {
-    const event: Events = await manager
+  ): Promise<Event<string[]>> {
+    const event: Event<string[]> = await manager
       .getCustomRepository(EventsRepository)
       .getEvent(eventNo);
 
@@ -117,7 +100,6 @@ export class EventsService {
     manager: EntityManager,
   ): Promise<void> {
     await this.getEvent(eventNo, manager);
-    await this.getEventImages(eventNo, manager);
 
     await manager
       .getCustomRepository(EventImagesRepository)
