@@ -7,54 +7,80 @@ import {
   Repository,
   UpdateResult,
 } from 'typeorm';
-import { AnnouncesDto } from '../dto/announce.dto';
+import { CreateAnnounceDto } from '../dto/create-announce.dto';
 import { Announces } from '../entity/announce.entity';
+import { Announce } from '../interface/announces.interface';
 
 @EntityRepository(Announces)
 export class AnnouncesRepository extends Repository<Announces> {
   //  조회 관련
-  async getAllAnnounces(): Promise<Announces[]> {
+  async getAnnounces(): Promise<Announce<string[]>[]> {
     try {
-      const announces: Announces[] = await this.createQueryBuilder('announces')
+      const announces: Announce<string>[] = await this.createQueryBuilder(
+        'announces',
+      )
+        .leftJoin('announces.announceImage', 'images')
         .select([
           'announces.no AS no',
           'announces.title AS title',
           'announces.description AS description',
+          'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
         ])
         .orderBy('no', 'DESC')
+        .groupBy('announces.no')
         .getRawMany();
 
-      return announces;
+      const convertAnnounces: Announce<string[]>[] = announces.map(
+        ({ imageUrls, ...announceInfo }) => {
+          const announce: Announce<string[]> = {
+            ...announceInfo,
+            imageUrls: JSON.parse(imageUrls),
+          };
+
+          return announce;
+        },
+      );
+
+      return convertAnnounces;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getAllAnnounces-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getAnnounces-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
-  async getAnnouncesByNo(announcesNo: number): Promise<Announces> {
+  async getAnnounce(announceNo: number): Promise<Announce<string[]>> {
     try {
-      const announces: Announces = await this.createQueryBuilder('announces')
-        .leftJoin('announces.announcesImages', 'images')
-        .select([
-          'announces.no AS no',
-          'announces.title AS title',
-          'announces.description AS description',
-          'JSON_ARRAYAGG(images.imageUrl) AS images',
-        ])
-        .where('announces.no = :announcesNo', { announcesNo })
-        .getRawOne();
+      const { imageUrls, ...announceInfo }: Announce<string> =
+        await this.createQueryBuilder('announces')
+          .leftJoin('announces.announceImage', 'images')
+          .select([
+            'announces.no AS no',
+            'announces.title AS title',
+            'announces.description AS description',
+            'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
+          ])
+          .orderBy('no', 'DESC')
+          .where('announces.no = :announceNo', { announceNo })
+          .getRawOne();
 
-      return announces;
+      const convertAnnounce: Announce<string[]> = {
+        ...announceInfo,
+        imageUrls: JSON.parse(imageUrls),
+      };
+
+      return convertAnnounce;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getAnnouncesByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getAnnounce-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
   // 생성 관련
-  async createAnnounces(announcesDto: AnnouncesDto): Promise<ResultSetHeader> {
+  async createAnnounce(
+    announcesDto: CreateAnnounceDto,
+  ): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('announces')
         .insert()
@@ -65,7 +91,7 @@ export class AnnouncesRepository extends Repository<Announces> {
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createAnnounces-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createAnnounce-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -73,10 +99,20 @@ export class AnnouncesRepository extends Repository<Announces> {
   // 수정 관련
   async updateAnnounces(
     announcesNo: number,
+<<<<<<< HEAD
     announcesDto: AnnouncesDto,
+<<<<<<< HEAD
   ): Promise<ResultSetHeader> {
     try {
       const { raw }: UpdateResult = await this.createQueryBuilder('boards')
+=======
+=======
+    announcesDto: CreateAnnounceDto,
+>>>>>>> 44f7cbffe7e221adab85db634a646f1daa9bd42f
+  ): Promise<UpdateResult> {
+    try {
+      const raw: UpdateResult = await this.createQueryBuilder('boards')
+>>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
         .update(Announces)
         .set(announcesDto)
         .where('no = :announcesNo', { announcesNo })

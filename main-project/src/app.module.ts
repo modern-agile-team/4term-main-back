@@ -16,10 +16,17 @@ import { MannersModule } from './manners/manners.module';
 import { AwsModule } from './aws/aws.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AnnouncesModule } from './announces/announces.module';
+<<<<<<< HEAD
 import { AuthModule } from './auth/auth.module';
 import { cacheModule } from './common/configs/redis.config';
 import { mailModule } from './common/configs/email.config';
 import { EventsModule } from './events/events.module';
+=======
+import { EventsModule } from './events/events.module';
+import { AuthModule } from './auth/auth.module';
+import { cacheModule } from './common/configs/redis.config';
+import { mailModule } from './common/configs/email.config';
+>>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
 
 @Module({
   imports: [
@@ -38,10 +45,17 @@ import { EventsModule } from './events/events.module';
     ChatsModule,
     MannersModule,
     AwsModule,
+<<<<<<< HEAD
     AuthModule,
     cacheModule,
     mailModule,
     EventsModule,
+=======
+    EventsModule,
+    AuthModule,
+    cacheModule,
+    mailModule,
+>>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
   ],
   controllers: [AppController],
   providers: [AppService],

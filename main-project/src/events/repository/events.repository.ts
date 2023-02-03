@@ -13,7 +13,7 @@ import { Events } from '../entity/events.entity';
 @EntityRepository(Events)
 export class EventsRepository extends Repository<Events> {
   //  조회 관련
-  async getAllEvents(): Promise<Events[]> {
+  async getEvents(): Promise<Events[]> {
     try {
       const events: Events[] = await this.createQueryBuilder()
         .select(['no AS no', 'title AS title', 'description AS description'])
@@ -50,7 +50,11 @@ export class EventsRepository extends Repository<Events> {
   }
 
   // 생성 관련
+<<<<<<< HEAD
   async createEvent(eventsDto: EventDto): Promise<ResultSetHeader> {
+=======
+  async createEvents(eventsDto: EventDto): Promise<ResultSetHeader> {
+>>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()

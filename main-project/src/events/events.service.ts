@@ -40,19 +40,12 @@ export class EventsService {
       return { eventNo, imageUrl: url };
     });
 
-    const { affectedRows }: ResultSetHeader =
-      await this.eventsImagesRepository.uploadEventImagesUrl(images);
-
-    if (!affectedRows) {
-      throw new InternalServerErrorException(
-        `이미지 업로드(uploadImageUrls-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+    await this.eventsImagesRepository.uploadEventImagesUrl(images);
   }
 
   // 조회 관련
-  async getAllEvents(): Promise<Events[]> {
-    const events: Events[] = await this.eventsRepository.getAllEvents();
+  async getEvents(): Promise<Events[]> {
+    const events: Events[] = await this.eventsRepository.getEvents();
 
     if (!events.length) {
       throw new NotFoundException(
