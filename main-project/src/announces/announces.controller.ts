@@ -32,14 +32,7 @@ import { ApiUpdateAnnounce } from './swagger-decorator/update-announce.decorator
 @Controller('announces')
 @ApiTags('공지사항 API')
 export class AnnouncesController {
-<<<<<<< HEAD
-  constructor(
-    private readonly announcesService: AnnouncesService,
-    private readonly awsService: AwsService,
-  ) {}
-=======
   constructor(private readonly announcesService: AnnouncesService) {}
->>>>>>> 44f7cbffe7e221adab85db634a646f1daa9bd42f
   //Get Methods
   @Get()
   @UseInterceptors(TransactionInterceptor)
@@ -80,55 +73,16 @@ export class AnnouncesController {
     @Body() createAnnounceDto: CreateAnnounceDto,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
-<<<<<<< HEAD
-<<<<<<< HEAD
-    await this.announcesService.createAnnounces(manager, announcesDto);
-=======
-    await this.announcesService.createAnnounces(announcesDto);
->>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
-=======
-    await this.announcesService.createAnnounces(
+    await this.announcesService.createAnnounce(
       manager,
       createAnnounceDto,
       files,
       userNo,
     );
->>>>>>> 44f7cbffe7e221adab85db634a646f1daa9bd42f
 
     return { response: { msg: '공지사항 생성 성공' } };
   }
 
-<<<<<<< HEAD
-  @Post('/images/:announcesNo')
-  @ApiOperation({
-    summary: '공지사항 이미지 업로드 API',
-    description: 's3에 이미지 업로드 후 DB에 image 정보 생성.',
-  })
-  @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
-  async uploadAnnouncesImages(
-    @Param('announcesNo', ParseIntPipe) announcesNo: number,
-    @UploadedFiles() files: Express.Multer.File[],
-  ): Promise<APIResponse> {
-<<<<<<< HEAD
-    const images = await this.awsService.uploadImages(files, 'announces');
-
-    await this.announcesService.uploadImageUrls(announcesNo, images);
-
-    return { response: { images } };
-=======
-    const imageURLs = await this.awsService.uploadImages(files, 'announces');
-
-    await this.announcesService.uploadAnnouncesimagesUrl(
-      announcesNo,
-      imageURLs,
-    );
-
-    return { response: { msg: '이미지 업로드 성공' } };
->>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
-  }
-
-=======
->>>>>>> 44f7cbffe7e221adab85db634a646f1daa9bd42f
   // Patch Methods
   @Patch('/:announcesNo')
   @UseGuards(JwtAuthGuard)
@@ -163,42 +117,6 @@ export class AnnouncesController {
     @GetUser() userNo: number,
     @Param('announcesNo', ParseIntPipe) announcesNo: number,
   ): Promise<APIResponse> {
-<<<<<<< HEAD
-    await this.announcesService.deleteAnnouncesByNo(announcesNo);
-
-    await this.announcesService.deleteAnnouncesImages(announcesNo);
-
-    const images = await this.announcesService.getAnnouncesImages(announcesNo);
-
-    await this.awsService.deleteFiles(images);
-
-    return { response: { msg: '공지사항 삭제 성공' } };
-  }
-
-  // Delete Methods
-  @Delete('/images/:announcesNo')
-  @ApiOperation({
-    summary: '공지사항 이미지 삭제 API',
-    description: '공지사항 번호를 사용해 이미지를 삭제한다.',
-  })
-  async deleteAnnouncesimages(
-    @Param('announcesNo', ParseIntPipe) announcesNo: number,
-  ): Promise<APIResponse> {
-    const imagesUrlList = await this.announcesService.getAnnouncesImages(
-      announcesNo,
-    );
-
-    await this.announcesService.deleteAnnouncesImages(announcesNo);
-
-    await this.awsService.deleteFiles(imagesUrlList);
-
-<<<<<<< HEAD
-    return { response: { msg: '공지사항 이미지 삭제 성공' } };
-=======
-    return { response: { msg: '이미지 삯제 성공' } };
->>>>>>> 99a22fd33993957b148bda24bbd5d8abbad9c6b2
-  }
-=======
     await this.announcesService.deleteAnnounceByNo(
       manager,
       announcesNo,
@@ -207,5 +125,4 @@ export class AnnouncesController {
 
     return { response: { msg: '공지사항 삭제 성공' } };
   }
->>>>>>> 44f7cbffe7e221adab85db634a646f1daa9bd42f
 }

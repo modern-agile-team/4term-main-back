@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsString } from 'class-validator';
-export class EventDto {
+export class CreateEventDto {
   @ApiProperty({
     example: '민뜨와의 협업 이벤트!!!!!!!!!!!!!!!!1',
     description: '이벤트 제목',
