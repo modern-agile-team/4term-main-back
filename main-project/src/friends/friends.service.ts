@@ -8,6 +8,7 @@ import { NoticeType } from 'src/common/configs/notice-type.config';
 import { NoticeFriendsRepository } from 'src/notices/repository/notices-friend.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { EntityManager } from 'typeorm';
+import { DeleteFriendDto } from './dto/delete-friend.dto';
 import { FriendRequestDto } from './dto/friend-request.dto';
 import { Friends } from './entity/friend.entity';
 import {
@@ -57,8 +58,7 @@ export class FriendsService {
 
   async acceptFriendRequest(
     userNo: number,
-    friendNo: number,
-    senderNo: number,
+    { friendNo, senderNo }: FriendRequestDto,
   ): Promise<void> {
     const request = await this.checkRequest({
       receiverNo: userNo,
@@ -156,8 +156,7 @@ export class FriendsService {
 
   async deleteFriend(
     userNo: number,
-    friendNo: number,
-    friendUserNo: number,
+    { friendNo, friendUserNo }: DeleteFriendDto,
   ): Promise<void> {
     const request: FriendRequestStatus = await this.checkRequest({
       receiverNo: userNo,
