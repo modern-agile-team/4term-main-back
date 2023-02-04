@@ -23,9 +23,9 @@ import { CreateEnquiryDto } from './dto/create-enquiry.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
 import { UpdateEnquiryDto } from './dto/update-enquiry.dto';
 import { EnquiriesService } from './enquiries.service';
-import { EnquiryReplies } from './entity/enquiry-reply.entity';
-import { Enquiries } from './entity/enquiry.entity';
 import { Enquiry, Reply } from './interface/enquiry.interface';
+import { ApiGetEnquiries } from './swagger-decorator/get-enquiries.decorator';
+import { ApiGetEnquiry } from './swagger-decorator/get-enquiry.decorator';
 
 @Controller('enquiries')
 @ApiTags('문의사항 API')
@@ -33,29 +33,25 @@ export class EnquiriesController {
   constructor(private readonly enquiriesService: EnquiriesService) {}
   //Get Methods
   @Get()
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '문의사항 전체 조회 API',
-    description: '문의사항 전부를 내림차순으로 조회한다.',
-  })
-  async getAllEnquiries(
+  @ApiGetEnquiries()
+  async getEnquiries(
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const eunqiries: Enquiry[] = await this.enquiriesService.getAllEnquiries(
-      manager,
-    );
+    const eunqiries: Enquiry<string[]>[] =
+      await this.enquiriesService.getEnquiries(manager);
 
-    return { response: eunqiries };
+    return { msg: '문의사항 전체 조회 성공', response: { eunqiries } };
   }
 
   @Get('/reply')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '문의사항 답변 전체조회 API',
-    description: '문의사항의 답변들을 전체 조회한다.',
-  })
+  @ApiGetEnquiry()
   async getAllReplies(
     @TransactionDecorator() manager: EntityManager,
+    @GetUser() userNo: number,
   ): Promise<APIResponse> {
     const replies: Reply[] = await this.enquiriesService.getAllReplies(manager);
 
@@ -63,26 +59,25 @@ export class EnquiriesController {
   }
 
   @Get('/:enquiryNo')
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '문의사항 상세 조회 API',
-    description: '문의 번호를 통해 문의사항을 상세 조회한다.',
-  })
+  @ApiGetEnquiry()
   async getEnquiryByNo(
     @Param('enquiryNo') enquiryNo: number,
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const enquiry: Enquiry = await this.enquiriesService.getEnquiryByNo(
+    const enquiry: Enquiry<string[]> = await this.enquiriesService.getEnquiry(
       manager,
       enquiryNo,
+      userNo,
     );
 
     return { response: enquiry };
   }
 
   @Get('/:enquiryNo/reply')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '문의사항 답변 상세조회 API',

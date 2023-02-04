@@ -1,13 +1,13 @@
 import { CreateReplyDto } from '../dto/create-reply.dto';
 import { Enquiries } from '../entity/enquiry.entity';
 
-export interface Enquiry {
+export interface Enquiry<T> {
   no: number;
   userNo: number;
   title: string;
   description: string;
   createdDate: Date;
-  imageUrl: string;
+  imageUrls: T;
   isDone?: boolean;
 }
 

@@ -14,50 +14,72 @@ import { Enquiry } from '../interface/enquiry.interface';
 @EntityRepository(Enquiries)
 export class EnquiriesRepository extends Repository<Enquiries> {
   //Get Methods
-  async getAllEnquiries(): Promise<Enquiry[]> {
+  async getEnquiries(): Promise<Enquiry<string[]>[]> {
     try {
-      const enquiries = this.createQueryBuilder('enquiries')
-        .leftJoin('enquiries.userNo', 'users')
-        .select([
-          'enquiries.no AS no',
-          'users.no AS userNo',
-          'enquiries.title AS title',
-          'enquiries.isDone AS isDone',
-          'enquiries.description AS description',
-          `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
-        ])
-        .orderBy('no', 'DESC')
-        .getRawMany();
-      //TODO: 공지사항 전체조회 시 이미지 사용하는 지 토의
-      return enquiries;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} getAllEnquiries-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async getEnquiryByNo(enquiryNo: number): Promise<Enquiry> {
-    try {
-      const enquiry = this.createQueryBuilder('enquiries')
+      const enquiries: Enquiry<string>[] = await this.createQueryBuilder(
+        'enquiries',
+      )
         .leftJoin('enquiries.userNo', 'users')
         .leftJoin('enquiries.enquiryImages', 'images')
         .select([
           'enquiries.no AS no',
           'users.no AS userNo',
           'enquiries.title AS title',
-          'enquiries.description AS description',
           'enquiries.isDone AS isDone',
+          'enquiries.description AS description',
           `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
-          'JSON_ARRAYAGG(images.imageUrl) AS imageUrl',
+          'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
         ])
-        .where('enquiries.no = :enquiryNo', { enquiryNo })
-        .getRawOne();
+        .orderBy('no', 'DESC')
+        .groupBy('enquiries.no')
+        .getRawMany();
 
-      return enquiry;
+      const convertEnquiry: Enquiry<string[]>[] = enquiries.map(
+        ({ imageUrls, ...enquiryInfo }) => {
+          const enquiry: Enquiry<string[]> = {
+            ...enquiryInfo,
+            imageUrls: JSON.parse(imageUrls),
+          };
+
+          return enquiry;
+        },
+      );
+
+      return convertEnquiry;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getEnquiryByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getEnquiries-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getEnquiry(enquiryNo: number): Promise<Enquiry<string[]>> {
+    try {
+      const { imageUrls, ...enquiryInfo }: Enquiry<string> =
+        await this.createQueryBuilder('enquiries')
+          .leftJoin('enquiries.userNo', 'users')
+          .leftJoin('enquiries.enquiryImages', 'images')
+          .select([
+            'enquiries.no AS no',
+            'users.no AS userNo',
+            'enquiries.title AS title',
+            'enquiries.description AS description',
+            'enquiries.isDone AS isDone',
+            `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
+            'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
+          ])
+          .where('enquiries.no = :enquiryNo', { enquiryNo })
+          .getRawOne();
+
+      const convertEnquiry: Enquiry<string[]> = {
+        ...enquiryInfo,
+        imageUrls: JSON.parse(imageUrls),
+      };
+
+      return convertEnquiry;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getEnquiry-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

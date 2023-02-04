@@ -6,7 +6,6 @@ import {
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { ResultSetHeader } from 'mysql2';
 import { AwsService } from 'src/aws/aws.service';
-import { UsersRepository } from 'src/users/repository/users.repository';
 import { EntityManager } from 'typeorm';
 import { CreateEnquiryDto } from './dto/create-enquiry.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
@@ -21,19 +20,12 @@ import { EnquiriesRepository } from './repository/enquiry.repository';
 
 @Injectable()
 export class EnquiriesService {
-  constructor(
-    private readonly enquiriesRepository: EnquiriesRepository,
-    private readonly enquiryRepliesRepository: EnquiryRepliesRepository,
-    private readonly enquiryImagesRepository: EnquiryImagesRepository,
-    private readonly usersRepository: UsersRepository,
-
-    private readonly awsService: AwsService,
-  ) {}
+  constructor(private readonly awsService: AwsService) {}
   // 문의사항 조회 관련
-  async getAllEnquiries(manager: EntityManager): Promise<Enquiry[]> {
-    const enquiries: Enquiry[] = await manager
+  async getEnquiries(manager: EntityManager): Promise<Enquiry<string[]>[]> {
+    const enquiries: Enquiry<string[]>[] = await manager
       .getCustomRepository(EnquiriesRepository)
-      .getAllEnquiries();
+      .getEnquiries();
 
     if (!enquiries.length) {
       throw new NotFoundException(
@@ -48,24 +40,27 @@ export class EnquiriesService {
     manager: EntityManager,
     enquiryNo: number,
     userNo: number,
-  ): Promise<Enquiry> {
-    const enquiry: Enquiry = await this.getEnquiryByNo(manager, enquiryNo);
+  ): Promise<Enquiry<string[]>> {
+    const enquiry: Enquiry<string[]> = await this.readEnquiry(
+      manager,
+      enquiryNo,
+    );
     await this.validateWriter(userNo, enquiry);
 
     return enquiry;
   }
 
-  async getEnquiryByNo(
+  private async readEnquiry(
     manager: EntityManager,
     enquiryNo: number,
-  ): Promise<Enquiry> {
-    const enquiry: Enquiry = await manager
+  ): Promise<Enquiry<string[]>> {
+    const enquiry: Enquiry<string[]> = await manager
       .getCustomRepository(EnquiriesRepository)
-      .getEnquiryByNo(enquiryNo);
+      .getEnquiry(enquiryNo);
 
     if (!enquiry.no) {
       throw new NotFoundException(
-        `문의 상세 조회(getEnquiryByNo-service): ${enquiryNo}번 문의 사항이 없습니다.`,
+        `문의 상세 조회(readEnquiry-service): ${enquiryNo}번 문의 사항이 없습니다.`,
       );
     }
 
@@ -90,22 +85,17 @@ export class EnquiriesService {
     manager: EntityManager,
     enquiryNo: number,
   ): Promise<Reply> {
-    await this.getEnquiryByNo(manager, enquiryNo);
-    const reply: Reply = await this.getReply(manager, enquiryNo);
+    await this.readEnquiry(manager, enquiryNo);
+
+    const reply: Reply = await manager
+      .getCustomRepository(EnquiryRepliesRepository)
+      .getReplyByNo(enquiryNo);
 
     if (!reply) {
       throw new NotFoundException(
         `문의 답변 상세조회(getReplyByNo-service): ${enquiryNo}번 문의사항의 답변이 없습니다.`,
       );
     }
-
-    return reply;
-  }
-
-  async getReply(manager: EntityManager, enquiryNo: number): Promise<Reply> {
-    const reply: Reply = await manager
-      .getCustomRepository(EnquiryRepliesRepository)
-      .getReplyByNo(enquiryNo);
 
     return reply;
   }
@@ -183,7 +173,7 @@ export class EnquiriesService {
     files: Express.Multer.File[],
     manager: EntityManager,
   ): Promise<void> {
-    await this.getEnquiryByNo(manager, enquiryNo);
+    await this.readEnquiry(manager, enquiryNo);
     await this.isCreated(manager, enquiryNo);
 
     const reply: Reply = { ...createReplyDto, enquiryNo };
@@ -197,7 +187,9 @@ export class EnquiriesService {
   }
 
   async isCreated(manager: EntityManager, enquiryNo: number): Promise<void> {
-    const reply: Reply = await this.getReply(manager, enquiryNo);
+    const reply: Reply = await manager
+      .getCustomRepository(EnquiryRepliesRepository)
+      .getReplyByNo(enquiryNo);
     if (reply) {
       throw new BadRequestException(
         `답변 작성 확인(isCreated-service): 이미 답변이 작성된 문의사항입니다.`,
@@ -272,14 +264,16 @@ export class EnquiriesService {
     manager: EntityManager,
     files: Express.Multer.File[],
   ): Promise<void> {
-    const enquiry: Enquiry = await this.getEnquiryByNo(manager, enquiryNo);
+    const enquiry: Enquiry<string[]> = await this.readEnquiry(
+      manager,
+      enquiryNo,
+    );
     await this.validateWriter(userNo, enquiry);
 
     await this.editEnquiry(manager, enquiryNo, updateEnquiryDto);
 
-    const { imageUrl }: Enquiry = enquiry;
-    const images: string[] = JSON.parse(imageUrl);
-    await this.editEnquiryimages(manager, images, files, enquiryNo);
+    const { imageUrls }: Enquiry<string[]> = enquiry;
+    await this.editEnquiryimages(manager, imageUrls, files, enquiryNo);
   }
 
   private async editEnquiry(
@@ -364,7 +358,7 @@ export class EnquiriesService {
     manager: EntityManager,
     enquiryNo: number,
   ): Promise<void> {
-    await this.getEnquiryByNo(manager, enquiryNo);
+    await this.readEnquiry(manager, enquiryNo);
 
     const isDeleted: number = await manager
       .getCustomRepository(EnquiriesRepository)
@@ -396,7 +390,7 @@ export class EnquiriesService {
     manager: EntityManager,
     enquiryNo: number,
   ): Promise<void> {
-    await this.getEnquiryByNo(manager, enquiryNo);
+    await this.readEnquiry(manager, enquiryNo);
 
     const isDeleted: number = await manager
       .getCustomRepository(EnquiryRepliesRepository)
@@ -427,9 +421,9 @@ export class EnquiriesService {
   //function
   private async validateWriter(
     userNo: number,
-    enquiry: Enquiry,
+    enquiry: Enquiry<string[]>,
   ): Promise<void> {
-    if (enquiry.userNo != userNo) {
+    if (enquiry.userNo !== userNo) {
       throw new BadRequestException(
         `사용자 검증(validateWriter-service): 잘못된 사용자의 접근입니다.`,
       );

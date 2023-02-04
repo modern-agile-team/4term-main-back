@@ -31,7 +31,7 @@ export class UserProfile extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
 
-  @Column({ type: 'varchar', length: 45 })
+  @Column({ type: 'varchar', length: 45, nullable: true })
   major: string;
 
   @OneToOne((type) => Manners, (Manners) => Manners.userProfileNo)

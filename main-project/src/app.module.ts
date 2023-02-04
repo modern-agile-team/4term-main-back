@@ -16,10 +16,10 @@ import { MannersModule } from './manners/manners.module';
 import { AwsModule } from './aws/aws.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AnnouncesModule } from './announces/announces.module';
-import { EventsModule } from './events/events.module';
 import { AuthModule } from './auth/auth.module';
 import { cacheModule } from './common/configs/redis.config';
 import { mailModule } from './common/configs/email.config';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
