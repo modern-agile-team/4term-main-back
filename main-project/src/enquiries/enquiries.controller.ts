@@ -25,6 +25,7 @@ import { UpdateEnquiryDto } from './dto/update-enquiry.dto';
 import { EnquiriesService } from './enquiries.service';
 import { Enquiry, Reply } from './interface/enquiry.interface';
 import { ApiCreateEnquiry } from './swagger-decorator/create-enquiry.decorator';
+import { ApiDeleteEnquiry } from './swagger-decorator/delete-enquiry.decorator';
 import { ApiGetEnquiries } from './swagger-decorator/get-enquiries.decorator';
 import { ApiGetEnquiry } from './swagger-decorator/get-enquiry.decorator';
 
@@ -194,15 +195,13 @@ export class EnquiriesController {
   @Delete('/:enquiryNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '문의사항 삭제 API',
-    description: '문의번호를 사용해 해당 문의사항을 삭제한다.',
-  })
+  @ApiDeleteEnquiry()
   async deleteEnquiry(
     @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    await this.enquiriesService.deleteEnquiryByNo(manager, enquiryNo);
+    await this.enquiriesService.deleteEnquiry(manager, enquiryNo, userNo);
 
     return { msg: '문의사항 삭제 성공' };
   }

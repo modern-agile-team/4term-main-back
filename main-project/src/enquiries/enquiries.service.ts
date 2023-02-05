@@ -59,7 +59,8 @@ export class EnquiriesService {
       manager,
       enquiryNo,
     );
-    await this.validateWriter(userNo, enquiry);
+
+    await this.validateWriter(enquiry.userNo, userNo);
 
     return enquiry;
   }
@@ -261,7 +262,7 @@ export class EnquiriesService {
       manager,
       enquiryNo,
     );
-    await this.validateWriter(userNo, enquiry);
+    await this.validateWriter(enquiry.userNo, userNo);
 
     await this.editEnquiry(manager, enquiryNo, updateEnquiryDto);
 
@@ -347,21 +348,30 @@ export class EnquiriesService {
   }
 
   // Delete Methods
-  async deleteEnquiryByNo(
+  async deleteEnquiry(
+    manager: EntityManager,
+    enquiryNo: number,
+    userNo: number,
+  ): Promise<void> {
+    const { imageUrls, ...enquiry }: Enquiry<string[]> = await this.readEnquiry(
+      manager,
+      enquiryNo,
+    );
+    await this.validateWriter(enquiry.userNo, userNo);
+
+    if (!imageUrls.includes(null)) {
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    await this.removeEnquiry(manager, enquiryNo);
+  }
+
+  private async removeEnquiry(
     manager: EntityManager,
     enquiryNo: number,
   ): Promise<void> {
-    await this.readEnquiry(manager, enquiryNo);
-
-    const isDeleted: number = await manager
+    await manager
       .getCustomRepository(EnquiriesRepository)
       .deleteEnquiry(enquiryNo);
-
-    if (!isDeleted) {
-      throw new InternalServerErrorException(
-        `문의사항 삭제 오류 updateEnquiry-service.`,
-      );
-    }
   }
 
   async deleteEnquiryImages(
@@ -414,9 +424,9 @@ export class EnquiriesService {
   //function
   private async validateWriter(
     userNo: number,
-    enquiry: Enquiry<string[]>,
+    writerNo: number,
   ): Promise<void> {
-    if (enquiry.userNo !== userNo) {
+    if (writerNo !== userNo) {
       throw new BadRequestException(
         `사용자 검증(validateWriter-service): 잘못된 사용자의 접근입니다.`,
       );
