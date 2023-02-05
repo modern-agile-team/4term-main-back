@@ -24,6 +24,7 @@ import { CreateReplyDto } from './dto/create-reply.dto';
 import { UpdateEnquiryDto } from './dto/update-enquiry.dto';
 import { EnquiriesService } from './enquiries.service';
 import { Enquiry, Reply } from './interface/enquiry.interface';
+import { ApiCreateEnquiry } from './swagger-decorator/create-enquiry.decorator';
 import { ApiGetEnquiries } from './swagger-decorator/get-enquiries.decorator';
 import { ApiGetEnquiry } from './swagger-decorator/get-enquiry.decorator';
 
@@ -73,7 +74,7 @@ export class EnquiriesController {
       userNo,
     );
 
-    return { response: enquiry };
+    return { msg: '문의사항 조회 성공', response: { enquiry } };
   }
 
   @Get('/:enquiryNo/reply')
@@ -99,11 +100,8 @@ export class EnquiriesController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
-  @ApiOperation({
-    summary: '문의사항 생성 API',
-    description: '입력한 정보로 문의사항을 생성한다.',
-  })
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @ApiCreateEnquiry()
   async createEnquiry(
     @Body() enquiryDto: CreateEnquiryDto,
     @GetUser() userNo: number,

@@ -25,8 +25,8 @@ export class EnquiriesRepository extends Repository<Enquiries> {
           'enquiries.no AS no',
           'users.no AS userNo',
           'enquiries.title AS title',
-          'enquiries.isDone AS isDone',
           'enquiries.description AS description',
+          'enquiries.isDone AS isDone',
           `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
           'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
         ])

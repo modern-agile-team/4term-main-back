@@ -1,5 +1,4 @@
 import { CreateReplyDto } from '../dto/create-reply.dto';
-import { Enquiries } from '../entity/enquiry.entity';
 
 export interface Enquiry<T> {
   no: number;
@@ -11,11 +10,16 @@ export interface Enquiry<T> {
   isDone?: boolean;
 }
 
-export interface Image {
-  imageUrl: string;
-  enquiryNo?: number;
-  replyNo?: number;
+export interface EnquiryImage<T> {
+  imageUrl: T;
+  enquiryNo: number;
 }
+
+export interface ReplyImage<T> {
+  imageUrl: T;
+  replyNo: number;
+}
+
 export class Reply extends CreateReplyDto {
   imageUrl?: string;
   no?: number;

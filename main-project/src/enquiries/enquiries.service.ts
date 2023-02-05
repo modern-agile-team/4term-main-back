@@ -4,15 +4,23 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common/exceptions';
+import { ConfigService } from '@nestjs/config';
 import { ResultSetHeader } from 'mysql2';
 import { AwsService } from 'src/aws/aws.service';
+import { Users } from 'src/users/entity/user.entity';
+import { UsersRepository } from 'src/users/repository/users.repository';
 import { EntityManager } from 'typeorm';
 import { CreateEnquiryDto } from './dto/create-enquiry.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
 import { UpdateEnquiryDto } from './dto/update-enquiry.dto';
 import { UpdateReplyDto } from './dto/update-reply.dto';
 import { EnquiryReplies } from './entity/enquiry-reply.entity';
-import { Enquiry, Image, Reply } from './interface/enquiry.interface';
+import {
+  Enquiry,
+  EnquiryImage,
+  Reply,
+  ReplyImage,
+} from './interface/enquiry.interface';
 import { EnquiryImagesRepository } from './repository/enquiry-image.repository';
 import { EnquiryReplyImagesRepository } from './repository/enquiry-reply-image.repository';
 import { EnquiryRepliesRepository } from './repository/enquiry-reply.repository';
@@ -20,8 +28,14 @@ import { EnquiriesRepository } from './repository/enquiry.repository';
 
 @Injectable()
 export class EnquiriesService {
-  constructor(private readonly awsService: AwsService) {}
-  // 문의사항 조회 관련
+  constructor(
+    private readonly awsService: AwsService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  ADMIN_USER: number = Number(this.configService.get<number>('ADMIN_USER'));
+
+  // Get Methods
   async getEnquiries(manager: EntityManager): Promise<Enquiry<string[]>[]> {
     const enquiries: Enquiry<string[]>[] = await manager
       .getCustomRepository(EnquiriesRepository)
@@ -100,7 +114,7 @@ export class EnquiriesService {
     return reply;
   }
 
-  // 문의사항 생성 관련
+  // Post Methods
   async createEnquiry(
     manager: EntityManager,
     createEnquiryDto: CreateEnquiryDto,
@@ -114,7 +128,8 @@ export class EnquiriesService {
     );
 
     if (files.length) {
-      await this.uploadEnquiryImages(manager, enquiryNo, files);
+      const imageUrls: string[] = await this.uploadImages(files);
+      await this.setEnquiryImages(manager, imageUrls, enquiryNo);
     }
   }
 
@@ -127,44 +142,22 @@ export class EnquiriesService {
       .getCustomRepository(EnquiriesRepository)
       .createEnquiry({ ...createEnquiryDto, userNo });
 
-    if (!insertId) {
-      throw new InternalServerErrorException(
-        `문의 사항 생성(setEnquiry-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-
     return insertId;
-  }
-
-  private async uploadEnquiryImages(
-    manager: EntityManager,
-    enquiryNo: number,
-    files: Express.Multer.File[],
-  ): Promise<void> {
-    const imageUrls: string[] = await this.awsService.uploadImages(
-      files,
-      'enquiry',
-    );
-    const images: Image[] = imageUrls.map((imageUrl: string) => {
-      return { enquiryNo, imageUrl };
-    });
-
-    await this.setEnquiryImages(manager, images);
   }
 
   private async setEnquiryImages(
     manager: EntityManager,
-    images: Image[],
+    imageUrls: string[],
+    enquiryNo: number,
   ): Promise<void> {
-    const { insertId }: ResultSetHeader = await manager
-      .getCustomRepository(EnquiryImagesRepository)
-      .setEnquiryImages(images);
+    const images: EnquiryImage<string>[] = await this.convertImageArray(
+      enquiryNo,
+      imageUrls,
+    );
 
-    if (!insertId) {
-      throw new InternalServerErrorException(
-        `문의사항 이미지 upload(setEnquiryImages-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+    await manager
+      .getCustomRepository(EnquiryImagesRepository)
+      .createEnquiryImages(images);
   }
 
   async createReply(
@@ -220,7 +213,7 @@ export class EnquiriesService {
     files: Express.Multer.File[],
   ): Promise<void> {
     const imageUrls = await this.awsService.uploadImages(files, 'reply');
-    const images: Image[] = imageUrls.map((imageUrl: string) => {
+    const images: ReplyImage<string>[] = imageUrls.map((imageUrl: string) => {
       return { replyNo, imageUrl };
     });
     await this.setReplyImages(manager, images);
@@ -228,7 +221,7 @@ export class EnquiriesService {
 
   private async setReplyImages(
     manager: EntityManager,
-    images: Image[],
+    images: ReplyImage<string>[],
   ): Promise<void> {
     const { insertId }: ResultSetHeader = await manager
       .getCustomRepository(EnquiryReplyImagesRepository)
@@ -300,13 +293,13 @@ export class EnquiriesService {
   ): Promise<void> {
     if (files.length) {
       await this.awsService.deleteFiles(images);
-      await this.uploadEnquiryImages(manager, enquiryNo, files);
+      // await this.uploadEnquiryImages(manager, enquiryNo, files);
     } else {
       await this.awsService.deleteFiles(images);
       await this.deleteEnquiryImages(manager, enquiryNo);
     }
   }
-  //ssss
+
   async updateReply(
     manager: EntityManager,
     enquiryNo: number,
@@ -353,7 +346,7 @@ export class EnquiriesService {
     }
   }
 
-  //문의사항 삭제 관련
+  // Delete Methods
   async deleteEnquiryByNo(
     manager: EntityManager,
     enquiryNo: number,
@@ -428,5 +421,38 @@ export class EnquiriesService {
         `사용자 검증(validateWriter-service): 잘못된 사용자의 접근입니다.`,
       );
     }
+  }
+
+  private async validateAdmin(manager: EntityManager, userNo: number) {
+    const { no }: Users = await manager
+      .getCustomRepository(UsersRepository)
+      .getUserByNo(userNo);
+
+    if (no !== this.ADMIN_USER) {
+      throw new BadRequestException(
+        '관리자 검증(validateAdmin-service): 관리자가 아닙니다.',
+      );
+    }
+  }
+
+  private async convertImageArray(
+    enquiryNo: number,
+    imageUrls: string[],
+  ): Promise<EnquiryImage<string>[]> {
+    const images: EnquiryImage<string>[] = imageUrls.map((imageUrl: string) => {
+      return { enquiryNo, imageUrl };
+    });
+
+    return images;
+  }
+
+  // s3
+  private async uploadImages(files: Express.Multer.File[]): Promise<string[]> {
+    const imageUrls: string[] = await this.awsService.uploadImages(
+      files,
+      'enquiry',
+    );
+
+    return imageUrls;
   }
 }
