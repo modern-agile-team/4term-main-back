@@ -4,18 +4,20 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
 
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 
-export function ApiCreateEnquiry() {
+export function ApiUpdateEnquiry() {
   return applyDecorators(
-    ApiOperation({
-      summary: '문의사항 생성',
-    }),
     ApiBearerAuth(),
+    ApiOperation({
+      summary: '문의사항 수정',
+      description: '문의사항의 제목, 내용, 사진을 수정',
+    }),
     ApiConsumes('multipart/form-data'),
     ApiBody({
       schema: {
@@ -23,7 +25,7 @@ export function ApiCreateEnquiry() {
         properties: {
           title: {
             type: 'string',
-            example: '연애를 하고싶은데 어떻게 시작해야할까요....흨흨',
+            example: '연애를 시작했는데 데이트는 뭘 해야할까요?',
             minLength: 2,
             maxLength: 255,
             nullable: false,
@@ -31,7 +33,7 @@ export function ApiCreateEnquiry() {
           },
           description: {
             type: 'string',
-            example: '아니 왜 나만 연애를 못하는데!!!!!!!!!!!!!!!!',
+            example: '타입은 Date입니다 하하하하핳하ㅏ.',
             minLength: 2,
             maxLength: 255,
             nullable: false,
@@ -43,15 +45,25 @@ export function ApiCreateEnquiry() {
     ApiOkResponse(
       SwaggerApiResponse.success(
         'Api 작동 성공 msg 반환',
-        '문의사항 생성 성공.',
+        '문의사항 수정 성공',
       ),
+    ),
+    ApiNotFoundResponse(
+      SwaggerApiResponse.exception([
+        {
+          name: 'enquiryNotFound',
+          example: {
+            msg: `문의사항 상세 조회(getEnquiry-service): 4번 문의사항이 없습니다.`,
+          },
+        },
+      ]),
     ),
     ApiBadRequestResponse(
       SwaggerApiResponse.exception([
         {
-          name: 'isNotAdmin',
+          name: 'isNotWriter',
           example: {
-            msg: '관리자 검증(validateAdmin-service): 관리자가 아닙니다.',
+            msg: `사용자 검증(deleteEnquiry-service): 잘못된 사용자의 접근입니다.`,
           },
         },
       ]),
