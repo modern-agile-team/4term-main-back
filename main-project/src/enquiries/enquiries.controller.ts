@@ -28,6 +28,7 @@ import { ApiCreateEnquiry } from './swagger-decorator/create-enquiry.decorator';
 import { ApiDeleteEnquiry } from './swagger-decorator/delete-enquiry.decorator';
 import { ApiGetEnquiries } from './swagger-decorator/get-enquiries.decorator';
 import { ApiGetEnquiry } from './swagger-decorator/get-enquiry.decorator';
+import { ApiUpdateEnquiry } from './swagger-decorator/update-enquiry.decorator';
 
 @Controller('enquiries')
 @ApiTags('문의사항 API')
@@ -146,10 +147,7 @@ export class EnquiriesController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
-  @ApiOperation({
-    summary: '문의사항 수정 API',
-    description: '입력한 정보로 문의 내용을 수정한다.',
-  })
+  @ApiUpdateEnquiry()
   async updateReply(
     @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
     @Body() updateEnquiryDto: UpdateEnquiryDto,
