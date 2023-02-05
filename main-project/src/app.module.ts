@@ -20,6 +20,7 @@ import { EventsModule } from './events/events.module';
 import { AuthModule } from './auth/auth.module';
 import { cacheModule } from './common/configs/redis.config';
 import { mailModule } from './common/configs/email.config';
+import { CreditsModule } from './credits/credits.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { mailModule } from './common/configs/email.config';
     AwsModule,
     EventsModule,
     AuthModule,
+    CreditsModule,
     cacheModule,
     mailModule,
   ],
