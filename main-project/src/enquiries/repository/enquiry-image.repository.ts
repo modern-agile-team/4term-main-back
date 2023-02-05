@@ -27,15 +27,13 @@ export class EnquiryImagesRepository extends Repository<EnquiryImages> {
   }
 
   //Delete Methods
-  async deleteEnquiryImages(enquiryNo: number): Promise<number> {
+  async deleteEnquiryImages(enquiryNo: number): Promise<void> {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .delete()
         .from(EnquiryImages)
         .where('enquiryNo = :enquiryNo', { enquiryNo })
         .execute();
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteEnquiryImages-repository: 알 수 없는 서버 에러입니다.`,

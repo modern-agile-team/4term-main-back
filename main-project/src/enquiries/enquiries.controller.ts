@@ -157,7 +157,7 @@ export class EnquiriesController {
     @UploadedFiles() files: Express.Multer.File[],
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    await this.enquiriesService.updateEnquiry(
+    await this.enquiriesService.editEnquiry(
       userNo,
       enquiryNo,
       updateEnquiryDto,
@@ -178,6 +178,7 @@ export class EnquiriesController {
   async updateEnquiry(
     @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
     @Body() updateEnquiryDto: UpdateEnquiryDto,
+    @GetUser() userNo: number,
     @UploadedFiles() files: Express.Multer.File[],
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {

@@ -251,53 +251,46 @@ export class EnquiriesService {
   }
 
   //Patch Methods
-  async updateEnquiry(
+  async editEnquiry(
     userNo: number,
     enquiryNo: number,
     updateEnquiryDto: UpdateEnquiryDto,
     manager: EntityManager,
     files: Express.Multer.File[],
   ): Promise<void> {
-    const enquiry: Enquiry<string[]> = await this.readEnquiry(
+    const { imageUrls, ...enquiry }: Enquiry<string[]> = await this.readEnquiry(
       manager,
       enquiryNo,
     );
     await this.validateWriter(enquiry.userNo, userNo);
 
-    await this.editEnquiry(manager, enquiryNo, updateEnquiryDto);
-
-    const { imageUrls }: Enquiry<string[]> = enquiry;
-    await this.editEnquiryimages(manager, imageUrls, files, enquiryNo);
+    await this.updateEnquiry(manager, enquiryNo, updateEnquiryDto);
+    await this.editEnquiryimages(manager, files, enquiryNo, imageUrls);
   }
 
-  private async editEnquiry(
+  private async updateEnquiry(
     manager: EntityManager,
     enquiryNo: number,
     updateEnquiryDto: UpdateEnquiryDto,
   ): Promise<void> {
-    const isEdited: number = await manager
+    await manager
       .getCustomRepository(EnquiriesRepository)
       .updateEnquiry(enquiryNo, updateEnquiryDto);
-
-    if (!isEdited) {
-      throw new InternalServerErrorException(
-        `문의사항 수정 오류 updateEnquiry-service.`,
-      );
-    }
   }
 
   private async editEnquiryimages(
     manager: EntityManager,
-    images: string[],
     files: Express.Multer.File[],
     enquiryNo: number,
+    imageUrls: string[],
   ): Promise<void> {
-    if (files.length) {
-      await this.awsService.deleteFiles(images);
-      // await this.uploadEnquiryImages(manager, enquiryNo, files);
-    } else {
-      await this.awsService.deleteFiles(images);
+    if (!imageUrls.includes(null)) {
       await this.deleteEnquiryImages(manager, enquiryNo);
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    if (files.length) {
+      const images: string[] = await this.uploadImages(files);
+      await this.setEnquiryImages(manager, images, enquiryNo);
     }
   }
 
@@ -374,19 +367,13 @@ export class EnquiriesService {
       .deleteEnquiry(enquiryNo);
   }
 
-  async deleteEnquiryImages(
+  private async deleteEnquiryImages(
     manager: EntityManager,
     enquiryNo: number,
   ): Promise<void> {
-    const isDeleted: number = await manager
+    await manager
       .getCustomRepository(EnquiryImagesRepository)
       .deleteEnquiryImages(enquiryNo);
-
-    if (!isDeleted) {
-      throw new InternalServerErrorException(
-        `문의사항 삭제 오류 updateEnquiry-service.`,
-      );
-    }
   }
 
   async deleteReplyByEnquiryNo(

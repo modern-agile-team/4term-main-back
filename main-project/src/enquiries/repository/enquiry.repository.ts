@@ -105,15 +105,13 @@ export class EnquiriesRepository extends Repository<Enquiries> {
   async updateEnquiry(
     enquiryNo: number,
     updateEnquiryDto: UpdateEnquiryDto,
-  ): Promise<number> {
+  ): Promise<void> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .update(Enquiries)
         .set(updateEnquiryDto)
         .where('no = :enquiryNo', { enquiryNo })
         .execute();
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateEnquiry-repository: 알 수 없는 서버 에러입니다.`,
