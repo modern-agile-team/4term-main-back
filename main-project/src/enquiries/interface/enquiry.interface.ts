@@ -1,10 +1,9 @@
+import { CreateEnquiryDto } from '../dto/create-enquiry.dto';
 import { CreateReplyDto } from '../dto/create-reply.dto';
 
-export interface Enquiry<T> {
+export interface Enquiry<T> extends CreateEnquiryDto {
   no: number;
   userNo: number;
-  title: string;
-  description: string;
   createdDate: Date;
   imageUrls: T;
   isDone?: boolean;
@@ -16,13 +15,13 @@ export interface EnquiryImage<T> {
 }
 
 export interface ReplyImage<T> {
-  imageUrl: T;
+  imageUrl?: T;
   replyNo: number;
 }
 
-export class Reply extends CreateReplyDto {
-  imageUrl?: string;
+export class Reply<T> extends CreateReplyDto {
   no?: number;
+  enquiryNo: number;
   createdDate?: Date;
-  enquiryNo?: number;
+  imageUrls?: T;
 }

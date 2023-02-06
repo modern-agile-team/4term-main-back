@@ -47,7 +47,7 @@ export class EnquiriesService {
 
     if (!enquiries.length) {
       throw new NotFoundException(
-        `문의 전체 조회(getAllEnquiries): 문의 사항이 없습니다.`,
+        `문의 전체 조회(getEnquiries-service): 문의 사항이 없습니다.`,
       );
     }
 
@@ -86,31 +86,22 @@ export class EnquiriesService {
     return enquiry;
   }
 
-  async getAllReplies(manager: EntityManager): Promise<EnquiryReplies[]> {
-    const replies: EnquiryReplies[] = await manager
-      .getCustomRepository(EnquiryRepliesRepository)
-      .getAllReplies();
-
-    if (!replies.length) {
-      throw new NotFoundException(
-        `문의 답변 전체조회(getAllReplies-service): 답변이 없습니다.`,
-      );
-    }
-
-    return replies;
-  }
-
-  async getReplyByNo(
+  async getReply(
     manager: EntityManager,
     enquiryNo: number,
-  ): Promise<Reply> {
-    await this.readEnquiry(manager, enquiryNo);
+    userNo: number,
+  ): Promise<Reply<string[]>> {
+    const { imageUrls, ...enquiry }: Enquiry<string[]> = await this.readEnquiry(
+      manager,
+      enquiryNo,
+    );
+    await this.validateWriter(userNo, enquiry.userNo);
 
-    const reply: Reply = await manager
+    const reply: Reply<string[]> = await manager
       .getCustomRepository(EnquiryRepliesRepository)
-      .getReplyByNo(enquiryNo);
+      .getReply(enquiryNo);
 
-    if (!reply) {
+    if (!reply.no) {
       throw new NotFoundException(
         `문의 답변 상세조회(getReplyByNo-service): ${enquiryNo}번 문의사항의 답변이 없습니다.`,
       );
@@ -172,9 +163,12 @@ export class EnquiriesService {
     manager: EntityManager,
   ): Promise<void> {
     await this.readEnquiry(manager, enquiryNo);
-    await this.isCreated(manager, enquiryNo);
+    // await this.isCreated(manager, enquiryNo);
+    /**
+     * validate reply
+     */
 
-    const reply: Reply = { ...createReplyDto, enquiryNo };
+    const reply: Reply<void> = { ...createReplyDto, enquiryNo };
     const replyNo = await this.setReply(manager, reply);
 
     if (files.length) {
@@ -184,20 +178,9 @@ export class EnquiriesService {
     await this.closeEnquiry(manager, enquiryNo);
   }
 
-  async isCreated(manager: EntityManager, enquiryNo: number): Promise<void> {
-    const reply: Reply = await manager
-      .getCustomRepository(EnquiryRepliesRepository)
-      .getReplyByNo(enquiryNo);
-    if (reply) {
-      throw new BadRequestException(
-        `답변 작성 확인(isCreated-service): 이미 답변이 작성된 문의사항입니다.`,
-      );
-    }
-  }
-
   private async setReply(
     manager: EntityManager,
-    reply: Reply,
+    reply: Reply<void>,
   ): Promise<number> {
     const { insertId }: ResultSetHeader = await manager
       .getCustomRepository(EnquiryRepliesRepository)
@@ -303,14 +286,18 @@ export class EnquiriesService {
     enquiryNo: number,
     updateReplyDto: UpdateReplyDto,
     files: Express.Multer.File[],
+    userNo: number,
   ): Promise<void> {
-    const reply: Reply = await this.getReplyByNo(manager, enquiryNo);
+    const reply: Reply<string[]> = await this.getReply(
+      manager,
+      enquiryNo,
+      userNo,
+    );
 
     await this.editReply(manager, enquiryNo, updateReplyDto);
 
-    const { imageUrl, no }: Reply = reply;
-    const images: string[] = JSON.parse(imageUrl);
-    await this.editReplyimages(manager, images, files, no);
+    const { imageUrls, no }: Reply<string[]> = reply;
+    await this.editReplyimages(manager, imageUrls, files, no);
   }
 
   private async editReply(

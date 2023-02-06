@@ -30,6 +30,7 @@ import { ApiCreateEnquiry } from './swagger-decorator/create-enquiry.decorator';
 import { ApiDeleteEnquiry } from './swagger-decorator/delete-enquiry.decorator';
 import { ApiGetEnquiries } from './swagger-decorator/get-enquiries.decorator';
 import { ApiGetEnquiry } from './swagger-decorator/get-enquiry.decorator';
+import { ApiGetReply } from './swagger-decorator/get-reply.decorator';
 import { ApiUpdateEnquiry } from './swagger-decorator/update-enquiry.decorator';
 
 @Controller('enquiries')
@@ -49,19 +50,6 @@ export class EnquiriesController {
       await this.enquiriesService.getEnquiries(manager, enquiryFilterDto);
 
     return { msg: '문의사항 전체 조회 성공', response: { eunqiries } };
-  }
-
-  @Get('/reply')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(TransactionInterceptor)
-  @ApiGetEnquiry()
-  async getAllReplies(
-    @TransactionDecorator() manager: EntityManager,
-    @GetUser() userNo: number,
-  ): Promise<APIResponse> {
-    const replies: Reply[] = await this.enquiriesService.getAllReplies(manager);
-
-    return { response: replies };
   }
 
   @Get('/:enquiryNo')
@@ -85,20 +73,19 @@ export class EnquiriesController {
   @Get('/:enquiryNo/reply')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '문의사항 답변 상세조회 API',
-    description: '문의 번호를 통해 문의사항의 답변을 상세 조회한다.',
-  })
-  async getReplyByNo(
+  @ApiGetReply()
+  async getReply(
     @Param('enquiryNo') enquiryNo: number,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const reply: Reply = await this.enquiriesService.getReplyByNo(
+    const reply: Reply<string[]> = await this.enquiriesService.getReply(
       manager,
       enquiryNo,
+      userNo,
     );
 
-    return { response: reply };
+    return { msg: '답변 조회 성공', response: { reply } };
   }
 
   // Post Methods
@@ -171,11 +158,8 @@ export class EnquiriesController {
 
   @Patch('/:enquiryNo/reply')
   @UseInterceptors(TransactionInterceptor)
-  @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
-  @ApiOperation({
-    summary: '답변 수정 API',
-    description: '입력한 정보로 답변 내용을 수정한다.',
-  })
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @ApiGetReply()
   async updateEnquiry(
     @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
     @Body() updateEnquiryDto: UpdateEnquiryDto,
@@ -188,6 +172,7 @@ export class EnquiriesController {
       enquiryNo,
       updateEnquiryDto,
       files,
+      userNo,
     );
 
     return { msg: '답변 수정 성공' };

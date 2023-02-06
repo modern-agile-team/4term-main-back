@@ -45,7 +45,7 @@ export function ApiGetEnquiries() {
         {
           name: 'enquiriesNotFound',
           example: {
-            msg: `문의사항 전체 조회(getEnquiries-service): 문의사항이 없습니다.`,
+            msg: `문의사항 전체 조회(getEnquiries-service): 문의 사항이 없습니다.`,
           },
         },
       ]),

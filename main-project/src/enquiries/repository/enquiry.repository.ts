@@ -19,7 +19,6 @@ export class EnquiriesRepository extends Repository<Enquiries> {
   async getEnquiries(page: number): Promise<Enquiry<string[]>[]> {
     try {
       const query: SelectQueryBuilder<Enquiries> = this.createQueryBuilder(
-        // const enquiries: Enquiry<string>[] = await this.createQueryBuilder(
         'enquiries',
       )
         .leftJoin('enquiries.userNo', 'users')
@@ -36,7 +35,6 @@ export class EnquiriesRepository extends Repository<Enquiries> {
         .orderBy('no', 'DESC')
         .groupBy('enquiries.no')
         .limit(5);
-      // .getRawMany();
 
       if (page > 1) {
         query.offset((page - 1) * 5);
