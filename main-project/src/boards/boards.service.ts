@@ -153,6 +153,8 @@ export class BoardsService {
     userNo: number,
     { hostMembers, ...board }: CreateBoardDto,
   ): Promise<void> {
+    console.log(1);
+
     await this.validateUsers(manager, hostMembers);
     const boardNo: number = await this.setBoard(manager, userNo, board);
     await this.setHosts(manager, boardNo, userNo, hostMembers);

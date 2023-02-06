@@ -16,7 +16,6 @@ export function ApiCreateBoard() {
       summary: '게시글 생성',
     }),
     ApiBearerAuth(),
-    ApiConsumes('multipart/form-data'),
     ApiBody({
       schema: {
         type: 'object',
@@ -39,7 +38,7 @@ export function ApiCreateBoard() {
           },
           isImpromptu: {
             type: 'boolean',
-            example: '1',
+            example: true,
             description: '즉석만남 설정 1: 즉석만남 / 0: 일반 모집',
           },
           location: {
@@ -50,7 +49,7 @@ export function ApiCreateBoard() {
             nullable: true,
             description: '예상 만남 장소',
           },
-          meetimeTime: {
+          meetingTime: {
             type: 'Date',
             example: '2021-06-27 15:22:21',
             description: '예상 만남 시간',
@@ -61,7 +60,7 @@ export function ApiCreateBoard() {
             nullable: true,
             description: '남자 모집 인원 (선택)',
           },
-          recruitFeMale: {
+          recruitFemale: {
             type: 'number',
             example: '233',
             nullable: true,
