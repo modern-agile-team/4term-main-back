@@ -5,7 +5,7 @@ import { ChatLog } from '../entity/chat-log.entity';
 
 @EntityRepository(ChatLog)
 export class ChatLogRepository extends Repository<ChatLog> {
-  async saveMessage(messagePayload: MessagePayloadDto): Promise<InsertResult> {
+  async saveMessage(messagePayload: MessagePayloadDto): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
