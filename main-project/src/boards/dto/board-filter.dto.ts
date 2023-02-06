@@ -13,7 +13,7 @@ export class BoardFilterDto {
   @ValidateGender()
   @IsString()
   @IsOptional()
-  gender: string;
+  readonly gender: string;
 
   @ApiProperty({
     example: '23',
@@ -23,7 +23,7 @@ export class BoardFilterDto {
   @IsNumber()
   @Type(() => Number)
   @IsOptional()
-  people: number;
+  readonly people: number;
 
   @ApiProperty({
     example: '23',
@@ -33,7 +33,7 @@ export class BoardFilterDto {
   @IsNumber()
   @Type(() => Number)
   @IsOptional()
-  page: number;
+  readonly page: number;
 
   @ApiProperty({
     example: '0 or false / 1 or true ',
@@ -43,7 +43,7 @@ export class BoardFilterDto {
   @IsBoolean()
   @ToBoolean()
   @IsOptional()
-  isDone: boolean;
+  readonly isDone: boolean;
 
   @ApiProperty({
     example: '0 or false / 1 or true ',
@@ -53,5 +53,5 @@ export class BoardFilterDto {
   @IsBoolean()
   @ToBoolean()
   @IsOptional()
-  isImpromptu: boolean;
+  readonly isImpromptu: boolean;
 }
