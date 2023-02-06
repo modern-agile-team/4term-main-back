@@ -59,11 +59,11 @@ export class BoardsController {
   @ApiGetBoards()
   async getBoards(
     @TransactionDecorator() manager: EntityManager,
-    @Query() BoardFilterDto?: BoardFilterDto,
+    @Query() boardFilterDto: BoardFilterDto,
   ): Promise<APIResponse> {
     const boards: Board<void>[] = await this.boardService.getBoards(
       manager,
-      BoardFilterDto,
+      boardFilterDto,
     );
 
     return { msg: '게시글 필터/전체 조회 성공', response: { boards } };
