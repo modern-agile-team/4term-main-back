@@ -28,7 +28,7 @@ export interface ChatUser extends Partial<ChatRoom> {
 }
 
 export interface ChatUserValidation extends Partial<ChatRoom> {
-  isUserNeeded: boolean;
+  isNeededUser: boolean;
 }
 
 export interface ChatRoomInvitation extends Partial<ChatRoom> {
