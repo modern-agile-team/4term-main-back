@@ -29,6 +29,8 @@ import { AuthConfig } from './config/auth.config';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { EntityManager } from 'typeorm';
+import { SignInDto } from './dto/sign-in.dto';
+import { MannersRepository } from 'src/manners/repository/manners.repository';
 
 @Injectable()
 export class AuthService {
@@ -47,7 +49,7 @@ export class AuthService {
     email: string,
     manager: EntityManager,
   ): Promise<User> {
-    const user : User = await this.createOrGetUser(email, manager);
+    const user: User = await this.createOrGetUser(email, manager);
     const authentication: Authentication =
       await this.authRepository.findAuthByUserNo(user.userNo);
 
@@ -58,12 +60,11 @@ export class AuthService {
     return await this.issueToken(user);
   }
 
-  async signIn(email: string): Promise<void> {
+  async getEmailCode(email: string): Promise<void> {
     await this.validateUserNotCreated(email);
     const validationKey = this.getEmailValidationKey();
-
     await this.cacheManager.set(email, validationKey, {
-      ttl: AuthConfig.signInTokenExpiration,
+      ttl: AuthConfig.emailCodeExpiration,
     });
 
     await this.mailerService.sendMail({
@@ -73,12 +74,22 @@ export class AuthService {
     });
   }
 
-  async verifyEmail(
-    { email, code, password }: VerifyEmailDto,
+  async verifyEmail({ email, code }: VerifyEmailDto): Promise<void> {
+    await this.validateUserNotCreated(email);
+    await this.validateEmail(email, code);
+    await this.cacheManager.set(email, 'valid', {
+      ttl: AuthConfig.validEmailStoreExpiration,
+    });
+  }
+
+  async signIn(
+    { email, password }: SignInDto,
     manager: EntityManager,
   ): Promise<User> {
     await this.validateUserNotCreated(email);
-    await this.validateEmail(email, code);
+    if ((await this.cacheManager.get(email)) !== 'valid') {
+      throw new UnauthorizedException('인증되지 않은 이메일입니다.');
+    }
 
     const user: User = await this.saveUser(email, manager);
     await this.saveAuthentication({ userNo: user.userNo, password }, manager);
@@ -316,14 +327,27 @@ export class AuthService {
     }
   }
 
+  private async saveManner(
+    userNo: number,
+    manager: EntityManager,
+  ): Promise<void> {
+    const mannerSavedResult: ResultSetHeader = await manager
+      .getCustomRepository(MannersRepository)
+      .createManner(userNo);
+
+    if (!mannerSavedResult.affectedRows) {
+      throw new InternalServerErrorException('매너 생성 오류입니다.');
+    }
+  }
+
   private async saveUser(email: string, manager: EntityManager): Promise<User> {
     const { insertId }: ResultSetHeader = await manager
       .getCustomRepository(UsersRepository)
       .createUser(email);
-
     if (!insertId) {
       throw new InternalServerErrorException('유저 생성 오류');
     }
+    await this.saveManner(insertId, manager);
 
     return { userNo: insertId, status: UserStatus.NO_PROFILE };
   }

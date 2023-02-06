@@ -1,4 +1,3 @@
-import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
   Column,
@@ -11,8 +10,8 @@ import {
 import { BoardGuests } from './board-guest.entity';
 import { Boards } from './board.entity';
 
-@Entity('board_participation')
-export class BoardParticipation extends BaseEntity {
+@Entity('board_guest_teams')
+export class BoardGuestTeams extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
@@ -33,4 +32,13 @@ export class BoardParticipation extends BaseEntity {
 
   @Column({ type: 'varchar', length: 255 })
   description: string;
+
+  @Column({
+    type: 'tinyint',
+    width: 1,
+    default: false,
+    nullable: true,
+    name: 'is_accepted',
+  })
+  isAccepted: boolean;
 }
