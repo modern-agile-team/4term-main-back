@@ -7,12 +7,17 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
-export class BoardDto {
+import { ToBoolean } from 'src/common/decorator/validateValue.decorator';
+export class CreateBoardDto {
   @ApiProperty({
     example: '크리스마스를 즐기자',
     description: '게시글 제목',
   })
+  @MaxLength(255)
+  @MinLength(2)
   @IsString()
   @IsNotEmpty()
   title: string;
@@ -21,28 +26,25 @@ export class BoardDto {
     example: '산타와 함께 크리스마스를 즐길 사람 급구@@@@@@',
     description: '게시글 내용',
   })
+  @MaxLength(255)
+  @MinLength(2)
   @IsString()
   @IsNotEmpty()
   description: string;
 
   @ApiProperty({
     example: 0,
-    description: '약속 성사 표시, 진행 중 : 0, 성사완료 : 1, optional 변수',
-  })
-  @IsBoolean()
-  @IsOptional()
-  isDone: boolean;
-
-  @ApiProperty({
-    example: 0,
     description: '번개 : 0, 일반 과팅 : 1, optional 변수',
   })
   @IsBoolean()
+  @ToBoolean()
   @IsOptional()
-  isThunder: boolean;
+  isImpromptu: boolean;
 
   @ApiProperty({ example: '노원 술먹구 가', description: '약속 장소' })
   @IsString()
+  @MaxLength(255)
+  @MinLength(2)
   @IsNotEmpty()
   location: string;
 
@@ -54,13 +56,13 @@ export class BoardDto {
 
   @ApiProperty({ example: 2, description: '남자 인원수' })
   @IsNumber()
-  @IsNotEmpty()
-  male: number;
+  @IsOptional()
+  recruitMale: number;
 
   @ApiProperty({ example: 2, description: '여자 인원수' })
   @IsNumber()
-  @IsNotEmpty()
-  female: number;
+  @IsOptional()
+  recruitFemale: number;
 
   @ApiProperty({
     example: [1, 2, 3],
@@ -69,13 +71,4 @@ export class BoardDto {
   @IsNumber({}, { each: true })
   @IsNotEmpty()
   hostMembers: number[];
-
-  // 삭제 예정
-  @ApiProperty({
-    example: 'host userNo -> jwt로 빠질 예정',
-    description: 'host user_no',
-  })
-  @IsNumber()
-  @IsNotEmpty()
-  userNo: number;
 }
