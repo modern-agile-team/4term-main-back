@@ -35,7 +35,7 @@ export class MeetingRepository extends Repository<Meetings> {
     }
   }
 
-  async getMeetingByNo(meetingNo: number): Promise<Meetings> {
+  async getMeeting(meetingNo: number): Promise<Meetings> {
     try {
       const meeting: Meetings = await this.createQueryBuilder('meetings')
         .where('meetings.no = :meetingNo', { meetingNo })
@@ -44,7 +44,7 @@ export class MeetingRepository extends Repository<Meetings> {
       return meeting;
     } catch (err) {
       throw new InternalServerErrorException(
-        `${err} 약속 조회(getMeetingById): 알 수 없는 서버 에러입니다.`,
+        `${err} 약속 조회(getMeeting): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -52,8 +52,15 @@ export class MeetingRepository extends Repository<Meetings> {
   async getMeetingByChatRoom(chatRoomNo: number): Promise<Meetings> {
     try {
       const meeting: Meetings = await this.createQueryBuilder('meetings')
+        .select([
+          'meetings.no AS meetingNo',
+          'meetings.location AS location',
+          `DATE_FORMAT(meetings.time, '%Y-%m-%d %h:%i') AS time`,
+          'meetings.is_accepted AS isAccepted',
+          'meetings.created_date AS createdDate',
+        ])
         .where('meetings.chatRoomNo = :chatRoomNo', { chatRoomNo })
-        .getOne();
+        .getRawOne();
 
       return meeting;
     } catch (err) {

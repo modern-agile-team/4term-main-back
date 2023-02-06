@@ -6,6 +6,7 @@ import {
   Patch,
   Delete,
   UseGuards,
+  Get,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { MeetingsService } from './meetings.service';
@@ -18,6 +19,8 @@ import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { ApiDeleteMeeting } from './swagger-decorator/delete-meeting.decorator';
 import { ApiUpdateMeeting } from './swagger-decorator/update-meeting.decorator';
 import { ApiAcceptMeeting } from './swagger-decorator/accept-meeting.decorator';
+import { Meetings } from './entity/meeting.entity';
+import { ApiGetMeeting } from './swagger-decorator/get-meeting.decorator';
 
 @ApiTags('약속 API')
 @ApiBearerAuth()
@@ -81,5 +84,19 @@ export class MeetingsController {
     await this.meetingsService.acceptMeeting(meetingNo, userNo);
 
     return { msg: '약속이 수락되었습니다' };
+  }
+
+  @ApiGetMeeting()
+  @Get('/chats/:chatRoomNo')
+  async getMeetingByChatRoom(
+    @GetUser() userNo: number,
+    @Param('chatRoomNo') chatRoomNo: number,
+  ) {
+    const meeting: Meetings = await this.meetingsService.getMeetingByChatRoom(
+      userNo,
+      chatRoomNo,
+    );
+
+    return { msg: '약속 조회 성공', response: { meeting } };
   }
 }
