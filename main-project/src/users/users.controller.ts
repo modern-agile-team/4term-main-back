@@ -32,6 +32,7 @@ import { ApiCreateCertificate } from './swagger-decorator/create-certificate.dec
 import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
 import { ApiDenyUser } from './swagger-decorator/deny-user.decorator';
 import { ApiGetUserCertificates } from './swagger-decorator/get-certificates.decorator';
+import { ApiGetOthersProfile } from './swagger-decorator/get-others-profile.decorator';
 import { ApiGetUserProfile } from './swagger-decorator/get-profile.decorator';
 import { ApiGetUserByNickname } from './swagger-decorator/get-user-by-nickname.decorator';
 import { ApiUpdateCertificate } from './swagger-decorator/update-certificate.decorator';
@@ -167,7 +168,7 @@ export class UsersController {
   }
 
   @ApiOperation({
-    summary: '회원 탈퇴(미정)',
+    summary: '회원 탈퇴',
   })
   @UseGuards(JwtAuthGuard)
   @Delete()
@@ -247,15 +248,26 @@ export class UsersController {
     return { msg: '학과 변경 신청이 완료되었습니다.' };
   }
 
-  @ApiGetUserProfile()
+  @ApiGetOthersProfile()
   @UseGuards(JwtAuthGuard)
   @Get('/:userNo/profile')
-  async getUserProfile(@Param('userNo') userNo: number) {
-    const userProfile: EntireProfile = await this.usersService.getUserProfile(
+  async getOhtersProfile(@Param('userNo') userNo: number) {
+    const userProfile: EntireProfile = await this.usersService.getOthersProfile(
       userNo,
     );
 
     return { msg: '프로필 조회 성공', response: { userProfile } };
+  }
+
+  @ApiGetUserProfile()
+  @UseGuards(JwtAuthGuard)
+  @Get('/profile')
+  async getUserProfile(@GetUser() userNo: number) {
+    const userProfile: EntireProfile = await this.usersService.getUserProfile(
+      userNo,
+    );
+
+    return { msg: '개인 상세 프로필 조회 성공', response: { userProfile } };
   }
 
   @ApiGetUserCertificates()

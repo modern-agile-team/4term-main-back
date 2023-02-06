@@ -12,6 +12,7 @@ import { WebSocketJwtStrategy } from './jwt/ws-token.strategy';
 import { KakaoStrategy } from './jwt/kakao.strategy';
 import { NaverStrategy } from './jwt/naver.strategy';
 import { GoogleStrategy } from './jwt/google.strategy';
+import { SocketJWTExtractors } from './extractor/socket-jwt.extractor';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { GoogleStrategy } from './jwt/google.strategy';
     KakaoStrategy,
     NaverStrategy,
     GoogleStrategy,
+    SocketJWTExtractors,
   ],
 })
 export class AuthModule {}

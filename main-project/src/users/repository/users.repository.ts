@@ -8,7 +8,12 @@ import {
 } from 'typeorm';
 import { UserStatus } from '../../common/configs/user-status.config';
 import { Users } from '../entity/user.entity';
-import { ProfileImages, User, UserImages } from '../interface/user.interface';
+import {
+  EntireProfile,
+  ProfileImages,
+  User,
+  UserImages,
+} from '../interface/user.interface';
 
 @EntityRepository(Users)
 export class UsersRepository extends Repository<Users> {
@@ -142,6 +147,23 @@ export class UsersRepository extends Repository<Users> {
     }
   }
 
+  async getUsersByNums(userNo: number[]): Promise<number[]> {
+    try {
+      const user: Users = await this.createQueryBuilder('users')
+        .select(['JSON_ARRAYAGG(users.no) AS no'])
+        .where('no IN (:userNo)', { userNo })
+        .getRawOne();
+
+      const users: number[] = JSON.parse(String(user.no));
+
+      return users;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 유저 조회 에러(getUsersByNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async getDeletedUsersImages(): Promise<UserImages> {
     try {
       const userImages: UserImages = await this.createQueryBuilder('users')
@@ -173,6 +195,33 @@ export class UsersRepository extends Repository<Users> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 회원 탈퇴한 유저 삭제(hardDeleteUsers): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getUserProfile(userNo: number): Promise<EntireProfile> {
+    try {
+      const profile: EntireProfile = await this.createQueryBuilder('users')
+        .leftJoin('users.userProfileNo', 'userProfiles')
+        .leftJoin('userProfiles.profileImage', 'profileImages')
+        .leftJoin('users.mannerNo', 'manners')
+        .select([
+          'users.no AS userNo',
+          'users.email AS email',
+          'userProfiles.nickname AS nickname',
+          'userProfiles.major AS major',
+          'userProfiles.gender AS gender',
+          'userProfiles.description AS description',
+          'profileImages.imageUrl AS profileImage',
+          'ROUND(manners.grade / manners.gradeCount, 1) AS grade',
+        ])
+        .where('users.no = :userNo', { userNo })
+        .getRawOne();
+
+      return profile;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 프로필 조회 오류(getUserProfileByUserNo) :알 수 없는 서버 에러입니다.`,
       );
     }
   }

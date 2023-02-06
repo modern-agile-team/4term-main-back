@@ -18,7 +18,7 @@ import {
   UpdatedMeeting,
 } from './interface/meeting.interface';
 import { ChatUsersRepository } from 'src/chats/repository/chat-users.repository';
-import { ChatUserInfo } from 'src/chats/interface/chat.interface';
+import { ChatUser } from 'src/chats/interface/chat.interface';
 import { UserType } from 'src/common/configs/user-type.config';
 
 @Injectable()
@@ -127,8 +127,10 @@ export class MeetingsService {
     userNo: number,
     chatRoomNo: number,
   ): Promise<void> {
-    const chatUser: ChatUserInfo =
-      await this.chatUserRepository.checkUserInChatRoom({ userNo, chatRoomNo });
+    const chatUser: ChatUser = await this.chatUserRepository.getChatRoomUser(
+      userNo,
+      chatRoomNo,
+    );
 
     if (!chatUser) {
       throw new NotFoundException('유저가 참여 중인 채팅방이 아닙니다.');
