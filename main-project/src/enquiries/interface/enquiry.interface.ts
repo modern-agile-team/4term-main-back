@@ -9,14 +9,10 @@ export interface Enquiry<T> extends CreateEnquiryDto {
   isDone?: boolean;
 }
 
-export interface EnquiryImage<T> {
-  imageUrl: T;
-  enquiryNo: number;
-}
-
-export interface ReplyImage<T> {
+export class ImageInfo<T> {
   imageUrl?: T;
-  replyNo: number;
+  enquiryNo?: number;
+  replyNo?: number;
 }
 
 export class Reply<T> extends CreateReplyDto {

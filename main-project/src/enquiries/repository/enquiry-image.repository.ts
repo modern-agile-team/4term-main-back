@@ -7,12 +7,12 @@ import {
   Repository,
 } from 'typeorm';
 import { EnquiryImages } from '../entity/enquiry-images.entity';
-import { EnquiryImage } from '../interface/enquiry.interface';
+import { ImageInfo } from '../interface/enquiry.interface';
 
 @EntityRepository(EnquiryImages)
 export class EnquiryImagesRepository extends Repository<EnquiryImages> {
   //문의사항 생성 관련
-  async createEnquiryImages(images: EnquiryImage<string>[]): Promise<void> {
+  async createEnquiryImages(images: ImageInfo<string>[]): Promise<void> {
     try {
       await this.createQueryBuilder()
         .insert()

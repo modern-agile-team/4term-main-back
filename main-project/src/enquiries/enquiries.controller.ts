@@ -27,6 +27,7 @@ import { UpdateEnquiryDto } from './dto/update-enquiry.dto';
 import { EnquiriesService } from './enquiries.service';
 import { Enquiry, Reply } from './interface/enquiry.interface';
 import { ApiCreateEnquiry } from './swagger-decorator/create-enquiry.decorator';
+import { ApiCreateReply } from './swagger-decorator/create-reply.decorator';
 import { ApiDeleteEnquiry } from './swagger-decorator/delete-enquiry.decorator';
 import { ApiGetEnquiries } from './swagger-decorator/get-enquiries.decorator';
 import { ApiGetEnquiry } from './swagger-decorator/get-enquiry.decorator';
@@ -111,14 +112,13 @@ export class EnquiriesController {
   }
 
   @Post('/:enquiryNo/reply')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
-  @ApiOperation({
-    summary: '문의사항 답변 작성 API',
-    description: '입력한 정보로 문의사항의 답변을 작성한다.',
-  })
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @ApiCreateReply()
   async createReply(
     @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
+    @GetUser() userNo: number,
     @Body() createReplyDto: CreateReplyDto,
     @UploadedFiles() files: Express.Multer.File[],
     @TransactionDecorator() manager: EntityManager,
@@ -128,6 +128,7 @@ export class EnquiriesController {
       enquiryNo,
       files,
       manager,
+      userNo,
     );
 
     return { msg: '답변 생성 성공' };
@@ -194,6 +195,7 @@ export class EnquiriesController {
   }
 
   @Delete('/:enquiryNo/reply')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '답변 삭제 API',
@@ -201,9 +203,10 @@ export class EnquiriesController {
   })
   async deleteReply(
     @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    await this.enquiriesService.deleteReplyByEnquiryNo(manager, enquiryNo);
+    await this.enquiriesService.deleteReply(manager, enquiryNo, userNo);
 
     return { msg: '답변 삭제 성공' };
   }

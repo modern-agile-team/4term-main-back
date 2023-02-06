@@ -15,13 +15,7 @@ import { CreateReplyDto } from './dto/create-reply.dto';
 import { EnquiryFilterDto } from './dto/enquiry-filter.dto';
 import { UpdateEnquiryDto } from './dto/update-enquiry.dto';
 import { UpdateReplyDto } from './dto/update-reply.dto';
-import { EnquiryReplies } from './entity/enquiry-reply.entity';
-import {
-  Enquiry,
-  EnquiryImage,
-  Reply,
-  ReplyImage,
-} from './interface/enquiry.interface';
+import { Enquiry, ImageInfo, Reply } from './interface/enquiry.interface';
 import { EnquiryImagesRepository } from './repository/enquiry-image.repository';
 import { EnquiryReplyImagesRepository } from './repository/enquiry-reply-image.repository';
 import { EnquiryRepliesRepository } from './repository/enquiry-reply.repository';
@@ -63,6 +57,11 @@ export class EnquiriesService {
       manager,
       enquiryNo,
     );
+    if (!enquiry.no) {
+      throw new NotFoundException(
+        `문의 상세 조회(getEnquiry-service): ${enquiryNo}번 문의 사항이 없습니다.`,
+      );
+    }
 
     await this.validateWriter(enquiry.userNo, userNo);
 
@@ -77,12 +76,6 @@ export class EnquiriesService {
       .getCustomRepository(EnquiriesRepository)
       .getEnquiry(enquiryNo);
 
-    if (!enquiry.no) {
-      throw new NotFoundException(
-        `문의 상세 조회(readEnquiry-service): ${enquiryNo}번 문의 사항이 없습니다.`,
-      );
-    }
-
     return enquiry;
   }
 
@@ -91,21 +84,31 @@ export class EnquiriesService {
     enquiryNo: number,
     userNo: number,
   ): Promise<Reply<string[]>> {
-    const { imageUrls, ...enquiry }: Enquiry<string[]> = await this.readEnquiry(
+    const { imageUrls, ...enquiry }: Enquiry<string[]> = await this.getEnquiry(
       manager,
       enquiryNo,
+      userNo,
     );
     await this.validateWriter(userNo, enquiry.userNo);
 
-    const reply: Reply<string[]> = await manager
-      .getCustomRepository(EnquiryRepliesRepository)
-      .getReply(enquiryNo);
+    const reply: Reply<string[]> = await this.readReply(manager, enquiryNo);
 
     if (!reply.no) {
       throw new NotFoundException(
         `문의 답변 상세조회(getReplyByNo-service): ${enquiryNo}번 문의사항의 답변이 없습니다.`,
       );
     }
+
+    return reply;
+  }
+
+  private async readReply(
+    manager: EntityManager,
+    enquiryNo: number,
+  ): Promise<Reply<string[]>> {
+    const reply: Reply<string[]> = await manager
+      .getCustomRepository(EnquiryRepliesRepository)
+      .getReply(enquiryNo);
 
     return reply;
   }
@@ -146,9 +149,9 @@ export class EnquiriesService {
     imageUrls: string[],
     enquiryNo: number,
   ): Promise<void> {
-    const images: EnquiryImage<string>[] = await this.convertImageArray(
-      enquiryNo,
+    const images: ImageInfo<string>[] = await this.convertImageArray(
       imageUrls,
+      enquiryNo,
     );
 
     await manager
@@ -161,18 +164,20 @@ export class EnquiriesService {
     enquiryNo: number,
     files: Express.Multer.File[],
     manager: EntityManager,
+    userNo: number,
   ): Promise<void> {
-    await this.readEnquiry(manager, enquiryNo);
-    // await this.isCreated(manager, enquiryNo);
-    /**
-     * validate reply
-     */
+    await this.validateAdmin(manager, userNo);
+    await this.getEnquiry(manager, enquiryNo, userNo);
+    // const reply=await this.readReply(manager, enquiryNo);
 
-    const reply: Reply<void> = { ...createReplyDto, enquiryNo };
-    const replyNo = await this.setReply(manager, reply);
+    const replyNo = await this.setReply(manager, {
+      ...createReplyDto,
+      enquiryNo,
+    });
 
     if (files.length) {
-      await this.uploadReplyImages(manager, replyNo, files);
+      const imageUrls: string[] = await this.uploadImages(files);
+      await this.setReplyImages(manager, imageUrls, replyNo);
     }
 
     await this.closeEnquiry(manager, enquiryNo);
@@ -186,40 +191,22 @@ export class EnquiriesService {
       .getCustomRepository(EnquiryRepliesRepository)
       .createReply(reply);
 
-    if (!insertId) {
-      throw new InternalServerErrorException(
-        `문의 답변 생성(setReply-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-
     return insertId;
-  }
-
-  private async uploadReplyImages(
-    manager: EntityManager,
-    replyNo: number,
-    files: Express.Multer.File[],
-  ): Promise<void> {
-    const imageUrls = await this.awsService.uploadImages(files, 'reply');
-    const images: ReplyImage<string>[] = imageUrls.map((imageUrl: string) => {
-      return { replyNo, imageUrl };
-    });
-    await this.setReplyImages(manager, images);
   }
 
   private async setReplyImages(
     manager: EntityManager,
-    images: ReplyImage<string>[],
+    imageUrls: string[],
+    replyNo: number,
   ): Promise<void> {
-    const { insertId }: ResultSetHeader = await manager
-      .getCustomRepository(EnquiryReplyImagesRepository)
-      .setReplyImages(images);
+    const images: ImageInfo<string>[] = await this.convertImageArray(
+      imageUrls,
+      replyNo,
+    );
 
-    if (!insertId) {
-      throw new InternalServerErrorException(
-        `문의 답변 이미지 DB upload(setReplyImages-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+    await manager
+      .getCustomRepository(EnquiryReplyImagesRepository)
+      .createReplyImages(images);
   }
 
   private async closeEnquiry(
@@ -245,9 +232,10 @@ export class EnquiriesService {
     manager: EntityManager,
     files: Express.Multer.File[],
   ): Promise<void> {
-    const { imageUrls, ...enquiry }: Enquiry<string[]> = await this.readEnquiry(
+    const { imageUrls, ...enquiry }: Enquiry<string[]> = await this.getEnquiry(
       manager,
       enquiryNo,
+      userNo,
     );
     await this.validateWriter(enquiry.userNo, userNo);
 
@@ -324,7 +312,7 @@ export class EnquiriesService {
   ): Promise<void> {
     if (files.length) {
       await this.awsService.deleteFiles(images);
-      await this.uploadReplyImages(manager, replyNo, files);
+      // await this.uploadReplyImages(manager, replyNo, files);
     } else {
       await this.awsService.deleteFiles(images);
       await this.deleteReplyImages(manager, replyNo);
@@ -337,9 +325,10 @@ export class EnquiriesService {
     enquiryNo: number,
     userNo: number,
   ): Promise<void> {
-    const { imageUrls, ...enquiry }: Enquiry<string[]> = await this.readEnquiry(
+    const { imageUrls, ...enquiry }: Enquiry<string[]> = await this.getEnquiry(
       manager,
       enquiryNo,
+      userNo,
     );
     await this.validateWriter(enquiry.userNo, userNo);
 
@@ -367,36 +356,25 @@ export class EnquiriesService {
       .deleteEnquiryImages(enquiryNo);
   }
 
-  async deleteReplyByEnquiryNo(
+  async deleteReply(
     manager: EntityManager,
     enquiryNo: number,
+    userNo: number,
   ): Promise<void> {
-    await this.readEnquiry(manager, enquiryNo);
+    await this.getEnquiry(manager, enquiryNo, userNo);
 
     const isDeleted: number = await manager
       .getCustomRepository(EnquiryRepliesRepository)
       .deleteReply(enquiryNo);
-
-    if (!isDeleted) {
-      throw new InternalServerErrorException(
-        `답변 삭제 오류 deleteReplyByEnquiryNo-service.`,
-      );
-    }
   }
 
   async deleteReplyImages(
     manager: EntityManager,
     replyNo: number,
   ): Promise<void> {
-    const isDeleted: number = await manager
+    await manager
       .getCustomRepository(EnquiryReplyImagesRepository)
       .deleteReplyImages(replyNo);
-
-    if (!isDeleted) {
-      throw new InternalServerErrorException(
-        `답변 삭제 오류 deleteReplyImages-service.`,
-      );
-    }
   }
 
   //function
@@ -404,7 +382,7 @@ export class EnquiriesService {
     userNo: number,
     writerNo: number,
   ): Promise<void> {
-    if (writerNo !== userNo) {
+    if ((writerNo | this.ADMIN_USER) !== userNo) {
       throw new BadRequestException(
         `사용자 검증(validateWriter-service): 잘못된 사용자의 접근입니다.`,
       );
@@ -424,14 +402,34 @@ export class EnquiriesService {
   }
 
   private async convertImageArray(
-    enquiryNo: number,
     imageUrls: string[],
-  ): Promise<EnquiryImage<string>[]> {
-    const images: EnquiryImage<string>[] = imageUrls.map((imageUrl: string) => {
-      return { enquiryNo, imageUrl };
-    });
+    enquiryNo?: number,
+    replyNo?: number,
+  ): Promise<ImageInfo<string>[]> {
+    const images: ImageInfo<string>[] = enquiryNo
+      ? imageUrls.map((imageUrl: string) => {
+          return { enquiryNo, imageUrl };
+        })
+      : imageUrls.map((imageUrl: string) => {
+          return { replyNo, imageUrl };
+        });
 
     return images;
+  }
+
+  private async validateIsAnswered(
+    enquiryNo: number,
+    manager: EntityManager,
+  ): Promise<void> {
+    const { no }: Reply<string[]> = await manager
+      .getCustomRepository(EnquiryRepliesRepository)
+      .getReply(enquiryNo);
+
+    if (!no) {
+      throw new BadRequestException(
+        '답변 확인(validateIsAnswered-service): 답변 작성된 문의사항입니다.',
+      );
+    }
   }
 
   // s3

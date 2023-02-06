@@ -1,43 +1,33 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { ResultSetHeader } from 'mysql2';
-import {
-  DeleteResult,
-  EntityRepository,
-  InsertResult,
-  Repository,
-} from 'typeorm';
+import { EntityRepository, Repository } from 'typeorm';
 import { EnquiryReplyImages } from '../entity/enquiry-reply-images.entity';
-import { ReplyImage } from '../interface/enquiry.interface';
+import { ImageInfo } from '../interface/enquiry.interface';
 
 @EntityRepository(EnquiryReplyImages)
 export class EnquiryReplyImagesRepository extends Repository<EnquiryReplyImages> {
-  //문의사항 생성 관련
-  async setReplyImages(images: ReplyImage<string>[]): Promise<ResultSetHeader> {
+  // Post Methods
+  async createReplyImages(images: ImageInfo<string>[]): Promise<void> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .insert()
         .into(EnquiryReplyImages)
         .values(images)
         .execute();
-
-      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} setReplyImages-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createReplyImages-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
-  //Delete Methods
-  async deleteReplyImages(replyNo: number): Promise<number> {
+  // Delete Methods
+  async deleteReplyImages(replyNo: number): Promise<void> {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .delete()
         .from(EnquiryReplyImages)
-        .where('reply_no = :replyNo', { replyNo })
+        .where('no = :replyNo', { replyNo })
         .execute();
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteReplyImages-repository: 알 수 없는 서버 에러입니다.`,
