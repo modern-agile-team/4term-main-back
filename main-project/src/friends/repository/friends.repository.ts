@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import {
   DeleteResult,
   EntityRepository,
@@ -129,7 +130,7 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async createFriendRequest(friendDetail: Friend): Promise<FriendInsertResult> {
+  async createFriendRequest(friendDetail: Friend): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
