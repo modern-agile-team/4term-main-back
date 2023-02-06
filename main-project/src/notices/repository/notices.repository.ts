@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import {
@@ -19,7 +20,7 @@ import {
 export class NoticesRepository extends Repository<Notices> {
   async saveNotice(
     noticeInfo: SavedNotice | SavedNotice[],
-  ): Promise<InsertRaw> {
+  ): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('notices')
         .insert()

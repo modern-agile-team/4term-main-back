@@ -4,6 +4,7 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { NoticeFriendsRepository } from 'src/notices/repository/notices-friend.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
@@ -13,7 +14,6 @@ import {
   Friend,
   FriendInfo,
   FriendRequestValidation,
-  FriendInsertResult,
   FriendRequestStatus,
   NoticeFriend,
 } from './interface/friend.interface';
@@ -45,7 +45,7 @@ export class FriendsService {
     manager: EntityManager,
     createFriendDto: Friend,
   ): Promise<number> {
-    const raw: FriendInsertResult = await manager
+    const raw: ResultSetHeader = await manager
       .getCustomRepository(FriendsRepository)
       .createFriendRequest(createFriendDto);
     if (!raw.affectedRows) {
@@ -90,7 +90,7 @@ export class FriendsService {
     const { senderNo, receiverNo, friendNo }: NoticeFriend = noticeFriend;
     const type = NoticeType.FRIEND_REQUEST;
 
-    const insertResult: FriendInsertResult = await manager
+    const insertResult: ResultSetHeader = await manager
       .getCustomRepository(NoticesRepository)
       .saveNotice({
         type,
