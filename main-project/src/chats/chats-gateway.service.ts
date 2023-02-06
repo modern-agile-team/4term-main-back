@@ -4,12 +4,12 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import { Socket } from 'socket.io';
 import { Boards } from 'src/boards/entity/board.entity';
 import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
-import { InsertRaw } from 'src/meetings/interface/meeting.interface';
-import { EntityManager, InsertResult } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
 import { ChatList } from './entity/chat-list.entity';
@@ -37,7 +37,9 @@ export class ChatsGatewayService {
 
   async initSocket(socket, userNo: number): Promise<any> {
     const chatRooms: ChatRoomWithUsers[] = await this.getChatRooms(userNo);
-
+    if (!chatRooms) {
+      return;
+    }
     chatRooms.forEach((chatRoom) => {
       socket.join(`${chatRoom.chatRoomNo}`);
     });
@@ -118,7 +120,7 @@ export class ChatsGatewayService {
   async getChatRooms(userNo: number): Promise<ChatRoomWithUsers[]> {
     const rooms = await this.chatUsersRepository.getChatRoomNoByUserNo(userNo);
     if (!rooms) {
-      throw new BadRequestException('채팅방이 존재하지 않습니다.');
+      return;
     }
     const chatRooms = JSON.parse(rooms);
     const chatRoomsWithUsers: ChatRoomWithUsers[] =
@@ -159,7 +161,7 @@ export class ChatsGatewayService {
 
     await this.checkChatRoom(chatRoomNo, userNo);
 
-    const chatLogNo = await this.saveMessageByEntityManager(
+    const chatLogNo: number = await this.saveMessageByEntityManager(
       manager,
       messagePayload,
     );
@@ -176,8 +178,8 @@ export class ChatsGatewayService {
   private async saveMessageByEntityManager(
     manager: EntityManager,
     messagePayload: MessagePayloadDto,
-  ): Promise<InsertResult> {
-    const insertId: InsertResult = await manager
+  ): Promise<number> {
+    const insertId: number = await manager
       .getCustomRepository(ChatLogRepository)
       .saveMessage(messagePayload);
     if (!insertId) {
@@ -199,7 +201,7 @@ export class ChatsGatewayService {
       return values;
     }, []);
 
-    const { affectedRows }: InsertRaw = await manager
+    const { affectedRows }: ResultSetHeader = await manager
       .getCustomRepository(ChatFileUrlsRepository)
       .saveFileUrl(fileUrl);
     if (affectedRows !== fileUrl.length) {
@@ -208,7 +210,9 @@ export class ChatsGatewayService {
   }
 
   private async saveMessage(messagePayload: MessagePayloadDto): Promise<void> {
-    const insertId = await this.chatLogRepository.saveMessage(messagePayload);
+    const insertId: number = await this.chatLogRepository.saveMessage(
+      messagePayload,
+    );
     if (!insertId) {
       throw new BadRequestException('매세지 저장 오류 입니다.');
     }
@@ -268,7 +272,9 @@ export class ChatsGatewayService {
     chatRoomNo: number,
     userNo: number,
   ): Promise<void> {
-    const chatRoom = await this.chatListRepository.getChatRoomByNo(chatRoomNo);
+    const chatRoom: ChatList = await this.chatListRepository.getChatRoomByNo(
+      chatRoomNo,
+    );
     if (!chatRoom) {
       throw new NotFoundException(`해당 채팅방이 존재하지 않습니다.`);
     }
