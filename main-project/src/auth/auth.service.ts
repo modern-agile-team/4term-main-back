@@ -29,6 +29,7 @@ import { AuthConfig } from './config/auth.config';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { EntityManager } from 'typeorm';
+import { SignInDto } from './dto/sign-in.dto';
 
 @Injectable()
 export class AuthService {
@@ -58,12 +59,11 @@ export class AuthService {
     return await this.issueToken(user);
   }
 
-  async signIn(email: string): Promise<void> {
+  async getEmailCode(email: string): Promise<void> {
     await this.validateUserNotCreated(email);
     const validationKey = this.getEmailValidationKey();
-
     await this.cacheManager.set(email, validationKey, {
-      ttl: AuthConfig.signInTokenExpiration,
+      ttl: AuthConfig.emailCodeExpiration,
     });
 
     await this.mailerService.sendMail({
@@ -73,12 +73,22 @@ export class AuthService {
     });
   }
 
-  async verifyEmail(
-    { email, code, password }: VerifyEmailDto,
+  async verifyEmail({ email, code }: VerifyEmailDto): Promise<void> {
+    await this.validateUserNotCreated(email);
+    await this.validateEmail(email, code);
+    await this.cacheManager.set(email, 'valid', {
+      ttl: AuthConfig.validEmailStoreExpiration,
+    });
+  }
+
+  async signIn(
+    { email, password }: SignInDto,
     manager: EntityManager,
   ): Promise<User> {
     await this.validateUserNotCreated(email);
-    await this.validateEmail(email, code);
+    if ((await this.cacheManager.get(email)) !== 'valid') {
+      throw new UnauthorizedException('인증되지 않은 이메일입니다.');
+    }
 
     const user: User = await this.saveUser(email, manager);
     await this.saveAuthentication({ userNo: user.userNo, password }, manager);
