@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   UploadedFiles,
   UseInterceptors,
@@ -11,8 +12,6 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChatsControllerService } from './chats-controller.service';
-import { GetChatLogDto } from './dto/get-chat-log.dto';
-import { InviteUserDto } from './dto/invite-user.dto';
 import { AwsService } from 'src/aws/aws.service';
 import { ChatLog } from './entity/chat-log.entity';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
@@ -32,7 +31,7 @@ export class ChatsController {
     private readonly awsService: AwsService,
   ) {}
 
-  @Get('/:chatRoomNo/previous-chat-log')
+  @Get('/:chatRoomNo/chat-log/:currentChatLogNo')
   @ApiOperation({
     summary: '이전 채팅 내역 API',
     description: '이전 채팅 내역 조회',
@@ -41,19 +40,19 @@ export class ChatsController {
   async getPreviousChatLog(
     @GetUser() userNo: number,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body() chatLogDto: GetChatLogDto,
+    @Param('currentChatLogNo', ParseIntPipe) currentChatLogNo: number,
   ): Promise<APIResponse> {
     const previousChatLog: ChatLog[] =
       await this.chatControllerService.getPreviousChatLog(
         userNo,
         chatRoomNo,
-        chatLogDto,
+        currentChatLogNo,
       );
 
     return { response: { previousChatLog } };
   }
 
-  @Get('/:chatRoomNo/current-chat-log')
+  @Get('/:chatRoomNo/chat-log')
   @ApiOperation({
     summary: '현재 채팅 내역 API',
     description: '채팅방에 들어갔을때 가장 최신 채팅 내역 조회',
@@ -69,7 +68,7 @@ export class ChatsController {
     return { response: { currentChatLog } };
   }
 
-  @Post('/:chatRoomNo/invitation')
+  @Post('/:chatRoomNo/invitation/:targetUserNo')
   @ApiOperation({
     summary: '채팅방 초대 API',
     description: '알람을 통해 채팅방 초대',
@@ -80,12 +79,12 @@ export class ChatsController {
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body() inviteUser: InviteUserDto,
+    @Param('targetUserNo', ParseIntPipe) targetUserNo: number,
   ): Promise<APIResponse> {
     await this.chatControllerService.inviteUser(
       userNo,
       manager,
-      inviteUser,
+      targetUserNo,
       chatRoomNo,
     );
 
@@ -94,7 +93,7 @@ export class ChatsController {
     };
   }
 
-  @Post('/:chatRoomNo/invitation/accept')
+  @Patch('/:chatRoomNo/invitation')
   @ApiOperation({
     summary: '채팅방 초대 수락 API',
     description: '유저 번호, 타입, 채팅방 번호를 통해 초대 수락',
@@ -116,7 +115,7 @@ export class ChatsController {
     };
   }
 
-  @Post('/:chatRoomNo/upload/files')
+  @Post('/:chatRoomNo/files')
   @ApiOperation({
     summary: '파일 전송 API',
     description:
