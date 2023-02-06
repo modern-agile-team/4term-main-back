@@ -1,7 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
 import { NoticeType } from 'src/common/configs/notice-type.config';
-import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import {
   DeleteResult,
   EntityRepository,
@@ -73,9 +72,14 @@ export class NoticesRepository extends Repository<Notices> {
 
   async getNoticeByNo(noticeNo: number): Promise<Notices> {
     try {
-      const notice: Notices = await this.createQueryBuilder()
-        .where('no = :noticeNo', { noticeNo })
-        .getOne();
+      const notice: Notices = await this.createQueryBuilder('notices')
+        .select([
+          'user_no AS userNo',
+          'type AS type',
+          'target_user_no AS targetUserNo',
+        ])
+        .where('notices.no = :noticeNo', { noticeNo })
+        .getRawOne();
 
       return notice;
     } catch (error) {
