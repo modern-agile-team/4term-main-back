@@ -30,6 +30,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { EntityManager } from 'typeorm';
 import { SignInDto } from './dto/sign-in.dto';
+import { MannersRepository } from 'src/manners/repository/manners.repository';
 
 @Injectable()
 export class AuthService {
@@ -326,14 +327,27 @@ export class AuthService {
     }
   }
 
+  private async saveManner(
+    userNo: number,
+    manager: EntityManager,
+  ): Promise<void> {
+    const mannerSavedResult: ResultSetHeader = await manager
+      .getCustomRepository(MannersRepository)
+      .createManner(userNo);
+
+    if (!mannerSavedResult.affectedRows) {
+      throw new InternalServerErrorException('매너 생성 오류입니다.');
+    }
+  }
+
   private async saveUser(email: string, manager: EntityManager): Promise<User> {
     const { insertId }: ResultSetHeader = await manager
       .getCustomRepository(UsersRepository)
       .createUser(email);
-
     if (!insertId) {
       throw new InternalServerErrorException('유저 생성 오류');
     }
+    await this.saveManner(insertId, manager);
 
     return { userNo: insertId, status: UserStatus.NO_PROFILE };
   }
