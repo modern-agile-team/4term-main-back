@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -16,129 +17,99 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { APIResponse } from 'src/common/interface/interface';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { AwsService } from 'src/aws/aws.service';
-import { Events } from './entity/events.entity';
-import { EventDto } from './dto/event.dto';
+import { CreateEventDto } from './dto/create-event.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { EntityManager } from 'typeorm';
+import { EventFilterDto } from './dto/event-filter.dto';
+import { ApiGetEvents } from './swagger-decorator/get-events.decorator';
+import { ApiCreateEvent } from './swagger-decorator/create-event.decorator';
+import { GetUser } from 'src/common/decorator/get-user.decorator';
+import { ApiDeleteEvent } from './swagger-decorator/delete-event.decorator';
+import { ApiGetEvent } from './swagger-decorator/get-event.decorator';
+import { ApiUpdateEvent } from './swagger-decorator/update-event.decorator';
+import { UpdateEventDto } from './dto/update-evet.dto';
 
 @Controller('events')
 @ApiTags('이벤트 API')
 export class EventsController {
-  constructor(
-    private readonly eventsService: EventsService,
-    private readonly awsService: AwsService,
-  ) {}
+  constructor(private readonly eventsService: EventsService) {}
   //Get Methods
   @Get()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '이벤트 전체조회 API',
-    description: '이벤트을 내림차순으로 전체 조회한다.',
-  })
+  @ApiGetEvents()
   async getEvents(
     @TransactionDecorator() manager: EntityManager,
+    @Query() eventFilterDto: EventFilterDto,
   ): Promise<APIResponse> {
     const events: Event<string[]>[] = await this.eventsService.getEvents(
       manager,
+      eventFilterDto,
     );
 
-    return { response: { events } };
+    return { msg: '이벤트 전체조회 성공', response: { events } };
   }
 
   @Get('/:eventNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '특정 이벤트 조회 API',
-    description: '번호를 통해 해당 이벤트을 조회한다.',
-  })
+  @ApiGetEvent()
   async getEvent(
     @TransactionDecorator() manager: EntityManager,
     @Param('eventNo', ParseIntPipe) eventNo: number,
   ): Promise<APIResponse> {
-    const event: Events = await this.eventsService.getEvent(eventNo, manager);
-
-    return { response: { event } };
-  }
-
-  @Get('/images/:eventNo')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '특정 이벤트 이미지 조회 API',
-    description: '번호를 통해 해당 이벤트의 이미지을 조회한다.',
-  })
-  async getEventImages(
-    @TransactionDecorator() manager: EntityManager,
-    @Param('eventNo', ParseIntPipe) eventNo: number,
-  ): Promise<APIResponse> {
-    const imageUrl: string[] = await this.eventsService.getEventImages(
+    const event: Event<string[]> = await this.eventsService.getEvent(
       eventNo,
       manager,
     );
 
-    return { response: imageUrl };
+    return { msg: '이벤트 조회 성공', response: { event } };
   }
 
   // Post Methods
   @Post()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '이벤트 생성 API',
-    description: '입력한 정보로 이벤트을 생성한다.',
-  })
-  @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
+  @ApiCreateEvent()
+  @UseInterceptors(FilesInterceptor('files', 10))
   async createEvent(
     @TransactionDecorator() manager: EntityManager,
-    @Body() eventsDto: EventDto,
-  ): Promise<APIResponse> {
-    await this.eventsService.createEvent(eventsDto, manager);
-
-    return { msg: '이벤트 생성 성공' };
-  }
-
-  @Post('/images/:eventNo')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '이벤트 이미지 업로드 API',
-    description: 's3에 이미지 업로드 후 DB에 image 정보 생성.',
-  })
-  @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
-  async uploadEventImages(
-    @Param('eventNo', ParseIntPipe) eventNo: number,
-    @TransactionDecorator() manager: EntityManager,
+    @GetUser() userNo: number,
+    @Body() createEventDto: CreateEventDto,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
-    const imageUrls: string[] = await this.awsService.uploadImages(
+    await this.eventsService.createEvent(
+      createEventDto,
+      userNo,
       files,
-      'events',
+      manager,
     );
 
-    await this.eventsService.uploadImageUrls(eventNo, imageUrls, manager);
-
-    return { msg: '이미지 업로드 성공' };
+    return { msg: '이벤트 생성 성공' };
   }
 
   // Patch Methods
   @Patch('/:eventNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '이벤트 수정 API',
-    description: '입력한 정보로 이벤트을 수정한다.',
-  })
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @ApiUpdateEvent()
   async updateEvent(
     @Param('eventNo', ParseIntPipe) eventNo: number,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
-    @Body() eventsDto: EventDto,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Body() updateEventDto: UpdateEventDto,
   ): Promise<APIResponse> {
-    await this.eventsService.updateEvent(eventNo, eventsDto, manager);
+    await this.eventsService.editEvent(
+      eventNo,
+      updateEventDto,
+      userNo,
+      files,
+      manager,
+    );
 
     return { msg: '이벤트 수정 성공' };
   }
@@ -147,45 +118,14 @@ export class EventsController {
   @Delete('/:eventNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '이벤트 삭제 API',
-    description: '이벤트 번호를 사용해 이벤트을 삭제한다.',
-  })
+  @ApiDeleteEvent()
   async deleteEvent(
     @Param('eventNo', ParseIntPipe) eventNo: number,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const images: string[] = await this.eventsService.getEventImages(
-      eventNo,
-      manager,
-    );
-
-    await this.awsService.deleteFiles(images);
-    await this.eventsService.deleteEvent(eventNo, manager);
+    await this.eventsService.deleteEvent(eventNo, userNo, manager);
 
     return { msg: '이벤트 삭제 성공' };
-  }
-
-  // Delete Methods
-  @Delete('/images/:eventNo')
-  @UseGuards(JwtAuthGuard)
-  @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '이벤트 이미지 삭제 API',
-    description: '이벤트 번호를 사용해 이미지를 삭제한다.',
-  })
-  async deleteEventImages(
-    @TransactionDecorator() manager: EntityManager,
-    @Param('eventNo', ParseIntPipe) eventNo: number,
-  ): Promise<APIResponse> {
-    const imagesUrls = await this.eventsService.getEventImages(
-      eventNo,
-      manager,
-    );
-
-    await this.awsService.deleteFiles(imagesUrls);
-    await this.eventsService.deleteEventImages(eventNo, manager);
-
-    return { msg: '이벤트 이미지 삭제 성공' };
   }
 }

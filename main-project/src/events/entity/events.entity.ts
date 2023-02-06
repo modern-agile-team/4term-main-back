@@ -32,4 +32,13 @@ export class Events extends BaseEntity {
 
   @OneToMany((type) => EventImages, (eventImages) => eventImages.eventNo)
   eventImage: EventImages;
+
+  @Column({
+    type: 'tinyint',
+    width: 1,
+    default: false,
+    nullable: true,
+    name: 'is_done',
+  })
+  isDone: boolean;
 }
