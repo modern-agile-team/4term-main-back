@@ -5,8 +5,10 @@ import {
   EntityRepository,
   InsertResult,
   Repository,
+  SelectQueryBuilder,
   UpdateResult,
 } from 'typeorm';
+import { EnquiryFilterDto } from '../dto/enquiry-filter.dto';
 import { UpdateEnquiryDto } from '../dto/update-enquiry.dto';
 import { Enquiries } from '../entity/enquiry.entity';
 import { Enquiry } from '../interface/enquiry.interface';
@@ -14,9 +16,10 @@ import { Enquiry } from '../interface/enquiry.interface';
 @EntityRepository(Enquiries)
 export class EnquiriesRepository extends Repository<Enquiries> {
   //Get Methods
-  async getEnquiries(): Promise<Enquiry<string[]>[]> {
+  async getEnquiries(page: number): Promise<Enquiry<string[]>[]> {
     try {
-      const enquiries: Enquiry<string>[] = await this.createQueryBuilder(
+      const query: SelectQueryBuilder<Enquiries> = this.createQueryBuilder(
+        // const enquiries: Enquiry<string>[] = await this.createQueryBuilder(
         'enquiries',
       )
         .leftJoin('enquiries.userNo', 'users')
@@ -32,7 +35,14 @@ export class EnquiriesRepository extends Repository<Enquiries> {
         ])
         .orderBy('no', 'DESC')
         .groupBy('enquiries.no')
-        .getRawMany();
+        .limit(5);
+      // .getRawMany();
+
+      if (page > 1) {
+        query.offset((page - 1) * 5);
+      }
+
+      const enquiries = await query.getRawMany();
 
       const convertEnquiry: Enquiry<string[]>[] = enquiries.map(
         ({ imageUrls, ...enquiryInfo }) => {

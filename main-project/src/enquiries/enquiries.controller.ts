@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -21,6 +22,7 @@ import { APIResponse } from 'src/common/interface/interface';
 import { EntityManager } from 'typeorm';
 import { CreateEnquiryDto } from './dto/create-enquiry.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
+import { EnquiryFilterDto } from './dto/enquiry-filter.dto';
 import { UpdateEnquiryDto } from './dto/update-enquiry.dto';
 import { EnquiriesService } from './enquiries.service';
 import { Enquiry, Reply } from './interface/enquiry.interface';
@@ -41,9 +43,10 @@ export class EnquiriesController {
   @ApiGetEnquiries()
   async getEnquiries(
     @TransactionDecorator() manager: EntityManager,
+    @Query() enquiryFilterDto?: EnquiryFilterDto,
   ): Promise<APIResponse> {
     const eunqiries: Enquiry<string[]>[] =
-      await this.enquiriesService.getEnquiries(manager);
+      await this.enquiriesService.getEnquiries(manager, enquiryFilterDto);
 
     return { msg: '문의사항 전체 조회 성공', response: { eunqiries } };
   }

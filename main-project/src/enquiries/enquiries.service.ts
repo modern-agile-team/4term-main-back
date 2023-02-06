@@ -12,6 +12,7 @@ import { UsersRepository } from 'src/users/repository/users.repository';
 import { EntityManager } from 'typeorm';
 import { CreateEnquiryDto } from './dto/create-enquiry.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
+import { EnquiryFilterDto } from './dto/enquiry-filter.dto';
 import { UpdateEnquiryDto } from './dto/update-enquiry.dto';
 import { UpdateReplyDto } from './dto/update-reply.dto';
 import { EnquiryReplies } from './entity/enquiry-reply.entity';
@@ -36,10 +37,13 @@ export class EnquiriesService {
   ADMIN_USER: number = Number(this.configService.get<number>('ADMIN_USER'));
 
   // Get Methods
-  async getEnquiries(manager: EntityManager): Promise<Enquiry<string[]>[]> {
+  async getEnquiries(
+    manager: EntityManager,
+    { page }: EnquiryFilterDto,
+  ): Promise<Enquiry<string[]>[]> {
     const enquiries: Enquiry<string[]>[] = await manager
       .getCustomRepository(EnquiriesRepository)
-      .getEnquiries();
+      .getEnquiries(page);
 
     if (!enquiries.length) {
       throw new NotFoundException(
