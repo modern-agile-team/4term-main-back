@@ -1,4 +1,4 @@
-import { UserProfile } from 'src/users/entity/user-profile.entity';
+import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
   Column,
@@ -13,12 +13,15 @@ export class Manners extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @Column()
-  grade: number;
+  @Column({ name: 'total_grade', default: 0 })
+  totalGrade: number;
 
-  @OneToOne((type) => UserProfile, (userProfile) => userProfile.mannerNo, {
+  @Column({ name: 'grade_count', default: 0 })
+  gradeCount: number;
+
+  @OneToOne((type) => Users, (users) => users.mannerNo, {
     nullable: false,
   })
   @JoinColumn({ name: 'user_profile_no' })
-  userProfileNo: number;
+  userNo: number;
 }
