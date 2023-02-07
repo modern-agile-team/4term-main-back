@@ -57,7 +57,7 @@ export function ApiGetBoards() {
         {
           name: 'boardsNotFound',
           example: {
-            msg: `게시글 전체 조회(getAllBoards-service): 조건에 맞는 게시글이 없습니다.`,
+            msg: `게시글 전체 조회(getBoards-service): 조건에 맞는 게시글이 없습니다.`,
           },
         },
       ]),

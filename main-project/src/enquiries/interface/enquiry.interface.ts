@@ -1,24 +1,23 @@
+import { CreateEnquiryDto } from '../dto/create-enquiry.dto';
 import { CreateReplyDto } from '../dto/create-reply.dto';
-import { Enquiries } from '../entity/enquiry.entity';
 
-export interface Enquiry {
+export interface Enquiry<T> extends CreateEnquiryDto {
   no: number;
   userNo: number;
-  title: string;
-  description: string;
   createdDate: Date;
-  imageUrl: string;
+  imageUrls: T;
   isDone?: boolean;
 }
 
-export interface Image {
-  imageUrl: string;
+export class ImageInfo<T> {
+  imageUrl?: T;
   enquiryNo?: number;
   replyNo?: number;
 }
-export class Reply extends CreateReplyDto {
-  imageUrl?: string;
+
+export class Reply<T> extends CreateReplyDto {
   no?: number;
+  enquiryNo: number;
   createdDate?: Date;
-  enquiryNo?: number;
+  imageUrls?: T;
 }
