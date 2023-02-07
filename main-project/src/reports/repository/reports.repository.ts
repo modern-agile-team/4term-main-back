@@ -6,7 +6,6 @@ import {
   InsertResult,
   Repository,
   SelectQueryBuilder,
-  UpdateResult,
 } from 'typeorm';
 import { CreateReportDto } from '../dto/create-reports.dto';
 import { ReportFilterDto } from '../dto/report-filter.dto';
@@ -32,6 +31,7 @@ export class ReportRepository extends Repository<Reports> {
           'reports.userNo AS userNo',
           'reports.title AS title',
           'reports.description AS description',
+          'DATE_FORMAT(reports.createdDate, "%Y.%m.%d %T") AS createdDate',
         ])
         .orderBy('reports.no', 'DESC')
         .groupBy('reports.no')
@@ -67,18 +67,23 @@ export class ReportRepository extends Repository<Reports> {
 
   async getReport(reportNo: number): Promise<Report<string[]>> {
     try {
-      const report = this.createQueryBuilder('reports')
-        .leftJoin('reports.reportedBoard', 'reportedBoard')
-        .leftJoin('reports.reportedUser', 'reportedUser')
+      const report: Report<string[]> = await this.createQueryBuilder('reports')
+        .leftJoin('reports.reportedBoard', 'reportedBoards')
+        .leftJoin('reports.reportedUser', 'reportedUsers')
+        .leftJoin('reportedBoards.reportBoardImage', 'reportBoardImages')
+        .leftJoin('reportedUsers.reportUserImage', 'reportUserImages')
         .select([
           'reports.no AS no',
           'reports.userNo AS userNo',
           'reports.title AS title',
           'reports.description AS description',
-          'reportedBoard.targetBoardNo as targetBoardNo',
-          'reportedUser.targetUserNo as targetUserNo',
+          'DATE_FORMAT(reports.createdDate, "%Y.%m.%d %T") AS createdDate',
+          `IF(reportedBoards.reportNo = ${reportNo}, reportedBoards.targetBoardNo, NULL) AS targetBoardNo`,
+
+          // 'reportedBoards.targetBoardNo as targetBoardNo',
+          // 'reportedUsers.targetUserNo as targetUserNo',
         ])
-        .where('reports.no=:reportNo', { reportNo })
+        .where('reports.no = :reportNo', { reportNo })
         .getRawOne();
 
       return report;
@@ -126,17 +131,13 @@ export class ReportRepository extends Repository<Reports> {
   }
 
   // 신고 삭제 관련
-  async deleteReport(reportNo: number): Promise<number> {
+  async deleteReport(reportNo: number): Promise<void> {
     try {
-      const { affected }: DeleteResult = await this.createQueryBuilder(
-        'reports',
-      )
+      await this.createQueryBuilder()
         .delete()
         .from(Reports)
         .where('no = :reportNo', { reportNo })
         .execute();
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteReport-repository: 알 수 없는 서버 에러입니다.`,

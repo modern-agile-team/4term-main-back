@@ -5,5 +5,6 @@ export interface Report<T> {
   userNo: number;
   targetBoardNo?: number;
   targetUserNo?: number;
-  imageUrls: T;
+  createdDate?: Date;
+  imageUrls?: T;
 }

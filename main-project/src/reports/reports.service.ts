@@ -4,7 +4,6 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Board } from 'src/boards/interface/boards.interface';
 import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { EntityManager } from 'typeorm';
@@ -19,11 +18,7 @@ import { ReportFilterDto } from './dto/report-filter.dto';
 
 @Injectable()
 export class ReportsService {
-  constructor(
-    private readonly boardRepository: BoardsRepository,
-    private readonly boardReportRepository: ReportBoardRepository,
-    private readonly userReportRepository: ReportUserRepository,
-  ) {}
+  constructor(private readonly boardRepository: BoardsRepository) {}
   // 조회 관련
   async getReports(
     manager: EntityManager,
@@ -42,49 +37,28 @@ export class ReportsService {
     return reports;
   }
 
-  async getAllBoardReports(): Promise<Report<string[]>[]> {
-    const reportedBoards: Report<string[]>[] =
-      await this.boardReportRepository.getAllBoardReports();
-
-    if (!reportedBoards) {
-      throw new NotFoundException(
-        `게시글 신고내역 전체 조회(getAllReportedusers): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-
-    return reportedBoards;
-  }
-
-  async getAllUserReports(): Promise<Report<string[]>[]> {
-    const reportedUsers: Report<string[]>[] =
-      await this.userReportRepository.getAllUserReports();
-
-    if (!reportedUsers) {
-      throw new NotFoundException(
-        `사용자 신고내역 전체 조회(getAllReportedusers): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-
-    return reportedUsers;
-  }
-
   async getReport(
+    manager: EntityManager,
+    reportNo: number,
+  ): Promise<Report<string[]>> {
+    const report: Report<string[]> = await this.readReport(manager, reportNo);
+
+    if (!report.no) {
+      throw new NotFoundException(
+        `신고내역 상세 조회(getReport): ${reportNo}번 신고내역이 없습니다.`,
+      );
+    }
+
+    return report;
+  }
+
+  private async readReport(
     manager: EntityManager,
     reportNo: number,
   ): Promise<Report<string[]>> {
     const report: Report<string[]> = await manager
       .getCustomRepository(ReportRepository)
       .getReport(reportNo);
-
-    if (!report.no) {
-      throw new NotFoundException(
-        `${reportNo}번 신고내역 상세 조회(getReportByNo): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-
-    !report.targetBoardNo
-      ? delete report.targetBoardNo
-      : delete report.targetUserNo;
 
     return report;
   }
@@ -95,13 +69,13 @@ export class ReportsService {
     createReportDto: CreateReportDto,
     boardNo: number,
   ): Promise<void> {
-    const board: Board<number[]> = await this.boardRepository.getBoardByNo(
+    const { no }: Board<number[]> = await this.boardRepository.getBoardByNo(
       boardNo,
     );
-    if (!board.no) {
-      throw new BadRequestException(`
-        게시글 신고 생성(createBoardReport): ${boardNo}번 게시글을 찾을 수 없습니다.
-        `);
+    if (!no) {
+      throw new BadRequestException(
+        `게시글 신고 생성(createBoardReport-service): ${boardNo}번 게시글을 찾을 수 없습니다.`,
+      );
     }
 
     const reportNo: number = await this.setReport(manager, createReportDto);
@@ -120,15 +94,9 @@ export class ReportsService {
 
     const reportNo: number = await this.setReport(manager, createReportDto);
 
-    const { insertId }: ResultSetHeader = await manager
+    await manager
       .getCustomRepository(ReportUserRepository)
       .createUserReport(reportNo, userNo);
-
-    if (!insertId) {
-      throw new InternalServerErrorException(
-        `사용자 신고 생성(createUserReport): 알 수 없는 서버 에러입니다.`,
-      );
-    }
   }
 
   private async setReport(
@@ -159,10 +127,8 @@ export class ReportsService {
   async deleteReportByNo(
     manager: EntityManager,
     reportNo: number,
-  ): Promise<string> {
+  ): Promise<void> {
     await this.getReport(manager, reportNo);
     await manager.getCustomRepository(ReportRepository).deleteReport(reportNo);
-
-    return `${reportNo}번 신고내역 삭제 성공 :)`;
   }
 }

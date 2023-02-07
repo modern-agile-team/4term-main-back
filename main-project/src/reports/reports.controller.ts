@@ -21,6 +21,7 @@ import { ReportFilterDto } from './dto/report-filter.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
 import { Report } from './interface/reports.interface';
 import { ReportsService } from './reports.service';
+import { ApiGetReport } from './swagger-decorator/get-report.decorator';
 import { ApiGetReports } from './swagger-decorator/get-reports.decorator';
 
 @Controller('reports')
@@ -47,11 +48,8 @@ export class ReportsController {
   @Get('/:reportNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '신고 상세 조회 API',
-    description: '신고 번호를 통해 해당 신고내역을 조회한다.',
-  })
-  async getReportByNo(
+  @ApiGetReport()
+  async getReport(
     @TransactionDecorator() manager: EntityManager,
     @Param('reportNo', ParseIntPipe) reportNo: number,
   ): Promise<object> {

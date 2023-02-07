@@ -32,7 +32,7 @@ export function ApiGetReport() {
         {
           name: 'reportyNotFound',
           example: {
-            msg: `문의 상세 조회(readReport-service): 3번 신고내역이 없습니다.`,
+            msg: `신고내역 상세 조회(getReport): 3번 신고내역이 없습니다.`,
           },
         },
       ]),
