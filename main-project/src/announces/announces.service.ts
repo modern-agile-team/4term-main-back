@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -141,11 +140,11 @@ export class AnnouncesService {
   ) {
     await manager
       .getCustomRepository(AnnouncesRepository)
-      .updateAnnounces(announceNo, announcesDto);
+      .updateAnnounce(announceNo, announcesDto);
   }
 
   // 삭제 관련
-  async deleteAnnounceByNo(
+  async deleteAnnounce(
     manager: EntityManager,
     announceNo: number,
     userNo: number,
@@ -168,7 +167,7 @@ export class AnnouncesService {
   ): Promise<void> {
     await manager
       .getCustomRepository(AnnouncesRepository)
-      .deleteAnnouncesByNo(announceNo);
+      .deleteAnnounce(announceNo);
   }
 
   private async deleteAnnounceImages(
