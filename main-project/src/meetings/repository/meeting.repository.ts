@@ -8,6 +8,7 @@ import {
 import { Meetings } from '../entity/meeting.entity';
 import { InternalServerErrorException } from '@nestjs/common';
 import {
+  EndedMeeting,
   InsertRaw,
   Meeting,
   MeetingGuests,
@@ -160,6 +161,45 @@ export class MeetingRepository extends Repository<Meetings> {
     } catch (err) {
       throw new InternalServerErrorException(
         `${err} 약속 삭제(deleteMeeting): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getEndedMeetings(): Promise<EndedMeeting<string>[]> {
+    try {
+      const endedMeetings: EndedMeeting<string>[] =
+        await this.createQueryBuilder('meetings')
+          .leftJoin('meetings.chatRoomNo', 'chatList')
+          .leftJoin('chatList.chatUserNo', 'chatUsers')
+          .select([
+            'meetings.no AS meetingNo',
+            `JSON_ARRAYAGG(JSON_OBJECT("userNo", chatUsers.userNo, "userType", chatUsers.userType)) AS members`,
+          ])
+          .groupBy('chatList.no')
+          .where('meetings.isMannerRequested = FALSE')
+          .andWhere('DATEDIFF(NOW(), meetings.time) >= 1')
+          .getRawMany();
+
+      return endedMeetings;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 종료된 약속 조회(getEndedMeetings): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async updateEndedMeetings(meetings: number[]): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(Meetings)
+        .set({ isMannerRequested: true })
+        .where('no in (:...meetings)', { meetings })
+        .execute();
+
+      return affected;
+    } catch (err) {
+      throw new InternalServerErrorException(
+        `${err} 종료된 약속 수정(updateEndedMeetings): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
