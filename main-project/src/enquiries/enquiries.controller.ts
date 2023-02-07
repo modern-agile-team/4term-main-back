@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
