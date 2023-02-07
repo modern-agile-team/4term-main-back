@@ -31,17 +31,13 @@ export class ReportBoardRepository extends Repository<ReportBoards> {
   }
 
   // 신고글 작성 관련
-  async createBoardReport(
-    reportNo: number,
-    boardNo: number,
-  ): Promise<ResultSetHeader> {
+  async createBoardReport(reportNo: number, boardNo: number): Promise<void> {
     try {
-      const { raw }: InsertResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .insert()
         .into(ReportBoards)
         .values({ reportNo, targetBoardNo: boardNo })
         .execute();
-      return raw;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} createBoardReport-repository: 알 수 없는 서버 에러입니다.`,

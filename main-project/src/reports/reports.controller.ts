@@ -45,83 +45,101 @@ export class ReportsController {
   }
 
   @Get('/:reportNo')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '신고 상세 조회 API',
     description: '신고 번호를 통해 해당 신고내역을 조회한다.',
   })
   async getReportByNo(
+    @TransactionDecorator() manager: EntityManager,
     @Param('reportNo', ParseIntPipe) reportNo: number,
   ): Promise<object> {
-    const response: Report<string[]> = await this.reportsService.getReportByNo(
+    const report: Report<string[]> = await this.reportsService.getReport(
+      manager,
       reportNo,
     );
 
-    return { response };
+    return { msg: '신고내역 상세조회 성공', response: { report } };
   }
 
   // Post
   @Post('/boards/:boardNo')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '게시글 신고 생성 API',
     description: '입력된 정보로 게시글 신고 생성.',
   })
   async createBoardReport(
     @Param('boardNo', ParseIntPipe) boardNo: number,
+    @TransactionDecorator() manager: EntityManager,
     @Body() createReportDto: CreateReportDto,
   ): Promise<object> {
-    const response: number = await this.reportsService.createBoardReport(
+    await this.reportsService.createBoardReport(
+      manager,
       createReportDto,
       boardNo,
     );
 
-    return { response };
+    return { msg: '게시글 신고 성공' };
   }
 
   @Post('/users/:userNo')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '사용자 신고 생성 API',
     description: '입력된 정보로 사용자 신고 생성.',
   })
   async createUserReport(
     @Param('userNo', ParseIntPipe) userNo: number,
+    @TransactionDecorator() manager: EntityManager,
     @Body() createReportDto: CreateReportDto,
   ): Promise<object> {
-    const response: number = await this.reportsService.createUserReport(
+    await this.reportsService.createUserReport(
+      manager,
       createReportDto,
       userNo,
     );
 
-    return { response };
+    return { msg: '유저 신고 성공' };
   }
 
   // Patch Methods
   @Patch('/:reportNo')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '신고내용 수정 API',
     description: '입력한 정보로 신고내용을 수정한다.',
   })
   async updateBoard(
     @Param('reportNo', ParseIntPipe) reportNo: number,
+    @TransactionDecorator() manager: EntityManager,
     @Body() updateReportDto: UpdateReportDto,
   ): Promise<object> {
-    const response: string = await this.reportsService.updateReport(
-      reportNo,
-      updateReportDto,
-    );
+    await this.reportsService.updateReport(manager, reportNo, updateReportDto);
 
-    return { response };
+    return { msg: '신고내역 수정 성공' };
   }
 
   // Delete Methods
   @Delete('/:reportNo')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
     summary: '특정 신고내역 삭제 API',
     description: '신고 번호를 사용하여 해당 신고내역을 삭제한다.',
   })
   async deleteReportByNo(
     @Param('reportNo', ParseIntPipe) reportNo: number,
+    @TransactionDecorator() manager: EntityManager,
   ): Promise<object> {
-    const response = await this.reportsService.deleteReportByNo(reportNo);
+    const response = await this.reportsService.deleteReportByNo(
+      manager,
+      reportNo,
+    );
 
     return { response };
   }
