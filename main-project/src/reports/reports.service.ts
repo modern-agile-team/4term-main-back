@@ -5,16 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Boards } from 'src/boards/entity/board.entity';
-import { CreateResponse } from 'src/boards/interface/boards.interface';
-import { BoardRepository } from 'src/boards/repository/board.repository';
-import { Connection, QueryRunner } from 'typeorm';
+import { Board } from 'src/boards/interface/boards.interface';
+import { BoardsRepository } from 'src/boards/repository/board.repository';
+import { Connection, EntityManager, QueryRunner } from 'typeorm';
 import { CreateReportDto } from './dto/create-reports.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
-import { ReportIF } from './interface/reports.interface';
-import { BoardReportRepository } from './repository/board-report.repository';
+import { Report } from './interface/reports.interface';
+import { ReportBoardRepository } from './repository/report-board.repository';
 import { ReportRepository } from './repository/reports.repository';
-import { UserReportRepository } from './repository/user-report.repository';
+import { ReportUserRepository } from './repository/report-user.repository';
+import { ResultSetHeader } from 'mysql2';
+import { ReportFilterDto } from './dto/report-filter.dto';
 
 @Injectable()
 export class ReportsService {
@@ -22,32 +23,37 @@ export class ReportsService {
     @InjectRepository(ReportRepository)
     private readonly reportRepository: ReportRepository,
 
-    @InjectRepository(BoardRepository)
-    private readonly boardRepository: BoardRepository,
+    @InjectRepository(BoardsRepository)
+    private readonly boardRepository: BoardsRepository,
 
-    @InjectRepository(BoardReportRepository)
-    private readonly boardReportRepository: BoardReportRepository,
+    @InjectRepository(ReportBoardRepository)
+    private readonly boardReportRepository: ReportBoardRepository,
 
-    @InjectRepository(UserReportRepository)
-    private readonly userReportRepository: UserReportRepository,
+    @InjectRepository(ReportUserRepository)
+    private readonly userReportRepository: ReportUserRepository,
 
     private readonly connection: Connection,
   ) {}
   // 조회 관련
-  async getAllReports(): Promise<ReportIF[]> {
-    const reports: ReportIF[] = await this.reportRepository.getAllReports();
+  async getReports(
+    manager: EntityManager,
+    reportFilterDto: ReportFilterDto,
+  ): Promise<Report<string[]>[]> {
+    const reports: Report<string[]>[] = await manager
+      .getCustomRepository(ReportRepository)
+      .getReports(reportFilterDto);
 
-    if (!reports) {
+    if (!reports.length) {
       throw new NotFoundException(
-        `신고내역 전체 조회(getAllReports): 알 수 없는 서버 에러입니다.`,
+        `신고내역 전체 조회(getReports): 알 수 없는 서버 에러입니다.`,
       );
     }
 
     return reports;
   }
 
-  async getAllBoardReports(): Promise<ReportIF[]> {
-    const reportedBoards: ReportIF[] =
+  async getAllBoardReports(): Promise<Report<string[]>[]> {
+    const reportedBoards: Report<string[]>[] =
       await this.boardReportRepository.getAllBoardReports();
 
     if (!reportedBoards) {
@@ -59,8 +65,8 @@ export class ReportsService {
     return reportedBoards;
   }
 
-  async getAllUserReports(): Promise<ReportIF[]> {
-    const reportedUsers: ReportIF[] =
+  async getAllUserReports(): Promise<Report<string[]>[]> {
+    const reportedUsers: Report<string[]>[] =
       await this.userReportRepository.getAllUserReports();
 
     if (!reportedUsers) {
@@ -72,8 +78,8 @@ export class ReportsService {
     return reportedUsers;
   }
 
-  async getReportByNo(reportNo: number): Promise<ReportIF> {
-    const report: ReportIF = await this.reportRepository.getReportByNo(
+  async getReportByNo(reportNo: number): Promise<Report<string[]>> {
+    const report: Report<string[]> = await this.reportRepository.getReportByNo(
       reportNo,
     );
 
@@ -100,7 +106,9 @@ export class ReportsService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const board: Boards = await this.boardRepository.getBoardByNo(boardNo);
+      const board: Board<number[]> = await this.boardRepository.getBoardByNo(
+        boardNo,
+      );
       if (!board.no) {
         throw new BadRequestException(`
         게시글 신고 생성(createBoardReport): ${boardNo}번 게시글을 찾을 수 없습니다.
@@ -112,8 +120,8 @@ export class ReportsService {
         createReportDto,
       );
 
-      const { insertId }: CreateResponse = await queryRunner.manager
-        .getCustomRepository(BoardReportRepository)
+      const { insertId }: ResultSetHeader = await queryRunner.manager
+        .getCustomRepository(ReportBoardRepository)
         .createBoardReport(reportNo, boardNo);
 
       if (!insertId) {
@@ -150,8 +158,8 @@ export class ReportsService {
         createReportDto,
       );
 
-      const { insertId }: CreateResponse = await queryRunner.manager
-        .getCustomRepository(UserReportRepository)
+      const { insertId }: ResultSetHeader = await queryRunner.manager
+        .getCustomRepository(ReportUserRepository)
         .createUserReport(reportNo, userNo);
 
       if (!insertId) {
@@ -176,7 +184,7 @@ export class ReportsService {
     queryRunner: QueryRunner,
     createReportDto: CreateReportDto,
   ): Promise<number> {
-    const { insertId }: CreateResponse = await queryRunner.manager
+    const { insertId }: ResultSetHeader = await queryRunner.manager
       .getCustomRepository(ReportRepository)
       .createReport(createReportDto);
 

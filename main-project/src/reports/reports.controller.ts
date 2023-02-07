@@ -7,12 +7,21 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
+import { EntityManager } from 'typeorm';
 import { CreateReportDto } from './dto/create-reports.dto';
+import { ReportFilterDto } from './dto/report-filter.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
-import { ReportIF } from './interface/reports.interface';
+import { Report } from './interface/reports.interface';
 import { ReportsService } from './reports.service';
+import { ApiGetReports } from './swagger-decorator/get-reports.decorator';
 
 @Controller('reports')
 @ApiTags('신고 API')
@@ -20,14 +29,19 @@ export class ReportsController {
   constructor(private reportsService: ReportsService) {}
   // Get
   @Get()
-  @ApiOperation({
-    summary: '신고 전체 조회 API',
-    description: '신고내역을 전부 조회한다.',
-  })
-  async getAllReports(): Promise<object> {
-    const response: ReportIF[] = await this.reportsService.getAllReports();
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetReports()
+  async getReports(
+    @TransactionDecorator() manager: EntityManager,
+    @Query() reportFilterDto: ReportFilterDto,
+  ): Promise<object> {
+    const reports: Report<string[]>[] = await this.reportsService.getReports(
+      manager,
+      reportFilterDto,
+    );
 
-    return { response };
+    return { msg: '신고내역 전체/필터 조회 성공', response: { reports } };
   }
 
   @Get('/:reportNo')
@@ -38,7 +52,7 @@ export class ReportsController {
   async getReportByNo(
     @Param('reportNo', ParseIntPipe) reportNo: number,
   ): Promise<object> {
-    const response: ReportIF = await this.reportsService.getReportByNo(
+    const response: Report<string[]> = await this.reportsService.getReportByNo(
       reportNo,
     );
 

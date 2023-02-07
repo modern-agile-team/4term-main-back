@@ -1,4 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import {
   DeleteResult,
   EntityRepository,
@@ -10,71 +11,91 @@ import {
 import { Friends } from '../entity/friend.entity';
 import {
   Friend,
-  FriendDetail,
   FriendInfo,
-  FriendList,
-  FriendRequestResponse,
+  FriendInsertResult,
   FriendRequestStatus,
   FriendToSearch,
 } from '../interface/friend.interface';
 
 @EntityRepository(Friends)
 export class FriendsRepository extends Repository<Friends> {
-  async getAllFriendList(userNo: number): Promise<FriendList[]> {
+  async getFriends(userNo: number): Promise<Friend[]> {
     try {
-      const result = await this.createQueryBuilder('friends')
+      const friends = await this.createQueryBuilder('friends')
         .leftJoin('friends.receiverNo', 'receiverUser')
         .leftJoin('receiverUser.userProfileNo', 'receiverUserProfile')
+        .leftJoin(
+          'receiverUserProfile.profileImage',
+          'receiverUserProfileImage',
+        )
         .leftJoin('friends.senderNo', 'senderUser')
         .leftJoin('senderUser.userProfileNo', 'senderUserProfile')
+        .leftJoin('senderUserProfile.profileImage', 'senderUserProfileImage')
+
         .select([
-          `IF(friends.receiver_no = ${userNo} , friends.sender_no, friends.receiver_no) AS friendNo`,
+          `IF(friends.receiver_no = ${userNo} , friends.sender_no, friends.receiver_no) AS friendUserNo`,
           `IF(friends.receiver_no = ${userNo} , senderUserProfile.nickname, receiverUserProfile.nickname) AS friendNickname`,
+          `IF(friends.receiver_no = ${userNo} , senderUserProfileImage.image_url, receiverUserProfileImage.image_url) AS friendProfileImage`,
         ])
-        .where('receiver_no = :userNo AND is_accept = 1', { userNo })
-        .orWhere('sender_no = :userNo AND is_accept = 1', { userNo })
+        .where(
+          'receiver_no = :userNo AND is_accept = 1 AND senderUserProfile.nickname IS NOT NULL',
+          { userNo },
+        )
+        .orWhere(
+          'sender_no = :userNo AND is_accept = 1 AND receiverUserProfile.nickname IS NOT NULL',
+          { userNo },
+        )
         .getRawMany();
 
-      return result;
+      return friends;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error}: 친구 목록 조회(getAllFriendList): 알 수 없는 서버 에러입니다.`,
+        `${error}: 친구 목록 조회(getFriends): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
-  async getAllReceiveFriendReq(receiverNo: number): Promise<Friends[]> {
+  async getReceivedRequests(receiverNo: number): Promise<Friends[]> {
     try {
       const result = await this.createQueryBuilder('friends')
         .leftJoin('friends.senderNo', 'senderUser')
         .leftJoin('senderUser.userProfileNo', 'senderUserProfile')
+        .leftJoin('senderUserProfile.profileImage', 'senderUserProfileImage')
         .select([
           'friends.sender_no AS senderUserNo',
           'senderUserProfile.nickname AS senderUserNickname',
+          'senderUserProfileImage.image_url AS senderUserProfileImage',
         ])
         .where('receiver_no = :receiverNo', { receiverNo })
         .andWhere('is_accept = 0')
+        .andWhere('senderUserProfile.nickname IS NOT NULL')
         .getRawMany();
 
       return result;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error}: 친구 신청 조회(getAllReceiveFriendReq): 알 수 없는 서버 에러입니다.`,
+        `${error}: 친구 신청 조회(getReceiveFriendRequests): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
-  async getAllSendFriendReq(senderNo: number): Promise<Friends[]> {
+  async getSentRequests(senderNo: number): Promise<Friends[]> {
     try {
       const result = await this.createQueryBuilder('friends')
         .leftJoin('friends.receiverNo', 'receiverUser')
         .leftJoin('receiverUser.userProfileNo', 'receiverUserProfile')
+        .leftJoin(
+          'receiverUserProfile.profileImage',
+          'receiverUserProfileImage',
+        )
         .select([
           'friends.receiver_no AS receiverUserNo',
           'receiverUserProfile.nickname AS receiverUserNickname',
+          'receiverUserProfileImage.image_url AS receiverUserProfileImage',
         ])
         .where('sender_no = :senderNo', { senderNo })
         .andWhere('is_accept = 0')
+        .andWhere('receiverUserProfile.nickname IS NOT NULL')
         .getRawMany();
 
       return result;
@@ -85,12 +106,12 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async checkFriend(friendDetail: FriendDetail): Promise<FriendRequestStatus> {
+  async getRequest(friendDetail: Friend): Promise<FriendRequestStatus> {
     try {
-      const result: FriendRequestStatus = await this.createQueryBuilder(
+      const request: FriendRequestStatus = await this.createQueryBuilder(
         'friends',
       )
-        .select(['friends.is_accept AS isAccept'])
+        .select(['friends.is_accept AS isAccept', 'friends.no AS friendNo'])
         .where(
           'receiver_no = :receiverNo AND sender_no = :senderNo',
           friendDetail,
@@ -101,54 +122,15 @@ export class FriendsRepository extends Repository<Friends> {
         )
         .getRawOne();
 
-      return result;
+      return request;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error}: 친구 목록 조회(checkFriend): 알 수 없는 서버 에러입니다.`,
+        `${error}: 특정 친구 신청 목록 조회(getRequest): 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
-  async checkRequest(friendDetail: FriendDetail): Promise<FriendRequestStatus> {
-    try {
-      const result: FriendRequestStatus = await this.createQueryBuilder(
-        'friends',
-      )
-        .select(['friends.is_accept AS isAccept'])
-        .where(
-          'receiver_no = :receiverNo AND sender_no = :senderNo',
-          friendDetail,
-        )
-        .getRawOne();
-
-      return result;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error}: 특정 친구 신청 목록 조회(checkRequest): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async checkRequestByFriendNo(friendNo: number): Promise<FriendRequestStatus> {
-    try {
-      const result: FriendRequestStatus = await this.createQueryBuilder(
-        'friends',
-      )
-        .select(['friends.is_accept AS isAccept'])
-        .where('no = :friendNo', { friendNo })
-        .getRawOne();
-
-      return result;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error}: 특정 친구 신청 목록 조회(checkRequest): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async createFriendRequest(
-    friendDetail: FriendDetail,
-  ): Promise<FriendRequestResponse> {
+  async createFriendRequest(friendDetail: Friend): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
@@ -210,9 +192,12 @@ export class FriendsRepository extends Repository<Friends> {
       )
         .delete()
         .from(Friends)
-        .where('receiver_no = :userNo AND sender_no = :friendNo', deleteFriend)
+        .where(
+          'no = :friendNo AND receiver_no = :userNo AND sender_no = :friendUserNo',
+          deleteFriend,
+        )
         .orWhere(
-          'receiver_no = :friendNo AND sender_no = :userNo',
+          'no = :friendNo AND receiver_no = :friendUserNo AND sender_no = :userNo',
           deleteFriend,
         )
         .execute();
@@ -225,21 +210,21 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async refuseRequestByNo(refuseFriendNo: FriendDetail): Promise<number> {
+  async deleteRequest(request: Friend): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()
         .from(Friends)
         .where(
-          'receiver_no = :receiverNo AND sender_no = :senderNo',
-          refuseFriendNo,
+          'no = :friendNo AND receiver_no = :receiverNo AND sender_no = :senderNo',
+          request,
         )
         .execute();
 
       return affected;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error}: 친구 거절(refuseRequestByNo): 알 수 없는 서버 에러입니다. `,
+        `${error}: 친구 거절(deleteRequest): 알 수 없는 서버 에러입니다. `,
       );
     }
   }

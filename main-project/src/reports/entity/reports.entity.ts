@@ -11,8 +11,8 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ReportImages } from './report-images.entity';
-import { ReportBoards } from './board-reports.entity';
-import { ReportUsers } from './user-reports.entity';
+import { ReportBoards } from './report-board.entity';
+import { ReportUsers } from './report-user.entity';
 
 @Entity('reports')
 export class Reports extends BaseEntity {
@@ -32,10 +32,10 @@ export class Reports extends BaseEntity {
   deletedDate: Date;
 
   @OneToOne((type) => ReportBoards, (reportBoards) => reportBoards.reportNo)
-  reportBoard: number;
+  reportedBoard: number;
 
   @OneToOne((type) => ReportUsers, (reportUser) => reportUser.reportNo)
-  reportUser: number;
+  reportedUser: number;
 
   @ManyToOne((type) => Users, (user) => user.report, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_no' })

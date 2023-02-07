@@ -1,10 +1,10 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   UploadedFiles,
   UseInterceptors,
@@ -12,12 +12,16 @@ import {
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChatsControllerService } from './chats-controller.service';
-import { GetChatLogDTO } from './dto/get-chat-log.dto';
-import { InviteUserDTO } from './dto/invite-user.dto';
 import { AwsService } from 'src/aws/aws.service';
 import { ChatLog } from './entity/chat-log.entity';
-import { ConnectedSocket } from '@nestjs/websockets/decorators';
-import { Socket } from 'dgram';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto';
+import { APIResponse } from 'src/common/interface/interface';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
+import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
+import { EntityManager } from 'typeorm';
+import { UseGuards } from '@nestjs/common/decorators';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { GetUser } from 'src/common/decorator/get-user.decorator';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -27,105 +31,109 @@ export class ChatsController {
     private readonly awsService: AwsService,
   ) {}
 
-  @Get('/:userNo')
+  @Get('/:chatRoomNo/chat-log/:currentChatLogNo')
   @ApiOperation({
-    summary: '채팅 목록 API',
-    description: ' 채팅 목록 조회',
+    summary: '이전 채팅 내역 API',
+    description: '이전 채팅 내역 조회',
   })
-  async getChatRoomList(@Param('userNo') userNo: number): Promise<object> {
-    const response = await this.chatControllerService.getChatRoomListByUserNo(
-      userNo,
-    );
-    return {
-      response,
-    };
-  }
-
-  @Get('/join/:chatRoomNo')
-  @ApiOperation({
-    summary: '채팅방 입장시 대화내역 API',
-    description: '채팅방 입장 시 가장 최신 대화내역 출력',
-  })
-  async getRecentChatLog(
+  @UseGuards(JwtAuthGuard)
+  async getPreviousChatLog(
+    @GetUser() userNo: number,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body('userNo', ParseIntPipe) userNo: number,
-  ): Promise<object> {
-    const response = await this.chatControllerService.getRecentChatLog({
-      userNo,
-      chatRoomNo,
-    });
+    @Param('currentChatLogNo', ParseIntPipe) currentChatLogNo: number,
+  ): Promise<APIResponse> {
+    const previousChatLog: ChatLog[] =
+      await this.chatControllerService.getPreviousChatLog(
+        userNo,
+        chatRoomNo,
+        currentChatLogNo,
+      );
 
-    return { response };
+    return { response: { previousChatLog } };
   }
 
-  @Get('/:chatRoomNo/log')
+  @Get('/:chatRoomNo/chat-log')
   @ApiOperation({
-    summary: '채팅 내역 API',
-    description: ' 채팅 내역 조회',
+    summary: '현재 채팅 내역 API',
+    description: '채팅방에 들어갔을때 가장 최신 채팅 내역 조회',
   })
-  async getChatLog(
+  @UseGuards(JwtAuthGuard)
+  async getCurrentChatLog(
+    @GetUser() userNo: number,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body() getChatLogDto: GetChatLogDTO,
-  ): Promise<object> {
-    const response = await this.chatControllerService.getChatLog(
-      getChatLogDto,
-      chatRoomNo,
-    );
+  ): Promise<APIResponse> {
+    const currentChatLog: ChatLog[] =
+      await this.chatControllerService.getCurrentChatLog(userNo, chatRoomNo);
 
-    return { response };
+    return { response: { currentChatLog } };
   }
 
-  @Post('/:chatRoomNo/invite')
+  @Post('/:chatRoomNo/invitation/:targetUserNo')
   @ApiOperation({
     summary: '채팅방 초대 API',
     description: '알람을 통해 채팅방 초대',
   })
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   async inviteUser(
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body() inviteUser: InviteUserDTO,
-  ): Promise<{ msg: string }> {
-    await this.chatControllerService.inviteUser(inviteUser, chatRoomNo);
+    @Param('targetUserNo', ParseIntPipe) targetUserNo: number,
+  ): Promise<APIResponse> {
+    await this.chatControllerService.inviteUser(
+      userNo,
+      manager,
+      targetUserNo,
+      chatRoomNo,
+    );
 
     return {
-      msg: '초대 성공',
+      msg: '채팅방 초대 성공',
     };
   }
 
-  @Post('/accept/:noticeNo')
+  @Patch('/:chatRoomNo/invitation')
   @ApiOperation({
     summary: '채팅방 초대 수락 API',
-    description: 'notice 번호를 통한 초대 수락',
+    description: '유저 번호, 타입, 채팅방 번호를 통해 초대 수락',
   })
+  @UseGuards(JwtAuthGuard)
   async acceptInvitation(
-    @Param('noticeNo', ParseIntPipe) noticeNo: number,
-    @Body('userNo', ParseIntPipe) userNo: number,
-  ): Promise<{ msg: string }> {
-    await this.chatControllerService.acceptInvitation(noticeNo, userNo);
+    @GetUser() userNo: number,
+    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
+    @Body() invitationInfo: AcceptInvitationDto,
+  ): Promise<APIResponse> {
+    await this.chatControllerService.acceptInvitation(
+      userNo,
+      chatRoomNo,
+      invitationInfo,
+    );
 
     return {
-      msg: '채팅방 참여 성공',
+      msg: '채팅방 초대 수락 성공',
     };
   }
 
-  @Post('/:chatRoomNo/images')
+  @Post('/:chatRoomNo/files')
+  @ApiOperation({
+    summary: '파일 전송 API',
+    description:
+      'files에 담긴 최대 10개의 파일을 전달받아 s3업로드 후 url배열 반환',
+  })
   @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
   async uploadFile(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @UploadedFiles() files: Express.Multer.File[],
-  ) {
-    const uploadedFileUrlList =
-      files.length === 0
-        ? false
-        : await this.awsService.uploadImage(files, chatRoomNo);
+  ): Promise<APIResponse> {
+    const uploadedFileUrlList = await this.awsService.uploadChatFiles(
+      files,
+      chatRoomNo,
+    );
 
     return {
-      msg: `이미지 업로드 성공`,
+      msg: `파일 업로드 성공`,
       response: { uploadedFileUrlList },
     };
-  }
-
-  @Post('/error')
-  err(@Body('no') no: number) {
-    throw new BadRequestException('에러');
   }
 }

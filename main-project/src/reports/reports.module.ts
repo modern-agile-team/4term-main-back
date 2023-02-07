@@ -1,21 +1,21 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BoardRepository } from 'src/boards/repository/board.repository';
+import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { ReportsController } from './reports.controller';
 import { ReportsService } from './reports.service';
-import { BoardReportRepository } from './repository/board-report.repository';
+import { ReportBoardRepository } from './repository/report-board.repository';
 import { ReportRepository } from './repository/reports.repository';
-import { UserReportRepository } from './repository/user-report.repository';
+import { ReportUserRepository } from './repository/report-user.repository';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
-      BoardRepository,
+      BoardsRepository,
       ReportRepository,
       UsersRepository,
-      BoardReportRepository,
-      UserReportRepository,
+      ReportBoardRepository,
+      ReportUserRepository,
     ]),
   ],
   providers: [ReportsService],

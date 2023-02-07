@@ -13,11 +13,12 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Users } from 'src/users/entity/user.entity';
-import { ReportBoards } from 'src/reports/entity/board-reports.entity';
+import { ReportBoards } from 'src/reports/entity/report-board.entity';
 import { NoticeBoards } from 'src/notices/entity/notice-board.entity';
 import { BoardHosts } from './board-host.entity';
-import { BoardGuests } from './board-guest.entity';
 import { ChatList } from 'src/chats/entity/chat-list.entity';
+import { BoardGuestTeams } from './board-guest-team.entity';
+import { NoticeBoardHosts } from 'src/notices/entity/notice-board-host.entity';
 
 @Entity('boards')
 export class Boards extends BaseEntity {
@@ -32,8 +33,27 @@ export class Boards extends BaseEntity {
     width: 1,
     default: false,
     nullable: true,
+    name: 'is_done',
   })
   isDone: boolean;
+
+  @Column({
+    type: 'tinyint',
+    width: 1,
+    default: false,
+    nullable: true,
+    name: 'is_impromptu',
+  })
+  isImpromptu: boolean;
+
+  @Column({
+    type: 'tinyint',
+    width: 1,
+    default: false,
+    nullable: true,
+    name: 'is_accepted',
+  })
+  isAccepted: boolean;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   description: string;
@@ -44,11 +64,11 @@ export class Boards extends BaseEntity {
   @Column({ type: 'datetime', name: 'meeting_time', nullable: true })
   meetingTime: Date;
 
-  @Column({ type: 'int', nullable: false })
-  male: number;
+  @Column({ type: 'int', nullable: false, name: 'recruit_male' })
+  recruitMale: number;
 
-  @Column({ type: 'int', nullable: false })
-  female: number;
+  @Column({ type: 'int', nullable: false, name: 'recruit_female' })
+  recruitFemale: number;
 
   @CreateDateColumn({ name: 'created_date' })
   createdDate: Date;
@@ -67,17 +87,24 @@ export class Boards extends BaseEntity {
   userNo: number;
 
   @OneToMany((type) => NoticeBoards, (noticeBoards) => noticeBoards.boardNo)
-  @JoinColumn()
   noticeBoard: NoticeBoards;
+
+  @OneToMany(
+    (type) => NoticeBoardHosts,
+    (noticeBoardHost) => noticeBoardHost.boardNo,
+  )
+  noticeBoardHost: NoticeBoardHosts;
 
   @OneToMany((type) => BoardHosts, (boardHosts) => boardHosts.boardNo, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn()
   hosts: BoardHosts;
 
-  @OneToMany((type) => BoardGuests, (boardGuests) => boardGuests.boardNo)
-  guests: BoardGuests;
+  @OneToMany(
+    (type) => BoardGuestTeams,
+    (boardParticipation) => boardParticipation.boardNo,
+  )
+  teamNo: BoardGuestTeams;
 
   @OneToMany((type) => ReportBoards, (boardReport) => boardReport.targetBoardNo)
   boardReport: ReportBoards[];
