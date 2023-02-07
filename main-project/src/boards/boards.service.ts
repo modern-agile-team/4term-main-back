@@ -4,7 +4,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { NoticeType } from 'src/common/configs/notice-type.config';
-import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
@@ -488,7 +487,7 @@ export class BoardsService {
     const type = NoticeType.GUEST_REQUEST;
 
     for (let idx in guests) {
-      const { insertId }: InsertRaw = await manager
+      const { insertId }: ResultSetHeader = await manager
         .getCustomRepository(NoticesRepository)
         .saveNotice({ userNo, type, targetUserNo: guests[idx] });
 
@@ -507,7 +506,7 @@ export class BoardsService {
     const type: number = NoticeType.GUEST_REQUEST;
 
     for (let idx in hosts) {
-      const { insertId }: InsertRaw = await manager
+      const { insertId }: ResultSetHeader = await manager
         .getCustomRepository(NoticesRepository)
         .saveNotice({ userNo, targetUserNo: hosts[idx], type });
 
@@ -530,7 +529,7 @@ export class BoardsService {
     users.push(hostUserNo);
 
     for (let idx in users) {
-      const { insertId }: InsertRaw = await manager
+      const { insertId }: ResultSetHeader = await manager
         .getCustomRepository(NoticesRepository)
         .saveNotice({
           userNo: this.ADMIN_USER,
@@ -578,7 +577,7 @@ export class BoardsService {
       .getCustomRepository(UsersRepository)
       .getUsersByNums(users);
 
-    if (!dbUsers.length) {
+    if (!dbUsers) {
       throw new BadRequestException(
         '사용자 확인(validateUsers-service): 존재하지 않는 사용자들 입니다',
       );
