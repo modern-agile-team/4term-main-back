@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { ConfigService } from '@nestjs/config';
+import { write } from 'fs';
 import { ResultSetHeader } from 'mysql2';
 import { AwsService } from 'src/aws/aws.service';
 import { Users } from 'src/users/entity/user.entity';
@@ -48,6 +49,24 @@ export class EnquiriesService {
     return enquiries;
   }
 
+  async getEnquiriesByUser(
+    manager: EntityManager,
+    { page }: EnquiryFilterDto,
+    userNo: number,
+  ): Promise<Enquiry<string[]>[]> {
+    const enquiries: Enquiry<string[]>[] = await manager
+      .getCustomRepository(EnquiriesRepository)
+      .getEnquiries(page, userNo);
+
+    if (!enquiries.length) {
+      throw new NotFoundException(
+        `유저별 문의 조회(getEnquiriesByUser-service): 문의 사항이 없습니다.`,
+      );
+    }
+
+    return enquiries;
+  }
+
   async getEnquiry(
     manager: EntityManager,
     enquiryNo: number,
@@ -63,7 +82,7 @@ export class EnquiriesService {
       );
     }
 
-    await this.validateWriter(enquiry.userNo, userNo);
+    await this.validateWriter(userNo, enquiry.userNo);
 
     return enquiry;
   }
@@ -89,6 +108,7 @@ export class EnquiriesService {
       enquiryNo,
       userNo,
     );
+
     await this.validateWriter(userNo, enquiry.userNo);
 
     const reply: Reply<string[]> = await this.readReply(manager, enquiryNo);
@@ -127,7 +147,7 @@ export class EnquiriesService {
     );
 
     if (files.length) {
-      const imageUrls: string[] = await this.uploadImages(files);
+      const imageUrls: string[] = await this.uploadEnquiryImages(files);
       await this.setEnquiryImages(manager, imageUrls, enquiryNo);
     }
   }
@@ -168,7 +188,7 @@ export class EnquiriesService {
   ): Promise<void> {
     await this.validateAdmin(manager, userNo);
     await this.getEnquiry(manager, enquiryNo, userNo);
-    // const reply=await this.readReply(manager, enquiryNo);
+    await this.validateIsAnswered(enquiryNo, manager);
 
     const replyNo = await this.setReply(manager, {
       ...createReplyDto,
@@ -176,7 +196,7 @@ export class EnquiriesService {
     });
 
     if (files.length) {
-      const imageUrls: string[] = await this.uploadImages(files);
+      const imageUrls: string[] = await this.uploadReplyImages(files);
       await this.setReplyImages(manager, imageUrls, replyNo);
     }
 
@@ -201,6 +221,7 @@ export class EnquiriesService {
   ): Promise<void> {
     const images: ImageInfo<string>[] = await this.convertImageArray(
       imageUrls,
+      undefined,
       replyNo,
     );
 
@@ -213,15 +234,9 @@ export class EnquiriesService {
     manager: EntityManager,
     enquiryNo: number,
   ): Promise<void> {
-    const isClosed: number = await manager
+    await manager
       .getCustomRepository(EnquiriesRepository)
       .closeEnquiry(enquiryNo);
-
-    if (!isClosed) {
-      throw new InternalServerErrorException(
-        `문의사항 답변상태 변경(closeEnquiry-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
   }
 
   //Patch Methods
@@ -264,58 +279,53 @@ export class EnquiriesService {
       await this.awsService.deleteFiles(imageUrls);
     }
     if (files.length) {
-      const images: string[] = await this.uploadImages(files);
+      const images: string[] = await this.uploadEnquiryImages(files);
       await this.setEnquiryImages(manager, images, enquiryNo);
     }
   }
 
-  async updateReply(
+  async editReply(
     manager: EntityManager,
     enquiryNo: number,
     updateReplyDto: UpdateReplyDto,
     files: Express.Multer.File[],
     userNo: number,
   ): Promise<void> {
-    const reply: Reply<string[]> = await this.getReply(
+    await this.validateAdmin(manager, userNo);
+    await this.getEnquiry(manager, enquiryNo, userNo);
+    const { imageUrls, no }: Reply<string[]> = await this.getReply(
       manager,
       enquiryNo,
       userNo,
     );
 
-    await this.editReply(manager, enquiryNo, updateReplyDto);
-
-    const { imageUrls, no }: Reply<string[]> = reply;
-    await this.editReplyimages(manager, imageUrls, files, no);
+    await this.updateReply(manager, enquiryNo, updateReplyDto);
+    await this.editReplyimages(manager, files, no, imageUrls);
   }
 
-  private async editReply(
+  private async updateReply(
     manager: EntityManager,
     enquiryNo: number,
     updateReplyDto: UpdateReplyDto,
   ): Promise<void> {
-    const isEdited: number = await manager
+    await manager
       .getCustomRepository(EnquiryRepliesRepository)
       .updateReply(enquiryNo, updateReplyDto);
-
-    if (!isEdited) {
-      throw new InternalServerErrorException(
-        `문의사항 답변 수정 오류 editReply-service.`,
-      );
-    }
   }
 
   private async editReplyimages(
     manager: EntityManager,
-    images: string[],
     files: Express.Multer.File[],
     replyNo: number,
+    imageUrls: string[],
   ): Promise<void> {
-    if (files.length) {
-      await this.awsService.deleteFiles(images);
-      // await this.uploadReplyImages(manager, replyNo, files);
-    } else {
-      await this.awsService.deleteFiles(images);
+    if (!imageUrls.includes(null)) {
       await this.deleteReplyImages(manager, replyNo);
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    if (files.length) {
+      const images: string[] = await this.uploadReplyImages(files);
+      await this.setReplyImages(manager, images, replyNo);
     }
   }
 
@@ -362,8 +372,24 @@ export class EnquiriesService {
     userNo: number,
   ): Promise<void> {
     await this.getEnquiry(manager, enquiryNo, userNo);
+    await this.validateAdmin(manager, userNo);
+    const { imageUrls }: Reply<string[]> = await this.getReply(
+      manager,
+      enquiryNo,
+      userNo,
+    );
 
-    const isDeleted: number = await manager
+    if (!imageUrls.includes(null)) {
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    await this.removeReply(manager, enquiryNo);
+  }
+
+  private async removeReply(
+    manager: EntityManager,
+    enquiryNo: number,
+  ): Promise<void> {
+    await manager
       .getCustomRepository(EnquiryRepliesRepository)
       .deleteReply(enquiryNo);
   }
@@ -382,7 +408,7 @@ export class EnquiriesService {
     userNo: number,
     writerNo: number,
   ): Promise<void> {
-    if ((writerNo | this.ADMIN_USER) !== userNo) {
+    if (writerNo !== userNo && this.ADMIN_USER !== userNo) {
       throw new BadRequestException(
         `사용자 검증(validateWriter-service): 잘못된 사용자의 접근입니다.`,
       );
@@ -425,7 +451,7 @@ export class EnquiriesService {
       .getCustomRepository(EnquiryRepliesRepository)
       .getReply(enquiryNo);
 
-    if (!no) {
+    if (no) {
       throw new BadRequestException(
         '답변 확인(validateIsAnswered-service): 답변 작성된 문의사항입니다.',
       );
@@ -433,10 +459,23 @@ export class EnquiriesService {
   }
 
   // s3
-  private async uploadImages(files: Express.Multer.File[]): Promise<string[]> {
+  private async uploadEnquiryImages(
+    files: Express.Multer.File[],
+  ): Promise<string[]> {
     const imageUrls: string[] = await this.awsService.uploadImages(
       files,
       'enquiry',
+    );
+
+    return imageUrls;
+  }
+
+  private async uploadReplyImages(
+    files: Express.Multer.File[],
+  ): Promise<string[]> {
+    const imageUrls: string[] = await this.awsService.uploadImages(
+      files,
+      'reply',
     );
 
     return imageUrls;

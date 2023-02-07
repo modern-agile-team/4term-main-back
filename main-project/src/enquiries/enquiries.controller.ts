@@ -29,10 +29,13 @@ import { Enquiry, Reply } from './interface/enquiry.interface';
 import { ApiCreateEnquiry } from './swagger-decorator/create-enquiry.decorator';
 import { ApiCreateReply } from './swagger-decorator/create-reply.decorator';
 import { ApiDeleteEnquiry } from './swagger-decorator/delete-enquiry.decorator';
+import { ApiDeleteReply } from './swagger-decorator/delete-reply.decorator';
+import { ApiGetEnquiriesByUser } from './swagger-decorator/get-enquiries-by-user.decorator';
 import { ApiGetEnquiries } from './swagger-decorator/get-enquiries.decorator';
 import { ApiGetEnquiry } from './swagger-decorator/get-enquiry.decorator';
 import { ApiGetReply } from './swagger-decorator/get-reply.decorator';
 import { ApiUpdateEnquiry } from './swagger-decorator/update-enquiry.decorator';
+import { ApiUpdateReply } from './swagger-decorator/update-reply.decorator';
 
 @Controller('enquiries')
 @ApiTags('문의사항 API')
@@ -51,6 +54,25 @@ export class EnquiriesController {
       await this.enquiriesService.getEnquiries(manager, enquiryFilterDto);
 
     return { msg: '문의사항 전체 조회 성공', response: { eunqiries } };
+  }
+
+  @Get('/my-page')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetEnquiriesByUser()
+  async getEnquiriesByUser(
+    @TransactionDecorator() manager: EntityManager,
+    @GetUser() userNo: number,
+    @Query() enquiryFilterDto?: EnquiryFilterDto,
+  ): Promise<APIResponse> {
+    const eunqiries: Enquiry<string[]>[] =
+      await this.enquiriesService.getEnquiriesByUser(
+        manager,
+        enquiryFilterDto,
+        userNo,
+      );
+
+    return { msg: '유저별 문의사항 전체 조회', response: { eunqiries } };
   }
 
   @Get('/:enquiryNo')
@@ -158,9 +180,10 @@ export class EnquiriesController {
   }
 
   @Patch('/:enquiryNo/reply')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @UseInterceptors(FilesInterceptor('files', 10))
-  @ApiGetReply()
+  @ApiUpdateReply()
   async updateEnquiry(
     @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
     @Body() updateEnquiryDto: UpdateEnquiryDto,
@@ -168,7 +191,7 @@ export class EnquiriesController {
     @UploadedFiles() files: Express.Multer.File[],
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    await this.enquiriesService.updateReply(
+    await this.enquiriesService.editReply(
       manager,
       enquiryNo,
       updateEnquiryDto,
@@ -197,10 +220,7 @@ export class EnquiriesController {
   @Delete('/:enquiryNo/reply')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '답변 삭제 API',
-    description: '문의번호를 사용해 해당 문의사항의 답변을 삭제한다.',
-  })
+  @ApiDeleteReply()
   async deleteReply(
     @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
     @GetUser() userNo: number,

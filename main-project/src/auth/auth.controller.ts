@@ -31,10 +31,12 @@ import { ApiGetPasswordToken } from './swagger-decorator/get-password-token.deco
 import { ApiLogin } from './swagger-decorator/login.decorator';
 import { ApiResetForgottenPassword } from './swagger-decorator/reset-forgotten-password.decorator';
 import { ApiResetLoginFailedCount } from './swagger-decorator/reset-login-failed-count.decorator';
-import { ApiSignIn } from './swagger-decorator/sign-in.decorator';
+import { ApiGetEmailCode } from './swagger-decorator/get-email-code.decorator';
 import { ApiSocialLogin } from './swagger-decorator/social-login.decorator';
 import { ApiUpdatePassword } from './swagger-decorator/upate-password.decorator';
 import { ApiVerifyEmail } from './swagger-decorator/verify-email.decorator';
+import { SignInDto } from './dto/sign-in.dto';
+import { ApiSignIn } from './swagger-decorator/sign-in.decorator';
 
 @ApiTags('인증 API')
 @Controller('auth')
@@ -105,27 +107,32 @@ export class AuthController {
     return { msg: '구글 계정으로 로그인되었습니다.', response: { user } };
   }
 
-  @ApiSignIn()
-  @Post('/signIn')
-  async signIn(@Body() { email }: EmailDto) {
-    await this.authService.signIn(email);
+  @ApiGetEmailCode()
+  @Get('/email-code')
+  async getEmailCode(@Body() { email }: EmailDto) {
+    await this.authService.getEmailCode(email);
 
     return { msg: '이메일 인증 코드가 전송되었습니다' };
   }
 
   @ApiVerifyEmail()
+  @Post('/email')
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto) {
+    await this.authService.verifyEmail(verifyEmailDto);
+
+    return { msg: '이메일 인증 성공' };
+  }
+
+  @ApiSignIn()
   @UseInterceptors(TransactionInterceptor)
-  @Post('/verify')
-  async verifyEmail(
-    @Body() verifyEmailDto: VerifyEmailDto,
+  @Post('/sign-in')
+  async signIn(
+    @Body() signInDto: SignInDto,
     @TransactionDecorator() manager: EntityManager,
   ) {
-    const user: User = await this.authService.verifyEmail(
-      verifyEmailDto,
-      manager,
-    );
+    const user: User = await this.authService.signIn(signInDto, manager);
 
-    return { response: { user } };
+    return { msg: '회원 가입 완료', response: { user } };
   }
 
   @ApiLogin()

@@ -8,7 +8,6 @@ import {
   SelectQueryBuilder,
   UpdateResult,
 } from 'typeorm';
-import { EnquiryFilterDto } from '../dto/enquiry-filter.dto';
 import { UpdateEnquiryDto } from '../dto/update-enquiry.dto';
 import { Enquiries } from '../entity/enquiry.entity';
 import { Enquiry } from '../interface/enquiry.interface';
@@ -16,7 +15,10 @@ import { Enquiry } from '../interface/enquiry.interface';
 @EntityRepository(Enquiries)
 export class EnquiriesRepository extends Repository<Enquiries> {
   //Get Methods
-  async getEnquiries(page: number): Promise<Enquiry<string[]>[]> {
+  async getEnquiries(
+    page: number,
+    userNo?: number,
+  ): Promise<Enquiry<string[]>[]> {
     try {
       const query: SelectQueryBuilder<Enquiries> = this.createQueryBuilder(
         'enquiries',
@@ -38,6 +40,9 @@ export class EnquiriesRepository extends Repository<Enquiries> {
 
       if (page > 1) {
         query.offset((page - 1) * 5);
+      }
+      if (userNo) {
+        query.where('enquiries.userNo = :userNo', { userNo });
       }
 
       const enquiries = await query.getRawMany();
@@ -127,16 +132,13 @@ export class EnquiriesRepository extends Repository<Enquiries> {
     }
   }
 
-  async closeEnquiry(no: number): Promise<number> {
+  async closeEnquiry(no: number): Promise<void> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .update(Enquiries)
         .set({ isDone: true })
         .where('no = :no', { no })
         .execute();
-      console.log(affected);
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} closeEnquiry-repository: 알 수 없는 서버 에러입니다.`,

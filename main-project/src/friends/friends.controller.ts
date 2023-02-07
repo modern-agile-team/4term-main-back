@@ -18,6 +18,14 @@ import { TransactionInterceptor } from 'src/common/interceptor/transaction-inter
 import { APIResponse } from 'src/common/interface/interface';
 import { EntityManager } from 'typeorm';
 import { FriendsService } from './friends.service';
+import { ApiAcceptFriendRequest } from './swagger/accept-friend-request.decorator';
+import { ApiDeleteFriend } from './swagger/delete-friend.decorator';
+import { ApiGetFriends } from './swagger/get-friends.decorator';
+import { ApiGetReceivedRequests } from './swagger/get-received-requests.decorator';
+import { ApiGetSentRequests } from './swagger/get-sent-requests.decorator';
+import { ApiRefuseRequests } from './swagger/refuse-request.decorator';
+import { ApiSearchFriends } from './swagger/search-friends.decorator';
+import { ApiSendFriendRequest } from './swagger/send-friend-request.decorator';
 
 @Controller('friends')
 @ApiTags('친구 API')
@@ -25,10 +33,7 @@ export class FriendsController {
   constructor(private readonly friendsService: FriendsService) {}
 
   @Get()
-  @ApiOperation({
-    summary: '친구 목록 API',
-    description: '친구 목록 조회',
-  })
+  @ApiGetFriends()
   @UseGuards(JwtAuthGuard)
   async getFriendList(@GetUser() userNo: number): Promise<APIResponse> {
     const friends = await this.friendsService.getFriends(userNo);
@@ -37,12 +42,9 @@ export class FriendsController {
   }
 
   @Post('/requests/:receiverNo')
+  @ApiSendFriendRequest()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '친구 신청 API',
-    description: '친구 신청 API',
-  })
   async sendFriendRequest(
     @GetUser() userNo,
     @TransactionDecorator() manager: EntityManager,
@@ -56,10 +58,7 @@ export class FriendsController {
   }
 
   @Patch('/requests/:friendNo/:senderNo')
-  @ApiOperation({
-    summary: '친구  요청 수락 API',
-    description: '토큰의 userNo와 Param으로 받은 friendNo,senderNo',
-  })
+  @ApiAcceptFriendRequest()
   @UseGuards(JwtAuthGuard)
   async acceptFriendRequest(
     @GetUser() userNo: number,
@@ -74,10 +73,7 @@ export class FriendsController {
   }
 
   @Get('/requests/received')
-  @ApiOperation({
-    summary: '받은 친구 신청 목록 조회 API',
-    description: '유저가 받은 친구 신청 전체 조회',
-  })
+  @ApiGetReceivedRequests()
   @UseGuards(JwtAuthGuard)
   async getReceivedRequests(
     @GetUser('userNo') receiverNo: number,
@@ -90,16 +86,11 @@ export class FriendsController {
   }
 
   @Get('/requests/sent')
-  @ApiOperation({
-    summary: '보낸 친구 신청 목록 조회 API',
-    description: '유저가 보낸 친구 신청 전체조회',
-  })
+  @ApiGetSentRequests()
   @UseGuards(JwtAuthGuard)
   async getSentRequests(
     @GetUser('userNo') senderNo: number,
   ): Promise<APIResponse> {
-    console.log(senderNo);
-
     const sentFriendRequests = await this.friendsService.getSentRequests(
       senderNo,
     );
@@ -108,10 +99,7 @@ export class FriendsController {
   }
 
   @Delete('/requests/:friendNo/:senderNo')
-  @ApiOperation({
-    summary: '친구 신청 거절 API',
-    description: '친구 신청 거절 API',
-  })
+  @ApiRefuseRequests()
   @UseGuards(JwtAuthGuard)
   async refuseRequest(
     @GetUser('userNo') receiverNo: number,
@@ -125,15 +113,12 @@ export class FriendsController {
     });
 
     return {
-      msg: '친구 요청을 거절했습니다.',
+      msg: '친구 신청을 거절했습니다.',
     };
   }
 
   @Delete('/:friendNo/:friendUserNo')
-  @ApiOperation({
-    summary: '친구 삭제 API',
-    description: '친구 삭제 API',
-  })
+  @ApiDeleteFriend()
   @UseGuards(JwtAuthGuard)
   async deleteFriend(
     @GetUser() userNo: number,
@@ -143,17 +128,14 @@ export class FriendsController {
     await this.friendsService.deleteFriend(userNo, friendNo, friendUserNo);
 
     return {
-      msg: '친구삭제가 완료되었습니다.',
+      msg: '친구 삭제가 완료되었습니다.',
     };
   }
 
   @Get('/:nickname')
-  @ApiOperation({
-    summary: '친구 검색 API',
-    description: '닉네임으로 친구 검색',
-  })
+  @ApiSearchFriends()
   @UseGuards(JwtAuthGuard)
-  async searchFriend(
+  async searchFriends(
     @GetUser() userNo: number,
     @Param('nickname') nickname: string,
   ): Promise<APIResponse> {

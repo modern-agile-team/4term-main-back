@@ -579,7 +579,7 @@ export class BoardsService {
       .getCustomRepository(UsersRepository)
       .getUsersByNums(users);
 
-    if (!dbUsers.length) {
+    if (!dbUsers) {
       throw new BadRequestException(
         '사용자 확인(validateUsers-service): 존재하지 않는 사용자들 입니다',
       );

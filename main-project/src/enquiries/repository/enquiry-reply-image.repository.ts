@@ -26,7 +26,7 @@ export class EnquiryReplyImagesRepository extends Repository<EnquiryReplyImages>
       await this.createQueryBuilder()
         .delete()
         .from(EnquiryReplyImages)
-        .where('no = :replyNo', { replyNo })
+        .where('replyNo = :replyNo', { replyNo })
         .execute();
     } catch (error) {
       throw new InternalServerErrorException(

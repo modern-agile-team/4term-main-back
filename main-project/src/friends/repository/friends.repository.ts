@@ -236,11 +236,17 @@ export class FriendsRepository extends Repository<Friends> {
       const friend = await this.createQueryBuilder('friends')
         .leftJoin('friends.receiverNo', 'receiverUser')
         .leftJoin('receiverUser.userProfileNo', 'receiverUserProfile')
+        .leftJoin(
+          'receiverUserProfile.profileImage',
+          'receiverUserProfileImage',
+        )
         .leftJoin('friends.senderNo', 'senderUser')
         .leftJoin('senderUser.userProfileNo', 'senderUserProfile')
+        .leftJoin('senderUserProfile.profileImage', 'senderUserProfileImage')
         .select([
           `IF(friends.receiverNo = ${userNo} , friends.senderNo, friends.receiverNo) AS friendNo`,
           `IF(friends.receiverNo = ${userNo} , senderUserProfile.nickname, receiverUserProfile.nickname) AS friendNickname`,
+          `IF(friends.receiverNo = ${userNo} , senderUserProfileImage.image_url, receiverUserProfileImage.image_url) AS friendProfileImage`,
         ])
         .where(
           `friends.receiverNo = :userNo AND senderUserProfile.nickname LIKE :nickname AND friends.isAccept = 1`,
