@@ -34,6 +34,7 @@ import { ApiGetEnquiries } from './swagger-decorator/get-enquiries.decorator';
 import { ApiGetEnquiry } from './swagger-decorator/get-enquiry.decorator';
 import { ApiGetReply } from './swagger-decorator/get-reply.decorator';
 import { ApiUpdateEnquiry } from './swagger-decorator/update-enquiry.decorator';
+import { ApiUpdateReply } from './swagger-decorator/update-reply.decorator';
 
 @Controller('enquiries')
 @ApiTags('문의사항 API')
@@ -159,9 +160,10 @@ export class EnquiriesController {
   }
 
   @Patch('/:enquiryNo/reply')
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @UseInterceptors(FilesInterceptor('files', 10))
-  @ApiGetReply()
+  @ApiUpdateReply()
   async updateEnquiry(
     @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
     @Body() updateEnquiryDto: UpdateEnquiryDto,
@@ -169,7 +171,7 @@ export class EnquiriesController {
     @UploadedFiles() files: Express.Multer.File[],
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    await this.enquiriesService.updateReply(
+    await this.enquiriesService.editReply(
       manager,
       enquiryNo,
       updateEnquiryDto,

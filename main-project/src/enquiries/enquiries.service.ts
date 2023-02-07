@@ -266,53 +266,48 @@ export class EnquiriesService {
     }
   }
 
-  async updateReply(
+  async editReply(
     manager: EntityManager,
     enquiryNo: number,
     updateReplyDto: UpdateReplyDto,
     files: Express.Multer.File[],
     userNo: number,
   ): Promise<void> {
-    const reply: Reply<string[]> = await this.getReply(
+    await this.validateAdmin(manager, userNo);
+    await this.getEnquiry(manager, enquiryNo, userNo);
+    const { imageUrls, no }: Reply<string[]> = await this.getReply(
       manager,
       enquiryNo,
       userNo,
     );
 
-    await this.editReply(manager, enquiryNo, updateReplyDto);
-
-    const { imageUrls, no }: Reply<string[]> = reply;
-    await this.editReplyimages(manager, imageUrls, files, no);
+    await this.updateReply(manager, enquiryNo, updateReplyDto);
+    await this.editReplyimages(manager, files, no, imageUrls);
   }
 
-  private async editReply(
+  private async updateReply(
     manager: EntityManager,
     enquiryNo: number,
     updateReplyDto: UpdateReplyDto,
   ): Promise<void> {
-    const isEdited: number = await manager
+    await manager
       .getCustomRepository(EnquiryRepliesRepository)
       .updateReply(enquiryNo, updateReplyDto);
-
-    if (!isEdited) {
-      throw new InternalServerErrorException(
-        `문의사항 답변 수정 오류 editReply-service.`,
-      );
-    }
   }
 
   private async editReplyimages(
     manager: EntityManager,
-    images: string[],
     files: Express.Multer.File[],
     replyNo: number,
+    imageUrls: string[],
   ): Promise<void> {
-    if (files.length) {
-      await this.awsService.deleteFiles(images);
-      // await this.uploadReplyImages(manager, replyNo, files);
-    } else {
-      await this.awsService.deleteFiles(images);
+    if (!imageUrls.includes(null)) {
       await this.deleteReplyImages(manager, replyNo);
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    if (files.length) {
+      const images: string[] = await this.uploadReplyImages(files);
+      await this.setReplyImages(manager, images, replyNo);
     }
   }
 

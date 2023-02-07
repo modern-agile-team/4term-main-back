@@ -11,12 +11,12 @@ import {
 
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 
-export function ApiUpdateEnquiry() {
+export function ApiUpdateReply() {
   return applyDecorators(
     ApiBearerAuth(),
     ApiOperation({
-      summary: '문의사항 수정',
-      description: '문의사항의 제목, 내용, 사진을 수정',
+      summary: '답변 수정',
+      description: '답변의 제목, 내용, 사진을 수정',
     }),
     ApiConsumes('multipart/form-data'),
     ApiBody({
@@ -29,7 +29,7 @@ export function ApiUpdateEnquiry() {
             minLength: 2,
             maxLength: 255,
             nullable: false,
-            description: '문의사항 제목',
+            description: '답변 제목',
           },
           description: {
             type: 'string',
@@ -37,7 +37,7 @@ export function ApiUpdateEnquiry() {
             minLength: 2,
             maxLength: 255,
             nullable: false,
-            description: '문의사항 내용',
+            description: '답변 내용',
           },
           file: {
             type: 'string',
@@ -48,10 +48,7 @@ export function ApiUpdateEnquiry() {
       },
     }),
     ApiOkResponse(
-      SwaggerApiResponse.success(
-        'Api 작동 성공 msg 반환',
-        '문의사항 수정 성공',
-      ),
+      SwaggerApiResponse.success('Api 작동 성공 msg 반환', '답변 수정 성공'),
     ),
     ApiNotFoundResponse(
       SwaggerApiResponse.exception([
@@ -61,14 +58,20 @@ export function ApiUpdateEnquiry() {
             msg: `문의사항 상세 조회(getEnquiry-service): 4번 문의사항이 없습니다.`,
           },
         },
+        {
+          name: 'replyNotFound',
+          example: {
+            msg: `답변 상세 조회(getReply-service): 4번 답변이 없습니다.`,
+          },
+        },
       ]),
     ),
     ApiBadRequestResponse(
       SwaggerApiResponse.exception([
         {
-          name: 'isNotWriter',
+          name: 'isNotAdmin',
           example: {
-            msg: `사용자 검증(deleteEnquiry-service): 잘못된 사용자의 접근입니다.`,
+            msg: '관리자 검증(validateAdmin-service): 관리자가 아닙니다.',
           },
         },
       ]),
