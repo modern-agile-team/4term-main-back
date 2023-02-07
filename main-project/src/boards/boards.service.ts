@@ -151,8 +151,6 @@ export class BoardsService {
     userNo: number,
     { hostMembers, ...board }: CreateBoardDto,
   ): Promise<void> {
-    console.log(1);
-
     await this.validateUsers(manager, hostMembers);
     const boardNo: number = await this.setBoard(manager, userNo, board);
     await this.setHosts(manager, boardNo, userNo, hostMembers);
@@ -505,7 +503,6 @@ export class BoardsService {
     hosts: number[],
   ): Promise<void> {
     const type: number = NoticeType.HOST_REQUEST;
-    console.log(type);
 
     for (let idx in hosts) {
       const { insertId }: ResultSetHeader = await manager
