@@ -18,7 +18,7 @@ import {
   UpdatedMeeting,
 } from './interface/meeting.interface';
 import { ChatUsersRepository } from 'src/chats/repository/chat-users.repository';
-import { ChatUserInfo } from 'src/chats/interface/chat.interface';
+import { ChatUser } from 'src/chats/interface/chat.interface';
 import { UserType } from 'src/common/configs/user-type.config';
 
 @Injectable()
@@ -77,12 +77,34 @@ export class MeetingsService {
     await this.updateMeetingByNo(meetingNo, { isAccepted: true });
   }
 
-  async getMeeting(meetingNo: number): Promise<Meetings> {
-    const meeting: Meetings = await this.meetingRepository.getMeetingByNo(
+  private async getMeeting(meetingNo: number): Promise<Meetings> {
+    const meeting: Meetings = await this.meetingRepository.getMeeting(
       meetingNo,
     );
     if (!meeting) {
       throw new NotFoundException('존재하지 않는 약속입니다.');
+    }
+
+    return meeting;
+  }
+
+  async getMeetingByChatRoom(
+    userNo: number,
+    chatRoomNo: number,
+  ): Promise<Meetings> {
+    const user: ChatUser = await this.chatUserRepository.getChatRoomUser(
+      userNo,
+      chatRoomNo,
+    );
+    if (!user) {
+      throw new UnauthorizedException('유저가 참여 중인 채팅방이 아닙니다.');
+    }
+
+    const meeting: Meetings = await this.meetingRepository.getMeetingByChatRoom(
+      chatRoomNo,
+    );
+    if (!meeting) {
+      throw new NotFoundException('약속이 존재하지 않는 채팅방입니다.');
     }
 
     return meeting;
@@ -127,8 +149,10 @@ export class MeetingsService {
     userNo: number,
     chatRoomNo: number,
   ): Promise<void> {
-    const chatUser: ChatUserInfo =
-      await this.chatUserRepository.checkUserInChatRoom({ userNo, chatRoomNo });
+    const chatUser: ChatUser = await this.chatUserRepository.getChatRoomUser(
+      userNo,
+      chatRoomNo,
+    );
 
     if (!chatUser) {
       throw new NotFoundException('유저가 참여 중인 채팅방이 아닙니다.');

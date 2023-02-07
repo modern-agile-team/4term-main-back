@@ -55,11 +55,21 @@ export interface EntireProfile {
   gender: boolean;
   description: string;
   profileImage: string;
-  mannerGrade: number;
+  grade: any;
+  email?: string;
 }
 
 export interface CertificateForJudgment {
   certificateNo: number;
   major: string;
   certificate: string;
+}
+
+export interface ProfileImages {
+  profileImages: string;
+}
+
+export interface UserImages {
+  profiles: string;
+  certificates: string;
 }
