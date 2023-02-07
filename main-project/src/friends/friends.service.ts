@@ -94,8 +94,8 @@ export class FriendsService {
       .getCustomRepository(NoticesRepository)
       .saveNotice({
         type,
-        userNo: senderNo,
-        targetUserNo: receiverNo,
+        userNo: receiverNo,
+        targetUserNo: senderNo,
       });
 
     const result = await manager
