@@ -5,6 +5,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
@@ -32,5 +33,12 @@ export class MannersController {
     await this.mannersService.updateManner(userNo, updateMannerDto, manager);
 
     return { msg: '평점 저장 성공' };
+  }
+
+  @UseInterceptors(TransactionInterceptor)
+  @Cron(CronExpression.EVERY_DAY_AT_2AM)
+  async sendMannerRequest(@TransactionDecorator() manager: EntityManager) {
+    await this.mannersService.sendMannerRequest(manager);
+    return 1;
   }
 }
