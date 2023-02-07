@@ -38,6 +38,11 @@ export function ApiCreateReply() {
             nullable: false,
             description: '답변 내용',
           },
+          file: {
+            type: 'string',
+            format: 'binary',
+            description: '답변 이미지 파일',
+          },
         },
       },
     }),
@@ -55,7 +60,7 @@ export function ApiCreateReply() {
         {
           name: 'enquiryNotFound',
           example: {
-            msg: `문의 상세 조회(readEnquiry-service): $3번 문의 사항이 없습니다.`,
+            msg: `문의 상세 조회(readEnquiry-service): 3번 문의 사항이 없습니다.`,
           },
         },
       ]),
@@ -66,6 +71,12 @@ export function ApiCreateReply() {
           name: 'isNotAdmin',
           example: {
             msg: '관리자 검증(validateAdmin-service): 관리자가 아닙니다.',
+          },
+        },
+        {
+          name: 'areadlyAnswered',
+          example: {
+            msg: '답변 확인(validateIsAnswered-service): 답변 작성된 문의사항입니다.',
           },
         },
       ]),

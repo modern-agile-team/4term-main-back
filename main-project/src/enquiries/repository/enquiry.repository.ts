@@ -8,7 +8,6 @@ import {
   SelectQueryBuilder,
   UpdateResult,
 } from 'typeorm';
-import { EnquiryFilterDto } from '../dto/enquiry-filter.dto';
 import { UpdateEnquiryDto } from '../dto/update-enquiry.dto';
 import { Enquiries } from '../entity/enquiry.entity';
 import { Enquiry } from '../interface/enquiry.interface';
@@ -127,16 +126,13 @@ export class EnquiriesRepository extends Repository<Enquiries> {
     }
   }
 
-  async closeEnquiry(no: number): Promise<number> {
+  async closeEnquiry(no: number): Promise<void> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .update(Enquiries)
         .set({ isDone: true })
         .where('no = :no', { no })
         .execute();
-      console.log(affected);
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} closeEnquiry-repository: 알 수 없는 서버 에러입니다.`,
