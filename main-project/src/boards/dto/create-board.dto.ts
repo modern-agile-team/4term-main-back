@@ -49,8 +49,8 @@ export class CreateBoardDto {
   location: string;
 
   @ApiProperty({ example: '2022-12-25 19:30:00', description: '약속 시간' })
-  @Transform(({ value }) => new Date(value))
   @IsDate()
+  @Transform(({ value }) => new Date(value))
   @IsNotEmpty()
   meetingTime: Date;
 
