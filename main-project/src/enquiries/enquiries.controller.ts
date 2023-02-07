@@ -72,7 +72,7 @@ export class EnquiriesController {
         userNo,
       );
 
-    return { msg: '유저별 문의사항 전체 조회', response: { eunqiries } };
+    return { msg: '유저별 문의사항 전체 조회 성공', response: { eunqiries } };
   }
 
   @Get('/:enquiryNo')

@@ -65,7 +65,7 @@ export class ReportRepository extends Repository<Reports> {
     }
   }
 
-  async getReportByNo(reportNo: number): Promise<Report<string[]>> {
+  async getReport(reportNo: number): Promise<Report<string[]>> {
     try {
       const report = this.createQueryBuilder('reports')
         .leftJoin('reports.reportedBoard', 'reportedBoard')
@@ -84,7 +84,7 @@ export class ReportRepository extends Repository<Reports> {
       return report;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getReportByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getReport-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -111,15 +111,13 @@ export class ReportRepository extends Repository<Reports> {
   async updateReport(
     reportNo: number,
     updateReportDto: UpdateReportDto,
-  ): Promise<number> {
+  ): Promise<void> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .update(Reports)
         .set(updateReportDto)
         .where('no = :reportNo', { reportNo })
         .execute();
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateReport-repository: 알 수 없는 서버 에러입니다.`,

@@ -10,7 +10,7 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { ReportImages } from './report-images.entity';
+import { ReportBoardImages } from './report-board-images.entity';
 import { ReportBoards } from './report-board.entity';
 import { ReportUsers } from './report-user.entity';
 
@@ -40,7 +40,4 @@ export class Reports extends BaseEntity {
   @ManyToOne((type) => Users, (user) => user.report, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_no' })
   userNo: number;
-
-  @OneToOne((type) => ReportImages, (reportImages) => reportImages.reportNo)
-  reportImages: ReportImages;
 }
