@@ -90,7 +90,6 @@ export class EnquiriesService {
       enquiryNo,
       userNo,
     );
-    console.log(userNo, 'ssss');
 
     await this.validateWriter(userNo, enquiry.userNo);
 
@@ -177,7 +176,6 @@ export class EnquiriesService {
       ...createReplyDto,
       enquiryNo,
     });
-    console.log(files);
 
     if (files.length) {
       const imageUrls: string[] = await this.uploadReplyImages(files);
@@ -205,6 +203,7 @@ export class EnquiriesService {
   ): Promise<void> {
     const images: ImageInfo<string>[] = await this.convertImageArray(
       imageUrls,
+      undefined,
       replyNo,
     );
 
@@ -360,8 +359,24 @@ export class EnquiriesService {
     userNo: number,
   ): Promise<void> {
     await this.getEnquiry(manager, enquiryNo, userNo);
+    await this.validateAdmin(manager, userNo);
+    const { imageUrls }: Reply<string[]> = await this.getReply(
+      manager,
+      enquiryNo,
+      userNo,
+    );
 
-    const isDeleted: number = await manager
+    if (!imageUrls.includes(null)) {
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    await this.removeReply(manager, enquiryNo);
+  }
+
+  private async removeReply(
+    manager: EntityManager,
+    enquiryNo: number,
+  ): Promise<void> {
+    await manager
       .getCustomRepository(EnquiryRepliesRepository)
       .deleteReply(enquiryNo);
   }

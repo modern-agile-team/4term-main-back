@@ -29,6 +29,7 @@ import { Enquiry, Reply } from './interface/enquiry.interface';
 import { ApiCreateEnquiry } from './swagger-decorator/create-enquiry.decorator';
 import { ApiCreateReply } from './swagger-decorator/create-reply.decorator';
 import { ApiDeleteEnquiry } from './swagger-decorator/delete-enquiry.decorator';
+import { ApiDeleteReply } from './swagger-decorator/delete-reply.decorator';
 import { ApiGetEnquiries } from './swagger-decorator/get-enquiries.decorator';
 import { ApiGetEnquiry } from './swagger-decorator/get-enquiry.decorator';
 import { ApiGetReply } from './swagger-decorator/get-reply.decorator';
@@ -197,10 +198,7 @@ export class EnquiriesController {
   @Delete('/:enquiryNo/reply')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '답변 삭제 API',
-    description: '문의번호를 사용해 해당 문의사항의 답변을 삭제한다.',
-  })
+  @ApiDeleteReply()
   async deleteReply(
     @Param('enquiryNo', ParseIntPipe) enquiryNo: number,
     @GetUser() userNo: number,
