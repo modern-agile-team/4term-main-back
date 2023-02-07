@@ -2,6 +2,7 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { log } from 'console';
 import { ResultSetHeader } from 'mysql2';
 import { ChatRoomOfBoard } from 'src/chats/interface/chat.interface';
 import {

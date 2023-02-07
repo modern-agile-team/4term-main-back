@@ -31,3 +31,18 @@ export interface UpdatedMeeting {
   time?: Date;
   isAccepted?: boolean;
 }
+
+export interface EndedMeeting<T> {
+  meetingNo: number;
+  members: T;
+}
+
+export interface MeetingMember {
+  userNo: number;
+  userType: number;
+}
+
+export interface SortedMembers {
+  guests: number[];
+  hosts: number[];
+}

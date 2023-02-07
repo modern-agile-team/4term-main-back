@@ -104,7 +104,9 @@ export class ChatsControllerService {
     }
 
     const error = isNeededUser
-      ? new NotFoundException(`${userNo}님의 정보를 찾을 수 없습니다.`)
+      ? new NotFoundException(
+          `채팅방에서 ${userNo}님의 정보를 찾을 수 없습니다.`,
+        )
       : new BadRequestException(`채팅방에 이미 ${userNo}님이 존재합니다.`);
 
     throw error;
@@ -118,21 +120,20 @@ export class ChatsControllerService {
   ): Promise<void> {
     await this.checkChatRoomExists(chatRoomNo);
 
-    const user: ChatUser = await this.checkUserInChatRoom({
-      userNo,
+    const inviter: ChatUser = await this.checkUserInChatRoom({
+      userNo: targetUserNo,
       chatRoomNo,
       isNeededUser: true,
     });
-
     await this.checkUserInChatRoom({
-      userNo: targetUserNo,
+      userNo,
       chatRoomNo,
       isNeededUser: false,
     });
 
     await this.saveNotice(manager, {
       userNo,
-      userType: user.userType,
+      userType: inviter.userType,
       targetUserNo,
       chatRoomNo,
     });

@@ -11,13 +11,10 @@ import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 export function ApiVerifyEmail() {
   return applyDecorators(
     ApiOperation({
-      summary: '이메일 이용해 회원 가입',
+      summary: '전송받은 코드로 이메일 인증',
     }),
     ApiOkResponse(
-      SwaggerApiResponse.success(
-        '반환값 없음',
-        '이메일 인증 코드가 전송되었습니다',
-      ),
+      SwaggerApiResponse.success('반환값 없음', '이메일 인증 성공'),
     ),
     ApiNotFoundResponse(
       SwaggerApiResponse.exception([

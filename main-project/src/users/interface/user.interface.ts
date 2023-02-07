@@ -55,7 +55,8 @@ export interface EntireProfile {
   gender: boolean;
   description: string;
   profileImage: string;
-  mannerGrade: number;
+  grade: any;
+  email?: string;
 }
 
 export interface CertificateForJudgment {
