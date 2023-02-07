@@ -242,12 +242,20 @@ export class UsersService {
 
   async getUserProfile(userNo: number): Promise<EntireProfile> {
     await this.validateIsConfirmedUser(userNo);
-
-    const profile: EntireProfile =
-      await this.userProfileRepository.getUserProfileByUserNo(userNo);
+    const profile: EntireProfile = await this.userRepository.getUserProfile(
+      userNo,
+    );
     if (!profile) {
       throw new NotFoundException('프로필이 존재하지 않는 유저입니다.');
     }
+    profile.grade = parseFloat(profile.grade);
+
+    return profile;
+  }
+
+  async getOthersProfile(userNo: number): Promise<EntireProfile> {
+    const profile: EntireProfile = await this.getUserProfile(userNo);
+    delete profile.email;
 
     return profile;
   }
@@ -422,7 +430,7 @@ export class UsersService {
     profileNo: number,
     imageUrl: string,
     manager: EntityManager,
-  ): Promise<void>{
+  ): Promise<void> {
     const isProfileImageUpdated: number = await manager
       .getCustomRepository(ProfileImagesRepository)
       .updateProfileImage(profileNo, imageUrl);

@@ -134,31 +134,4 @@ export class UserProfilesRepository extends Repository<UserProfile> {
       );
     }
   }
-
-  async getUserProfileByUserNo(userNo: number): Promise<EntireProfile> {
-    try {
-      const profile: EntireProfile = await this.createQueryBuilder(
-        'user_profiles',
-      )
-        .leftJoin('user_profiles.profileImage', 'profileImages')
-        .leftJoin('user_profiles.mannerNo', 'manners')
-        .select([
-          'user_profiles.userNo AS userNo',
-          'user_profiles.nickname AS nickname',
-          'user_profiles.major AS major',
-          'user_profiles.gender AS gender',
-          'user_profiles.description AS description',
-          'profileImages.imageUrl AS profileImage',
-          'manners.grade AS mannerGrade',
-        ])
-        .where('user_profiles.userNo = :userNo', { userNo })
-        .getRawOne();
-
-      return profile;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} 프로필 조회 오류(getUserProfileByUserNo) :알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
 }

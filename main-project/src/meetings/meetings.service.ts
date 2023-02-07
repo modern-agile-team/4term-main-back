@@ -77,12 +77,34 @@ export class MeetingsService {
     await this.updateMeetingByNo(meetingNo, { isAccepted: true });
   }
 
-  async getMeeting(meetingNo: number): Promise<Meetings> {
-    const meeting: Meetings = await this.meetingRepository.getMeetingByNo(
+  private async getMeeting(meetingNo: number): Promise<Meetings> {
+    const meeting: Meetings = await this.meetingRepository.getMeeting(
       meetingNo,
     );
     if (!meeting) {
       throw new NotFoundException('존재하지 않는 약속입니다.');
+    }
+
+    return meeting;
+  }
+
+  async getMeetingByChatRoom(
+    userNo: number,
+    chatRoomNo: number,
+  ): Promise<Meetings> {
+    const user: ChatUser = await this.chatUserRepository.getChatRoomUser(
+      userNo,
+      chatRoomNo,
+    );
+    if (!user) {
+      throw new UnauthorizedException('유저가 참여 중인 채팅방이 아닙니다.');
+    }
+
+    const meeting: Meetings = await this.meetingRepository.getMeetingByChatRoom(
+      chatRoomNo,
+    );
+    if (!meeting) {
+      throw new NotFoundException('약속이 존재하지 않는 채팅방입니다.');
     }
 
     return meeting;

@@ -1,5 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { EntityRepository, Repository, UpdateResult } from 'typeorm';
+import { ResultSetHeader } from 'mysql2';
+import {
+  EntityRepository,
+  InsertResult,
+  Repository,
+  UpdateResult,
+} from 'typeorm';
 import { Manners } from '../entity/manners.entity';
 import { updatedManner } from '../interface/manner.interface';
 
@@ -40,6 +46,22 @@ export class MannersRepository extends Repository<Manners> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 매너 조회 에러(getMannerByUserNo): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async createManner(userNo: number): Promise<ResultSetHeader> {
+    try {
+      const { raw }: InsertResult = await this.createQueryBuilder()
+        .insert()
+        .into(Manners)
+        .values({ userNo })
+        .execute();
+
+      return raw;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 평점 생성(createManner): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

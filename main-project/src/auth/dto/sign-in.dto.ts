@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty } from 'class-validator';
 
-export class VerifyEmailDto {
-  @IsNotEmpty()
+export class SignInDto {
   @IsEmail()
+  @IsNotEmpty()
   @ApiProperty({
     description: '사용자 이메일',
     example: '123@naver.com',
@@ -12,8 +12,8 @@ export class VerifyEmailDto {
 
   @IsNotEmpty()
   @ApiProperty({
-    description: '이메일로 전송된 6자리 사용자 인증 코드',
-    example: '123456',
+    description: '사용자 비밀번호',
+    example: '123@naver.com',
   })
-  code: string;
+  password: string;
 }
