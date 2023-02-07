@@ -30,7 +30,6 @@ import * as Joi from 'joi';
       validationSchema: Joi.object({
         DB_SYNCHRONIZE: Joi.boolean().required(),
         DB_PORT: Joi.number().required(),
-        REDIS_HOST: Joi.number().required(),
         REDIS_PORT: Joi.number().required(),
         EXPIRES_IN: Joi.number().required(),
         REFRESH_TOKEN_EXPIRATION: Joi.number().required(),
