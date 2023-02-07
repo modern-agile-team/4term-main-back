@@ -105,7 +105,7 @@ export class NoticesRepository extends Repository<Notices> {
           'userProfiles.nickname AS senderNickname',
           'profileImages.imageUrl AS senderProfileImage',
           'IF(notices.readDatetime, TRUE, FALSE) AS isRead',
-          'notices.createdDate AS createdDate',
+          'DATE_FORMAT(notices.createdDate, "%Y-%m-%d %h:%i") AS createdDate',
           `CASE 
             WHEN notices.type =${NoticeType.INVITE_GUEST} 
             OR notices.type = ${NoticeType.INVITE_HOST} 
