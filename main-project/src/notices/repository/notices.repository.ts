@@ -18,13 +18,13 @@ import {
 @EntityRepository(Notices)
 export class NoticesRepository extends Repository<Notices> {
   async saveNotice(
-    noticeInfo: SavedNotice | SavedNotice[],
+    notice: SavedNotice | SavedNotice[],
   ): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('notices')
         .insert()
         .into(Notices)
-        .values(noticeInfo)
+        .values(notice)
         .execute();
 
       return raw;

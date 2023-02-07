@@ -31,7 +31,8 @@ export interface FriendToSearch {
 
 export interface FriendInfo {
   friendNo: number;
-  nickname: string;
+  friendNickname: string;
+  friendProfileImage: string;
 }
 
 export interface NoticeFriend {

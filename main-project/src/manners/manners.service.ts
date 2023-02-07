@@ -4,8 +4,16 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common/exceptions';
+import { ResultSetHeader } from 'mysql2';
 import { NoticeType } from 'src/common/configs/notice-type.config';
+import {
+  EndedMeeting,
+  MeetingMember,
+  SortedMembers,
+} from 'src/meetings/interface/meeting.interface';
+import { MeetingRepository } from 'src/meetings/repository/meeting.repository';
 import { Notices } from 'src/notices/entity/notices.entity';
+import { SavedNotice } from 'src/notices/interface/notice.interface';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { EntityManager } from 'typeorm';
 import { UpdateMannerDto } from './dto/update-manner.dto';
@@ -18,7 +26,11 @@ export class MannersService {
   constructor(
     private readonly mannersRepository: MannersRepository,
     private readonly noticesRepository: NoticesRepository,
+    private readonly meetingRepository: MeetingRepository,
   ) {}
+
+  private readonly NOTICE_SENDER = 1;
+  private readonly NOTICE_RECEIVER = 0;
 
   async updateManner(
     senderNo: number,
@@ -83,5 +95,110 @@ export class MannersService {
     }
 
     return manner;
+  }
+
+  private async getEndedMeetings(): Promise<EndedMeeting<MeetingMember[]>[]> {
+    const meetings: EndedMeeting<string>[] =
+      await this.meetingRepository.getEndedMeetings();
+
+    const endedMeetings: EndedMeeting<MeetingMember[]>[] = [];
+    meetings.forEach((meeting) => {
+      const endedMeeting: EndedMeeting<MeetingMember[]> = {
+        meetingNo: meeting.meetingNo,
+        members: JSON.parse(meeting.members),
+      };
+      endedMeetings.push(endedMeeting);
+    });
+
+    return endedMeetings;
+  }
+
+  private getMemberCombinations(
+    meeting: EndedMeeting<MeetingMember[]>,
+  ): number[][] {
+    const members: SortedMembers = { guests: [], hosts: [] };
+    meeting.members.forEach((member) => {
+      if (member.userType) {
+        members.guests.push(member.userNo);
+      } else {
+        members.hosts.push(member.userNo);
+      }
+    });
+
+    const memberCombinations = [];
+    members.guests.forEach((guest) => {
+      members.hosts.forEach((host) => {
+        memberCombinations.push([host, guest]);
+        memberCombinations.push([guest, host]);
+      });
+    });
+
+    return memberCombinations;
+  }
+
+  private createMannerNotices(
+    meetings: EndedMeeting<MeetingMember[]>[],
+  ): SavedNotice[] {
+    const notices = [];
+    meetings.forEach((meeting) => {
+      const memberCombinations: number[][] =
+        this.getMemberCombinations(meeting);
+
+      memberCombinations.forEach((noticeUsers) => {
+        notices.push({
+          userNo: noticeUsers[this.NOTICE_RECEIVER],
+          targetUserNo: noticeUsers[this.NOTICE_SENDER],
+          type: NoticeType.MANNER_REQUEST,
+        });
+      });
+    });
+
+    return notices;
+  }
+
+  private async saveNotices(
+    notices: SavedNotice[],
+    manager: EntityManager,
+  ): Promise<void> {
+    if (!notices.length) {
+      return;
+    }
+    const noticeSavedResult: ResultSetHeader = await manager
+      .getCustomRepository(NoticesRepository)
+      .saveNotice(notices);
+
+    if (noticeSavedResult.affectedRows !== notices.length) {
+      throw new InternalServerErrorException('매너 알림 생성 오류입니다.');
+    }
+  }
+
+  private async updateEndedMeetings(
+    endedMeetings: EndedMeeting<MeetingMember[]>[],
+    manager: EntityManager,
+  ): Promise<void> {
+    const meetings: number[] = [];
+    endedMeetings.forEach((endedMeeting) =>
+      meetings.push(endedMeeting.meetingNo),
+    );
+
+    const meetingsUpdatedResult: number = await manager
+      .getCustomRepository(MeetingRepository)
+      .updateEndedMeetings(meetings);
+    if (meetingsUpdatedResult !== meetings.length) {
+      throw new InternalServerErrorException('종료된 약속 수정 오류입니다.');
+    }
+  }
+
+  async sendMannerRequest(manager: EntityManager): Promise<void> {
+    const endedMeetings: EndedMeeting<MeetingMember[]>[] =
+      await this.getEndedMeetings();
+    if (!endedMeetings.length) {
+      return;
+    }
+
+    const mannerNotices: SavedNotice[] =
+      this.createMannerNotices(endedMeetings);
+    await this.saveNotices(mannerNotices, manager);
+    await this.updateEndedMeetings(endedMeetings, manager);
   }
 }

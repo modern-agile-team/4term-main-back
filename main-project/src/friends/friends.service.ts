@@ -105,16 +105,13 @@ export class FriendsService {
         friendNo,
       });
     if (!result) {
-      throw new BadRequestException('알람 생성에 실패하였습니다.');
+      throw new InternalServerErrorException('알람 생성에 실패하였습니다.');
     }
   }
 
   async getReceivedRequests(receiverNo: number): Promise<Friends[]> {
     const receivedRequests: Friends[] =
       await this.friendsRepository.getReceivedRequests(receiverNo);
-    if (!receivedRequests.length) {
-      throw new NotFoundException(`받은 친구 신청이 없습니다.`);
-    }
 
     return receivedRequests;
   }
@@ -171,7 +168,7 @@ export class FriendsService {
       friendUserNo,
     });
     if (!deleteResult) {
-      throw new BadRequestException('친구 삭제 오류입니다.');
+      throw new InternalServerErrorException('친구 삭제에 실패했습니다.');
     }
   }
 
