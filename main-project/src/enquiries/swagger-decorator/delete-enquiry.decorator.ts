@@ -9,30 +9,24 @@ import {
 
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 
-export function ApiGetEnquiry() {
+export function ApiDeleteEnquiry() {
   return applyDecorators(
     ApiOperation({
-      summary: '문의사항 상세 조회',
+      summary: '문의사항 삭제',
     }),
     ApiBearerAuth(),
     ApiOkResponse(
-      SwaggerApiResponse.success('문의사항 조회', '문의사항 조회 성공', {
-        enquiries: {
-          no: 4,
-          userNo: 16,
-          title: 'test',
-          description: 'test description',
-          isDone: 0,
-          createdDate: '2023.01.30 16:34:05',
-        },
-      }),
+      SwaggerApiResponse.success(
+        'Api 작동 성공 msg 반환',
+        '문의사항 삭제 성공',
+      ),
     ),
     ApiNotFoundResponse(
       SwaggerApiResponse.exception([
         {
           name: 'enquiryNotFound',
           example: {
-            msg: `문의 상세 조회(readEnquiry-service): 3번 문의 사항이 없습니다.`,
+            msg: `문의사항 상세 조회(getEnquiry-service): 4번 문의사항이 없습니다.`,
           },
         },
       ]),
@@ -42,7 +36,7 @@ export function ApiGetEnquiry() {
         {
           name: 'isNotWriter',
           example: {
-            msg: `사용자 검증(getEnquiry-service): 잘못된 사용자의 접근입니다.`,
+            msg: `사용자 검증(deleteEnquiry-service): 잘못된 사용자의 접근입니다.`,
           },
         },
       ]),

@@ -14,6 +14,7 @@ export interface Friend {
   userNo?: number;
   friendNo?: number;
   friendUserNo?: number;
+  friendProfileImage?: string;
   receiverNo?: number;
   senderNo?: number;
 }

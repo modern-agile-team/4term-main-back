@@ -4,16 +4,14 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { UserType } from 'src/common/configs/user-type.config';
-import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import { NoticeChats } from 'src/notices/entity/notice-chat.entity';
 import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { EntityManager } from 'typeorm';
 import { AcceptInvitationDto } from './dto/accept-invitation.dto';
-import { GetChatLogDto } from './dto/get-chat-log.dto';
-import { InviteUserDto } from './dto/invite-user.dto';
 import { ChatList } from './entity/chat-list.entity';
 import { ChatLog } from './entity/chat-log.entity';
 import {
@@ -38,14 +36,14 @@ export class ChatsControllerService {
   async getPreviousChatLog(
     userNo: number,
     chatRoomNo: number,
-    { currentChatLogNo }: GetChatLogDto,
+    currentChatLogNo: number,
   ): Promise<ChatLog[]> {
     await this.checkChatRoomExists(chatRoomNo);
 
     await this.checkUserInChatRoom({
       userNo,
       chatRoomNo,
-      isUserNeeded: true,
+      isNeededUser: true,
     });
 
     const previousChatLog: ChatLog[] =
@@ -66,7 +64,7 @@ export class ChatsControllerService {
     await this.checkUserInChatRoom({
       userNo,
       chatRoomNo,
-      isUserNeeded: true,
+      isNeededUser: true,
     });
 
     const currentChatLog: ChatLog[] =
@@ -87,7 +85,7 @@ export class ChatsControllerService {
   private async checkUserInChatRoom({
     userNo,
     chatRoomNo,
-    isUserNeeded,
+    isNeededUser,
   }: ChatUserValidation): Promise<ChatUser> {
     const chatRoom: ChatList = await this.chatListRepository.getChatRoomByNo(
       chatRoomNo,
@@ -101,11 +99,11 @@ export class ChatsControllerService {
       chatRoomNo,
     );
 
-    if (isUserNeeded === Boolean(user)) {
+    if (isNeededUser === Boolean(user)) {
       return user;
     }
 
-    const error = isUserNeeded
+    const error = isNeededUser
       ? new NotFoundException(`${userNo}님의 정보를 찾을 수 없습니다.`)
       : new BadRequestException(`채팅방에 이미 ${userNo}님이 존재합니다.`);
 
@@ -115,7 +113,7 @@ export class ChatsControllerService {
   async inviteUser(
     userNo: number,
     manager: EntityManager,
-    { targetUserNo }: InviteUserDto,
+    targetUserNo: number,
     chatRoomNo: number,
   ): Promise<void> {
     await this.checkChatRoomExists(chatRoomNo);
@@ -123,13 +121,13 @@ export class ChatsControllerService {
     const user: ChatUser = await this.checkUserInChatRoom({
       userNo,
       chatRoomNo,
-      isUserNeeded: true,
+      isNeededUser: true,
     });
 
     await this.checkUserInChatRoom({
       userNo: targetUserNo,
       chatRoomNo,
-      isUserNeeded: false,
+      isNeededUser: false,
     });
 
     await this.saveNotice(manager, {
@@ -160,7 +158,7 @@ export class ChatsControllerService {
       throw new BadRequestException('이미 초대를 보낸 상태입니다.');
     }
 
-    const { insertId }: InsertRaw = await manager
+    const { insertId }: ResultSetHeader = await manager
       .getCustomRepository(NoticesRepository)
       .saveNotice({
         userNo,
@@ -203,13 +201,13 @@ export class ChatsControllerService {
     await this.checkUserInChatRoom({
       userNo: inviterNo,
       chatRoomNo,
-      isUserNeeded: true,
+      isNeededUser: true,
     });
 
     await this.checkUserInChatRoom({
       userNo: targetUserNo,
       chatRoomNo,
-      isUserNeeded: false,
+      isNeededUser: false,
     });
 
     await this.joinChatRoom({ userNo: targetUserNo, chatRoomNo, userType });

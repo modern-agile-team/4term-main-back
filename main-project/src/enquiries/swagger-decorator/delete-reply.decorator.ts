@@ -9,30 +9,27 @@ import {
 
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 
-export function ApiGetEnquiry() {
+export function ApiDeleteReply() {
   return applyDecorators(
     ApiOperation({
-      summary: '문의사항 상세 조회',
+      summary: '답변 삭제',
     }),
     ApiBearerAuth(),
     ApiOkResponse(
-      SwaggerApiResponse.success('문의사항 조회', '문의사항 조회 성공', {
-        enquiries: {
-          no: 4,
-          userNo: 16,
-          title: 'test',
-          description: 'test description',
-          isDone: 0,
-          createdDate: '2023.01.30 16:34:05',
-        },
-      }),
+      SwaggerApiResponse.success('Api 작동 성공 msg 반환', '답변 삭제 성공'),
     ),
     ApiNotFoundResponse(
       SwaggerApiResponse.exception([
         {
+          name: 'replyNotFound',
+          example: {
+            msg: `답변 상세 조회(getReply-service): 4번 답변이 없습니다.`,
+          },
+        },
+        {
           name: 'enquiryNotFound',
           example: {
-            msg: `문의 상세 조회(readEnquiry-service): 3번 문의 사항이 없습니다.`,
+            msg: `문의사항 상세 조회(getEnquiry-service): 4번 답변이 없습니다.`,
           },
         },
       ]),
@@ -40,9 +37,9 @@ export function ApiGetEnquiry() {
     ApiBadRequestResponse(
       SwaggerApiResponse.exception([
         {
-          name: 'isNotWriter',
+          name: 'isNotAdmin',
           example: {
-            msg: `사용자 검증(getEnquiry-service): 잘못된 사용자의 접근입니다.`,
+            msg: '관리자 검증(validateAdmin-service): 관리자가 아닙니다.',
           },
         },
       ]),

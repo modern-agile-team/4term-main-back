@@ -5,6 +5,7 @@ import {
   EntityRepository,
   InsertResult,
   Repository,
+  SelectQueryBuilder,
   UpdateResult,
 } from 'typeorm';
 import { UpdateEnquiryDto } from '../dto/update-enquiry.dto';
@@ -14,9 +15,9 @@ import { Enquiry } from '../interface/enquiry.interface';
 @EntityRepository(Enquiries)
 export class EnquiriesRepository extends Repository<Enquiries> {
   //Get Methods
-  async getEnquiries(): Promise<Enquiry<string[]>[]> {
+  async getEnquiries(page: number): Promise<Enquiry<string[]>[]> {
     try {
-      const enquiries: Enquiry<string>[] = await this.createQueryBuilder(
+      const query: SelectQueryBuilder<Enquiries> = this.createQueryBuilder(
         'enquiries',
       )
         .leftJoin('enquiries.userNo', 'users')
@@ -25,14 +26,20 @@ export class EnquiriesRepository extends Repository<Enquiries> {
           'enquiries.no AS no',
           'users.no AS userNo',
           'enquiries.title AS title',
-          'enquiries.isDone AS isDone',
           'enquiries.description AS description',
+          'enquiries.isDone AS isDone',
           `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
           'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
         ])
         .orderBy('no', 'DESC')
         .groupBy('enquiries.no')
-        .getRawMany();
+        .limit(5);
+
+      if (page > 1) {
+        query.offset((page - 1) * 5);
+      }
+
+      const enquiries = await query.getRawMany();
 
       const convertEnquiry: Enquiry<string[]>[] = enquiries.map(
         ({ imageUrls, ...enquiryInfo }) => {
@@ -105,15 +112,13 @@ export class EnquiriesRepository extends Repository<Enquiries> {
   async updateEnquiry(
     enquiryNo: number,
     updateEnquiryDto: UpdateEnquiryDto,
-  ): Promise<number> {
+  ): Promise<void> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .update(Enquiries)
         .set(updateEnquiryDto)
         .where('no = :enquiryNo', { enquiryNo })
         .execute();
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateEnquiry-repository: 알 수 없는 서버 에러입니다.`,
@@ -121,16 +126,13 @@ export class EnquiriesRepository extends Repository<Enquiries> {
     }
   }
 
-  async closeEnquiry(no: number): Promise<number> {
+  async closeEnquiry(no: number): Promise<void> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .update(Enquiries)
         .set({ isDone: true })
         .where('no = :no', { no })
         .execute();
-      console.log(affected);
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} closeEnquiry-repository: 알 수 없는 서버 에러입니다.`,
