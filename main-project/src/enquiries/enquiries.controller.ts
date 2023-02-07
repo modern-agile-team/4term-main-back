@@ -30,6 +30,7 @@ import { ApiCreateEnquiry } from './swagger-decorator/create-enquiry.decorator';
 import { ApiCreateReply } from './swagger-decorator/create-reply.decorator';
 import { ApiDeleteEnquiry } from './swagger-decorator/delete-enquiry.decorator';
 import { ApiDeleteReply } from './swagger-decorator/delete-reply.decorator';
+import { ApiGetEnquiriesByUser } from './swagger-decorator/get-enquiries-by-user.decorator';
 import { ApiGetEnquiries } from './swagger-decorator/get-enquiries.decorator';
 import { ApiGetEnquiry } from './swagger-decorator/get-enquiry.decorator';
 import { ApiGetReply } from './swagger-decorator/get-reply.decorator';
@@ -53,6 +54,25 @@ export class EnquiriesController {
       await this.enquiriesService.getEnquiries(manager, enquiryFilterDto);
 
     return { msg: '문의사항 전체 조회 성공', response: { eunqiries } };
+  }
+
+  @Get('/my-page')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetEnquiriesByUser()
+  async getEnquiriesByUser(
+    @TransactionDecorator() manager: EntityManager,
+    @GetUser() userNo: number,
+    @Query() enquiryFilterDto?: EnquiryFilterDto,
+  ): Promise<APIResponse> {
+    const eunqiries: Enquiry<string[]>[] =
+      await this.enquiriesService.getEnquiriesByUser(
+        manager,
+        enquiryFilterDto,
+        userNo,
+      );
+
+    return { msg: '유저별 문의사항 전체 조회', response: { eunqiries } };
   }
 
   @Get('/:enquiryNo')

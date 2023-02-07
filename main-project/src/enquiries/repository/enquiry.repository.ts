@@ -15,7 +15,10 @@ import { Enquiry } from '../interface/enquiry.interface';
 @EntityRepository(Enquiries)
 export class EnquiriesRepository extends Repository<Enquiries> {
   //Get Methods
-  async getEnquiries(page: number): Promise<Enquiry<string[]>[]> {
+  async getEnquiries(
+    page: number,
+    userNo?: number,
+  ): Promise<Enquiry<string[]>[]> {
     try {
       const query: SelectQueryBuilder<Enquiries> = this.createQueryBuilder(
         'enquiries',
@@ -37,6 +40,9 @@ export class EnquiriesRepository extends Repository<Enquiries> {
 
       if (page > 1) {
         query.offset((page - 1) * 5);
+      }
+      if (userNo) {
+        query.where('enquiries.userNo = :userNo', { userNo });
       }
 
       const enquiries = await query.getRawMany();

@@ -49,6 +49,24 @@ export class EnquiriesService {
     return enquiries;
   }
 
+  async getEnquiriesByUser(
+    manager: EntityManager,
+    { page }: EnquiryFilterDto,
+    userNo: number,
+  ): Promise<Enquiry<string[]>[]> {
+    const enquiries: Enquiry<string[]>[] = await manager
+      .getCustomRepository(EnquiriesRepository)
+      .getEnquiries(page, userNo);
+
+    if (!enquiries.length) {
+      throw new NotFoundException(
+        `문의 전체 조회(getEnquiriesByUser-service): 문의 사항이 없습니다.`,
+      );
+    }
+
+    return enquiries;
+  }
+
   async getEnquiry(
     manager: EntityManager,
     enquiryNo: number,
