@@ -146,4 +146,15 @@ export class ChatsGateway {
         );
     return { response: { messagePayload } };
   }
+  @SubscribeMessage('leave-room')
+  @UseGuards(WebSocketAuthGuard)
+  async handleLeaveRoom(
+    @WebSocketGetUser() userNo: number,
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() { chatRoomNo }: MessagePayloadDto,
+  ) {
+    await this.chatGatewayService.leaveChatRoom(userNo, socket, chatRoomNo);
+
+    return { msg: '채팅방 나가기 완료' };
+  }
 }
