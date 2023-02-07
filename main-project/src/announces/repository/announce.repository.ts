@@ -99,7 +99,7 @@ export class AnnouncesRepository extends Repository<Announces> {
   }
 
   // 수정 관련
-  async updateAnnounces(
+  async updateAnnounce(
     announcesNo: number,
     announcesDto: CreateAnnounceDto,
   ): Promise<UpdateResult> {
@@ -113,13 +113,13 @@ export class AnnouncesRepository extends Repository<Announces> {
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} updateAnnounces-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} updateAnnounce-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
   // 삭제 관련
-  async deleteAnnouncesByNo(announcesNo: number): Promise<DeleteResult> {
+  async deleteAnnounce(announcesNo: number): Promise<DeleteResult> {
     try {
       const raw: DeleteResult = await this.createQueryBuilder('announces')
         .delete()
@@ -130,7 +130,7 @@ export class AnnouncesRepository extends Repository<Announces> {
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} deleteAnnouncesByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} deleteAnnounce-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
