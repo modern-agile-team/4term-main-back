@@ -60,7 +60,7 @@ export class EnquiriesService {
 
     if (!enquiries.length) {
       throw new NotFoundException(
-        `문의 전체 조회(getEnquiriesByUser-service): 문의 사항이 없습니다.`,
+        `유저별 문의 조회(getEnquiriesByUser-service): 문의 사항이 없습니다.`,
       );
     }
 
