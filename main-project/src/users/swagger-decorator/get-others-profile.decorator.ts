@@ -8,20 +8,19 @@ import {
 
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 
-export function ApiGetUserProfile() {
+export function ApiGetOthersProfile() {
   return applyDecorators(
     ApiOperation({
-      summary: '마이페이지 프로필 조회',
+      summary: '유저 프로필 조회',
     }),
     ApiBearerAuth(),
     ApiOkResponse(
       SwaggerApiResponse.success(
         'userNo로 유저 프로필 조회',
-        '개인 상세 프로필 조회 성공',
+        '프로필 조회 성공',
         {
           userProfile: {
             userNo: 1,
-            email: 'asdf@fds.com',
             nickname: 'dream',
             major: '정보통신공학과',
             gender: false,
