@@ -8,7 +8,7 @@ import { Report } from '../interface/reports.interface';
 export class ReportBoardRepository extends Repository<ReportBoards> {
   //신고글 조회 관련
 
-  async getAllBoardReports(): Promise<Report[]> {
+  async getAllBoardReports(): Promise<Report<string[]>[]> {
     try {
       const reportedBoards = this.createQueryBuilder('ReportBoards')
         .leftJoin('ReportBoards.reportNo', 'reports')

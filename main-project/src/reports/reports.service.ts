@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Board } from 'src/boards/interface/boards.interface';
 import { BoardsRepository } from 'src/boards/repository/board.repository';
-import { Connection, QueryRunner } from 'typeorm';
+import { Connection, EntityManager, QueryRunner } from 'typeorm';
 import { CreateReportDto } from './dto/create-reports.dto';
 import { UpdateReportDto } from './dto/update-reports.dto';
 import { Report } from './interface/reports.interface';
@@ -15,6 +15,7 @@ import { ReportBoardRepository } from './repository/report-board.repository';
 import { ReportRepository } from './repository/reports.repository';
 import { ReportUserRepository } from './repository/report-user.repository';
 import { ResultSetHeader } from 'mysql2';
+import { ReportFilterDto } from './dto/report-filter.dto';
 
 @Injectable()
 export class ReportsService {
@@ -34,20 +35,25 @@ export class ReportsService {
     private readonly connection: Connection,
   ) {}
   // 조회 관련
-  async getAllReports(): Promise<Report[]> {
-    const reports: Report[] = await this.reportRepository.getAllReports();
+  async getReports(
+    manager: EntityManager,
+    reportFilterDto: ReportFilterDto,
+  ): Promise<Report<string[]>[]> {
+    const reports: Report<string[]>[] = await manager
+      .getCustomRepository(ReportRepository)
+      .getReports(reportFilterDto);
 
-    if (!reports) {
+    if (!reports.length) {
       throw new NotFoundException(
-        `신고내역 전체 조회(getAllReports): 알 수 없는 서버 에러입니다.`,
+        `신고내역 전체 조회(getReports): 알 수 없는 서버 에러입니다.`,
       );
     }
 
     return reports;
   }
 
-  async getAllBoardReports(): Promise<Report[]> {
-    const reportedBoards: Report[] =
+  async getAllBoardReports(): Promise<Report<string[]>[]> {
+    const reportedBoards: Report<string[]>[] =
       await this.boardReportRepository.getAllBoardReports();
 
     if (!reportedBoards) {
@@ -59,8 +65,8 @@ export class ReportsService {
     return reportedBoards;
   }
 
-  async getAllUserReports(): Promise<Report[]> {
-    const reportedUsers: Report[] =
+  async getAllUserReports(): Promise<Report<string[]>[]> {
+    const reportedUsers: Report<string[]>[] =
       await this.userReportRepository.getAllUserReports();
 
     if (!reportedUsers) {
@@ -72,8 +78,10 @@ export class ReportsService {
     return reportedUsers;
   }
 
-  async getReportByNo(reportNo: number): Promise<Report> {
-    const report: Report = await this.reportRepository.getReportByNo(reportNo);
+  async getReportByNo(reportNo: number): Promise<Report<string[]>> {
+    const report: Report<string[]> = await this.reportRepository.getReportByNo(
+      reportNo,
+    );
 
     if (!report) {
       throw new NotFoundException(

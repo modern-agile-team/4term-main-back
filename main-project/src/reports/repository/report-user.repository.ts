@@ -7,7 +7,7 @@ import { Report } from '../interface/reports.interface';
 @EntityRepository(ReportUsers)
 export class ReportUserRepository extends Repository<ReportUsers> {
   //신고글 조회 관련
-  async getAllUserReports(): Promise<Report[]> {
+  async getAllUserReports(): Promise<Report<string[]>[]> {
     try {
       const reportedusers = this.createQueryBuilder('ReportUsers')
         .leftJoin('ReportUsers.reportNo', 'reports')
