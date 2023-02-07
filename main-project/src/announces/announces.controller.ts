@@ -84,22 +84,22 @@ export class AnnouncesController {
   }
 
   // Patch Methods
-  @Patch('/:announcesNo')
+  @Patch('/:announceNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @UseInterceptors(FilesInterceptor('files', 10))
   @ApiUpdateAnnounce()
-  async updateAnnounces(
+  async updateAnnounce(
     @TransactionDecorator() manager: EntityManager,
     @GetUser() userNo: number,
-    @Param('announcesNo', ParseIntPipe) announcesNo: number,
+    @Param('announceNo', ParseIntPipe) announceNo: number,
     @Body() updateAnnounceDto: UpdateAnnounceDto,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
     await this.announcesService.editAnnounce(
       manager,
       userNo,
-      announcesNo,
+      announceNo,
       updateAnnounceDto,
       files,
     );
@@ -108,20 +108,16 @@ export class AnnouncesController {
   }
 
   // Delete Methods
-  @Delete('/:announcesNo')
+  @Delete('/:announceNo')
   @UseInterceptors(TransactionInterceptor)
   @UseGuards(JwtAuthGuard)
   @ApiDeleteAnnounce()
-  async deleteAnnounces(
+  async deleteAnnounce(
     @TransactionDecorator() manager: EntityManager,
     @GetUser() userNo: number,
-    @Param('announcesNo', ParseIntPipe) announcesNo: number,
+    @Param('announceNo', ParseIntPipe) announceNo: number,
   ): Promise<APIResponse> {
-    await this.announcesService.deleteAnnounceByNo(
-      manager,
-      announcesNo,
-      userNo,
-    );
+    await this.announcesService.deleteAnnounce(manager, announceNo, userNo);
 
     return { response: { msg: '공지사항 삭제 성공' } };
   }

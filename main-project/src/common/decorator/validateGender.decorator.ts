@@ -33,10 +33,10 @@ const valueToGender = (value: any) => {
   if (typeof value === 'boolean') {
     return value;
   }
-  if (value === '0') {
+  if (value === 0) {
     return 'recruitFemale';
   }
-  if (value === '1') {
+  if (value === 1) {
     return 'recruitMale';
   }
   throw new InternalServerErrorException(`성별을 잘못 입력하셨습니다.`);
