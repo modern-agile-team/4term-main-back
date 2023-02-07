@@ -114,6 +114,10 @@ export class NoticesRepository extends Repository<Notices> {
             OR notices.type = ${NoticeType.FRIEND_REQUEST_ACCEPTED}
               THEN JSON_OBJECT("friendNo", noticeFriends.friendNo)
             WHEN notices.type = ${NoticeType.GUEST_REQUEST}
+            OR notices.type = ${NoticeType.GUEST_REQUEST_REJECTED}
+            OR notices.type = ${NoticeType.HOST_REQUEST}
+            OR notices.type = ${NoticeType.HOST_REQUEST_ALL_ACCEPTED}
+            OR notices.type = ${NoticeType.HOST_REQUEST_REJECTED}
               THEN JSON_OBJECT("boardNo", noticeBoards.boardNo)
           END
           AS value`,
