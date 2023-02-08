@@ -1,6 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -14,6 +15,7 @@ export function ApiAcceptFriendRequest() {
       description:
         '토큰의 userNo와 Param으로 받은 friendNo(친구 번호),senderNo(상대)',
     }),
+    ApiBearerAuth(),
     ApiOkResponse(
       SwaggerApiResponse.success(
         '성공 메세지 반환',
