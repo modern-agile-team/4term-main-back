@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -170,6 +170,7 @@ export class UsersController {
   @ApiOperation({
     summary: '회원 탈퇴',
   })
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete()
   async softDeleteUser(@GetUser() userNo: number) {
