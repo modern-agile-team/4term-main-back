@@ -1,6 +1,6 @@
 export interface ChatRoom {
   chatRoomNo: number;
-  roomName: string;
+  roomName?: string;
   userNo?: number;
   boardNo?: number;
   chatRoomUsers?: number[];
