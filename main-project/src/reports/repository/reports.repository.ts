@@ -1,5 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
+import { report } from 'process';
 import {
   EntityRepository,
   InsertResult,
@@ -66,26 +67,32 @@ export class ReportRepository extends Repository<Reports> {
 
   async getReport(reportNo: number): Promise<Report<string[]>> {
     try {
-      const report: Report<string[]> = await this.createQueryBuilder('reports')
-        .leftJoin('reports.reportedBoard', 'reportedBoards')
-        .leftJoin('reports.reportedUser', 'reportedUsers')
-        .leftJoin('reportedBoards.reportBoardImage', 'reportBoardImages')
-        .leftJoin('reportedUsers.reportUserImage', 'reportUserImages')
-        .select([
-          'reports.no AS no',
-          'reports.userNo AS userNo',
-          'reports.title AS title',
-          'reports.description AS description',
-          'DATE_FORMAT(reports.createdDate, "%Y.%m.%d %T") AS createdDate',
-          `IF(reportedBoards.reportNo = ${reportNo}, reportedBoards.targetBoardNo, NULL) `,
+      const { imageUrls, ...report }: Report<string> =
+        await this.createQueryBuilder('reports')
+          .leftJoin('reports.reportedBoard', 'reportedBoards')
+          .leftJoin('reports.reportedUser', 'reportedUsers')
+          .leftJoin('reportedBoards.reportBoardImage', 'reportBoardImages')
+          .leftJoin('reportedUsers.reportUserImage', 'reportUserImages')
+          .select([
+            'reports.no AS no',
+            'reports.userNo AS userNo',
+            'reports.title AS title',
+            'reports.description AS description',
+            'DATE_FORMAT(reports.createdDate, "%Y.%m.%d %T") AS createdDate',
+            'reportedBoards.targetBoardNo AS targetBoardNo',
+            'reportedUsers.targetUserNo AS targetUserNo',
+            `IF(reportedBoards.reportNo = ${reportNo}, JSON_ARRAYAGG(reportBoardImages.imageUrl), JSON_ARRAYAGG(reportUserImages.imageUrl)) AS imageUrls`,
+          ])
+          .where('reports.no = :reportNo', { reportNo })
+          .groupBy('reports.no')
+          .getRawOne();
 
-          // 'reportedBoards.targetBoardNo as targetBoardNo',
-          // 'reportedUsers.targetUserNo as targetUserNo',
-        ])
-        .where('reports.no = :reportNo', { reportNo })
-        .getRawOne();
+      const convertReport: Report<string[]> = {
+        ...report,
+        imageUrls: JSON.parse(imageUrls),
+      };
 
-      return report;
+      return convertReport;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getReport-repository: 알 수 없는 서버 에러입니다.`,

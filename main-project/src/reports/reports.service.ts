@@ -16,14 +16,13 @@ import { ResultSetHeader } from 'mysql2';
 import { ReportFilterDto } from './dto/report-filter.dto';
 import { AwsService } from 'src/aws/aws.service';
 import { ConfigService } from '@nestjs/config';
-import { ReportBoardImagesRepository } from './repository/report-user-image.repository';
+import { ReportBoardImagesRepository } from './repository/report-board-image.repository';
 import { Users } from 'src/users/entity/user.entity';
 import { UsersRepository } from 'src/users/repository/users.repository';
 
 @Injectable()
 export class ReportsService {
   constructor(
-    private readonly boardRepository: BoardsRepository,
     private readonly awsService: AwsService,
     private readonly configService: ConfigService,
   ) {}
