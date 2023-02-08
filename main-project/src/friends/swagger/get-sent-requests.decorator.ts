@@ -15,16 +15,19 @@ export function ApiGetSentRequests() {
           {
             receiverUserNo: 3,
             receiverUserNickname: 'ccc',
+            receiverDescription: '대파 한 단',
             receiverUserProfileImage: 'http....',
           },
           {
             receiverUserNo: 5,
             receiverUserNickname: 'eee',
+            receiverDescription: '구구단',
             receiverUserProfileImage: 'http....',
           },
           {
             receiverUserNo: 8,
             receiverUserNickname: 'hhh',
+            receiverDescription: '주부 9단',
             receiverUserProfileImage: 'http....',
           },
         ],

@@ -14,16 +14,19 @@ export function ApiSearchFriends() {
           {
             friendNo: 9,
             friendNickname: 'iiia',
+            friendDescription: '구구단',
             friendProfileImage: 'http....',
           },
           {
             friendNo: 3,
             friendNickname: 'sdsa',
+            friendDescription: '내 근육 단단',
             friendProfileImage: 'http....',
           },
           {
             friendNo: 7,
             friendNickname: 'ggga',
+            friendDescription: '주부 9단',
             friendProfileImage: 'http....',
           },
         ],
