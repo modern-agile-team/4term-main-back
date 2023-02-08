@@ -31,10 +31,14 @@ export class Reports extends BaseEntity {
   @DeleteDateColumn({ name: 'deleted_date' })
   deletedDate: Date;
 
-  @OneToOne((type) => ReportBoards, (reportBoards) => reportBoards.reportNo)
+  @OneToOne((type) => ReportBoards, (reportBoards) => reportBoards.reportNo, {
+    onDelete: 'CASCADE',
+  })
   reportedBoard: number;
 
-  @OneToOne((type) => ReportUsers, (reportUser) => reportUser.reportNo)
+  @OneToOne((type) => ReportUsers, (reportUser) => reportUser.reportNo, {
+    onDelete: 'CASCADE',
+  })
   reportedUser: number;
 
   @ManyToOne((type) => Users, (user) => user.report, { onDelete: 'CASCADE' })

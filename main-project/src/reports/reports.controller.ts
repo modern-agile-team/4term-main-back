@@ -25,6 +25,7 @@ import { UpdateReportBoardDto } from './dto/update-reports.dto';
 import { Report } from './interface/reports.interface';
 import { ReportsService } from './reports.service';
 import { ApiCreateReportBoard } from './swagger-decorator/create-board-report.decorator';
+import { ApiDeleteReport } from './swagger-decorator/delete-report.decorator';
 import { ApiGetReport } from './swagger-decorator/get-report.decorator';
 import { ApiGetReports } from './swagger-decorator/get-reports.decorator';
 
@@ -130,21 +131,18 @@ export class ReportsController {
   @Delete('/:reportNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '특정 신고내역 삭제 API',
-    description: '신고 번호를 사용하여 해당 신고내역을 삭제한다.',
-  })
-  async deleteReportByNo(
+  @ApiDeleteReport()
+  async deleteReport(
     @Param('reportNo', ParseIntPipe) reportNo: number,
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<object> {
-    const response = await this.reportsService.deleteReport(
+    const report = await this.reportsService.deleteReport(
       manager,
       reportNo,
       userNo,
     );
 
-    return { response };
+    return { msg: '게시글 신고 삭제 성공' };
   }
 }
