@@ -26,6 +26,7 @@ import { ApiGetPreviousChatLog } from './swagger/get-previous-chat-log.decorator
 import { ApiGetCurrentChatLog } from './swagger/get-current-chat-log.decorator';
 import { ApiInviteUser } from './swagger/invite-user.decorator';
 import { ApiAcceptInvitation } from './swagger/accept-invitation.decorator';
+import { APiUploadFile } from './swagger/upload-file.decorator';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -108,11 +109,7 @@ export class ChatsController {
   }
 
   @Post('/:chatRoomNo/files')
-  @ApiOperation({
-    summary: '파일 전송 API',
-    description:
-      'files에 담긴 최대 10개의 파일을 전달받아 s3업로드 후 url배열 반환',
-  })
+  @APiUploadFile()
   @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
   async uploadFile(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,

@@ -69,6 +69,14 @@ export function ApiAcceptInvitation() {
           name: 'alreadyInvitedUser',
           example: { msg: '이미 초대를 보낸 상태입니다.' },
         },
+        {
+          name: 'incorrectUserNumber',
+          example: { msg: '초대받은 유저만 수락할 수 있습니다.' },
+        },
+        {
+          name: 'invalidNoticeType',
+          example: { msg: '잘못된 Notice 타입입니다.' },
+        },
       ]),
     ),
   );
