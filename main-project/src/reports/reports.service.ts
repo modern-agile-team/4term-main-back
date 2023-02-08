@@ -6,8 +6,8 @@ import {
 import { Board } from 'src/boards/interface/boards.interface';
 import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { EntityManager } from 'typeorm';
-import { CreateReportBoardDto } from './dto/create-reports.dto';
-import { UpdateReportBoardDto } from './dto/update-reports.dto';
+import { CreateReportBoardDto } from './dto/create-report-board.dto';
+import { UpdateReportBoardDto } from './dto/update-report-board.dto';
 import { Report, ReportImage } from './interface/reports.interface';
 import { ReportBoardRepository } from './repository/report-board.repository';
 import { ReportRepository } from './repository/reports.repository';
@@ -19,6 +19,8 @@ import { ConfigService } from '@nestjs/config';
 import { ReportBoardImagesRepository } from './repository/report-board-image.repository';
 import { Users } from 'src/users/entity/user.entity';
 import { UsersRepository } from 'src/users/repository/users.repository';
+import { CreateReportUserDto } from './dto/create-report-user.dto';
+import { ReportUserImagesRepository } from './repository/report-user-image.repository';
 
 @Injectable()
 export class ReportsService {
@@ -86,7 +88,7 @@ export class ReportsService {
       ...createReportDto,
       userNo,
     });
-    const boardReportedNo: number = await this.setBoardReport(
+    const reportBoardNo: number = await this.setBoardReport(
       manager,
       boardNo,
       reportNo,
@@ -94,7 +96,7 @@ export class ReportsService {
 
     if (files.length) {
       const imageUrls: string[] = await this.uploadImages(files);
-      await this.setReportBoardImages(manager, imageUrls, boardReportedNo);
+      await this.setReportBoardImages(manager, imageUrls, reportBoardNo);
     }
   }
 
@@ -127,17 +129,53 @@ export class ReportsService {
 
   async createUserReport(
     manager: EntityManager,
-    createReportDto: CreateReportBoardDto,
+    { targetUserNo, ...createReportUserDto }: CreateReportUserDto,
+    files: Express.Multer.File[],
     userNo: number,
   ): Promise<void> {
+    await this.validateUser(manager, targetUserNo);
+
     const reportNo: number = await this.setReport(manager, {
-      ...createReportDto,
+      ...createReportUserDto,
       userNo,
     });
+    const reportUserNo: number = await this.setUserReport(
+      manager,
+      targetUserNo,
+      reportNo,
+    );
 
-    await manager
+    if (files.length) {
+      const imageUrls: string[] = await this.uploadImages(files);
+      await this.setReportUserImages(manager, imageUrls, reportUserNo);
+    }
+  }
+
+  private async setUserReport(
+    manager: EntityManager,
+    userNo: number,
+    reportNo: number,
+  ): Promise<number> {
+    const { insertId }: ResultSetHeader = await manager
       .getCustomRepository(ReportUserRepository)
       .createUserReport(reportNo, userNo);
+
+    return insertId;
+  }
+
+  private async setReportUserImages(
+    manager: EntityManager,
+    imageUrls: string[],
+    reportUserNo: number,
+  ): Promise<void> {
+    const images: ReportImage<string>[] = this.convertReportUserImageArray(
+      imageUrls,
+      reportUserNo,
+    );
+
+    await manager
+      .getCustomRepository(ReportUserImagesRepository)
+      .createUserReportImages(images);
   }
 
   private async setReport(
@@ -208,6 +246,32 @@ export class ReportsService {
     });
 
     return images;
+  }
+
+  private convertReportUserImageArray(
+    imageUrls: string[],
+    reportUserNo: number,
+  ): ReportImage<string>[] {
+    const images: ReportImage<string>[] = imageUrls.map((imageUrl: string) => {
+      return { reportUserNo, imageUrl };
+    });
+
+    return images;
+  }
+
+  private async validateUser(
+    manager: EntityManager,
+    targetUserNo: number,
+  ): Promise<void> {
+    const { no }: Users = await manager
+      .getCustomRepository(UsersRepository)
+      .getUserByNo(targetUserNo);
+
+    if (!no) {
+      throw new BadRequestException(
+        '사용자 확인(validateUser-service): 존재하지 않는 사용자 입니다',
+      );
+    }
   }
 
   private async validateBoard(

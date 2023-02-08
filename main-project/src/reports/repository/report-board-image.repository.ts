@@ -5,7 +5,6 @@ import { ReportImage } from '../interface/reports.interface';
 
 @EntityRepository(ReportBoardImages)
 export class ReportBoardImagesRepository extends Repository<ReportBoardImages> {
-  // 신고글 작성 관련
   async createBoardReportImages(images: ReportImage<string>[]): Promise<void> {
     try {
       await this.createQueryBuilder()

@@ -19,12 +19,14 @@ import { TransactionDecorator } from 'src/common/decorator/transaction-manager.d
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { EntityManager } from 'typeorm';
-import { CreateReportBoardDto } from './dto/create-reports.dto';
+import { CreateReportBoardDto } from './dto/create-report-board.dto';
+import { CreateReportUserDto } from './dto/create-report-user.dto';
 import { ReportFilterDto } from './dto/report-filter.dto';
-import { UpdateReportBoardDto } from './dto/update-reports.dto';
+import { UpdateReportBoardDto } from './dto/update-report-board.dto';
 import { Report } from './interface/reports.interface';
 import { ReportsService } from './reports.service';
 import { ApiCreateReportBoard } from './swagger-decorator/create-board-report.decorator';
+import { ApiCreateReportUser } from './swagger-decorator/create-user-report.decorator';
 import { ApiDeleteReport } from './swagger-decorator/delete-report.decorator';
 import { ApiGetReport } from './swagger-decorator/get-report.decorator';
 import { ApiGetReports } from './swagger-decorator/get-reports.decorator';
@@ -91,18 +93,18 @@ export class ReportsController {
   @Post('/users')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '사용자 신고 생성 API',
-    description: '입력된 정보로 사용자 신고 생성.',
-  })
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @ApiCreateReportUser()
   async createUserReport(
-    @Param('userNo', ParseIntPipe) userNo: number,
     @TransactionDecorator() manager: EntityManager,
-    @Body() createReportDto: CreateReportBoardDto,
+    @Body() createReportUserDto: CreateReportUserDto,
+    @GetUser() userNo: number,
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<object> {
     await this.reportsService.createUserReport(
       manager,
-      createReportDto,
+      createReportUserDto,
+      files,
       userNo,
     );
 

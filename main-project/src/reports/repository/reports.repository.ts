@@ -1,15 +1,14 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
-import { report } from 'process';
 import {
   EntityRepository,
   InsertResult,
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
-import { CreateReportBoardDto } from '../dto/create-reports.dto';
+import { CreateReportBoardDto } from '../dto/create-report-board.dto';
 import { ReportFilterDto } from '../dto/report-filter.dto';
-import { UpdateReportBoardDto } from '../dto/update-reports.dto';
+import { UpdateReportBoardDto } from '../dto/update-report-board.dto';
 import { Reports } from '../entity/reports.entity';
 import { Report } from '../interface/reports.interface';
 
