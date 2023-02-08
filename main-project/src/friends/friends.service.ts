@@ -119,9 +119,6 @@ export class FriendsService {
   async getSentRequests(senderNo: number): Promise<Friends[]> {
     const sentRequests: Friends[] =
       await this.friendsRepository.getSentRequests(senderNo);
-    if (!sentRequests.length) {
-      throw new NotFoundException(`보낸 친구 신청이 없습니다.`);
-    }
 
     return sentRequests;
   }
