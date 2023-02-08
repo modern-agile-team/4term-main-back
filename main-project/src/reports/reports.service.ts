@@ -1,24 +1,30 @@
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { Board } from 'src/boards/interface/boards.interface';
 import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { EntityManager } from 'typeorm';
-import { CreateReportDto } from './dto/create-reports.dto';
-import { UpdateReportDto } from './dto/update-reports.dto';
-import { Report } from './interface/reports.interface';
+import { CreateReportBoardDto } from './dto/create-reports.dto';
+import { UpdateReportBoardDto } from './dto/update-reports.dto';
+import { Report, ReportImage } from './interface/reports.interface';
 import { ReportBoardRepository } from './repository/report-board.repository';
 import { ReportRepository } from './repository/reports.repository';
 import { ReportUserRepository } from './repository/report-user.repository';
 import { ResultSetHeader } from 'mysql2';
 import { ReportFilterDto } from './dto/report-filter.dto';
+import { AwsService } from 'src/aws/aws.service';
+import { ConfigService } from '@nestjs/config';
+import { ReportBoardImagesRepository } from './repository/report-user-image.repository';
 
 @Injectable()
 export class ReportsService {
-  constructor(private readonly boardRepository: BoardsRepository) {}
+  constructor(
+    private readonly boardRepository: BoardsRepository,
+    private readonly awsService: AwsService,
+    private readonly configService: ConfigService,
+  ) {}
   // 조회 관련
   async getReports(
     manager: EntityManager,
@@ -66,33 +72,64 @@ export class ReportsService {
   // 생성 관련
   async createBoardReport(
     manager: EntityManager,
-    createReportDto: CreateReportDto,
-    boardNo: number,
+    { boardNo, ...createReportDto }: CreateReportBoardDto,
+    files: Express.Multer.File[],
+    userNo: number,
   ): Promise<void> {
-    const { no }: Board<number[]> = await this.boardRepository.getBoardByNo(
+    await this.validateBoard(manager, boardNo);
+
+    const reportNo: number = await this.setReport(manager, {
+      ...createReportDto,
+      userNo,
+    });
+    const boardReportedNo: number = await this.setBoardReport(
+      manager,
       boardNo,
+      reportNo,
     );
-    if (!no) {
-      throw new BadRequestException(
-        `게시글 신고 생성(createBoardReport-service): ${boardNo}번 게시글을 찾을 수 없습니다.`,
-      );
+
+    if (files.length) {
+      const imageUrls: string[] = await this.uploadImages(files);
+      await this.setReportBoardImages(manager, imageUrls, boardReportedNo);
     }
+  }
 
-    const reportNo: number = await this.setReport(manager, createReportDto);
-
-    await manager
+  private async setBoardReport(
+    manager: EntityManager,
+    boardNo: number,
+    reportNo: number,
+  ): Promise<number> {
+    const { insertId }: ResultSetHeader = await manager
       .getCustomRepository(ReportBoardRepository)
       .createBoardReport(reportNo, boardNo);
+
+    return insertId;
+  }
+
+  private async setReportBoardImages(
+    manager: EntityManager,
+    imageUrls: string[],
+    reportBoardNo: number,
+  ): Promise<void> {
+    const images: ReportImage<string>[] = this.convertReportBoardImageArray(
+      imageUrls,
+      reportBoardNo,
+    );
+
+    await manager
+      .getCustomRepository(ReportBoardImagesRepository)
+      .createBoardReportImages(images);
   }
 
   async createUserReport(
     manager: EntityManager,
-    createReportDto: CreateReportDto,
+    createReportDto: CreateReportBoardDto,
     userNo: number,
   ): Promise<void> {
-    // TODO: User 확인 Method 사용 부분
-
-    const reportNo: number = await this.setReport(manager, createReportDto);
+    const reportNo: number = await this.setReport(manager, {
+      ...createReportDto,
+      userNo,
+    });
 
     await manager
       .getCustomRepository(ReportUserRepository)
@@ -101,11 +138,11 @@ export class ReportsService {
 
   private async setReport(
     manager: EntityManager,
-    createReportDto: CreateReportDto,
+    report: Report<void>,
   ): Promise<number> {
     const { insertId }: ResultSetHeader = await manager
       .getCustomRepository(ReportRepository)
-      .createReport(createReportDto);
+      .createReport(report);
 
     return insertId;
   }
@@ -114,7 +151,7 @@ export class ReportsService {
   async updateReport(
     manager: EntityManager,
     reportNo: number,
-    updateReportDto: UpdateReportDto,
+    updateReportDto: UpdateReportBoardDto,
   ): Promise<void> {
     await this.getReport(manager, reportNo);
 
@@ -124,11 +161,73 @@ export class ReportsService {
   }
 
   // 삭제 관련
-  async deleteReportByNo(
+  async deleteReport(
+    manager: EntityManager,
+    reportNo: number,
+    userNo: number,
+  ): Promise<void> {
+    const { imageUrls, ...report }: Report<string[]> = await this.getReport(
+      manager,
+      reportNo,
+    );
+    this.validateWriter(userNo, report.userNo);
+
+    if (!imageUrls.includes(null)) {
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    await this.removeReport(manager, reportNo);
+  }
+
+  private async removeReport(
     manager: EntityManager,
     reportNo: number,
   ): Promise<void> {
-    await this.getReport(manager, reportNo);
     await manager.getCustomRepository(ReportRepository).deleteReport(reportNo);
+  }
+
+  // functions
+  private validateWriter(userNo: number, writerNo: number): void {
+    const ADMIN_USER = this.configService.get<number>('ADMIN_USER');
+
+    if (writerNo !== userNo && ADMIN_USER !== userNo) {
+      throw new BadRequestException(
+        `사용자 검증(validateWriter-service): 잘못된 사용자의 접근입니다.`,
+      );
+    }
+  }
+
+  private convertReportBoardImageArray(
+    imageUrls: string[],
+    reportBoardNo: number,
+  ): ReportImage<string>[] {
+    const images: ReportImage<string>[] = imageUrls.map((imageUrl: string) => {
+      return { reportBoardNo, imageUrl };
+    });
+
+    return images;
+  }
+
+  private async validateBoard(
+    manager: EntityManager,
+    boardNo: number,
+  ): Promise<void> {
+    const { no }: Board<number[]> = await manager
+      .getCustomRepository(BoardsRepository)
+      .getBoardByNo(boardNo);
+    if (!no) {
+      throw new BadRequestException(
+        `게시글 신고 생성(validateBoard-service): ${boardNo}번 게시글을 찾을 수 없습니다.`,
+      );
+    }
+  }
+
+  // s3
+  private async uploadImages(files: Express.Multer.File[]): Promise<string[]> {
+    const imageUrls: string[] = await this.awsService.uploadImages(
+      files,
+      'report',
+    );
+
+    return imageUrls;
   }
 }

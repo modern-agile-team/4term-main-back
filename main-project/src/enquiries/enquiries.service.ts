@@ -1,11 +1,6 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common/exceptions';
 import { ConfigService } from '@nestjs/config';
-import { write } from 'fs';
 import { ResultSetHeader } from 'mysql2';
 import { AwsService } from 'src/aws/aws.service';
 import { Users } from 'src/users/entity/user.entity';
@@ -29,7 +24,7 @@ export class EnquiriesService {
     private readonly configService: ConfigService,
   ) {}
 
-  ADMIN_USER: number = Number(this.configService.get<number>('ADMIN_USER'));
+  ADMIN_USER: number = this.configService.get<number>('ADMIN_USER');
 
   // Get Methods
   async getEnquiries(
@@ -82,7 +77,7 @@ export class EnquiriesService {
       );
     }
 
-    await this.validateWriter(userNo, enquiry.userNo);
+    this.validateWriter(userNo, enquiry.userNo);
 
     return enquiry;
   }
@@ -109,7 +104,7 @@ export class EnquiriesService {
       userNo,
     );
 
-    await this.validateWriter(userNo, enquiry.userNo);
+    this.validateWriter(userNo, enquiry.userNo);
 
     const reply: Reply<string[]> = await this.readReply(manager, enquiryNo);
 
@@ -169,7 +164,7 @@ export class EnquiriesService {
     imageUrls: string[],
     enquiryNo: number,
   ): Promise<void> {
-    const images: ImageInfo<string>[] = await this.convertImageArray(
+    const images: ImageInfo<string>[] = this.convertImageArray(
       imageUrls,
       enquiryNo,
     );
@@ -219,7 +214,7 @@ export class EnquiriesService {
     imageUrls: string[],
     replyNo: number,
   ): Promise<void> {
-    const images: ImageInfo<string>[] = await this.convertImageArray(
+    const images: ImageInfo<string>[] = this.convertImageArray(
       imageUrls,
       undefined,
       replyNo,
@@ -252,7 +247,7 @@ export class EnquiriesService {
       enquiryNo,
       userNo,
     );
-    await this.validateWriter(enquiry.userNo, userNo);
+    this.validateWriter(enquiry.userNo, userNo);
 
     await this.updateEnquiry(manager, enquiryNo, updateEnquiryDto);
     await this.editEnquiryimages(manager, files, enquiryNo, imageUrls);
@@ -340,7 +335,7 @@ export class EnquiriesService {
       enquiryNo,
       userNo,
     );
-    await this.validateWriter(enquiry.userNo, userNo);
+    this.validateWriter(enquiry.userNo, userNo);
 
     if (!imageUrls.includes(null)) {
       await this.awsService.deleteFiles(imageUrls);
@@ -404,10 +399,7 @@ export class EnquiriesService {
   }
 
   //function
-  private async validateWriter(
-    userNo: number,
-    writerNo: number,
-  ): Promise<void> {
+  private validateWriter(userNo: number, writerNo: number): void {
     if (writerNo !== userNo && this.ADMIN_USER !== userNo) {
       throw new BadRequestException(
         `사용자 검증(validateWriter-service): 잘못된 사용자의 접근입니다.`,
@@ -427,11 +419,11 @@ export class EnquiriesService {
     }
   }
 
-  private async convertImageArray(
+  private convertImageArray(
     imageUrls: string[],
     enquiryNo?: number,
     replyNo?: number,
-  ): Promise<ImageInfo<string>[]> {
+  ): ImageInfo<string>[] {
     const images: ImageInfo<string>[] = enquiryNo
       ? imageUrls.map((imageUrl: string) => {
           return { enquiryNo, imageUrl };

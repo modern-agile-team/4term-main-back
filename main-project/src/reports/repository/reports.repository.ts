@@ -1,15 +1,14 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
 import {
-  DeleteResult,
   EntityRepository,
   InsertResult,
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
-import { CreateReportDto } from '../dto/create-reports.dto';
+import { CreateReportBoardDto } from '../dto/create-reports.dto';
 import { ReportFilterDto } from '../dto/report-filter.dto';
-import { UpdateReportDto } from '../dto/update-reports.dto';
+import { UpdateReportBoardDto } from '../dto/update-reports.dto';
 import { Reports } from '../entity/reports.entity';
 import { Report } from '../interface/reports.interface';
 
@@ -78,7 +77,7 @@ export class ReportRepository extends Repository<Reports> {
           'reports.title AS title',
           'reports.description AS description',
           'DATE_FORMAT(reports.createdDate, "%Y.%m.%d %T") AS createdDate',
-          `IF(reportedBoards.reportNo = ${reportNo}, reportedBoards.targetBoardNo, NULL) AS targetBoardNo`,
+          `IF(reportedBoards.reportNo = ${reportNo}, reportedBoards.targetBoardNo, NULL) `,
 
           // 'reportedBoards.targetBoardNo as targetBoardNo',
           // 'reportedUsers.targetUserNo as targetUserNo',
@@ -96,7 +95,7 @@ export class ReportRepository extends Repository<Reports> {
 
   // 신고글 작성 관련
   async createReport(
-    createReportDto: CreateReportDto,
+    createReportDto: Omit<CreateReportBoardDto, 'boardNo'>,
   ): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
@@ -107,7 +106,7 @@ export class ReportRepository extends Repository<Reports> {
       return raw;
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} createBoard-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} createReport-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -115,7 +114,7 @@ export class ReportRepository extends Repository<Reports> {
   //게시글 수정 관련
   async updateReport(
     reportNo: number,
-    updateReportDto: UpdateReportDto,
+    updateReportDto: UpdateReportBoardDto,
   ): Promise<void> {
     try {
       await this.createQueryBuilder()

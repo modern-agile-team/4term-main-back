@@ -1,5 +1,5 @@
 export interface Report<T> {
-  no: number;
+  no?: number;
   title: string;
   description: string;
   userNo: number;
@@ -7,4 +7,9 @@ export interface Report<T> {
   targetUserNo?: number;
   createdDate?: Date;
   imageUrls?: T;
+}
+
+export interface ReportImage<T> {
+  imageUrl: T;
+  announceNo?: number;
 }

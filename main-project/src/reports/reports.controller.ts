@@ -8,19 +8,23 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { EntityManager } from 'typeorm';
-import { CreateReportDto } from './dto/create-reports.dto';
+import { CreateReportBoardDto } from './dto/create-reports.dto';
 import { ReportFilterDto } from './dto/report-filter.dto';
-import { UpdateReportDto } from './dto/update-reports.dto';
+import { UpdateReportBoardDto } from './dto/update-reports.dto';
 import { Report } from './interface/reports.interface';
 import { ReportsService } from './reports.service';
+import { ApiCreateReportBoard } from './swagger-decorator/create-board-report.decorator';
 import { ApiGetReport } from './swagger-decorator/get-report.decorator';
 import { ApiGetReports } from './swagger-decorator/get-reports.decorator';
 
@@ -62,28 +66,28 @@ export class ReportsController {
   }
 
   // Post
-  @Post('/boards/:boardNo')
+  @Post('/boards')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '게시글 신고 생성 API',
-    description: '입력된 정보로 게시글 신고 생성.',
-  })
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @ApiCreateReportBoard()
   async createBoardReport(
-    @Param('boardNo', ParseIntPipe) boardNo: number,
     @TransactionDecorator() manager: EntityManager,
-    @Body() createReportDto: CreateReportDto,
+    @Body() createReportDto: CreateReportBoardDto,
+    @GetUser() userNo: number,
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<object> {
     await this.reportsService.createBoardReport(
       manager,
       createReportDto,
-      boardNo,
+      files,
+      userNo,
     );
 
     return { msg: '게시글 신고 성공' };
   }
 
-  @Post('/users/:userNo')
+  @Post('/users')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiOperation({
@@ -93,7 +97,7 @@ export class ReportsController {
   async createUserReport(
     @Param('userNo', ParseIntPipe) userNo: number,
     @TransactionDecorator() manager: EntityManager,
-    @Body() createReportDto: CreateReportDto,
+    @Body() createReportDto: CreateReportBoardDto,
   ): Promise<object> {
     await this.reportsService.createUserReport(
       manager,
@@ -115,7 +119,7 @@ export class ReportsController {
   async updateBoard(
     @Param('reportNo', ParseIntPipe) reportNo: number,
     @TransactionDecorator() manager: EntityManager,
-    @Body() updateReportDto: UpdateReportDto,
+    @Body() updateReportDto: UpdateReportBoardDto,
   ): Promise<object> {
     await this.reportsService.updateReport(manager, reportNo, updateReportDto);
 
@@ -132,11 +136,13 @@ export class ReportsController {
   })
   async deleteReportByNo(
     @Param('reportNo', ParseIntPipe) reportNo: number,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<object> {
-    const response = await this.reportsService.deleteReportByNo(
+    const response = await this.reportsService.deleteReport(
       manager,
       reportNo,
+      userNo,
     );
 
     return { response };

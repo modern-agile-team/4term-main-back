@@ -1,6 +1,4 @@
 import { OmitType } from '@nestjs/swagger';
-import { CreateReportDto } from './create-reports.dto';
+import { CreateReportBoardDto } from './create-reports.dto';
 
-export class UpdateReportDto extends OmitType(CreateReportDto, [
-  'reportingUserNo',
-]) {}
+export class UpdateReportBoardDto extends OmitType(CreateReportBoardDto, []) {}

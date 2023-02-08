@@ -1,25 +1,29 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
-export class CreateReportDto {
-  @IsNotEmpty()
-  @IsNumber()
-  @ApiProperty({ example: 21, description: '신고주체 사용자 번호(원고)' })
-  reportingUserNo: number;
-  // jwt 구현되면 useGaroud로 대체 예정
-
-  @IsNotEmpty()
-  @IsString()
+export class CreateReportBoardDto {
   @ApiProperty({
     example: '개발이 너무 재밌어요 어떡하죠?',
     description: '신고글 제목',
   })
+  @IsString()
+  @IsNotEmpty()
   title: string;
 
-  @IsNotEmpty()
-  @IsString()
   @ApiProperty({
     example: '라고 할 뻔ㅋㅋㅋㅋㅋ',
     description: '신고글 내용',
   })
+  @IsString()
+  @IsNotEmpty()
   description: string;
+
+  @ApiProperty({
+    example: 65,
+    description: '게시글 번호',
+  })
+  @IsNumber()
+  @Type(() => Number)
+  @IsNotEmpty()
+  boardNo: number;
 }
