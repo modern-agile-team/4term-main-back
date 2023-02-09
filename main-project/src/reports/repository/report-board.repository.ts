@@ -7,12 +7,12 @@ import { ReportBoards } from '../entity/report-board.entity';
 export class ReportBoardRepository extends Repository<ReportBoards> {
   async getReportBoard(reportNo: number): Promise<ReportBoards> {
     try {
-      const reportBoards: ReportBoards = await this.createQueryBuilder()
+      const reportBoard: ReportBoards = await this.createQueryBuilder()
         .select()
         .where('report_no = :reportNo', { reportNo })
         .getOne();
 
-      return reportBoards;
+      return reportBoard;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getReportBoard-repository: 알 수 없는 서버 에러입니다.`,
