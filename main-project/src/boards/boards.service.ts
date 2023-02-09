@@ -21,7 +21,6 @@ import { UpdateBoardDto } from './dto/update-board.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { FriendsRepository } from 'src/friends/repository/friends.repository';
 import { Friend } from 'src/friends/interface/friend.interface';
-import { NoticeBoardHostsRepository } from 'src/notices/repository/notices-board-host.repository';
 import { BoardBookmarks } from './entity/board-bookmark.entity';
 import { ConfigService } from '@nestjs/config';
 import { SavedNotice } from 'src/notices/interface/notice.interface';
@@ -403,7 +402,7 @@ export class BoardsService {
       manager,
       boardNo,
     );
-    await this.validateHost(hostUserNo, userNo);
+    this.validateHost(hostUserNo, userNo);
     await this.removeBoard(manager, boardNo);
   }
 
@@ -500,19 +499,19 @@ export class BoardsService {
   private async saveNoticeHostTeam(
     manager: EntityManager,
     boardNo: number,
-    userNo: number,
+    targetUserNo: number,
     hosts: number[],
   ): Promise<void> {
-    const type: number = NoticeType.GUEST_REQUEST;
+    const type: number = NoticeType.HOST_REQUEST;
 
     for (let idx in hosts) {
       const { insertId }: ResultSetHeader = await manager
         .getCustomRepository(NoticesRepository)
-        .saveNotice({ userNo, targetUserNo: hosts[idx], type });
+        .saveNotice({ targetUserNo, userNo: hosts[idx], type });
 
       await manager
-        .getCustomRepository(NoticeBoardHostsRepository)
-        .saveNoticeBoardHosts(insertId, boardNo);
+        .getCustomRepository(NoticeBoardsRepository)
+        .saveNoticeBoard(insertId, boardNo);
     }
   }
 
@@ -532,21 +531,21 @@ export class BoardsService {
       const { insertId }: ResultSetHeader = await manager
         .getCustomRepository(NoticesRepository)
         .saveNotice({
-          userNo: this.ADMIN_USER,
-          targetUserNo: users[idx],
+          targetUserNo: this.ADMIN_USER,
+          userNo: users[idx],
           type,
         });
 
       await manager
-        .getCustomRepository(NoticeBoardHostsRepository)
-        .saveNoticeBoardHosts(insertId, boardNo);
+        .getCustomRepository(NoticeBoardsRepository)
+        .saveNoticeBoard(insertId, boardNo);
     }
   }
 
   private async saveNoticeHostInviteReject(
     manager: EntityManager,
-    userNo: number,
     targetUserNo: number,
+    userNo: number,
   ): Promise<void> {
     const type = NoticeType.HOST_REQUEST_REJECTED;
 
@@ -557,11 +556,12 @@ export class BoardsService {
 
   private async saveNoticeGuestInviteReject(
     manager: EntityManager,
-    userNo: number,
+    targetUserNo: number,
     guests: number[],
   ): Promise<void> {
     const type = NoticeType.GUEST_REQUEST_REJECTED;
-    const notices: SavedNotice[] = guests.map((targetUserNo) => {
+
+    const notices: SavedNotice[] = guests.map((userNo) => {
       return { userNo, targetUserNo, type };
     });
 
@@ -626,10 +626,7 @@ export class BoardsService {
     }
   }
 
-  private async validateHost(
-    hostUserNo: number,
-    userNo: number,
-  ): Promise<void> {
+  private validateHost(hostUserNo: number, userNo: number): void {
     if (userNo != hostUserNo) {
       throw new BadRequestException(
         `작성자 검증 (validateHost-service): 작성자와 사용자가 일치하지 않습니다.`,
@@ -789,7 +786,7 @@ export class BoardsService {
   ): Promise<void> {
     const board: Board<number[]> = await this.getBoard(manager, boardNo);
 
-    await this.validateHost(board.hostUserNo, userNo);
+    this.validateHost(board.hostUserNo, userNo);
     await this.validateRecruits(manager, board, updateBoardDto);
   }
 }

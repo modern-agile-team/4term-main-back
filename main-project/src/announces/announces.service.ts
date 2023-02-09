@@ -23,7 +23,7 @@ export class AnnouncesService {
     private readonly configService: ConfigService,
   ) {}
 
-  ADMIN_USER: number = Number(this.configService.get<number>('ADMIN_USER'));
+  ADMIN_USER: number = this.configService.get<number>('ADMIN_USER');
 
   // 생성 관련
   async createAnnounce(
@@ -57,7 +57,7 @@ export class AnnouncesService {
     imageUrls: string[],
     announceNo: number,
   ): Promise<void> {
-    const images: AnnounceImage<string>[] = await this.convertImageArray(
+    const images: AnnounceImage<string>[] = this.convertImageArray(
       announceNo,
       imageUrls,
     );
@@ -180,10 +180,10 @@ export class AnnouncesService {
   }
 
   // functions
-  private async convertImageArray(
+  private convertImageArray(
     announceNo: number,
     imageUrls: string[],
-  ): Promise<AnnounceImage<string>[]> {
+  ): AnnounceImage<string>[] {
     const images: AnnounceImage<string>[] = imageUrls.map(
       (imageUrl: string) => {
         return { announceNo, imageUrl };
@@ -193,7 +193,10 @@ export class AnnouncesService {
     return images;
   }
 
-  private async validateAdmin(manager: EntityManager, userNo: number) {
+  private async validateAdmin(
+    manager: EntityManager,
+    userNo: number,
+  ): Promise<void> {
     const { no }: Users = await manager
       .getCustomRepository(UsersRepository)
       .getUserByNo(userNo);

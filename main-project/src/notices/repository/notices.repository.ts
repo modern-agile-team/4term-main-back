@@ -18,13 +18,13 @@ import {
 @EntityRepository(Notices)
 export class NoticesRepository extends Repository<Notices> {
   async saveNotice(
-    noticeInfo: SavedNotice | SavedNotice[],
+    notice: SavedNotice | SavedNotice[],
   ): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('notices')
         .insert()
         .into(Notices)
-        .values(noticeInfo)
+        .values(notice)
         .execute();
 
       return raw;
@@ -105,7 +105,7 @@ export class NoticesRepository extends Repository<Notices> {
           'userProfiles.nickname AS senderNickname',
           'profileImages.imageUrl AS senderProfileImage',
           'IF(notices.readDatetime, TRUE, FALSE) AS isRead',
-          'notices.createdDate AS createdDate',
+          'DATE_FORMAT(notices.createdDate, "%Y-%m-%d %h:%i") AS createdDate',
           `CASE 
             WHEN notices.type =${NoticeType.INVITE_GUEST} 
             OR notices.type = ${NoticeType.INVITE_HOST} 
@@ -114,6 +114,10 @@ export class NoticesRepository extends Repository<Notices> {
             OR notices.type = ${NoticeType.FRIEND_REQUEST_ACCEPTED}
               THEN JSON_OBJECT("friendNo", noticeFriends.friendNo)
             WHEN notices.type = ${NoticeType.GUEST_REQUEST}
+            OR notices.type = ${NoticeType.GUEST_REQUEST_REJECTED}
+            OR notices.type = ${NoticeType.HOST_REQUEST}
+            OR notices.type = ${NoticeType.HOST_REQUEST_ALL_ACCEPTED}
+            OR notices.type = ${NoticeType.HOST_REQUEST_REJECTED}
               THEN JSON_OBJECT("boardNo", noticeBoards.boardNo)
           END
           AS value`,

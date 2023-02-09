@@ -7,6 +7,7 @@ import { ReportsService } from './reports.service';
 import { ReportBoardRepository } from './repository/report-board.repository';
 import { ReportRepository } from './repository/reports.repository';
 import { ReportUserRepository } from './repository/report-user.repository';
+import { AwsService } from 'src/aws/aws.service';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { ReportUserRepository } from './repository/report-user.repository';
       ReportUserRepository,
     ]),
   ],
-  providers: [ReportsService],
+  providers: [ReportsService, AwsService],
   controllers: [ReportsController],
 })
 export class ReportsModule {}
