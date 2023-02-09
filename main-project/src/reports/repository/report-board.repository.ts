@@ -5,7 +5,21 @@ import { ReportBoards } from '../entity/report-board.entity';
 
 @EntityRepository(ReportBoards)
 export class ReportBoardRepository extends Repository<ReportBoards> {
-  // 신고글 작성 관련
+  async getReportBoard(reportNo: number): Promise<ReportBoards> {
+    try {
+      const reportBoards: ReportBoards = await this.createQueryBuilder()
+        .select()
+        .where('report_no = :reportNo', { reportNo })
+        .getOne();
+
+      return reportBoards;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getReportBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async createBoardReport(
     reportNo: number,
     boardNo: number,

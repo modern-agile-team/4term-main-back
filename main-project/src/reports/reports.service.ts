@@ -7,7 +7,7 @@ import { Board } from 'src/boards/interface/boards.interface';
 import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { EntityManager } from 'typeorm';
 import { CreateReportBoardDto } from './dto/create-report-board.dto';
-import { UpdateReportBoardDto } from './dto/update-report-board.dto';
+import { UpdateReportDto } from './dto/update-report-board.dto';
 import { Report, ReportImage } from './interface/reports.interface';
 import { ReportBoardRepository } from './repository/report-board.repository';
 import { ReportRepository } from './repository/reports.repository';
@@ -21,6 +21,8 @@ import { Users } from 'src/users/entity/user.entity';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { CreateReportUserDto } from './dto/create-report-user.dto';
 import { ReportUserImagesRepository } from './repository/report-user-image.repository';
+import { ReportBoards } from './entity/report-board.entity';
+import { ReportUsers } from './entity/report-user.entity';
 
 @Injectable()
 export class ReportsService {
@@ -73,6 +75,28 @@ export class ReportsService {
       .getReport(reportNo);
 
     return report;
+  }
+
+  private async readReportBoard(
+    manager: EntityManager,
+    reportNo: number,
+  ): Promise<ReportBoards> {
+    const reportBoard: ReportBoards = await manager
+      .getCustomRepository(ReportBoardRepository)
+      .getReportBoard(reportNo);
+
+    return reportBoard;
+  }
+
+  private async readReportUser(
+    manager: EntityManager,
+    reportNo: number,
+  ): Promise<ReportUsers> {
+    const reportUser: ReportUsers = await manager
+      .getCustomRepository(ReportUserRepository)
+      .getReportUser(reportNo);
+
+    return reportUser;
   }
 
   // 생성 관련
@@ -190,16 +214,69 @@ export class ReportsService {
   }
 
   //수정 관련
-  async updateReport(
+  async editReport(
     manager: EntityManager,
     reportNo: number,
-    updateReportDto: UpdateReportBoardDto,
+    updateReportDto: UpdateReportDto,
+    userNo: number,
+    files: Express.Multer.File[],
   ): Promise<void> {
-    await this.getReport(manager, reportNo);
+    const { imageUrls, ...report }: Report<string[]> = await this.getReport(
+      manager,
+      reportNo,
+    );
+    this.validateWriter(userNo, report.userNo);
 
+    await this.updateReport(manager, reportNo, updateReportDto);
+    report.targetBoardNo
+      ? await this.editReportBoardImages(manager, files, reportNo, imageUrls)
+      : await this.editReportUserImages(manager, files, reportNo, imageUrls);
+  }
+
+  private async updateReport(
+    manager: EntityManager,
+    reportNo: number,
+    updateReportDto: UpdateReportDto,
+  ): Promise<void> {
     await manager
       .getCustomRepository(ReportRepository)
       .updateReport(reportNo, updateReportDto);
+  }
+
+  private async editReportBoardImages(
+    manager: EntityManager,
+    files: Express.Multer.File[],
+    reportNo: number,
+    imageUrls: string[],
+  ): Promise<void> {
+    const { no }: ReportBoards = await this.readReportBoard(manager, reportNo);
+
+    if (!imageUrls.includes(null)) {
+      await this.deleteReportBoardImages(manager, no);
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    if (files.length) {
+      const images: string[] = await this.uploadImages(files);
+      await this.setReportBoardImages(manager, images, reportNo);
+    }
+  }
+
+  private async editReportUserImages(
+    manager: EntityManager,
+    files: Express.Multer.File[],
+    reportNo: number,
+    imageUrls: string[],
+  ): Promise<void> {
+    const { no }: ReportUsers = await this.readReportUser(manager, reportNo);
+
+    if (!imageUrls.includes(null)) {
+      await this.deleteReportUserImages(manager, no);
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    if (files.length) {
+      const images: string[] = await this.uploadImages(files);
+      await this.setReportUserImages(manager, images, reportNo);
+    }
   }
 
   // 삭제 관련
@@ -226,6 +303,24 @@ export class ReportsService {
     reportNo: number,
   ): Promise<void> {
     await manager.getCustomRepository(ReportRepository).deleteReport(reportNo);
+  }
+
+  private async deleteReportBoardImages(
+    manager: EntityManager,
+    reportBoardNo: number,
+  ): Promise<void> {
+    await manager
+      .getCustomRepository(ReportBoardImagesRepository)
+      .deleteBoardReportImages(reportBoardNo);
+  }
+
+  private async deleteReportUserImages(
+    manager: EntityManager,
+    reportUserNo: number,
+  ): Promise<void> {
+    await manager
+      .getCustomRepository(ReportUserImagesRepository)
+      .deleteUserReportImages(reportUserNo);
   }
 
   // functions

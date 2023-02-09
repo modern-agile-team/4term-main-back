@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -22,7 +22,7 @@ import { EntityManager } from 'typeorm';
 import { CreateReportBoardDto } from './dto/create-report-board.dto';
 import { CreateReportUserDto } from './dto/create-report-user.dto';
 import { ReportFilterDto } from './dto/report-filter.dto';
-import { UpdateReportBoardDto } from './dto/update-report-board.dto';
+import { UpdateReportDto } from './dto/update-report-board.dto';
 import { Report } from './interface/reports.interface';
 import { ReportsService } from './reports.service';
 import { ApiCreateReportBoard } from './swagger-decorator/create-board-report.decorator';
@@ -30,6 +30,7 @@ import { ApiCreateReportUser } from './swagger-decorator/create-user-report.deco
 import { ApiDeleteReport } from './swagger-decorator/delete-report.decorator';
 import { ApiGetReport } from './swagger-decorator/get-report.decorator';
 import { ApiGetReports } from './swagger-decorator/get-reports.decorator';
+import { ApiUpdateReport } from './swagger-decorator/update-report.decorator';
 
 @Controller('reports')
 @ApiTags('신고 API')
@@ -115,16 +116,22 @@ export class ReportsController {
   @Patch('/:reportNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiOperation({
-    summary: '신고내용 수정 API',
-    description: '입력한 정보로 신고내용을 수정한다.',
-  })
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @ApiUpdateReport()
   async updateBoard(
     @Param('reportNo', ParseIntPipe) reportNo: number,
     @TransactionDecorator() manager: EntityManager,
-    @Body() updateReportDto: UpdateReportBoardDto,
+    @GetUser() userNo: number,
+    @Body() updateReportDto: UpdateReportDto,
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<object> {
-    await this.reportsService.updateReport(manager, reportNo, updateReportDto);
+    await this.reportsService.editReport(
+      manager,
+      reportNo,
+      updateReportDto,
+      userNo,
+      files,
+    );
 
     return { msg: '신고내역 수정 성공' };
   }

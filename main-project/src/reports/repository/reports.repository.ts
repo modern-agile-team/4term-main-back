@@ -8,7 +8,7 @@ import {
 } from 'typeorm';
 import { CreateReportBoardDto } from '../dto/create-report-board.dto';
 import { ReportFilterDto } from '../dto/report-filter.dto';
-import { UpdateReportBoardDto } from '../dto/update-report-board.dto';
+import { UpdateReportDto } from '../dto/update-report-board.dto';
 import { Reports } from '../entity/reports.entity';
 import { Report } from '../interface/reports.interface';
 
@@ -83,7 +83,6 @@ export class ReportRepository extends Repository<Reports> {
             `IF(reportedBoards.reportNo = ${reportNo}, JSON_ARRAYAGG(reportBoardImages.imageUrl), JSON_ARRAYAGG(reportUserImages.imageUrl)) AS imageUrls`,
           ])
           .where('reports.no = :reportNo', { reportNo })
-          .groupBy('reports.no')
           .getRawOne();
 
       const convertReport: Report<string[]> = {
@@ -120,7 +119,7 @@ export class ReportRepository extends Repository<Reports> {
   //게시글 수정 관련
   async updateReport(
     reportNo: number,
-    updateReportDto: UpdateReportBoardDto,
+    updateReportDto: UpdateReportDto,
   ): Promise<void> {
     try {
       await this.createQueryBuilder()

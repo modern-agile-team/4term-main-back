@@ -18,4 +18,18 @@ export class ReportUserImagesRepository extends Repository<ReportUserImages> {
       );
     }
   }
+
+  async deleteUserReportImages(reportUserNo: number): Promise<void> {
+    try {
+      await this.createQueryBuilder()
+        .delete()
+        .from(ReportUserImages)
+        .where('reportUserNo = :reportUserNo', { reportUserNo })
+        .execute();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteUserReportImages-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
 }

@@ -18,4 +18,18 @@ export class ReportBoardImagesRepository extends Repository<ReportBoardImages> {
       );
     }
   }
+
+  async deleteBoardReportImages(reportBoardNo: number): Promise<void> {
+    try {
+      await this.createQueryBuilder()
+        .delete()
+        .from(ReportBoardImages)
+        .where('reportBoardNo = :reportBoardNo', { reportBoardNo })
+        .execute();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} deleteBoardReportImages-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
 }
