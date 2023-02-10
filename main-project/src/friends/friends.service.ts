@@ -94,8 +94,8 @@ export class FriendsService {
       .getCustomRepository(NoticesRepository)
       .saveNotice({
         type,
-        userNo: senderNo,
-        targetUserNo: receiverNo,
+        userNo: receiverNo,
+        targetUserNo: senderNo,
       });
 
     const result = await manager
@@ -119,9 +119,6 @@ export class FriendsService {
   async getSentRequests(senderNo: number): Promise<Friends[]> {
     const sentRequests: Friends[] =
       await this.friendsRepository.getSentRequests(senderNo);
-    if (!sentRequests.length) {
-      throw new NotFoundException(`보낸 친구 신청이 없습니다.`);
-    }
 
     return sentRequests;
   }

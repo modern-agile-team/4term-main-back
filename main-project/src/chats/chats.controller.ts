@@ -68,7 +68,7 @@ export class ChatsController {
     return { response: { currentChatLog } };
   }
 
-  @Post('/:chatRoomNo/invitation/:targetUserNo')
+  @Post('/:chatRoomNo/invitation/:userNo')
   @ApiOperation({
     summary: '채팅방 초대 API',
     description: '알람을 통해 채팅방 초대',
@@ -76,10 +76,10 @@ export class ChatsController {
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   async inviteUser(
-    @GetUser() userNo: number,
+    @GetUser() targetUserNo: number,
     @TransactionDecorator() manager: EntityManager,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Param('targetUserNo', ParseIntPipe) targetUserNo: number,
+    @Param('userNo', ParseIntPipe) userNo: number,
   ): Promise<APIResponse> {
     await this.chatControllerService.inviteUser(
       userNo,

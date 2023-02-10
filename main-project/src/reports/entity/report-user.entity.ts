@@ -4,9 +4,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { ReportUserImages } from './report-user-image.entity';
 import { Reports } from './reports.entity';
 
 @Entity('report_users')
@@ -25,4 +27,10 @@ export class ReportUsers extends BaseEntity {
   })
   @JoinColumn({ name: 'target_user_no' })
   targetUserNo: number;
+
+  @OneToMany(
+    (type) => ReportUserImages,
+    (reportUserImages) => reportUserImages.reportUserNo,
+  )
+  reportUserImage: ReportUserImages[];
 }
