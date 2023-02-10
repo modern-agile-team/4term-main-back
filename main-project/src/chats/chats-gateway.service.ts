@@ -287,4 +287,17 @@ export class ChatsGatewayService {
       throw new BadRequestException('채팅방에 유저의 정보가 없습니다.');
     }
   }
+  async leaveChatRoom(
+    userNo: number,
+    socket: Socket,
+    chatRoomNo: number,
+  ): Promise<void> {
+    await this.checkChatRoom(chatRoomNo, userNo);
+    await this.chatUsersRepository.deleteChatRoomUser({ userNo, chatRoomNo });
+
+    socket.leave(`${chatRoomNo}`);
+    socket.broadcast
+      .to(`${chatRoomNo}`)
+      .emit('message', { message: `${userNo}가 나갔습니다.` });
+  }
 }

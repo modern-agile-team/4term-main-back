@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common/decorators';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -30,6 +30,7 @@ import {
 import { ApiConfirmUser } from './swagger-decorator/confirm-user.decorator';
 import { ApiCreateCertificate } from './swagger-decorator/create-certificate.decorator';
 import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
+import { ApiDeleteProfileImage } from './swagger-decorator/delete-profile-image.decorator';
 import { ApiDenyUser } from './swagger-decorator/deny-user.decorator';
 import { ApiGetUserCertificates } from './swagger-decorator/get-certificates.decorator';
 import { ApiGetOthersProfile } from './swagger-decorator/get-others-profile.decorator';
@@ -127,6 +128,25 @@ export class UsersController {
     };
   }
 
+  @ApiDeleteProfileImage()
+  @UseInterceptors(TransactionInterceptor)
+  @UseGuards(JwtAuthGuard)
+  @Delete('/profile-image')
+  async deleteProfileImage(
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+  ) {
+    const accessToken: string = await this.usersService.deleteProfileImage(
+      userNo,
+      manager,
+    );
+
+    return {
+      msg: '프로필 이미지가 삭제되었습니다.',
+      response: { accessToken },
+    };
+  }
+
   @ApiCreateCertificate()
   @UseInterceptors(FileInterceptor('file'))
   @UseInterceptors(TransactionInterceptor)
@@ -170,6 +190,7 @@ export class UsersController {
   @ApiOperation({
     summary: '회원 탈퇴',
   })
+  @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Delete()
   async softDeleteUser(@GetUser() userNo: number) {

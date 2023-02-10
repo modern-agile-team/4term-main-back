@@ -35,6 +35,7 @@ export class FriendsRepository extends Repository<Friends> {
         .select([
           `IF(friends.receiver_no = ${userNo} , friends.sender_no, friends.receiver_no) AS friendUserNo`,
           `IF(friends.receiver_no = ${userNo} , senderUserProfile.nickname, receiverUserProfile.nickname) AS friendNickname`,
+          `IF(friends.receiver_no = ${userNo} , senderUserProfile.description, receiverUserProfile.description) AS friendDescription`,
           `IF(friends.receiver_no = ${userNo} , senderUserProfileImage.image_url, receiverUserProfileImage.image_url) AS friendProfileImage`,
         ])
         .where(
@@ -64,6 +65,7 @@ export class FriendsRepository extends Repository<Friends> {
         .select([
           'friends.sender_no AS senderUserNo',
           'senderUserProfile.nickname AS senderUserNickname',
+          'senderUserProfile.description AS senderUserDescription',
           'senderUserProfileImage.image_url AS senderUserProfileImage',
         ])
         .where('receiver_no = :receiverNo', { receiverNo })
@@ -91,6 +93,7 @@ export class FriendsRepository extends Repository<Friends> {
         .select([
           'friends.receiver_no AS receiverUserNo',
           'receiverUserProfile.nickname AS receiverUserNickname',
+          'receiverUserProfile.description AS receiverUserDescription',
           'receiverUserProfileImage.image_url AS receiverUserProfileImage',
         ])
         .where('sender_no = :senderNo', { senderNo })
@@ -236,11 +239,18 @@ export class FriendsRepository extends Repository<Friends> {
       const friend = await this.createQueryBuilder('friends')
         .leftJoin('friends.receiverNo', 'receiverUser')
         .leftJoin('receiverUser.userProfileNo', 'receiverUserProfile')
+        .leftJoin(
+          'receiverUserProfile.profileImage',
+          'receiverUserProfileImage',
+        )
         .leftJoin('friends.senderNo', 'senderUser')
         .leftJoin('senderUser.userProfileNo', 'senderUserProfile')
+        .leftJoin('senderUserProfile.profileImage', 'senderUserProfileImage')
         .select([
           `IF(friends.receiverNo = ${userNo} , friends.senderNo, friends.receiverNo) AS friendNo`,
           `IF(friends.receiverNo = ${userNo} , senderUserProfile.nickname, receiverUserProfile.nickname) AS friendNickname`,
+          `IF(friends.receiverNo = ${userNo} , senderUserProfile.description, receiverUserProfile.description) AS friendDescription`,
+          `IF(friends.receiverNo = ${userNo} , senderUserProfileImage.image_url, receiverUserProfileImage.image_url) AS friendProfileImage`,
         ])
         .where(
           `friends.receiverNo = :userNo AND senderUserProfile.nickname LIKE :nickname AND friends.isAccept = 1`,
