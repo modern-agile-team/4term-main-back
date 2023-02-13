@@ -1,36 +1,24 @@
-import { Users } from 'src/users/entity/user.entity';
-import { QueryRunner } from 'typeorm';
-import { Meetings } from '../entity/meeting.entity';
-
 export interface InsertRaw {
   affectedRows: number;
   insertId?: number;
 }
 
-export interface MeetingDetail {
+export interface Meeting {
+  chatRoomNo?: number;
   location: string;
   time: Date;
 }
 
-export interface MeetingMemberDetail {
-  host: Users | number;
-  meetingNo: Meetings | number;
-  hostHeadcount: number;
-  guestHeadcount: number;
+export interface MeetingHosts {
+  hosts: any;
 }
 
-export interface MeetingVacancy {
-  addGuestAvailable: boolean;
-  addHostAvailable: boolean;
+export interface MeetingGuests {
+  guests: any;
 }
 
-export interface InviteNoticeResult {
-  meetingNo: number;
-  side: string;
-}
-
-export interface Members {
-  members: string;
+export interface MeetingMembers {
+  members: any;
 }
 
 export interface MeetingUser {
@@ -38,14 +26,23 @@ export interface MeetingUser {
   userNo: number;
 }
 
-export interface NoticeGuestParam {
-  noticeNo: number;
-  guest: number[];
-  queryRunner: QueryRunner;
+export interface UpdatedMeeting {
+  location?: string;
+  time?: Date;
+  isAccepted?: boolean;
 }
 
-export interface NoticeMeetingParam {
-  noticeNo: number;
+export interface EndedMeeting<T> {
   meetingNo: number;
-  queryRunner: QueryRunner;
+  members: T;
+}
+
+export interface MeetingMember {
+  userNo: number;
+  userType: number;
+}
+
+export interface SortedMembers {
+  guests: number[];
+  hosts: number[];
 }

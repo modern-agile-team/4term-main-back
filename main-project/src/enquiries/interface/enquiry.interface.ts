@@ -1,16 +1,23 @@
-export interface EnquiryCreateResponse {
-  affectedRows: number;
-  insertId?: number;
-}
+import { CreateEnquiryDto } from '../dto/create-enquiry.dto';
+import { CreateReplyDto } from '../dto/create-reply.dto';
 
-export interface EnquiryDetail {
-  userNo: number;
-  title: string;
-  description: string;
-}
-export interface EnquiryReadResponse {
+export interface Enquiry<T> extends CreateEnquiryDto {
   no: number;
   userNo: number;
-  title: string;
-  description: string;
+  createdDate: Date;
+  imageUrls: T;
+  isDone?: boolean;
+}
+
+export class ImageInfo<T> {
+  imageUrl?: T;
+  enquiryNo?: number;
+  replyNo?: number;
+}
+
+export class Reply<T> extends CreateReplyDto {
+  no?: number;
+  enquiryNo: number;
+  createdDate?: Date;
+  imageUrls?: T;
 }

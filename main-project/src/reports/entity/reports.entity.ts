@@ -10,9 +10,9 @@ import {
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { ReportImages } from './report-images.entity';
-import { Reportedboards } from './reported-board.entity';
-import { ReportedUsers } from './reported-user.entity';
+import { ReportBoardImages } from './report-board-images.entity';
+import { ReportBoards } from './report-board.entity';
+import { ReportUsers } from './report-user.entity';
 
 @Entity('reports')
 export class Reports extends BaseEntity {
@@ -31,19 +31,17 @@ export class Reports extends BaseEntity {
   @DeleteDateColumn({ name: 'deleted_date' })
   deletedDate: Date;
 
-  @OneToOne(
-    (type) => Reportedboards,
-    (reportedboards) => reportedboards.reportNo,
-  )
+  @OneToOne((type) => ReportBoards, (reportBoards) => reportBoards.reportNo, {
+    onDelete: 'CASCADE',
+  })
   reportedBoard: number;
 
-  @OneToOne((type) => ReportedUsers, (reportedUsers) => reportedUsers.reportNo)
+  @OneToOne((type) => ReportUsers, (reportUser) => reportUser.reportNo, {
+    onDelete: 'CASCADE',
+  })
   reportedUser: number;
 
   @ManyToOne((type) => Users, (user) => user.report, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_no' })
   userNo: number;
-
-  @OneToOne((type) => ReportImages, (reportImages) => reportImages.reportNo)
-  reportImages: ReportImages;
 }

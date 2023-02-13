@@ -1,35 +1,38 @@
-export interface BoardCreateResponse {
-  affectedRows: number;
-  insertId?: number;
-}
-
-export interface BoardReadResponse {
-  no: number;
+export class Board<T> {
+  no?: number;
+  hostUserNo?: number;
+  hostNickname?: string;
   title: string;
-  isDone: boolean;
   description: string;
   location: string;
-  nickname: string;
   meetingTime: Date;
-  meetingNo: number;
-  userNo: number;
+  isDone: boolean;
+  recruitMale: number;
+  recruitFemale: number;
+  isImpromptu: boolean;
+  hostMemberNums?: T;
+  hostMemberNicknames?: T;
+  createdDate?: Date;
 }
 
-export interface BoardMemberDetail {
+export interface Guest<T> {
+  no?: number;
+  teamNo: number;
+  userNo: number;
+  isAnswered?: boolean;
+  isAccepted?: T;
+}
+
+export interface Host<T> {
+  users: T;
+  acceptedResults: T;
+}
+
+export interface GuestTeam<T> {
+  teamNo?: number;
+  title: string;
+  description: string;
   boardNo?: number;
-  male: number;
-  female: number;
-}
-
-export interface BoardDetail {
-  title: string;
-  description: string;
-  isDone: boolean;
-  location: string;
-  meetingTime: Date;
-}
-
-export interface BookmarkDetail {
-  boardNo: number;
-  userNo: number;
+  isAccepted?: T;
+  guests?: T;
 }

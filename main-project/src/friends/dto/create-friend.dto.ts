@@ -1,16 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsNumber } from 'class-validator';
 
-export class CreateFriendDto {
-  @IsNotEmpty()
-  @ApiProperty({
-    example: 1,
-  })
-  receiverNo: number;
-
+export class CreateFriendRequestDto {
+  @IsNumber()
   @IsNotEmpty()
   @ApiProperty({
     example: 2,
+    description: '친구 신청을 보낼 유저의 no => receiverNo',
   })
-  senderNo: number;
+  receiverNo: number;
 }

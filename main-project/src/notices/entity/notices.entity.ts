@@ -6,12 +6,12 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
-  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { NoticeGuests } from './notice-guest.entity';
-import { NoticeMeetings } from './notice-meeting.entity';
+import { NoticeBoards } from './notice-board.entity';
+import { NoticeChats } from './notice-chat.entity';
+import { NoticeFriends } from './notice-friend.entity';
 
 @Entity('notices')
 export class Notices extends BaseEntity {
@@ -42,16 +42,14 @@ export class Notices extends BaseEntity {
   })
   createdDate: Date;
 
-  @Column('varchar', { length: 100, nullable: true })
-  value: string;
+  @OneToOne((type) => NoticeBoards, (noticeBoards) => noticeBoards.noticeNo, {
+    onDelete: 'CASCADE',
+  })
+  noticeBoards: NoticeBoards;
 
-  @OneToOne(
-    (type) => NoticeMeetings,
-    (noticeMeetings) => noticeMeetings.noticeNo,
-    { onDelete: 'CASCADE' },
-  )
-  noticeMeetings: NoticeMeetings;
+  @OneToOne((type) => NoticeChats, (noticeChats) => noticeChats.noticeNo)
+  noticeChats: NoticeChats;
 
-  @OneToMany((type) => NoticeGuests, (noticeGuests) => noticeGuests.noticeNo)
-  noticeGuests: NoticeGuests[];
+  @OneToOne((type) => NoticeFriends, (noticeFriends) => noticeFriends.noticeNo)
+  noticeFriends: NoticeChats;
 }

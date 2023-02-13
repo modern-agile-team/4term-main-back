@@ -3,39 +3,31 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class CreateMeetingDto {
-  @IsNotEmpty()
-  @ApiProperty({
-    example: [1, 2, 3],
-    description: '약속 주최자 측 정보, 배열 0번지가 게시물 작성자',
-    required: true,
-  })
-  host: number[];
-
-  @IsNotEmpty()
-  @IsString()
   @ApiProperty({
     example: '경기도',
     description: '약속 장소',
     required: true,
   })
+  @IsString()
+  @IsNotEmpty()
   location: string;
 
-  @IsNotEmpty()
-  @Type(() => Date)
-  @IsDate()
   @ApiProperty({
     example: '2022-06-27 15:22:31',
     description: '약속 시간',
     required: true,
   })
+  @IsDate()
+  @Type(() => Date)
+  @IsNotEmpty()
   time: Date;
 
-  @IsNotEmpty()
-  @IsInt()
   @ApiProperty({
-    example: 3,
-    description: '원하는 게스트 인원',
+    example: 1,
+    description: '채팅방 번호',
     required: true,
   })
-  guestHeadcount: number;
+  @IsInt()
+  @IsNotEmpty()
+  chatRoomNo: number;
 }

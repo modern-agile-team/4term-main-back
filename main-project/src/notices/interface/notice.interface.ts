@@ -1,51 +1,32 @@
-export interface NoticeResponse {
-  affectedRows: number;
-  insertId?: number;
-}
-
-export interface NoticeDetail {
+export interface SavedNotice {
   userNo: number;
   targetUserNo: number;
   type: number;
 }
 
-export interface NoticeConditions {
-  userNo: number;
-  targetUserNo?: number;
-  type?: number;
-}
-
-export interface Notice {
-  noticeNo?: number;
-  userNo?: number;
-  targetUserNo: number;
-  type?: number;
-  meetingNo?: number;
-  guest?: any;
-  createdDate?: Date;
-  isRead?: boolean;
-}
-
-export interface NoticeMeetingDetail {
-  meetingNo: number;
+class Notice {
   noticeNo: number;
-}
-
-export interface NoticeGuestDetail {
-  noticeNo: number;
-  userNo: number;
-}
-
-export interface NoticeGuests {
-  noticeNo: number;
-  meetingNo: number;
-  adminGuest: number;
-  guests: any;
-}
-
-export interface NoticeMeeting {
-  noticeNo: number;
-  meetingNo: number;
-  targetUserNo: number;
   type: number;
+  targetUserNo: number;
+  isRead: boolean;
+  createdDate: Date;
+}
+
+export class UserNotice extends Notice {
+  value: string;
+}
+
+export class ExtractedNotice extends Notice {
+  chatRoomNo?: number;
+  boardNo?: number;
+  friendNo?: number;
+}
+
+export interface NoticeChatsInfo {
+  chatRoomNo: number;
+  noticeNo: number;
+}
+
+export interface UpdatedNotice {
+  readDatetime: string;
 }
