@@ -1,11 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
-import { ResultSetHeader } from 'mysql2';
-import {
-  DeleteResult,
-  EntityRepository,
-  InsertResult,
-  Repository,
-} from 'typeorm';
+import { EntityRepository, Repository } from 'typeorm';
 import { EnquiryImages } from '../entity/enquiry-images.entity';
 import { ImageInfo } from '../interface/enquiry.interface';
 

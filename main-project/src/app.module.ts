@@ -34,6 +34,7 @@ import * as Joi from 'joi';
         EXPIRES_IN: Joi.number().required(),
         REFRESH_TOKEN_EXPIRATION: Joi.number().required(),
         TOKEN_EXPIRATION: Joi.number().required(),
+        ADMIN_USER: Joi.number().required(),
       }),
     }),
     CacheModule.register(),
