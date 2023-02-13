@@ -15,7 +15,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { Board } from './interface/boards.interface';
+import { Board, GuestTeam } from './interface/boards.interface';
 import { BoardFilterDto } from './dto/board-filter.dto';
 import { Cron, CronExpression } from '@nestjs/schedule/dist';
 import { APIResponse } from 'src/common/interface/interface';
@@ -38,6 +38,8 @@ import { GuestInviteDto } from './dto/guest-invite.dto';
 import { ApiDeleteBoard } from './swagger-decorator/delete-board.decorator';
 import { ApiDeleteBookmark } from './swagger-decorator/delete-bookmark.decorator';
 import { ApiGetBoardsByUser } from './swagger-decorator/get- boards-by-user.decorator';
+import { GetBoardByUserDto } from './dto/get-board-by-user.dto';
+import { ApiGetGuestTemasByBoardNo } from './swagger-decorator/get-guest-teams-by-board-no.decorator';
 
 @Controller('boards')
 @ApiTags('게시글 API')
@@ -90,7 +92,7 @@ export class BoardsController {
   @UseInterceptors(TransactionInterceptor)
   @ApiGetBoardsByUser()
   async getBoardByUser(
-    @Param('type') type: number,
+    @Param('type') { type }: GetBoardByUserDto,
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
@@ -101,6 +103,21 @@ export class BoardsController {
     );
 
     return { msg: '유저별 게시글 조회 성공', response: { boards } };
+  }
+
+  @Get('/guest-team/:boardNo')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetGuestTemasByBoardNo()
+  async getGuestTeamsByBoardNo(
+    @Param('boardNo') boardNo: number,
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<APIResponse> {
+    const guestTeams: GuestTeam<number[]>[] =
+      await this.boardService.getGuestTeamsByBoardNo(manager, userNo, boardNo);
+
+    return { msg: '여름 신청내역 조회 성공', response: { guestTeams } };
   }
 
   // Post Methods
@@ -205,7 +222,7 @@ export class BoardsController {
       isAccepted,
     );
 
-    return { msg: '게시글 수락/거절 처리 성공' };
+    return { msg: '게스트 수락/거절 처리 성공' };
   }
 
   // Delete Methods

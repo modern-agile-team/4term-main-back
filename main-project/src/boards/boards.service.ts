@@ -134,6 +134,37 @@ export class BoardsService {
     return info;
   }
 
+  async getGuestTeamsByBoardNo(
+    manager: EntityManager,
+    userNo: number,
+    boardNo: number,
+  ): Promise<GuestTeam<number[]>[]> {
+    await this.getBoard(manager, boardNo);
+    await this.validateHost(manager, boardNo, userNo);
+
+    const guestTeams: GuestTeam<number[]>[] =
+      await this.readGuestTeamsByBoardNo(manager, boardNo);
+
+    if (!guestTeams.length) {
+      throw new BadRequestException(
+        `여름 신청내역 조회(getGuestTeamsByBoardNo-service): 신청내역이 없습니다.`,
+      );
+    }
+
+    return guestTeams;
+  }
+
+  async readGuestTeamsByBoardNo(
+    manager: EntityManager,
+    boardNo: number,
+  ): Promise<GuestTeam<number[]>[]> {
+    const guestTeams: GuestTeam<number[]>[] = await manager
+      .getCustomRepository(BoardGuestTeamsRepository)
+      .getGuestTeamsByBoardNo(boardNo);
+
+    return guestTeams;
+  }
+
   private async getAllGuestsByBoardNo(
     manager: EntityManager,
     boardNo: number,
@@ -402,7 +433,7 @@ export class BoardsService {
       manager,
       boardNo,
     );
-    this.validateHost(hostUserNo, userNo);
+    this.validateWriter(hostUserNo, userNo);
     await this.removeBoard(manager, boardNo);
   }
 
@@ -626,10 +657,24 @@ export class BoardsService {
     }
   }
 
-  private validateHost(hostUserNo: number, userNo: number): void {
+  private validateWriter(hostUserNo: number, userNo: number): void {
     if (userNo != hostUserNo) {
       throw new BadRequestException(
         `작성자 검증 (validateHost-service): 작성자와 사용자가 일치하지 않습니다.`,
+      );
+    }
+  }
+
+  private async validateHost(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+  ): Promise<void> {
+    const { users }: Host<number[]> = await this.getHosts(manager, boardNo);
+
+    if (!users.includes(userNo)) {
+      throw new BadRequestException(
+        '호스트 확인(validateHost-service): 해당 게시글의 호스트멤버가 아닙니다.',
       );
     }
   }
@@ -786,7 +831,7 @@ export class BoardsService {
   ): Promise<void> {
     const board: Board<number[]> = await this.getBoard(manager, boardNo);
 
-    this.validateHost(board.hostUserNo, userNo);
+    this.validateWriter(board.hostUserNo, userNo);
     await this.validateRecruits(manager, board, updateBoardDto);
   }
 }
