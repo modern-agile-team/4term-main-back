@@ -123,4 +123,17 @@ export class ChatUsersRepository extends Repository<ChatUsers> {
       );
     }
   }
+  async deleteChatRoomUser(chatRoomUser: ChatRoom) {
+    try {
+      await this.createQueryBuilder('chat_users')
+        .delete()
+        .from(ChatUsers)
+        .where('user_no = :userNo AND chat_room_no = :chatRoomNo', chatRoomUser)
+        .execute();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 채팅방 유저 삭제(deleteChatRoomUser): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
 }
