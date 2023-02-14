@@ -15,11 +15,13 @@ export function ApiGetReceivedRequests() {
           {
             senderUserNo: 7,
             senderUserNickname: 'ggg',
+            senderDescription: '계란 지단',
             senderUserProfileImage: 'http....',
           },
           {
             senderUserNo: 9,
             senderUserNickname: 'iii',
+            senderDescription: '주부 9단',
             senderUserProfileImage: 'http....',
           },
         ],
