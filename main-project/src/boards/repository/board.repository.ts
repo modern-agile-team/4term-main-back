@@ -82,7 +82,13 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async getBoards(filters?: BoardFilterDto): Promise<Board<void>[]> {
+  async getBoards({
+    gender,
+    people,
+    page,
+    isDone,
+    isImpromptu,
+  }: BoardFilterDto): Promise<Board<void>[]> {
     try {
       const boards: SelectQueryBuilder<Boards> = this.createQueryBuilder(
         'boards',
@@ -107,40 +113,27 @@ export class BoardsRepository extends Repository<Boards> {
           `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
         ])
         .where('boards.is_accepted = 1')
-        .orderBy('boards.no', 'DESC');
+        .orderBy('boards.no', 'DESC')
+        .limit(10);
 
-      for (let idx in filters) {
-        switch (idx) {
-          case 'gender':
-            boards.andWhere(`boards.${filters[idx]} = :${filters[idx]}`, {
-              [filters[idx]]: 0,
-            });
-            break;
-
-          case 'people':
-            boards.andWhere(
-              'boards.recruitMale + boards.recruitFemale = :people',
-              {
-                people: filters[idx],
-              },
-            );
-            break;
-
-          case 'isDone':
-            boards.andWhere(`boards.${idx} = :${idx}`, { [idx]: filters[idx] });
-            break;
-
-          case 'isImpromptu':
-            boards.andWhere(`boards.${idx} = :${idx}`, { [idx]: filters[idx] });
-            break;
-
-          case 'page':
-            boards.limit(10).offset(filters[idx] * 10);
-            break;
-
-          default:
-            break;
-        }
+      if (gender) {
+        boards.andWhere(`boards.${gender} = :gender`, { gender: 0 });
+      }
+      if (people) {
+        boards.andWhere('boards.recruitMale + boards.recruitFemale = :people', {
+          people,
+        });
+      }
+      if (isDone) {
+        boards.andWhere(`boards.isDone = :isDone`, { isDone });
+      }
+      if (isImpromptu) {
+        boards.andWhere(`boards.isImpromptu = :isImpromptu`, {
+          isImpromptu,
+        });
+      }
+      if (page > 1) {
+        boards.offset((page - 1) * 10);
       }
 
       return await boards.getRawMany();
