@@ -15,7 +15,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { Board } from './interface/boards.interface';
+import { Board, BoardPagenation } from './interface/boards.interface';
 import { BoardFilterDto } from './dto/board-filter.dto';
 import { Cron, CronExpression } from '@nestjs/schedule/dist';
 import { APIResponse } from 'src/common/interface/interface';
@@ -61,12 +61,12 @@ export class BoardsController {
     @TransactionDecorator() manager: EntityManager,
     @Query() boardFilterDto: BoardFilterDto,
   ): Promise<APIResponse> {
-    const boards: Board<void>[] = await this.boardService.getBoards(
+    const boardPagenation: BoardPagenation = await this.boardService.getBoards(
       manager,
       boardFilterDto,
     );
 
-    return { msg: '게시글 필터/전체 조회 성공', response: { boards } };
+    return { msg: '게시글 필터/전체 조회 성공', response: { boardPagenation } };
   }
 
   @Get('/:boardNo')
