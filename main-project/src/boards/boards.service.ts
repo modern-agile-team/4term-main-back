@@ -8,7 +8,13 @@ import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.rep
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { Guest, Board, Host, GuestTeam } from './interface/boards.interface';
+import {
+  Guest,
+  Board,
+  Host,
+  GuestTeam,
+  BoardPagenation,
+} from './interface/boards.interface';
 import { BoardBookmarksRepository } from './repository/board-bookmark.repository';
 import { BoardGuestsRepository as BoardGuestsRepository } from './repository/board-guest.repository';
 import { BoardHostsRepository } from './repository/board-host.repository';
@@ -58,18 +64,18 @@ export class BoardsService {
   async getBoards(
     manager: EntityManager,
     filter: BoardFilterDto,
-  ): Promise<Board<void>[]> {
-    const boards: Board<void>[] = await manager
+  ): Promise<BoardPagenation> {
+    const boardPagenation: BoardPagenation = await manager
       .getCustomRepository(BoardsRepository)
       .getBoards(filter);
 
-    if (!boards.length) {
+    if (!boardPagenation.boards.length) {
       throw new NotFoundException(
         `게시글 전체 조회(getAllBoards-service): 조건에 맞는 게시글이 없습니다.`,
       );
     }
 
-    return boards;
+    return boardPagenation;
   }
 
   async getBoardsByUser(
