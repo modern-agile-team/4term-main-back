@@ -6,9 +6,10 @@ export class GuestInviteDto {
   @ApiProperty({
     example: true,
     description: '여름 참가 시 게스트멤버로 초대받는 것에 대한 수락/거절',
+    required: true,
   })
   @IsBoolean()
   @ToBoolean()
   @IsNotEmpty()
-  isAccepted: boolean;
+  readonly isAccepted: boolean;
 }
