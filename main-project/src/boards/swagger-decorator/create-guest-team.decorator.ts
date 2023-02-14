@@ -16,34 +16,6 @@ export function ApiCreateGuestTeam() {
       summary: '여름 참가 신청',
     }),
     ApiBearerAuth(),
-    ApiBody({
-      schema: {
-        type: 'object',
-        properties: {
-          guests: {
-            type: 'number[]',
-            example: [3, 2, 98],
-            nullable: false,
-            description:
-              '참가 신청자를 제외한 나머지 게스트의 userNo(신청자는 jwt를 통한 userNo사용)',
-          },
-          title: {
-            type: 'string',
-            example: '크리스마스는 혼자 였지만 이번엔 아닐거야ㅋㅋ',
-            minLength: 2,
-            maxLength: 255,
-            nullable: false,
-            description: '여름 참가글 제목',
-          },
-          description: {
-            type: 'string',
-            example: '화끈한 사람들 다수 대기 중',
-            nullable: false,
-            description: '여름 참가글 내용',
-          },
-        },
-      },
-    }),
     ApiOkResponse(
       SwaggerApiResponse.success('Api 작동 성공 msg 반환', '참가신청 성공.'),
     ),
