@@ -1,5 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 
 export function ApiSearchFriends() {
@@ -8,6 +8,7 @@ export function ApiSearchFriends() {
       summary: '친구 검색 ',
       description: '닉네임으로 친구 검색',
     }),
+    ApiBearerAuth(),
     ApiOkResponse(
       SwaggerApiResponse.success('해당하는 친구 반환', {
         searchResult: [

@@ -6,9 +6,10 @@ export class HostInviteDto {
   @ApiProperty({
     example: true,
     description: '게시글 작성 시 호스트멤버로 초대받는 것에 대한 수락/거절',
+    required: true,
   })
   @IsBoolean()
   @ToBoolean()
   @IsNotEmpty()
-  isAccepted: boolean;
+  readonly isAccepted: boolean;
 }

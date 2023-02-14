@@ -26,17 +26,11 @@ const ValidateGender = () => {
   };
 };
 
-const valueToGender = (value: any) => {
-  if (value === null || value === undefined) {
-    return undefined;
-  }
-  if (typeof value === 'boolean') {
-    return value;
-  }
-  if (value === 0) {
+const valueToGender = (value: string) => {
+  if (value === '0') {
     return 'recruitFemale';
   }
-  if (value === 1) {
+  if (value === '1') {
     return 'recruitMale';
   }
   throw new InternalServerErrorException(`성별을 잘못 입력하셨습니다.`);

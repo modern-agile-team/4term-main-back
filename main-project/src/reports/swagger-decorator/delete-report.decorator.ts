@@ -9,16 +9,16 @@ import {
 
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 
-export function ApiAcceptGuestInvite() {
+export function ApiDeleteReport() {
   return applyDecorators(
     ApiOperation({
-      summary: '여름 참가 시 guestMembers 초대 수락/거절',
+      summary: '게시글 신고 삭제',
     }),
     ApiBearerAuth(),
     ApiOkResponse(
       SwaggerApiResponse.success(
         'Api 작동 성공 msg 반환',
-        '여름 참가 게스트 수락/거절 처리 성공',
+        '게시글 신고 삭제 성공',
       ),
     ),
     ApiNotFoundResponse(
@@ -27,20 +27,18 @@ export function ApiAcceptGuestInvite() {
           name: 'boardNotFound',
           example: { msg: `존재하지 않는 게시글 번호입니다.` },
         },
+        {
+          name: 'boardReportNotFound',
+          example: { msg: `존재하지 않는 게시글 신고 번호입니다.` },
+        },
       ]),
     ),
     ApiBadRequestResponse(
       SwaggerApiResponse.exception([
         {
-          name: 'isNotGuest',
+          name: 'isNotWriter',
           example: {
-            msg: '게스트 확인(validateIsGuest-service): 해당 게시글에 대한 참가신청이 없습니다.',
-          },
-        },
-        {
-          name: 'alreadyAnswered',
-          example: {
-            msg: '게스트 수락 확인(validateGuestIsAnswered-service): 이미 초대 수락한 알람입니다.',
+            msg: `사용자 검증(deleteReport-service): 잘못된 사용자의 접근입니다.`,
           },
         },
       ]),

@@ -10,37 +10,36 @@ import {
 
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 
-export function ApiCreateEnquiry() {
+export function ApiCreateReportBoard() {
   return applyDecorators(
     ApiOperation({
-      summary: '문의사항 생성',
+      summary: '게시글 신고 생성',
     }),
     ApiBearerAuth(),
-    ApiConsumes('multipart/form-data'),
     ApiBody({
       schema: {
         type: 'object',
         properties: {
           title: {
             type: 'string',
-            example: '연애를 하고싶은데 어떻게 시작해야할까요....흨흨',
+            example: '광고성 글이네요 광고회사 사이트인 줄ㅋㅋㅋㅋ',
             minLength: 2,
             maxLength: 255,
             nullable: false,
-            description: '문의사항 제목',
+            description: '게시글 신고 제목',
           },
           description: {
             type: 'string',
-            example: '아니 왜 나만 연애를 못하는데!!!!!!!!!!!!!!!!',
+            example: '@@@@@@@@@@@광고광고빔 빰빠마ㅃ마빠빠마빠빰',
             minLength: 2,
             maxLength: 255,
             nullable: false,
-            description: '문의사항 내용',
+            description: '게시글 신고 내용',
           },
-          files: {
-            type: 'string',
-            format: 'binary',
-            description: '문의사항 이미지 파일',
+          boardNo: {
+            type: 'number',
+            example: 54,
+            description: '신고할 게시글 번호',
           },
         },
       },
@@ -48,15 +47,15 @@ export function ApiCreateEnquiry() {
     ApiOkResponse(
       SwaggerApiResponse.success(
         'Api 작동 성공 msg 반환',
-        '문의사항 생성 성공.',
+        '게시글 신고 생성 성공.',
       ),
     ),
     ApiBadRequestResponse(
       SwaggerApiResponse.exception([
         {
-          name: 'isNotAdmin',
+          name: 'boardNotFound',
           example: {
-            msg: '관리자 검증(validateAdmin-service): 관리자가 아닙니다.',
+            msg: `게시글 신고 생성(validateBoard-service): 3번 게시글을 찾을 수 없습니다.`,
           },
         },
       ]),

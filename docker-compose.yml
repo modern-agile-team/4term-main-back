@@ -1,18 +1,24 @@
 version: '3.8'
 
 services:
+    nginx:
+        container_name: nginx
+        image: nginx:latest
+        ports:
+            - 80:80
     redis:
         image: redis:latest
-        command: redis-server  --requirepass redispw --port 55001
+        command: redis-server  --requirepass redispw --port 6379
         env_file: .env
         container_name: redis_prod
         hostname: redis_prod
         ports:
-            - 55000:55000
+            - 6379:6379
+        restart: always
     nest1:
         build:
             context: .
-            dockerfile: ./dockerfile
+            dockerfile: ./dockerfilecd
         env_file: .env
         image: ghcr.io/klaus9267/summer-auto-deploy
         ports:
@@ -28,7 +34,7 @@ services:
         env_file: .env
         image: ghcr.io/klaus9267/summer-auto-deploy
         ports:
-            - 4000:3000
+            - 3002:3000
         container_name: nest-prod2
         depends_on:
             - redis
@@ -40,7 +46,7 @@ services:
         env_file: .env
         image: ghcr.io/klaus9267/summer-auto-deploy
         ports:
-            - 5000:3000
+            - 3003:3000
         container_name: nest-prod3
         depends_on:
             - redis
