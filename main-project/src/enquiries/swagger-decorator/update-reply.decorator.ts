@@ -39,7 +39,7 @@ export function ApiUpdateReply() {
             nullable: false,
             description: '답변 내용',
           },
-          file: {
+          files: {
             type: 'string',
             format: 'binary',
             description: '답변 이미지 파일',
