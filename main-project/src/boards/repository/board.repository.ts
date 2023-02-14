@@ -41,43 +41,40 @@ export class BoardsRepository extends Repository<Boards> {
 
   async getBoardByNo(no: number): Promise<Board<number[]>> {
     try {
-      const {
-        hostMemberNums,
-        hostMemberNicknames,
-        ...jsonBoard
-      }: Board<string> = await this.createQueryBuilder('boards')
-        .leftJoin('boards.userNo', 'users')
-        .leftJoin('users.userProfileNo', 'profile')
-        .leftJoin('boards.hosts', 'hosts')
-        .leftJoin('hosts.userNo', 'hostUsers')
-        .leftJoin('hostUsers.userProfileNo', 'hostProfile')
-        .select([
-          'boards.no AS no',
-          'boards.userNo AS hostUserNo',
-          'profile.nickname AS hostNickname',
-          'boards.title AS title',
-          'boards.description AS description',
-          'boards.location AS location',
-          'boards.isDone AS isDone',
-          'boards.recruitMale AS recruitMale',
-          'boards.recruitFemale AS recruitFemale',
-          'boards.isImpromptu AS isImpromptu',
-          `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
-          `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
-          'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
-          'JSON_ARRAYAGG(hostProfile.nickname) AS hostMemberNicknames',
-        ])
-        .where('boards.no = :no', { no })
-        .andWhere('hosts.board_no = :no', { no })
-        .getRawOne();
+      const { hostMemberNums, hostMemberNicknames, ...board }: Board<string> =
+        await this.createQueryBuilder('boards')
+          .leftJoin('boards.userNo', 'users')
+          .leftJoin('users.userProfileNo', 'profile')
+          .leftJoin('boards.hosts', 'hosts')
+          .leftJoin('hosts.userNo', 'hostUsers')
+          .leftJoin('hostUsers.userProfileNo', 'hostProfile')
+          .select([
+            'boards.no AS no',
+            'boards.userNo AS hostUserNo',
+            'profile.nickname AS hostNickname',
+            'boards.title AS title',
+            'boards.description AS description',
+            'boards.location AS location',
+            'boards.isDone AS isDone',
+            'boards.recruitMale AS recruitMale',
+            'boards.recruitFemale AS recruitFemale',
+            'boards.isImpromptu AS isImpromptu',
+            `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
+            `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
+            'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
+            'JSON_ARRAYAGG(hostProfile.nickname) AS hostMemberNicknames',
+          ])
+          .where('boards.no = :no', { no })
+          .andWhere('hosts.board_no = :no', { no })
+          .getRawOne();
 
-      const board: Board<number[]> = {
-        ...jsonBoard,
+      const convertBoard: Board<number[]> = {
+        ...board,
         hostMemberNums: JSON.parse(hostMemberNums),
         hostMemberNicknames: JSON.parse(hostMemberNicknames),
       };
 
-      return board;
+      return convertBoard;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getBoard-repository: 알 수 없는 서버 에러입니다.`,
@@ -85,7 +82,13 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async getBoards(filters?: BoardFilterDto): Promise<Board<void>[]> {
+  async getBoards({
+    gender,
+    people,
+    page,
+    isDone,
+    isImpromptu,
+  }: BoardFilterDto): Promise<Board<void>[]> {
     try {
       const boards: SelectQueryBuilder<Boards> = this.createQueryBuilder(
         'boards',
@@ -110,40 +113,27 @@ export class BoardsRepository extends Repository<Boards> {
           `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
         ])
         .where('boards.is_accepted = 1')
-        .orderBy('boards.no', 'DESC');
+        .orderBy('boards.no', 'DESC')
+        .limit(10);
 
-      for (let idx in filters) {
-        switch (idx) {
-          case 'gender':
-            boards.andWhere(`boards.${filters[idx]} = :${filters[idx]}`, {
-              [filters[idx]]: 0,
-            });
-            break;
-
-          case 'people':
-            boards.andWhere(
-              'boards.recruitMale + boards.recruitFemale = :people',
-              {
-                people: filters[idx],
-              },
-            );
-            break;
-
-          case 'isDone':
-            boards.andWhere(`boards.${idx} = :${idx}`, { [idx]: filters[idx] });
-            break;
-
-          case 'isImpromptu':
-            boards.andWhere(`boards.${idx} = :${idx}`, { [idx]: filters[idx] });
-            break;
-
-          case 'page':
-            boards.limit(10).offset(filters[idx] * 10);
-            break;
-
-          default:
-            break;
-        }
+      if (gender) {
+        boards.andWhere(`boards.${gender} = :gender`, { gender: 0 });
+      }
+      if (people) {
+        boards.andWhere('boards.recruitMale + boards.recruitFemale = :people', {
+          people,
+        });
+      }
+      if (isDone) {
+        boards.andWhere(`boards.isDone = :isDone`, { isDone });
+      }
+      if (isImpromptu) {
+        boards.andWhere(`boards.isImpromptu = :isImpromptu`, {
+          isImpromptu,
+        });
+      }
+      if (page > 1) {
+        boards.offset((page - 1) * 10);
       }
 
       return await boards.getRawMany();

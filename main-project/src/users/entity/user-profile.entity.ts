@@ -22,7 +22,7 @@ export class UserProfile extends BaseEntity {
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 
-  @Column({ type: 'varchar', length: 45 })
+  @Column({ type: 'varchar', length: 10 })
   nickname: string;
 
   @Column({ type: 'boolean', width: 1, default: false })

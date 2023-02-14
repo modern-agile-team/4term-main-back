@@ -13,10 +13,10 @@ export class Manners extends BaseEntity {
   @PrimaryGeneratedColumn()
   no: number;
 
-  @Column({ name: 'grade', default: 0 })
+  @Column({ name: 'grade', default: 45 })
   grade: number;
 
-  @Column({ name: 'grade_count', default: 0 })
+  @Column({ name: 'grade_count', default: 10 })
   gradeCount: number;
 
   @OneToOne((type) => Users, (users) => users.mannerNo, {

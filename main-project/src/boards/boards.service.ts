@@ -402,7 +402,7 @@ export class BoardsService {
       manager,
       boardNo,
     );
-    await this.validateHost(hostUserNo, userNo);
+    this.validateHost(hostUserNo, userNo);
     await this.removeBoard(manager, boardNo);
   }
 
@@ -560,7 +560,7 @@ export class BoardsService {
     guests: number[],
   ): Promise<void> {
     const type = NoticeType.GUEST_REQUEST_REJECTED;
-    // TODO:
+
     const notices: SavedNotice[] = guests.map((userNo) => {
       return { userNo, targetUserNo, type };
     });
@@ -626,10 +626,7 @@ export class BoardsService {
     }
   }
 
-  private async validateHost(
-    hostUserNo: number,
-    userNo: number,
-  ): Promise<void> {
+  private validateHost(hostUserNo: number, userNo: number): void {
     if (userNo != hostUserNo) {
       throw new BadRequestException(
         `작성자 검증 (validateHost-service): 작성자와 사용자가 일치하지 않습니다.`,
@@ -789,7 +786,7 @@ export class BoardsService {
   ): Promise<void> {
     const board: Board<number[]> = await this.getBoard(manager, boardNo);
 
-    await this.validateHost(board.hostUserNo, userNo);
+    this.validateHost(board.hostUserNo, userNo);
     await this.validateRecruits(manager, board, updateBoardDto);
   }
 }
