@@ -15,7 +15,7 @@ import { BoardFilterDto } from '../dto/board-filter.dto';
 import { CreateBoardDto } from '../dto/create-board.dto';
 import { UpdateBoardDto } from '../dto/update-board.dto';
 import { Boards } from '../entity/board.entity';
-import { Board } from '../interface/boards.interface';
+import { Board, BoardPagenation } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
 export class BoardsRepository extends Repository<Boards> {
@@ -82,9 +82,15 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async getBoards(filters?: BoardFilterDto): Promise<Board<void>[]> {
+  async getBoards({
+    gender,
+    people,
+    page,
+    isDone,
+    isImpromptu,
+  }: BoardFilterDto): Promise<BoardPagenation> {
     try {
-      const boards: SelectQueryBuilder<Boards> = this.createQueryBuilder(
+      const query: SelectQueryBuilder<Boards> = this.createQueryBuilder(
         'boards',
       )
         .leftJoin('boards.userNo', 'users')
@@ -107,43 +113,33 @@ export class BoardsRepository extends Repository<Boards> {
           `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
         ])
         .where('boards.is_accepted = 1')
-        .orderBy('boards.no', 'DESC');
+        .orderBy('boards.no', 'DESC')
+        .limit(10);
 
-      for (let idx in filters) {
-        switch (idx) {
-          case 'gender':
-            boards.andWhere(`boards.${filters[idx]} = :${filters[idx]}`, {
-              [filters[idx]]: 0,
-            });
-            break;
-
-          case 'people':
-            boards.andWhere(
-              'boards.recruitMale + boards.recruitFemale = :people',
-              {
-                people: filters[idx],
-              },
-            );
-            break;
-
-          case 'isDone':
-            boards.andWhere(`boards.${idx} = :${idx}`, { [idx]: filters[idx] });
-            break;
-
-          case 'isImpromptu':
-            boards.andWhere(`boards.${idx} = :${idx}`, { [idx]: filters[idx] });
-            break;
-
-          case 'page':
-            boards.limit(10).offset(filters[idx] * 10);
-            break;
-
-          default:
-            break;
-        }
+      if (gender) {
+        query.andWhere(`boards.${gender} = :gender`, { gender: 0 });
       }
+      if (people) {
+        query.andWhere('boards.recruitMale + boards.recruitFemale = :people', {
+          people,
+        });
+      }
+      if (isDone) {
+        query.andWhere(`boards.isDone = :isDone`, { isDone });
+      }
+      if (isImpromptu) {
+        query.andWhere(`boards.isImpromptu = :isImpromptu`, {
+          isImpromptu,
+        });
+      }
+      const totalPage: number = Math.ceil((await query.getCount()) / 10);
 
-      return await boards.getRawMany();
+      if (page > 1) {
+        query.offset((page - 1) * 10);
+      }
+      const boards: Board<string[]>[] = await query.getRawMany();
+
+      return { boards, totalPage, page };
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getBoards-repository: 알 수 없는 서버 에러입니다.`,

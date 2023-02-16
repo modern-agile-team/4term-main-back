@@ -3,7 +3,6 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
-  ApiConsumes,
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
@@ -56,19 +55,19 @@ export function ApiCreateBoard() {
           },
           recruitMale: {
             type: 'number',
-            example: 233,
+            example: 2,
             nullable: true,
             description: '남자 모집 인원 (선택)',
           },
           recruitFemale: {
             type: 'number',
-            example: 233,
+            example: 0,
             nullable: true,
             description: '여자 모집 인원 (선택)',
           },
           hostMembers: {
             type: 'number[]',
-            example: [2, 5, 8],
+            example: [14, 15],
             nullable: false,
             description: '호스트 측 인원들(친구)',
           },
