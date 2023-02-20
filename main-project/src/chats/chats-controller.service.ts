@@ -38,8 +38,6 @@ export class ChatsControllerService {
     chatRoomNo: number,
     currentChatLogNo: number,
   ): Promise<ChatLog[]> {
-    await this.checkChatRoomExists(chatRoomNo);
-
     await this.checkUserInChatRoom({
       userNo,
       chatRoomNo,
@@ -59,8 +57,6 @@ export class ChatsControllerService {
     userNo: number,
     chatRoomNo: number,
   ): Promise<ChatLog[]> {
-    await this.checkChatRoomExists(chatRoomNo);
-
     await this.checkUserInChatRoom({
       userNo,
       chatRoomNo,
@@ -118,8 +114,6 @@ export class ChatsControllerService {
     targetUserNo: number,
     chatRoomNo: number,
   ): Promise<void> {
-    await this.checkChatRoomExists(chatRoomNo);
-
     const inviter: ChatUser = await this.checkUserInChatRoom({
       userNo: targetUserNo,
       chatRoomNo,
@@ -130,6 +124,7 @@ export class ChatsControllerService {
       chatRoomNo,
       isNeededUser: false,
     });
+    console.log(inviter);
 
     await this.saveNotice(manager, {
       userNo,
@@ -186,11 +181,9 @@ export class ChatsControllerService {
   async acceptInvitation(
     userNo: number,
     chatRoomNo: number,
-    invitationInfo: AcceptInvitationDto,
+    { senderNo, receiverNo, type }: AcceptInvitationDto,
   ): Promise<void> {
-    const { inviterNo, targetUserNo, type }: AcceptInvitationDto =
-      invitationInfo;
-    if (userNo !== targetUserNo) {
+    if (userNo !== receiverNo) {
       throw new BadRequestException(`초대받은 유저만 수락할 수 있습니다.`);
     }
     if (type !== NoticeType.INVITE_HOST && type !== NoticeType.INVITE_GUEST) {
@@ -200,18 +193,18 @@ export class ChatsControllerService {
       type === NoticeType.INVITE_HOST ? UserType.HOST : UserType.GUEST;
 
     await this.checkUserInChatRoom({
-      userNo: inviterNo,
+      userNo: senderNo,
       chatRoomNo,
       isNeededUser: true,
     });
 
     await this.checkUserInChatRoom({
-      userNo: targetUserNo,
+      userNo,
       chatRoomNo,
       isNeededUser: false,
     });
 
-    await this.joinChatRoom({ userNo: targetUserNo, chatRoomNo, userType });
+    await this.joinChatRoom({ userNo, chatRoomNo, userType });
   }
 
   private async joinChatRoom(chatUserInfo: ChatUser): Promise<void> {

@@ -3,11 +3,11 @@ import { IsNotEmpty, IsNumber } from 'class-validator';
 export class AcceptInvitationDto {
   @IsNumber()
   @IsNotEmpty()
-  inviterNo: number;
+  senderNo: number;
 
   @IsNumber()
   @IsNotEmpty()
-  targetUserNo: number;
+  receiverNo: number;
 
   @IsNumber()
   @IsNotEmpty()
