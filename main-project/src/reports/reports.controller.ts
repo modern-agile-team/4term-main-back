@@ -45,12 +45,15 @@ export class ReportsController {
     @TransactionDecorator() manager: EntityManager,
     @Query() reportFilterDto: ReportFilterDto,
   ): Promise<object> {
-    const reports: Report<string[]>[] = await this.reportsService.getReports(
+    const reportPagenation = await this.reportsService.getReports(
       manager,
       reportFilterDto,
     );
 
-    return { msg: '신고내역 전체/필터 조회 성공', response: { reports } };
+    return {
+      msg: '신고내역 전체/필터 조회 성공',
+      response: { reportPagenation },
+    };
   }
 
   @Get('/:reportNo')
@@ -59,11 +62,13 @@ export class ReportsController {
   @ApiGetReport()
   async getReport(
     @TransactionDecorator() manager: EntityManager,
+    @GetUser() userNo: number,
     @Param('reportNo', ParseIntPipe) reportNo: number,
   ): Promise<object> {
     const report: Report<string[]> = await this.reportsService.getReport(
       manager,
       reportNo,
+      userNo,
     );
 
     return { msg: '신고내역 상세조회 성공', response: { report } };
@@ -119,8 +124,8 @@ export class ReportsController {
   @UseInterceptors(FilesInterceptor('files', 10))
   @ApiUpdateReport()
   async updateBoard(
-    @Param('reportNo', ParseIntPipe) reportNo: number,
     @TransactionDecorator() manager: EntityManager,
+    @Param('reportNo', ParseIntPipe) reportNo: number,
     @GetUser() userNo: number,
     @Body() updateReportDto: UpdateReportDto,
     @UploadedFiles() files: Express.Multer.File[],
