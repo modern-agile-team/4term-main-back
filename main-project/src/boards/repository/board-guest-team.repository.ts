@@ -1,6 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
-import { EntityRepository, InsertResult, Repository } from 'typeorm';
+import {
+  EntityRepository,
+  InsertResult,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { BoardGuestTeams } from '../entity/board-guest-team.entity';
 import { GuestTeam } from '../interface/boards.interface';
 
@@ -32,6 +37,44 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getGuestTeamInfo-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getGuestTeamsByBoardNo(
+    boardNo: number,
+  ): Promise<GuestTeam<number[]>[]> {
+    try {
+      const query: SelectQueryBuilder<BoardGuestTeams> =
+        this.createQueryBuilder('teams')
+          .leftJoin('teams.boardGuest', 'guests')
+          .select([
+            'guests.teamNo AS teamNo',
+            'teams.title AS title',
+            'teams.description AS description',
+            'JSON_ARRAYAGG(guests.userNo) AS guests',
+          ])
+          .where('teams.boardNo = :boardNo', { boardNo })
+          .groupBy('guests.teamNo')
+          .where('teams.isAccepted = TRUE');
+
+      const guestTeams = await query.getRawMany();
+
+      const convertGuestTeams: GuestTeam<number[]>[] = guestTeams.map(
+        ({ guests, ...guetTemaInfo }) => {
+          const guetTeam: GuestTeam<number[]> = {
+            ...guetTemaInfo,
+            guests: JSON.parse(guests),
+          };
+
+          return guetTeam;
+        },
+      );
+
+      return convertGuestTeams;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getGuestTeamsByBoardNo-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

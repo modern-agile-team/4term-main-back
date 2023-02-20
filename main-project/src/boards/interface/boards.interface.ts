@@ -15,6 +15,12 @@ export class Board<T> {
   createdDate?: Date;
 }
 
+export class BoardPagenation {
+  boards: Board<string[]>[];
+  totalPage: number;
+  page: number;
+}
+
 export interface Guest<T> {
   no?: number;
   teamNo: number;

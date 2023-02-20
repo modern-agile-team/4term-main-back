@@ -15,7 +15,7 @@ import { BoardFilterDto } from '../dto/board-filter.dto';
 import { CreateBoardDto } from '../dto/create-board.dto';
 import { UpdateBoardDto } from '../dto/update-board.dto';
 import { Boards } from '../entity/board.entity';
-import { Board } from '../interface/boards.interface';
+import { Board, BoardPagenation } from '../interface/boards.interface';
 
 @EntityRepository(Boards)
 export class BoardsRepository extends Repository<Boards> {
@@ -88,9 +88,9 @@ export class BoardsRepository extends Repository<Boards> {
     page,
     isDone,
     isImpromptu,
-  }: BoardFilterDto): Promise<Board<void>[]> {
+  }: BoardFilterDto): Promise<BoardPagenation> {
     try {
-      const boards: SelectQueryBuilder<Boards> = this.createQueryBuilder(
+      const query: SelectQueryBuilder<Boards> = this.createQueryBuilder(
         'boards',
       )
         .leftJoin('boards.userNo', 'users')
@@ -117,26 +117,29 @@ export class BoardsRepository extends Repository<Boards> {
         .limit(10);
 
       if (gender) {
-        boards.andWhere(`boards.${gender} = :gender`, { gender: 0 });
+        query.andWhere(`boards.${gender} = :gender`, { gender: 0 });
       }
       if (people) {
-        boards.andWhere('boards.recruitMale + boards.recruitFemale = :people', {
+        query.andWhere('boards.recruitMale + boards.recruitFemale = :people', {
           people,
         });
       }
       if (isDone) {
-        boards.andWhere(`boards.isDone = :isDone`, { isDone });
+        query.andWhere(`boards.isDone = :isDone`, { isDone });
       }
       if (isImpromptu) {
-        boards.andWhere(`boards.isImpromptu = :isImpromptu`, {
+        query.andWhere(`boards.isImpromptu = :isImpromptu`, {
           isImpromptu,
         });
       }
-      if (page > 1) {
-        boards.offset((page - 1) * 10);
-      }
+      const totalPage: number = Math.ceil((await query.getCount()) / 10);
 
-      return await boards.getRawMany();
+      if (page > 1) {
+        query.offset((page - 1) * 10);
+      }
+      const boards: Board<string[]>[] = await query.getRawMany();
+
+      return { boards, totalPage, page };
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getBoards-repository: 알 수 없는 서버 에러입니다.`,
