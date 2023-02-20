@@ -124,8 +124,8 @@ export class ReportsController {
   @UseInterceptors(FilesInterceptor('files', 10))
   @ApiUpdateReport()
   async updateBoard(
-    @Param('reportNo', ParseIntPipe) reportNo: number,
     @TransactionDecorator() manager: EntityManager,
+    @Param('reportNo', ParseIntPipe) reportNo: number,
     @GetUser() userNo: number,
     @Body() updateReportDto: UpdateReportDto,
     @UploadedFiles() files: Express.Multer.File[],

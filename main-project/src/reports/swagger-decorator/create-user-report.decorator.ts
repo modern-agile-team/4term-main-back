@@ -47,7 +47,7 @@ export function ApiCreateReportUser() {
             type: 'string',
             format: 'binary',
             nullable: true,
-            description: '문의사항 이미지 파일',
+            description: '신고 이미지 파일',
           },
         },
       },
