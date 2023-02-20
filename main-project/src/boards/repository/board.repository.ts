@@ -13,6 +13,7 @@ import {
 } from 'typeorm';
 import { BoardFilterDto } from '../dto/board-filter.dto';
 import { CreateBoardDto } from '../dto/create-board.dto';
+import { GetBoardByUserDto } from '../dto/get-board-by-user.dto';
 import { UpdateBoardDto } from '../dto/update-board.dto';
 import { Boards } from '../entity/board.entity';
 import { Board, BoardPagenation } from '../interface/boards.interface';
@@ -153,6 +154,7 @@ export class BoardsRepository extends Repository<Boards> {
         'boards',
       )
         .leftJoin('boards.userNo', 'users')
+        .leftJoin('boards.boardBookmark', 'bookmarks')
         .leftJoin('users.userProfileNo', 'profiles')
         .leftJoin('boards.hosts', 'hosts')
         .leftJoin('boards.teamNo', 'guestTeam')
@@ -184,6 +186,9 @@ export class BoardsRepository extends Repository<Boards> {
           break;
         case 3:
           boards.where('guests.userNo = :userNo', { userNo });
+          break;
+        case 4:
+          boards.where('bookmarks.userNo = :userNo', { userNo });
           break;
         default:
           throw new BadRequestException(
