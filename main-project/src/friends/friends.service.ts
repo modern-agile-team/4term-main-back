@@ -178,6 +178,15 @@ export class FriendsService {
     return searchResult;
   }
 
+  async isFriend(myUserNo: number, friendUserNo: number): Promise<Boolean> {
+    const isFriend: Friends = await this.friendsRepository.getFriend(
+      myUserNo,
+      friendUserNo,
+    );
+
+    return Boolean(isFriend);
+  }
+
   private async deleteRequest(request: Friend): Promise<void> {
     const deleteResult = await this.friendsRepository.deleteRequest(request);
     if (!deleteResult) {

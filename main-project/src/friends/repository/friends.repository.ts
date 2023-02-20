@@ -4,7 +4,6 @@ import {
   DeleteResult,
   EntityRepository,
   InsertResult,
-  QueryResult,
   Repository,
   UpdateResult,
 } from 'typeorm';
@@ -12,7 +11,6 @@ import { Friends } from '../entity/friend.entity';
 import {
   Friend,
   FriendInfo,
-  FriendInsertResult,
   FriendRequestStatus,
   FriendToSearch,
 } from '../interface/friend.interface';
@@ -231,6 +229,7 @@ export class FriendsRepository extends Repository<Friends> {
       );
     }
   }
+
   async searchFriendByNickname({
     userNo,
     nickname,
@@ -267,6 +266,33 @@ export class FriendsRepository extends Repository<Friends> {
           },
         )
         .getRawMany();
+
+      return friend;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error}: 친구 검색(searchFriendByNickname): 알 수 없는 서버 에러입니다. `,
+      );
+    }
+  }
+
+  async getFriend(myUserNo, friendUserNo): Promise<Friends> {
+    try {
+      const friend: Friends = await this.createQueryBuilder('friends')
+        .where(
+          `friends.receiverNo = :myUserNo AND friends.senderNo = :friendUserNo`,
+          {
+            myUserNo,
+            friendUserNo,
+          },
+        )
+        .orWhere(
+          `friends.receiverNo = :friendUserNo AND friends.senderNo = :myUserNo`,
+          {
+            friendUserNo,
+            myUserNo,
+          },
+        )
+        .getRawOne();
 
       return friend;
     } catch (error) {

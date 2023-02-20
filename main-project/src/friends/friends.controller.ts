@@ -11,6 +11,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { number } from 'joi';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -26,6 +27,7 @@ import { ApiGetSentRequests } from './swagger/get-sent-requests.decorator';
 import { ApiRefuseRequests } from './swagger/refuse-request.decorator';
 import { ApiSearchFriends } from './swagger/search-friends.decorator';
 import { ApiSendFriendRequest } from './swagger/send-friend-request.decorator';
+import { ApiValidateFriend } from './swagger/validate-friend.decorator';
 
 @Controller('friends')
 @ApiTags('친구 API')
@@ -146,6 +148,23 @@ export class FriendsController {
 
     return {
       response: { searchResult },
+    };
+  }
+
+  @Get('/validate/:friendUserNo')
+  @ApiValidateFriend()
+  @UseGuards(JwtAuthGuard)
+  async isFriend(
+    @GetUser('userNo') myUserNo: number,
+    @Param('friendUserNo', ParseIntPipe) friendUserNo: number,
+  ): Promise<APIResponse> {
+    const isFriend: Boolean = await this.friendsService.isFriend(
+      myUserNo,
+      friendUserNo,
+    );
+
+    return {
+      response: { isFriend },
     };
   }
 }
