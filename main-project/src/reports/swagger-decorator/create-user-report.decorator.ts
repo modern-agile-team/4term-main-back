@@ -1,7 +1,9 @@
 import { applyDecorators } from '@nestjs/common';
 import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiConsumes,
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
@@ -14,6 +16,7 @@ export function ApiCreateReportUser() {
       summary: '유저 신고 생성',
     }),
     ApiBearerAuth(),
+    ApiConsumes('multipart/form-data'),
     ApiBody({
       schema: {
         type: 'object',
@@ -36,9 +39,15 @@ export function ApiCreateReportUser() {
           },
           targetUserNo: {
             type: 'number',
-            example: 54,
+            example: 18,
             nullable: false,
             description: '신고할 유저 번호',
+          },
+          files: {
+            type: 'string',
+            format: 'binary',
+            nullable: true,
+            description: '문의사항 이미지 파일',
           },
         },
       },
@@ -48,6 +57,16 @@ export function ApiCreateReportUser() {
         'Api 작동 성공 msg 반환',
         '유저 신고 생성 성공.',
       ),
+    ),
+    ApiBadRequestResponse(
+      SwaggerApiResponse.exception([
+        {
+          name: 'userNotFound',
+          example: {
+            msg: '사용자 확인(validateUser-service): 존재하지 않는 사용자 입니다',
+          },
+        },
+      ]),
     ),
   );
 }

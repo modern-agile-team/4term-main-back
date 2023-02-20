@@ -62,11 +62,13 @@ export class ReportsController {
   @ApiGetReport()
   async getReport(
     @TransactionDecorator() manager: EntityManager,
+    @GetUser() userNo: number,
     @Param('reportNo', ParseIntPipe) reportNo: number,
   ): Promise<object> {
     const report: Report<string[]> = await this.reportsService.getReport(
       manager,
       reportNo,
+      userNo,
     );
 
     return { msg: '신고내역 상세조회 성공', response: { report } };

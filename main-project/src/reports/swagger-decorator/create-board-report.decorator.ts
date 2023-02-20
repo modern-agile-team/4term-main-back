@@ -16,6 +16,7 @@ export function ApiCreateReportBoard() {
       summary: '게시글 신고 생성',
     }),
     ApiBearerAuth(),
+    ApiConsumes('multipart/form-data'),
     ApiBody({
       schema: {
         type: 'object',
@@ -40,6 +41,12 @@ export function ApiCreateReportBoard() {
             type: 'number',
             example: 54,
             description: '신고할 게시글 번호',
+          },
+          files: {
+            type: 'string',
+            format: 'binary',
+            nullable: true,
+            description: '문의사항 이미지 파일',
           },
         },
       },

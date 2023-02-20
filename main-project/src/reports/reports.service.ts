@@ -63,11 +63,11 @@ export class ReportsService {
     manager: EntityManager,
     page: number,
   ): Promise<ReportPagenation> {
-    const reports: ReportPagenation = await manager
+    const reportMetaData: ReportPagenation = await manager
       .getCustomRepository(ReportRepository)
       .getReports(page);
 
-    return reports;
+    return reportMetaData;
   }
 
   private async readReportBoards(
@@ -95,8 +95,10 @@ export class ReportsService {
   async getReport(
     manager: EntityManager,
     reportNo: number,
+    userNo: number,
   ): Promise<Report<string[]>> {
     const report: Report<string[]> = await this.readReport(manager, reportNo);
+    this.validateWriter(userNo, report.userNo);
 
     if (!report.no) {
       throw new NotFoundException(
@@ -204,13 +206,14 @@ export class ReportsService {
       ...createReportUserDto,
       userNo,
     });
+
     const reportUserNo: number = await this.setUserReport(
       manager,
       targetUserNo,
       reportNo,
     );
 
-    if (files.length) {
+    if (files) {
       const imageUrls: string[] = await this.uploadImages(files);
       await this.setReportUserImages(manager, imageUrls, reportUserNo);
     }
@@ -265,8 +268,8 @@ export class ReportsService {
     const { imageUrls, ...report }: Report<string[]> = await this.getReport(
       manager,
       reportNo,
+      userNo,
     );
-    this.validateWriter(userNo, report.userNo);
 
     await this.updateReport(manager, reportNo, updateReportDto);
     report.targetBoardNo
@@ -329,9 +332,8 @@ export class ReportsService {
     const { imageUrls, ...report }: Report<string[]> = await this.getReport(
       manager,
       reportNo,
+      userNo,
     );
-
-    this.validateWriter(userNo, report.userNo);
 
     if (!imageUrls.includes(null)) {
       await this.awsService.deleteFiles(imageUrls);
@@ -399,11 +401,11 @@ export class ReportsService {
     manager: EntityManager,
     targetUserNo: number,
   ): Promise<void> {
-    const { no }: Users = await manager
+    const user: Users = await manager
       .getCustomRepository(UsersRepository)
       .getUserByNo(targetUserNo);
 
-    if (!no) {
+    if (!user) {
       throw new BadRequestException(
         '사용자 확인(validateUser-service): 존재하지 않는 사용자 입니다',
       );
@@ -417,21 +419,10 @@ export class ReportsService {
     const { no }: Board<number[]> = await manager
       .getCustomRepository(BoardsRepository)
       .getBoardByNo(boardNo);
+
     if (!no) {
       throw new BadRequestException(
         `게시글 신고 생성(validateBoard-service): ${boardNo}번 게시글을 찾을 수 없습니다.`,
-      );
-    }
-  }
-
-  private async validateAdmin(manager: EntityManager, userNo: number) {
-    const { no }: Users = await manager
-      .getCustomRepository(UsersRepository)
-      .getUserByNo(userNo);
-
-    if (no !== this.ADMIN_USER) {
-      throw new BadRequestException(
-        '관리자 검증(validateAdmin-service): 관리자가 아닙니다.',
       );
     }
   }
