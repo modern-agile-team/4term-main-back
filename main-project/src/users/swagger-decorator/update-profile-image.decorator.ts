@@ -7,8 +7,6 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { UserStatus } from 'src/common/configs/user-status.config';
-
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 
 export function ApiUpdateProfileImage() {
@@ -32,12 +30,10 @@ export function ApiUpdateProfileImage() {
     }),
     ApiOkResponse(
       SwaggerApiResponse.success(
-        'userNo,status,accessToken 반환',
+        'accessToken 반환',
         '프로필 이미지가 수정되었습니다.',
         {
           user: {
-            userNo: 1,
-            status: UserStatus.CONFIRMED,
             accessToken: '갱신된 토큰',
           },
         },

@@ -12,13 +12,13 @@ import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 export function ApiDeleteReport() {
   return applyDecorators(
     ApiOperation({
-      summary: '게시글 신고 삭제',
+      summary: '신고내역 삭제',
     }),
     ApiBearerAuth(),
     ApiOkResponse(
       SwaggerApiResponse.success(
         'Api 작동 성공 msg 반환',
-        '게시글 신고 삭제 성공',
+        '신고내역 삭제 성공',
       ),
     ),
     ApiNotFoundResponse(
@@ -28,8 +28,8 @@ export function ApiDeleteReport() {
           example: { msg: `존재하지 않는 게시글 번호입니다.` },
         },
         {
-          name: 'boardReportNotFound',
-          example: { msg: `존재하지 않는 게시글 신고 번호입니다.` },
+          name: 'reportNoNotFound',
+          example: { msg: `존재하지 않는 신고 번호입니다.` },
         },
       ]),
     ),

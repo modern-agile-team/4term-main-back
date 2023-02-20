@@ -33,6 +33,13 @@ export class NoticesService {
     });
   }
 
+  async isUserHasUnreadNotices(userNo: number): Promise<boolean> {
+    const countOfUnreadNotices: number =
+      await this.noticeRepository.getCountOfUnreadNotices(userNo);
+
+    return Boolean(countOfUnreadNotices);
+  }
+
   private async updateNotice(
     noticeNo: number,
     updatedNotice: UpdatedNotice,

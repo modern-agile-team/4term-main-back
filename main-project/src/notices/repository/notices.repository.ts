@@ -133,4 +133,19 @@ export class NoticesRepository extends Repository<Notices> {
       );
     }
   }
+
+  async getCountOfUnreadNotices(userNo: number): Promise<number> {
+    try {
+      const countOfUnreadNotices: number = await this.createQueryBuilder()
+        .where('user_no = :userNo', { userNo })
+        .andWhere('read_datetime IS NULL', { userNo })
+        .getCount();
+
+      return countOfUnreadNotices;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 안 읽은 알림 개수 조회(getCountOfUnreadNotices): 알 수 없는 서버 오류입니다.`,
+      );
+    }
+  }
 }

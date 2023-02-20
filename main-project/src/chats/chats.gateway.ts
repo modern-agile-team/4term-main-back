@@ -23,9 +23,7 @@ import { EntityManager } from 'typeorm';
 
 @WebSocketGateway(4000, {
   namespace: 'chat',
-  cors: {
-    origin: ['http://localhost:3001'],
-  },
+  cors: true,
 })
 export class ChatsGateway {
   constructor(private readonly chatGatewayService: ChatsGatewayService) {}
