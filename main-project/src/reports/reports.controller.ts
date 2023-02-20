@@ -45,12 +45,15 @@ export class ReportsController {
     @TransactionDecorator() manager: EntityManager,
     @Query() reportFilterDto: ReportFilterDto,
   ): Promise<object> {
-    const reports: Report<string[]>[] = await this.reportsService.getReports(
+    const reportPagenation = await this.reportsService.getReports(
       manager,
       reportFilterDto,
     );
 
-    return { msg: '신고내역 전체/필터 조회 성공', response: { reports } };
+    return {
+      msg: '신고내역 전체/필터 조회 성공',
+      response: { reportPagenation },
+    };
   }
 
   @Get('/:reportNo')
