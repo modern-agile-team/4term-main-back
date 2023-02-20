@@ -30,6 +30,7 @@ import {
 import { ApiConfirmUser } from './swagger-decorator/confirm-user.decorator';
 import { ApiCreateCertificate } from './swagger-decorator/create-certificate.decorator';
 import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
+import { ApiDeleteProfileImage } from './swagger-decorator/delete-profile-image.decorator';
 import { ApiDenyUser } from './swagger-decorator/deny-user.decorator';
 import { ApiGetUserCertificates } from './swagger-decorator/get-certificates.decorator';
 import { ApiGetOthersProfile } from './swagger-decorator/get-others-profile.decorator';
@@ -123,6 +124,25 @@ export class UsersController {
 
     return {
       msg: '프로필 이미지가 수정되었습니다.',
+      response: { accessToken },
+    };
+  }
+
+  @ApiDeleteProfileImage()
+  @UseInterceptors(TransactionInterceptor)
+  @UseGuards(JwtAuthGuard)
+  @Delete('/profile-image')
+  async deleteProfileImage(
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+  ) {
+    const accessToken: string = await this.usersService.deleteProfileImage(
+      userNo,
+      manager,
+    );
+
+    return {
+      msg: '프로필 이미지가 삭제되었습니다.',
       response: { accessToken },
     };
   }

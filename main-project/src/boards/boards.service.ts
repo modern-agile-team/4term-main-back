@@ -8,7 +8,13 @@ import { NoticeBoardsRepository } from 'src/notices/repository/notices-board.rep
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { Guest, Board, Host, GuestTeam } from './interface/boards.interface';
+import {
+  Guest,
+  Board,
+  Host,
+  GuestTeam,
+  BoardPagenation,
+} from './interface/boards.interface';
 import { BoardBookmarksRepository } from './repository/board-bookmark.repository';
 import { BoardGuestsRepository as BoardGuestsRepository } from './repository/board-guest.repository';
 import { BoardHostsRepository } from './repository/board-host.repository';
@@ -58,18 +64,18 @@ export class BoardsService {
   async getBoards(
     manager: EntityManager,
     filter: BoardFilterDto,
-  ): Promise<Board<void>[]> {
-    const boards: Board<void>[] = await manager
+  ): Promise<BoardPagenation> {
+    const boardPagenation: BoardPagenation = await manager
       .getCustomRepository(BoardsRepository)
       .getBoards(filter);
 
-    if (!boards.length) {
+    if (!boardPagenation.boards.length) {
       throw new NotFoundException(
         `게시글 전체 조회(getAllBoards-service): 조건에 맞는 게시글이 없습니다.`,
       );
     }
 
-    return boards;
+    return boardPagenation;
   }
 
   async getBoardsByUser(
@@ -132,6 +138,37 @@ export class BoardsService {
       .getGuestTeamInfo(boardNo);
 
     return info;
+  }
+
+  async getGuestTeamsByBoardNo(
+    manager: EntityManager,
+    userNo: number,
+    boardNo: number,
+  ): Promise<GuestTeam<number[]>[]> {
+    await this.getBoard(manager, boardNo);
+    await this.validateHost(manager, boardNo, userNo);
+
+    const guestTeams: GuestTeam<number[]>[] =
+      await this.readGuestTeamsByBoardNo(manager, boardNo);
+
+    if (!guestTeams.length) {
+      throw new BadRequestException(
+        `여름 신청내역 조회(getGuestTeamsByBoardNo-service): 신청내역이 없습니다.`,
+      );
+    }
+
+    return guestTeams;
+  }
+
+  async readGuestTeamsByBoardNo(
+    manager: EntityManager,
+    boardNo: number,
+  ): Promise<GuestTeam<number[]>[]> {
+    const guestTeams: GuestTeam<number[]>[] = await manager
+      .getCustomRepository(BoardGuestTeamsRepository)
+      .getGuestTeamsByBoardNo(boardNo);
+
+    return guestTeams;
   }
 
   private async getAllGuestsByBoardNo(
@@ -402,7 +439,7 @@ export class BoardsService {
       manager,
       boardNo,
     );
-    await this.validateHost(hostUserNo, userNo);
+    this.validateWriter(hostUserNo, userNo);
     await this.removeBoard(manager, boardNo);
   }
 
@@ -560,7 +597,7 @@ export class BoardsService {
     guests: number[],
   ): Promise<void> {
     const type = NoticeType.GUEST_REQUEST_REJECTED;
-    // TODO:
+
     const notices: SavedNotice[] = guests.map((userNo) => {
       return { userNo, targetUserNo, type };
     });
@@ -626,13 +663,24 @@ export class BoardsService {
     }
   }
 
-  private async validateHost(
-    hostUserNo: number,
-    userNo: number,
-  ): Promise<void> {
+  private validateWriter(hostUserNo: number, userNo: number): void {
     if (userNo != hostUserNo) {
       throw new BadRequestException(
         `작성자 검증 (validateHost-service): 작성자와 사용자가 일치하지 않습니다.`,
+      );
+    }
+  }
+
+  private async validateHost(
+    manager: EntityManager,
+    boardNo: number,
+    userNo: number,
+  ): Promise<void> {
+    const { users }: Host<number[]> = await this.getHosts(manager, boardNo);
+
+    if (!users.includes(userNo)) {
+      throw new BadRequestException(
+        '호스트 확인(validateHost-service): 해당 게시글의 호스트멤버가 아닙니다.',
       );
     }
   }
@@ -789,7 +837,7 @@ export class BoardsService {
   ): Promise<void> {
     const board: Board<number[]> = await this.getBoard(manager, boardNo);
 
-    await this.validateHost(board.hostUserNo, userNo);
+    this.validateWriter(board.hostUserNo, userNo);
     await this.validateRecruits(manager, board, updateBoardDto);
   }
 }

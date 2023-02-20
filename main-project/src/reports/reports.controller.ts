@@ -7,12 +7,30 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
+  UploadedFiles,
+  UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CreateReportDto } from './dto/create-reports.dto';
-import { UpdateReportDto } from './dto/update-reports.dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { ApiTags } from '@nestjs/swagger';
+import { GetUser } from 'src/common/decorator/get-user.decorator';
+import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
+import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
+import { EntityManager } from 'typeorm';
+import { CreateReportBoardDto } from './dto/create-report-board.dto';
+import { CreateReportUserDto } from './dto/create-report-user.dto';
+import { ReportFilterDto } from './dto/report-filter.dto';
+import { UpdateReportDto } from './dto/update-report-board.dto';
 import { Report } from './interface/reports.interface';
 import { ReportsService } from './reports.service';
+import { ApiCreateReportBoard } from './swagger-decorator/create-board-report.decorator';
+import { ApiCreateReportUser } from './swagger-decorator/create-user-report.decorator';
+import { ApiDeleteReport } from './swagger-decorator/delete-report.decorator';
+import { ApiGetReport } from './swagger-decorator/get-report.decorator';
+import { ApiGetReports } from './swagger-decorator/get-reports.decorator';
+import { ApiUpdateReport } from './swagger-decorator/update-report.decorator';
 
 @Controller('reports')
 @ApiTags('신고 API')
@@ -20,93 +38,120 @@ export class ReportsController {
   constructor(private reportsService: ReportsService) {}
   // Get
   @Get()
-  @ApiOperation({
-    summary: '신고 전체 조회 API',
-    description: '신고내역을 전부 조회한다.',
-  })
-  async getAllReports(): Promise<object> {
-    const response: Report[] = await this.reportsService.getAllReports();
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetReports()
+  async getReports(
+    @TransactionDecorator() manager: EntityManager,
+    @Query() reportFilterDto: ReportFilterDto,
+  ): Promise<object> {
+    const reports: Report<string[]>[] = await this.reportsService.getReports(
+      manager,
+      reportFilterDto,
+    );
 
-    return { response };
+    return { msg: '신고내역 전체/필터 조회 성공', response: { reports } };
   }
 
   @Get('/:reportNo')
-  @ApiOperation({
-    summary: '신고 상세 조회 API',
-    description: '신고 번호를 통해 해당 신고내역을 조회한다.',
-  })
-  async getReportByNo(
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetReport()
+  async getReport(
+    @TransactionDecorator() manager: EntityManager,
     @Param('reportNo', ParseIntPipe) reportNo: number,
   ): Promise<object> {
-    const response: Report = await this.reportsService.getReportByNo(reportNo);
+    const report: Report<string[]> = await this.reportsService.getReport(
+      manager,
+      reportNo,
+    );
 
-    return { response };
+    return { msg: '신고내역 상세조회 성공', response: { report } };
   }
 
   // Post
-  @Post('/boards/:boardNo')
-  @ApiOperation({
-    summary: '게시글 신고 생성 API',
-    description: '입력된 정보로 게시글 신고 생성.',
-  })
+  @Post('/boards')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @ApiCreateReportBoard()
   async createBoardReport(
-    @Param('boardNo', ParseIntPipe) boardNo: number,
-    @Body() createReportDto: CreateReportDto,
+    @TransactionDecorator() manager: EntityManager,
+    @Body() createReportDto: CreateReportBoardDto,
+    @GetUser() userNo: number,
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<object> {
-    const response: number = await this.reportsService.createBoardReport(
+    await this.reportsService.createBoardReport(
+      manager,
       createReportDto,
-      boardNo,
-    );
-
-    return { response };
-  }
-
-  @Post('/users/:userNo')
-  @ApiOperation({
-    summary: '사용자 신고 생성 API',
-    description: '입력된 정보로 사용자 신고 생성.',
-  })
-  async createUserReport(
-    @Param('userNo', ParseIntPipe) userNo: number,
-    @Body() createReportDto: CreateReportDto,
-  ): Promise<object> {
-    const response: number = await this.reportsService.createUserReport(
-      createReportDto,
+      files,
       userNo,
     );
 
-    return { response };
+    return { msg: '게시글 신고 성공' };
+  }
+
+  @Post('/users')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @ApiCreateReportUser()
+  async createUserReport(
+    @TransactionDecorator() manager: EntityManager,
+    @Body() createReportUserDto: CreateReportUserDto,
+    @GetUser() userNo: number,
+    @UploadedFiles() files: Express.Multer.File[],
+  ): Promise<object> {
+    await this.reportsService.createUserReport(
+      manager,
+      createReportUserDto,
+      files,
+      userNo,
+    );
+
+    return { msg: '유저 신고 성공' };
   }
 
   // Patch Methods
   @Patch('/:reportNo')
-  @ApiOperation({
-    summary: '신고내용 수정 API',
-    description: '입력한 정보로 신고내용을 수정한다.',
-  })
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @UseInterceptors(FilesInterceptor('files', 10))
+  @ApiUpdateReport()
   async updateBoard(
     @Param('reportNo', ParseIntPipe) reportNo: number,
+    @TransactionDecorator() manager: EntityManager,
+    @GetUser() userNo: number,
     @Body() updateReportDto: UpdateReportDto,
+    @UploadedFiles() files: Express.Multer.File[],
   ): Promise<object> {
-    const response: string = await this.reportsService.updateReport(
+    await this.reportsService.editReport(
+      manager,
       reportNo,
       updateReportDto,
+      userNo,
+      files,
     );
 
-    return { response };
+    return { msg: '신고내역 수정 성공' };
   }
 
   // Delete Methods
   @Delete('/:reportNo')
-  @ApiOperation({
-    summary: '특정 신고내역 삭제 API',
-    description: '신고 번호를 사용하여 해당 신고내역을 삭제한다.',
-  })
-  async deleteReportByNo(
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiDeleteReport()
+  async deleteReport(
     @Param('reportNo', ParseIntPipe) reportNo: number,
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
   ): Promise<object> {
-    const response = await this.reportsService.deleteReportByNo(reportNo);
+    const report = await this.reportsService.deleteReport(
+      manager,
+      reportNo,
+      userNo,
+    );
 
-    return { response };
+    return { msg: '게시글 신고 삭제 성공' };
   }
 }

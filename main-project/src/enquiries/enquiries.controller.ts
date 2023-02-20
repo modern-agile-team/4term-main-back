@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -72,7 +72,7 @@ export class EnquiriesController {
         userNo,
       );
 
-    return { msg: '유저별 문의사항 전체 조회', response: { eunqiries } };
+    return { msg: '유저별 문의사항 전체 조회 성공', response: { eunqiries } };
   }
 
   @Get('/:enquiryNo')

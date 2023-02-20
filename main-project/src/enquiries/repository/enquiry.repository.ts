@@ -31,7 +31,7 @@ export class EnquiriesRepository extends Repository<Enquiries> {
           'enquiries.title AS title',
           'enquiries.description AS description',
           'enquiries.isDone AS isDone',
-          `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
+          'DATE_FORMAT(enquiries.createdDate, "%Y.%m.%d %T") AS createdDate',
           'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
         ])
         .orderBy('no', 'DESC')
@@ -78,7 +78,7 @@ export class EnquiriesRepository extends Repository<Enquiries> {
             'enquiries.title AS title',
             'enquiries.description AS description',
             'enquiries.isDone AS isDone',
-            `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
+            'DATE_FORMAT(enquiries.createdDate, "%Y.%m.%d %T") AS createdDate',
             'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
           ])
           .where('enquiries.no = :enquiryNo', { enquiryNo })
