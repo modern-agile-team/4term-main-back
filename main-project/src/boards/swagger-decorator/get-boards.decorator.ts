@@ -49,6 +49,8 @@ export function ApiGetBoards() {
               createdDate: '2023.01.30 16:34:05',
             },
           ],
+          totalPage: 2,
+          page: 2,
         },
       ),
     ),

@@ -8,7 +8,11 @@ import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { EntityManager } from 'typeorm';
 import { CreateReportBoardDto } from './dto/create-report-board.dto';
 import { UpdateReportDto } from './dto/update-report-board.dto';
-import { Report, ReportImage } from './interface/reports.interface';
+import {
+  Report,
+  ReportImage,
+  ReportPagenation,
+} from './interface/reports.interface';
 import { ReportBoardRepository } from './repository/report-board.repository';
 import { ReportRepository } from './repository/reports.repository';
 import { ReportUserRepository } from './repository/report-user.repository';
@@ -34,28 +38,67 @@ export class ReportsService {
   ADMIN_USER = this.configService.get<number>('ADMIN_USER');
 
   // 조회 관련
-  async getReports(
-    manager: EntityManager,
-    reportFilterDto: ReportFilterDto,
-  ): Promise<Report<string[]>[]> {
-    const reports: Report<string[]>[] = await manager
-      .getCustomRepository(ReportRepository)
-      .getReports(reportFilterDto);
+  async getReports(manager: EntityManager, { type, page }: ReportFilterDto) {
+    let reportMetaData: ReportPagenation;
 
-    if (!reports.length) {
+    if (type) {
+      reportMetaData =
+        type === 0
+          ? await this.readReportUsers(manager, page)
+          : await this.readReportBoards(manager, page);
+    } else {
+      reportMetaData = await this.readReports(manager, page);
+    }
+
+    if (!reportMetaData.reports.length) {
       throw new NotFoundException(
-        `신고내역 전체 조회(getReports): 알 수 없는 서버 에러입니다.`,
+        '신고내역 상세 조회(getReports-service): 신고내역이 없습니다!',
       );
     }
 
-    return reports;
+    return reportMetaData;
+  }
+
+  private async readReports(
+    manager: EntityManager,
+    page: number,
+  ): Promise<ReportPagenation> {
+    const reportMetaData: ReportPagenation = await manager
+      .getCustomRepository(ReportRepository)
+      .getReports(page);
+
+    return reportMetaData;
+  }
+
+  private async readReportBoards(
+    manager: EntityManager,
+    page: number,
+  ): Promise<ReportPagenation> {
+    const reportMetaData: ReportPagenation = await manager
+      .getCustomRepository(ReportBoardRepository)
+      .getReportBoards(page);
+
+    return reportMetaData;
+  }
+
+  private async readReportUsers(
+    manager: EntityManager,
+    page: number,
+  ): Promise<ReportPagenation> {
+    const reportMetaData: ReportPagenation = await manager
+      .getCustomRepository(ReportUserRepository)
+      .getReportUsers(page);
+
+    return reportMetaData;
   }
 
   async getReport(
     manager: EntityManager,
     reportNo: number,
+    userNo: number,
   ): Promise<Report<string[]>> {
     const report: Report<string[]> = await this.readReport(manager, reportNo);
+    this.validateWriter(userNo, report.userNo);
 
     if (!report.no) {
       throw new NotFoundException(
@@ -163,13 +206,14 @@ export class ReportsService {
       ...createReportUserDto,
       userNo,
     });
+
     const reportUserNo: number = await this.setUserReport(
       manager,
       targetUserNo,
       reportNo,
     );
 
-    if (files.length) {
+    if (files) {
       const imageUrls: string[] = await this.uploadImages(files);
       await this.setReportUserImages(manager, imageUrls, reportUserNo);
     }
@@ -224,8 +268,8 @@ export class ReportsService {
     const { imageUrls, ...report }: Report<string[]> = await this.getReport(
       manager,
       reportNo,
+      userNo,
     );
-    this.validateWriter(userNo, report.userNo);
 
     await this.updateReport(manager, reportNo, updateReportDto);
     report.targetBoardNo
@@ -288,9 +332,8 @@ export class ReportsService {
     const { imageUrls, ...report }: Report<string[]> = await this.getReport(
       manager,
       reportNo,
+      userNo,
     );
-
-    this.validateWriter(userNo, report.userNo);
 
     if (!imageUrls.includes(null)) {
       await this.awsService.deleteFiles(imageUrls);
@@ -358,11 +401,11 @@ export class ReportsService {
     manager: EntityManager,
     targetUserNo: number,
   ): Promise<void> {
-    const { no }: Users = await manager
+    const user: Users = await manager
       .getCustomRepository(UsersRepository)
       .getUserByNo(targetUserNo);
 
-    if (!no) {
+    if (!user) {
       throw new BadRequestException(
         '사용자 확인(validateUser-service): 존재하지 않는 사용자 입니다',
       );
@@ -376,21 +419,10 @@ export class ReportsService {
     const { no }: Board<number[]> = await manager
       .getCustomRepository(BoardsRepository)
       .getBoardByNo(boardNo);
+
     if (!no) {
       throw new BadRequestException(
         `게시글 신고 생성(validateBoard-service): ${boardNo}번 게시글을 찾을 수 없습니다.`,
-      );
-    }
-  }
-
-  private async validateAdmin(manager: EntityManager, userNo: number) {
-    const { no }: Users = await manager
-      .getCustomRepository(UsersRepository)
-      .getUserByNo(userNo);
-
-    if (no !== this.ADMIN_USER) {
-      throw new BadRequestException(
-        '관리자 검증(validateAdmin-service): 관리자가 아닙니다.',
       );
     }
   }

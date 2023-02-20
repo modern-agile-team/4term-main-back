@@ -12,7 +12,7 @@ export class BoardGuestsRepository extends Repository<BoardGuests> {
         'boardGuest',
       )
         .leftJoin('boardGuest.teamNo', 'team')
-        .select('JSON_ARRAYAGG(boardGuest.userNo) AS userNo')
+        .select('JSON_ARRAYAGG(boardGuest.userNo) AS guests')
         .where('team.boardNo = :boardNo', { boardNo })
         .getRawOne();
 

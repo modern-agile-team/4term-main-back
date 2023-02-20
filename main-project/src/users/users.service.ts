@@ -123,6 +123,20 @@ export class UsersService {
     return await this.updateAccessToken(userNo);
   }
 
+  async deleteProfileImage(
+    userNo: number,
+    manager: EntityManager,
+  ): Promise<string> {
+    const { imageUrl, profileNo }: UserImage =
+      await this.profileImageRepository.getProfileImage(userNo);
+    if (!imageUrl) {
+      throw new NotFoundException('프로필 이미지가 존재하지 않는 유저입니다.');
+    }
+    await this.updateProfileImageByProfileNo(profileNo, null, manager);
+
+    return await this.updateAccessToken(userNo);
+  }
+
   async softDeleteUser(userNo: number): Promise<void> {
     await this.cacheManager.del(userNo);
 
