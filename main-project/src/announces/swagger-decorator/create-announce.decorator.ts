@@ -3,7 +3,7 @@ import {
   ApiBadRequestResponse,
   ApiBearerAuth,
   ApiBody,
-  ApiNotFoundResponse,
+  ApiConsumes,
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
@@ -16,6 +16,7 @@ export function ApiCreateAnnounce() {
       summary: '공지사항 생성',
     }),
     ApiBearerAuth(),
+    ApiConsumes('multipart/form-data'),
     ApiBody({
       schema: {
         type: 'object',
@@ -36,6 +37,11 @@ export function ApiCreateAnnounce() {
             maxLength: 255,
             nullable: false,
             description: '공지사항 내용',
+          },
+          files: {
+            type: 'string',
+            format: 'binary',
+            description: '공지사항 이미지 파일',
           },
         },
       },
