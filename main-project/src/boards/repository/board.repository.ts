@@ -2,7 +2,6 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { log } from 'console';
 import { ResultSetHeader } from 'mysql2';
 import { ChatRoomOfBoard } from 'src/chats/interface/chat.interface';
 import {
@@ -13,7 +12,6 @@ import {
 } from 'typeorm';
 import { BoardFilterDto } from '../dto/board-filter.dto';
 import { CreateBoardDto } from '../dto/create-board.dto';
-import { GetBoardByUserDto } from '../dto/get-board-by-user.dto';
 import { UpdateBoardDto } from '../dto/update-board.dto';
 import { Boards } from '../entity/board.entity';
 import { Board, BoardPagenation } from '../interface/boards.interface';
@@ -60,7 +58,7 @@ export class BoardsRepository extends Repository<Boards> {
             'boards.recruitMale AS recruitMale',
             'boards.recruitFemale AS recruitFemale',
             'boards.isImpromptu AS isImpromptu',
-            `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
+            'boards.meetingTime AS meetingTime',
             `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
             'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
             'JSON_ARRAYAGG(hostProfile.nickname) AS hostMemberNicknames',
@@ -110,7 +108,7 @@ export class BoardsRepository extends Repository<Boards> {
           'boards.isImpromptu AS isImpromptu',
           'boards.recruitMale AS recruitMale',
           'boards.recruitFemale AS recruitFemale',
-          `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
+          'boards.meeting_time AS meetingTime',
           `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
         ])
         .where('boards.is_accepted = 1')
@@ -172,7 +170,7 @@ export class BoardsRepository extends Repository<Boards> {
           'boards.isImpromptu AS isImpromptu',
           'boards.recruitMale AS recruitMale',
           'boards.recruitFemale AS recruitFemale',
-          `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
+          'boards.meetingTime AS meetingTime',
           `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
         ])
         .orderBy('boards.no', 'DESC');
@@ -187,9 +185,9 @@ export class BoardsRepository extends Repository<Boards> {
         case 3:
           boards.where('guests.userNo = :userNo', { userNo });
           break;
-        case 4:
-          boards.where('bookmarks.userNo = :userNo', { userNo });
-          break;
+        // case 4:
+        //   boards.where('bookmarks.userNo = :userNo', { userNo });
+        //   break;
         default:
           throw new BadRequestException(
             '유저별 게시글 검색(getBoardsByUser-repository): type을 잘못 입력했습니다.',

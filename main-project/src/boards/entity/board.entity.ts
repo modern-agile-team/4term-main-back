@@ -60,8 +60,13 @@ export class Boards extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   location: string;
 
-  @Column({ type: 'datetime', name: 'meeting_time', nullable: true })
-  meetingTime: Date;
+  @Column({
+    type: 'varchar',
+    length: 255,
+    name: 'meeting_time',
+    nullable: true,
+  })
+  meetingTime: string;
 
   @Column({ type: 'int', nullable: false, name: 'recruit_male' })
   recruitMale: number;
