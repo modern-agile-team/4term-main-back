@@ -17,13 +17,15 @@ export function ApiGetReport() {
     ApiBearerAuth(),
     ApiOkResponse(
       SwaggerApiResponse.success('신고내역 조회', '신고내역 조회 성공', {
-        enquiries: {
-          no: 4,
-          userNo: 16,
-          title: 'test',
-          description: 'test description',
-          isDone: 0,
-          createdDate: '2023.01.30 16:34:05',
+        report: {
+          no: 22,
+          userNo: 14,
+          title: '집가고싶다sss',
+          description: '집가서 마파두부 먹고싶',
+          createdDate: '2023.02.20 14:06:26',
+          targetBoardNo: null,
+          targetUserNo: 16,
+          imageUrls: [null],
         },
       }),
     ),

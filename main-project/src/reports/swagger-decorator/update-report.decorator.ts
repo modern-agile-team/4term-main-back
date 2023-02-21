@@ -39,10 +39,11 @@ export function ApiUpdateReport() {
             nullable: false,
             description: '신고내역 내용',
           },
-          file: {
+          files: {
             type: 'string',
             format: 'binary',
-            description: '신고내역 이미지 파일',
+            example: 'test.jpg',
+            description: '신고 이미지 파일(send empty value 체크해제 필수)',
           },
         },
       },
