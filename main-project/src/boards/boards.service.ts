@@ -30,6 +30,7 @@ import { Friend } from 'src/friends/interface/friend.interface';
 import { BoardBookmarks } from './entity/board-bookmark.entity';
 import { ConfigService } from '@nestjs/config';
 import { SavedNotice } from 'src/notices/interface/notice.interface';
+import { Boards } from './entity/board.entity';
 
 @Injectable()
 export class BoardsService {
@@ -131,11 +132,11 @@ export class BoardsService {
 
   private async getGuestTeamInfo(
     manager: EntityManager,
-    boardNo: number,
+    teamNo: number,
   ): Promise<GuestTeam<number[]>> {
     const info: GuestTeam<number[]> = await manager
       .getCustomRepository(BoardGuestTeamsRepository)
-      .getGuestTeamInfo(boardNo);
+      .getGuestTeamInfo(teamNo);
 
     return info;
   }
@@ -400,19 +401,17 @@ export class BoardsService {
 
   private async acceptGuestInvite(
     manager: EntityManager,
+    teamNo: number,
     boardNo: number,
     userNo: number,
   ): Promise<void> {
-    const { teamNo }: GuestTeam<number[]> = await this.getGuestTeamInfo(
+    await this.updateGuestInvite(manager, teamNo, userNo);
+    const { isAccepted }: GuestTeam<number[]> = await this.getGuestTeamInfo(
       manager,
-      boardNo,
+      teamNo,
     );
 
-    await this.updateGuestInvite(manager, teamNo, userNo);
-    const isAllAccepted: boolean = await this.validateGuestAllAccept(
-      manager,
-      boardNo,
-    );
+    const isAllAccepted: boolean = isAccepted.includes(0) ? false : true;
 
     if (isAllAccepted) {
       await this.updateAppliesAccepted(manager, teamNo);
@@ -493,12 +492,9 @@ export class BoardsService {
   private async rejectGuestInvite(
     manager: EntityManager,
     boardNo: number,
+    teamNo: number,
   ): Promise<void> {
     const guests: number[] = await this.getAllGuestsByBoardNo(manager, boardNo);
-    const { teamNo }: GuestTeam<number[]> = await this.getGuestTeamInfo(
-      manager,
-      boardNo,
-    );
 
     await this.saveNoticeGuestInviteReject(manager, this.ADMIN_USER, guests);
     await this.deleteGuestTeam(manager, teamNo);
@@ -733,19 +729,6 @@ export class BoardsService {
     return isAllAccepted;
   }
 
-  private async validateGuestAllAccept(
-    manager: EntityManager,
-    boardNo: number,
-  ): Promise<boolean> {
-    const { isAccepted }: GuestTeam<number[]> = await manager
-      .getCustomRepository(BoardGuestTeamsRepository)
-      .getGuestTeamInfo(boardNo);
-
-    const isAllAccepted: boolean = isAccepted.includes(0) ? false : true;
-
-    return isAllAccepted;
-  }
-
   async validateHostInvite(
     manager: EntityManager,
     boardNo: number,
@@ -783,12 +766,12 @@ export class BoardsService {
 
   private async validateGuestIsAnswered(
     manager: EntityManager,
-    boardNo: number,
+    teamNo: number,
     userNo: number,
   ) {
     const isAnswered: boolean = await manager
       .getCustomRepository(BoardGuestsRepository)
-      .getAnswer(boardNo, userNo);
+      .getAnswer(teamNo, userNo);
 
     if (isAnswered) {
       throw new BadRequestException(
@@ -799,17 +782,34 @@ export class BoardsService {
 
   async validateGuestInvite(
     manager: EntityManager,
-    boardNo: number,
+    teamNo: number,
     userNo: number,
     isAccepted: boolean,
   ): Promise<void> {
-    await this.getBoard(manager, boardNo);
+    const boardNo: number = await this.getBoardByTeamNo(manager, teamNo);
     await this.validateIsGuest(manager, boardNo, userNo);
-    await this.validateGuestIsAnswered(manager, boardNo, userNo);
+    await this.validateGuestIsAnswered(manager, teamNo, userNo);
 
     isAccepted
-      ? await this.acceptGuestInvite(manager, boardNo, userNo)
-      : await this.rejectGuestInvite(manager, boardNo);
+      ? await this.acceptGuestInvite(manager, teamNo, boardNo, userNo)
+      : await this.rejectGuestInvite(manager, boardNo, teamNo);
+  }
+
+  async getBoardByTeamNo(
+    manager: EntityManager,
+    teamNo: number,
+  ): Promise<number> {
+    const board: Boards = await manager
+      .getCustomRepository(BoardsRepository)
+      .getBoardByTeamNo(teamNo);
+
+    if (!board) {
+      throw new NotFoundException(
+        `게스트 확인(getBoardByTeamNo-service): ${teamNo}번 여름 신청에 대한 게시글이 없습니다.`,
+      );
+    }
+
+    return board.no;
   }
 
   private async validateIsGuest(

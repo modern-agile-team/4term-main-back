@@ -12,7 +12,7 @@ import { GuestTeam } from '../interface/boards.interface';
 @EntityRepository(BoardGuestTeams)
 export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
   // 조회
-  async getGuestTeamInfo(boardNo: number): Promise<GuestTeam<number[]>> {
+  async getGuestTeamInfo(teamNo: number): Promise<GuestTeam<number[]>> {
     try {
       const { guests, isAccepted, ...applies }: GuestTeam<string> =
         await this.createQueryBuilder('teams')
@@ -24,7 +24,7 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
             'JSON_ARRAYAGG(guests.userNo) AS guests',
             'JSON_ARRAYAGG(guests.isAccepted) AS isAccepted',
           ])
-          .where('teams.boardNo = :boardNo', { boardNo })
+          .where('teams.no = :teamNo', { teamNo })
           .getRawOne();
 
       const infomation: GuestTeam<number[]> = {
@@ -108,7 +108,7 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
         .execute();
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} updateAppliesAccepted-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} updateIsAccepted-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

@@ -209,19 +209,19 @@ export class BoardsController {
     return { msg: '게시글 수락/거절 처리 성공' };
   }
 
-  @Patch('/:boardNo/invite/guest')
+  @Patch('/:teamNo/invite/guest')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiAcceptGuestInvite()
   async acceptGuestInvite(
-    @Param('boardNo', ParseIntPipe) boardNo: number,
+    @Param('teamNo', ParseIntPipe) teamNo: number,
     @Body() { isAccepted }: GuestInviteDto,
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
     await this.boardService.validateGuestInvite(
       manager,
-      boardNo,
+      teamNo,
       userNo,
       isAccepted,
     );
