@@ -41,3 +41,7 @@ export interface FileUrl {
   chatLogNo: number;
   fileUrl: string;
 }
+
+export interface BoardGuestTeam {
+  teamNo: number;
+}

@@ -11,7 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { AnnouncesService } from './announces.service';
 import { CreateAnnounceDto } from './dto/create-announce.dto';
 import { APIResponse } from 'src/common/interface/interface';
@@ -80,7 +80,7 @@ export class AnnouncesController {
       userNo,
     );
 
-    return { response: { msg: '공지사항 생성 성공' } };
+    return { msg: '공지사항 생성 성공' };
   }
 
   // Patch Methods
@@ -104,7 +104,7 @@ export class AnnouncesController {
       files,
     );
 
-    return { response: { msg: '공지사항 수정 성공' } };
+    return { msg: '공지사항 수정 성공' };
   }
 
   // Delete Methods
@@ -119,6 +119,6 @@ export class AnnouncesController {
   ): Promise<APIResponse> {
     await this.announcesService.deleteAnnounce(manager, announceNo, userNo);
 
-    return { response: { msg: '공지사항 삭제 성공' } };
+    return { msg: '공지사항 삭제 성공' };
   }
 }

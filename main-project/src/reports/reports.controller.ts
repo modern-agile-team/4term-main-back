@@ -23,7 +23,7 @@ import { CreateReportBoardDto } from './dto/create-report-board.dto';
 import { CreateReportUserDto } from './dto/create-report-user.dto';
 import { ReportFilterDto } from './dto/report-filter.dto';
 import { UpdateReportDto } from './dto/update-report-board.dto';
-import { Report } from './interface/reports.interface';
+import { Report, ReportPagenation } from './interface/reports.interface';
 import { ReportsService } from './reports.service';
 import { ApiCreateReportBoard } from './swagger-decorator/create-board-report.decorator';
 import { ApiCreateReportUser } from './swagger-decorator/create-user-report.decorator';
@@ -45,12 +45,13 @@ export class ReportsController {
     @TransactionDecorator() manager: EntityManager,
     @Query() reportFilterDto: ReportFilterDto,
   ): Promise<object> {
-    const reports: Report<string[]>[] = await this.reportsService.getReports(
-      manager,
-      reportFilterDto,
-    );
+    const reportPagenation: ReportPagenation =
+      await this.reportsService.getReports(manager, reportFilterDto);
 
-    return { msg: '신고내역 전체/필터 조회 성공', response: { reports } };
+    return {
+      msg: '신고내역 전체/필터 조회 성공',
+      response: { reportPagenation },
+    };
   }
 
   @Get('/:reportNo')
@@ -59,11 +60,13 @@ export class ReportsController {
   @ApiGetReport()
   async getReport(
     @TransactionDecorator() manager: EntityManager,
+    @GetUser() userNo: number,
     @Param('reportNo', ParseIntPipe) reportNo: number,
   ): Promise<object> {
     const report: Report<string[]> = await this.reportsService.getReport(
       manager,
       reportNo,
+      userNo,
     );
 
     return { msg: '신고내역 상세조회 성공', response: { report } };
@@ -119,8 +122,8 @@ export class ReportsController {
   @UseInterceptors(FilesInterceptor('files', 10))
   @ApiUpdateReport()
   async updateBoard(
-    @Param('reportNo', ParseIntPipe) reportNo: number,
     @TransactionDecorator() manager: EntityManager,
+    @Param('reportNo', ParseIntPipe) reportNo: number,
     @GetUser() userNo: number,
     @Body() updateReportDto: UpdateReportDto,
     @UploadedFiles() files: Express.Multer.File[],

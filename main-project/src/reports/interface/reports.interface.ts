@@ -1,5 +1,6 @@
 export interface Report<T> {
   no?: number;
+  reportNo?: number;
   title: string;
   description: string;
   userNo: number;
@@ -12,4 +13,10 @@ export interface Report<T> {
 export interface ReportImage<T> {
   imageUrl: T;
   announceNo?: number;
+}
+
+export interface ReportPagenation {
+  reports: Report<string[]>[];
+  totalPage: number;
+  page: number;
 }

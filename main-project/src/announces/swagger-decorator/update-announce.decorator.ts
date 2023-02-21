@@ -39,6 +39,11 @@ export function ApiUpdateAnnounce() {
             nullable: false,
             description: '공지사항 내용',
           },
+          files: {
+            type: 'string',
+            format: 'binary',
+            description: '공지사항 이미지 파일',
+          },
         },
       },
     }),

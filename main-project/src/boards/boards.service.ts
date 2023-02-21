@@ -709,7 +709,7 @@ export class BoardsService {
     );
 
     if (
-      guests.length &&
+      guests != null &&
       (updateBoardDto.recruitFemale != board.recruitFemale ||
         updateBoardDto.recruitMale != board.recruitMale)
     ) {

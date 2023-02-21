@@ -15,7 +15,11 @@ import { ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { Board, GuestTeam, BoardPagenation } from './interface/boards.interface';
+import {
+  Board,
+  GuestTeam,
+  BoardPagenation,
+} from './interface/boards.interface';
 import { BoardFilterDto } from './dto/board-filter.dto';
 import { Cron, CronExpression } from '@nestjs/schedule/dist';
 import { APIResponse } from 'src/common/interface/interface';
@@ -48,7 +52,7 @@ export class BoardsController {
   //Cron
   @Cron(CronExpression.EVERY_HOUR)
   @Patch()
-  async closeBoard(): Promise <APIResponse> {
+  async closeBoard(): Promise<APIResponse> {
     await this.boardService.closeBoard();
 
     return { msg: 'cron : closeBoard' };
@@ -76,7 +80,7 @@ export class BoardsController {
   @UseInterceptors(TransactionInterceptor)
   @ApiGetBoard()
   async getBoardByNo(
-    @Param('boardNo') boardNo: number,
+    @Param('boardNo', ParseIntPipe) boardNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
     const board: Board<number[]> = await this.boardService.getBoard(
@@ -92,14 +96,14 @@ export class BoardsController {
   @UseInterceptors(TransactionInterceptor)
   @ApiGetBoardsByUser()
   async getBoardByUser(
-    @Param('type') { type }: GetBoardByUserDto,
+    @Param('type') type: GetBoardByUserDto,
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
     const boards: Board<void>[] = await this.boardService.getBoardsByUser(
       manager,
       userNo,
-      type,
+      Number(type),
     );
 
     return { msg: '유저별 게시글 조회 성공', response: { boards } };
@@ -110,7 +114,7 @@ export class BoardsController {
   @UseInterceptors(TransactionInterceptor)
   @ApiGetGuestTemasByBoardNo()
   async getGuestTeamsByBoardNo(
-    @Param('boardNo') boardNo: number,
+    @Param('boardNo', ParseIntPipe) boardNo: number,
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
@@ -140,7 +144,7 @@ export class BoardsController {
   @UseInterceptors(TransactionInterceptor)
   @ApiCreateBookmark()
   async createBookmark(
-    @Param('boardNo') boardNo: number,
+    @Param('boardNo', ParseIntPipe) boardNo: number,
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
@@ -154,7 +158,7 @@ export class BoardsController {
   @UseInterceptors(TransactionInterceptor)
   @ApiCreateGuestTeam()
   async createGuestTeam(
-    @Param('boardNo') boardNo: number,
+    @Param('boardNo', ParseIntPipe) boardNo: number,
     @GetUser() userNo: number,
     @Body() createGuestTeamDto: CreateGuestTeamDto,
     @TransactionDecorator() manager: EntityManager,

@@ -14,6 +14,7 @@ import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { AwsService } from 'src/aws/aws.service';
 import { ChatFileUrlsRepository } from './repository/chat-file-urls.repository';
 import { jwtModule } from 'src/common/configs/jwt-module.config';
+import { BoardGuestTeamsRepository } from 'src/boards/repository/board-guest-team.repository';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -26,6 +27,7 @@ import { jwtModule } from 'src/common/configs/jwt-module.config';
       NoticeChatsRepository,
       NoticesRepository,
       BoardsRepository,
+      BoardGuestTeamsRepository,
     ]),
     jwtModule,
   ],
