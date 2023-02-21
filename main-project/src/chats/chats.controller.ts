@@ -22,6 +22,11 @@ import { EntityManager } from 'typeorm';
 import { UseGuards } from '@nestjs/common/decorators';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
+import { ApiGetPreviousChatLog } from './swagger/get-previous-chat-log.decorator';
+import { ApiGetCurrentChatLog } from './swagger/get-current-chat-log.decorator';
+import { ApiInviteUser } from './swagger/invite-user.decorator';
+import { ApiAcceptInvitation } from './swagger/accept-invitation.decorator';
+import { APiUploadFile } from './swagger/upload-file.decorator';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -32,10 +37,7 @@ export class ChatsController {
   ) {}
 
   @Get('/:chatRoomNo/chat-log/:currentChatLogNo')
-  @ApiOperation({
-    summary: '이전 채팅 내역 API',
-    description: '이전 채팅 내역 조회',
-  })
+  @ApiGetPreviousChatLog()
   @UseGuards(JwtAuthGuard)
   async getPreviousChatLog(
     @GetUser() userNo: number,
@@ -53,10 +55,7 @@ export class ChatsController {
   }
 
   @Get('/:chatRoomNo/chat-log')
-  @ApiOperation({
-    summary: '현재 채팅 내역 API',
-    description: '채팅방에 들어갔을때 가장 최신 채팅 내역 조회',
-  })
+  @ApiGetCurrentChatLog()
   @UseGuards(JwtAuthGuard)
   async getCurrentChatLog(
     @GetUser() userNo: number,
@@ -69,12 +68,9 @@ export class ChatsController {
   }
 
   @Post('/:chatRoomNo/invitation/:userNo')
-  @ApiOperation({
-    summary: '채팅방 초대 API',
-    description: '알람을 통해 채팅방 초대',
-  })
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
+  @ApiInviteUser()
   async inviteUser(
     @GetUser() targetUserNo: number,
     @TransactionDecorator() manager: EntityManager,
@@ -94,20 +90,17 @@ export class ChatsController {
   }
 
   @Patch('/:chatRoomNo/invitation')
-  @ApiOperation({
-    summary: '채팅방 초대 수락 API',
-    description: '유저 번호, 타입, 채팅방 번호를 통해 초대 수락',
-  })
+  @ApiAcceptInvitation()
   @UseGuards(JwtAuthGuard)
   async acceptInvitation(
     @GetUser() userNo: number,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body() invitationInfo: AcceptInvitationDto,
+    @Body() invitation: AcceptInvitationDto,
   ): Promise<APIResponse> {
     await this.chatControllerService.acceptInvitation(
       userNo,
       chatRoomNo,
-      invitationInfo,
+      invitation,
     );
 
     return {
@@ -116,11 +109,7 @@ export class ChatsController {
   }
 
   @Post('/:chatRoomNo/files')
-  @ApiOperation({
-    summary: '파일 전송 API',
-    description:
-      'files에 담긴 최대 10개의 파일을 전달받아 s3업로드 후 url배열 반환',
-  })
+  @APiUploadFile()
   @UseInterceptors(FilesInterceptor('files', 10)) // 10은 최대파일개수
   async uploadFile(
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
