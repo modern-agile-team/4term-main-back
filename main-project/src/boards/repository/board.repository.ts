@@ -185,9 +185,9 @@ export class BoardsRepository extends Repository<Boards> {
         case 3:
           boards.where('guests.userNo = :userNo', { userNo });
           break;
-        // case 4:
-        //   boards.where('bookmarks.userNo = :userNo', { userNo });
-        //   break;
+        case 4:
+          boards.where('bookmarks.userNo = :userNo', { userNo });
+          break;
         default:
           throw new BadRequestException(
             '유저별 게시글 검색(getBoardsByUser-repository): type을 잘못 입력했습니다.',
