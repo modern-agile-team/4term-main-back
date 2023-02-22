@@ -10,8 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { number } from 'joi';
+import { ApiTags } from '@nestjs/swagger';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
