@@ -13,7 +13,7 @@ export function ApiAcceptInvitation() {
   return applyDecorators(
     ApiOperation({
       summary: '채팅방 초대 수락 ',
-      description: '유저 번호, 타입, 채팅방 번호를 통해 초대 수락',
+      description: '유저 번호, notice타입, 채팅방 번호를 통해 초대 수락',
     }),
     ApiBearerAuth(),
     ApiBody({

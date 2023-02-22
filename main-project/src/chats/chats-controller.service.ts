@@ -402,4 +402,22 @@ export class ChatsControllerService {
       throw new InternalServerErrorException(`알림 삭제에 실패했습니다.`);
     }
   }
+
+  async rejecteInvitation(
+    manager: EntityManager,
+    userNo: number,
+    chatRoomNo: number,
+    { senderNo, type }: AcceptInvitationDto,
+  ): Promise<void> {
+    const noticeNo: number = await this.checkChatNotice(
+      userNo,
+      senderNo,
+      chatRoomNo,
+      type,
+    );
+    if (!noticeNo) {
+      throw new NotFoundException(`초대 정보가 존재하지 않습니다.`);
+    }
+    await this.deleteNotice(manager, noticeNo);
+  }
 }

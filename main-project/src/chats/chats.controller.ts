@@ -19,7 +19,7 @@ import { APIResponse } from 'src/common/interface/interface';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { EntityManager } from 'typeorm';
-import { UseGuards } from '@nestjs/common/decorators';
+import { Delete, UseGuards } from '@nestjs/common/decorators';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { ApiGetPreviousChatLog } from './swagger/get-previous-chat-log.decorator';
@@ -28,6 +28,7 @@ import { ApiInviteUser } from './swagger/invite-user.decorator';
 import { ApiAcceptInvitation } from './swagger/accept-invitation.decorator';
 import { APiUploadFile } from './swagger/upload-file.decorator';
 import { ApiCreateChatRoom } from './swagger/create-chat-room.decorator';
+import { ApiRejecteInvitation } from './swagger/rejected-invitation.decorator';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -128,6 +129,25 @@ export class ChatsController {
     return {
       msg: '채팅방 초대 수락 성공',
     };
+  }
+
+  @Delete('/:chatRoomNo/invitation')
+  @ApiRejecteInvitation()
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  async rejecteInvitation(
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
+    @Body() invitation: AcceptInvitationDto,
+  ): Promise<APIResponse> {
+    await this.chatControllerService.rejecteInvitation(
+      manager,
+      userNo,
+      chatRoomNo,
+      invitation,
+    );
+    return { msg: '채팅방 초대 거절 성공' };
   }
 
   @Post('/:chatRoomNo/files')
