@@ -10,7 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { ChatsControllerService } from './chats-controller.service';
 import { AwsService } from 'src/aws/aws.service';
 import { ChatLog } from './entity/chat-log.entity';
@@ -27,6 +27,7 @@ import { ApiGetCurrentChatLog } from './swagger/get-current-chat-log.decorator';
 import { ApiInviteUser } from './swagger/invite-user.decorator';
 import { ApiAcceptInvitation } from './swagger/accept-invitation.decorator';
 import { APiUploadFile } from './swagger/upload-file.decorator';
+import { ApiCreateChatRoom } from './swagger/create-chat-room.decorator';
 
 @Controller('chats')
 @ApiTags('채팅 APi')
@@ -35,6 +36,24 @@ export class ChatsController {
     private readonly chatControllerService: ChatsControllerService,
     private readonly awsService: AwsService,
   ) {}
+  @Post('/:boardNo/:guestTeamNo')
+  @ApiCreateChatRoom()
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  async createChatRoom(
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+    @Param('boardNo', ParseIntPipe) boardNo: number,
+    @Param('guestTeamNo', ParseIntPipe) guestTeamNo: number,
+  ): Promise<APIResponse> {
+    await this.chatControllerService.createChatRoom(
+      userNo,
+      manager,
+      boardNo,
+      guestTeamNo,
+    );
+    return { msg: '여름 신청 수락' };
+  }
 
   @Get('/:chatRoomNo/chat-log/:currentChatLogNo')
   @ApiGetPreviousChatLog()
