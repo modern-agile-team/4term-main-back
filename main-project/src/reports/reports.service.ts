@@ -38,7 +38,10 @@ export class ReportsService {
   ADMIN_USER = this.configService.get<number>('ADMIN_USER');
 
   // 조회 관련
-  async getReports(manager: EntityManager, { type, page }: ReportFilterDto) {
+  async getReports(
+    manager: EntityManager,
+    { type, page }: ReportFilterDto,
+  ): Promise<ReportPagenation> {
     let reportMetaData: ReportPagenation;
 
     if (type) {

@@ -23,7 +23,7 @@ import { CreateReportBoardDto } from './dto/create-report-board.dto';
 import { CreateReportUserDto } from './dto/create-report-user.dto';
 import { ReportFilterDto } from './dto/report-filter.dto';
 import { UpdateReportDto } from './dto/update-report-board.dto';
-import { Report } from './interface/reports.interface';
+import { Report, ReportPagenation } from './interface/reports.interface';
 import { ReportsService } from './reports.service';
 import { ApiCreateReportBoard } from './swagger-decorator/create-board-report.decorator';
 import { ApiCreateReportUser } from './swagger-decorator/create-user-report.decorator';
@@ -45,10 +45,8 @@ export class ReportsController {
     @TransactionDecorator() manager: EntityManager,
     @Query() reportFilterDto: ReportFilterDto,
   ): Promise<object> {
-    const reportPagenation = await this.reportsService.getReports(
-      manager,
-      reportFilterDto,
-    );
+    const reportPagenation: ReportPagenation =
+      await this.reportsService.getReports(manager, reportFilterDto);
 
     return {
       msg: '신고내역 전체/필터 조회 성공',
