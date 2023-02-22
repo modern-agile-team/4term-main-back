@@ -21,3 +21,9 @@ export class Reply<T> extends CreateReplyDto {
   createdDate?: Date;
   imageUrls?: T;
 }
+
+export class EnquiryPagenation {
+  enquiry: Enquiry<string[]>[];
+  totalPage: number;
+  page: number;
+}

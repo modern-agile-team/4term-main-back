@@ -18,11 +18,12 @@ services:
     nest1:
         build:
             context: .
-            dockerfile: ./dockerfilecd
+            dockerfile: ./dockerfile
         env_file: .env
         image: ghcr.io/klaus9267/summer-auto-deploy
         ports:
             - 3000:3000
+            - 4000:4000
         container_name: nest-prod1
         depends_on:
             - redis
@@ -35,6 +36,7 @@ services:
         image: ghcr.io/klaus9267/summer-auto-deploy
         ports:
             - 3002:3000
+            - 4000:4000
         container_name: nest-prod2
         depends_on:
             - redis
@@ -47,6 +49,7 @@ services:
         image: ghcr.io/klaus9267/summer-auto-deploy
         ports:
             - 3003:3000
+            - 4000:4000
         container_name: nest-prod3
         depends_on:
             - redis

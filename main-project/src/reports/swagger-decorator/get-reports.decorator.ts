@@ -19,24 +19,33 @@ export function ApiGetReports() {
         '신고내역 전체/필터 조회',
         '신고내역 전체/필터 조회 성공',
         {
-          reports: [
-            {
-              no: 4,
-              userNo: 16,
-              title: 'test',
-              description: 'test description',
-              isDone: 0,
-              createdDate: '2023.01.30 16:34:05',
-            },
-            {
-              no: 4,
-              userNo: 16,
-              title: 'test',
-              description: 'test description',
-              isDone: 0,
-              createdDate: '2023.01.30 16:34:05',
-            },
-          ],
+          reportPagenation: {
+            reports: [
+              {
+                no: 21,
+                userNo: 15,
+                title: '집가고싶다sss',
+                description: '집가서 마파두부 먹고싶',
+                createdDate: '2023.02.17 15:21:53',
+              },
+              {
+                no: 20,
+                userNo: 15,
+                title: '집가고싶다sss',
+                description: '집가서 마파두부 먹고싶',
+                createdDate: '2023.02.17 15:21:51',
+              },
+              {
+                no: 18,
+                userNo: 15,
+                title: 'ㅁㅇㅁㄴㅇ',
+                description: 'adasdassda ',
+                createdDate: '2023.02.08 17:52:01',
+              },
+            ],
+            totalPage: 1,
+            page: 1,
+          },
         },
       ),
     ),
@@ -45,7 +54,7 @@ export function ApiGetReports() {
         {
           name: 'reportsNotFound',
           example: {
-            msg: `신고내역 전체 조회(getReports-service): 신고내역이 없습니다.`,
+            msg: '신고내역 상세 조회(getReports-service): 신고내역이 없습니다!',
           },
         },
       ]),

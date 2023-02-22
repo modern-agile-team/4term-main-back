@@ -8,31 +8,19 @@ import {
 
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 
-export function ApiGetGuestTemasByBoardNo() {
+export function ApiGetGuestTemasByTeamNo() {
   return applyDecorators(
     ApiOperation({
-      summary: '특정 게시글에 대한여름 신청내역 전체조회',
+      summary: '여름 신청서 상세조회',
     }),
     ApiBearerAuth(),
     ApiOkResponse(
-      SwaggerApiResponse.success('해당 게시글의 여름 신청내역 전체조회', {
-        guestTeamMetaData: {
-          guestTeams: [
-            {
-              teamNo: 4,
-              title: 'tessssst',
-              description: 'desc',
-              guests: [16, 14],
-            },
-            {
-              teamNo: 5,
-              title: 'tessssst',
-              description: 'desc',
-              guests: [16, 14],
-            },
-          ],
-          totalPage: 1,
-          page: 1,
+      SwaggerApiResponse.success('여름 신청서 상세조회 성공', {
+        guestTeams: {
+          teamNo: 4,
+          title: 'tessssst',
+          description: 'desc',
+          guests: [16, 14],
         },
       }),
     ),

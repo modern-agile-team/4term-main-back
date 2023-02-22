@@ -4,12 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ResultSetHeader } from 'mysql2';
 import { AwsService } from 'src/aws/aws.service';
 import { Users } from 'src/users/entity/user.entity';
 import { UsersRepository } from 'src/users/repository/users.repository';
-import { EntityManager, UpdateResult } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { CreateAnnounceDto } from './dto/create-announce.dto';
 import { Announce, AnnounceImage } from './interface/announces.interface';
 import { AnnouncesRepository } from './repository/announce.repository';
@@ -18,7 +17,6 @@ import { AnnouncesImagesRepository } from './repository/announces-images.reposit
 @Injectable()
 export class AnnouncesService {
   constructor(
-    @InjectRepository(AnnouncesRepository)
     private readonly awsService: AwsService,
     private readonly configService: ConfigService,
   ) {}
@@ -33,6 +31,7 @@ export class AnnouncesService {
     userNo: number,
   ): Promise<void> {
     await this.validateAdmin(manager, userNo);
+
     const announceNo: number = await this.setAnnounce(manager, announcesDto);
 
     if (files.length) {
@@ -212,7 +211,7 @@ export class AnnouncesService {
   private async uploadImages(files: Express.Multer.File[]): Promise<string[]> {
     const imageUrls: string[] = await this.awsService.uploadImages(
       files,
-      'announce',
+      'announces',
     );
 
     return imageUrls;

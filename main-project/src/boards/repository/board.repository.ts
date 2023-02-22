@@ -2,7 +2,6 @@ import {
   BadRequestException,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { log } from 'console';
 import { ResultSetHeader } from 'mysql2';
 import { ChatRoomOfBoard } from 'src/chats/interface/chat.interface';
 import {
@@ -39,6 +38,21 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
+  async getBoardByTeamNo(teamNo: number) {
+    try {
+      const board: Boards = await this.createQueryBuilder('boards')
+        .leftJoin('boards.teamNo', 'guestTeams')
+        .where('guestTeams.no = :teamNo', { teamNo })
+        .getOne();
+
+      return board;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getBoardByTeamNo-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async getBoardByNo(no: number): Promise<Board<number[]>> {
     try {
       const { hostMemberNums, hostMemberNicknames, ...board }: Board<string> =
@@ -59,7 +73,7 @@ export class BoardsRepository extends Repository<Boards> {
             'boards.recruitMale AS recruitMale',
             'boards.recruitFemale AS recruitFemale',
             'boards.isImpromptu AS isImpromptu',
-            `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
+            'boards.meetingTime AS meetingTime',
             `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
             'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
             'JSON_ARRAYAGG(hostProfile.nickname) AS hostMemberNicknames',
@@ -109,7 +123,7 @@ export class BoardsRepository extends Repository<Boards> {
           'boards.isImpromptu AS isImpromptu',
           'boards.recruitMale AS recruitMale',
           'boards.recruitFemale AS recruitFemale',
-          `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
+          'boards.meeting_time AS meetingTime',
           `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
         ])
         .where('boards.is_accepted = 1')
@@ -153,6 +167,7 @@ export class BoardsRepository extends Repository<Boards> {
         'boards',
       )
         .leftJoin('boards.userNo', 'users')
+        .leftJoin('boards.boardBookmark', 'bookmarks')
         .leftJoin('users.userProfileNo', 'profiles')
         .leftJoin('boards.hosts', 'hosts')
         .leftJoin('boards.teamNo', 'guestTeam')
@@ -170,7 +185,7 @@ export class BoardsRepository extends Repository<Boards> {
           'boards.isImpromptu AS isImpromptu',
           'boards.recruitMale AS recruitMale',
           'boards.recruitFemale AS recruitFemale',
-          `DATE_FORMAT(boards.meetingTime, '%Y.%m.%d %T') AS meetingTime`,
+          'boards.meetingTime AS meetingTime',
           `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
         ])
         .orderBy('boards.no', 'DESC');
@@ -184,6 +199,9 @@ export class BoardsRepository extends Repository<Boards> {
           break;
         case 3:
           boards.where('guests.userNo = :userNo', { userNo });
+          break;
+        case 4:
+          boards.where('bookmarks.userNo = :userNo', { userNo });
           break;
         default:
           throw new BadRequestException(
@@ -285,15 +303,16 @@ export class BoardsRepository extends Repository<Boards> {
   async getUsersByBoardNo(
     boardNo: number,
     userNo: number,
+    guestTeamNo,
   ): Promise<ChatRoomOfBoard> {
     try {
       const users: ChatRoomOfBoard = await this.createQueryBuilder('boards')
         .leftJoin('boards.hosts', 'hostTeam')
-        .leftJoin('boards.teamNo', 'team')
-        .leftJoin('team.boardGuest', 'guestTeam')
         .leftJoin('hostTeam.userNo', 'hostUser')
-        .leftJoin('guestTeam.userNo', 'guestUser')
         .leftJoin('hostUser.userProfileNo', 'hostProfile')
+        .leftJoin('boards.teamNo', 'guestTeams')
+        .leftJoin('guestTeams.boardGuest', 'guestTeam')
+        .leftJoin('guestTeam.userNo', 'guestUser')
         .leftJoin('guestUser.userProfileNo', 'guestProfile')
         .select([
           'boards.no AS boardNo',
@@ -302,10 +321,17 @@ export class BoardsRepository extends Repository<Boards> {
           'GROUP_CONCAT(DISTINCT hostTeam.user_no) AS hostsUserNo',
           'GROUP_CONCAT(DISTINCT guestTeam.user_no) AS guestsUserNo',
         ])
-        .where('boards.no = :boardNo AND boards.user_no = :userNo', {
-          boardNo,
-          userNo,
-        })
+        .where(
+          `boards.no = :boardNo 
+           AND boards.user_no = :userNo 
+           AND guestTeam.no = :guestTeamNo
+           `,
+          {
+            boardNo,
+            userNo,
+            guestTeamNo,
+          },
+        )
         .getRawOne();
 
       return users;
