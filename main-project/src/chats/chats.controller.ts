@@ -111,13 +111,16 @@ export class ChatsController {
   @Patch('/:chatRoomNo/invitation')
   @ApiAcceptInvitation()
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   async acceptInvitation(
     @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
     @Body() invitation: AcceptInvitationDto,
   ): Promise<APIResponse> {
     await this.chatControllerService.acceptInvitation(
       userNo,
+      manager,
       chatRoomNo,
       invitation,
     );

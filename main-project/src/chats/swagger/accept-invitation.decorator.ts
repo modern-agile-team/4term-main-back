@@ -7,7 +7,6 @@ import {
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
-import { number } from 'joi';
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 
 export function ApiAcceptInvitation() {
@@ -28,13 +27,6 @@ export function ApiAcceptInvitation() {
             nullable: false,
             description: '초대한 유저의 userNo',
           },
-          receiverNo: {
-            type: 'number',
-            minLength: 1,
-            example: 9,
-            nullable: false,
-            description: '초대받은 유저의 userNo',
-          },
           type: {
             type: 'number',
             maxLength: 1,
@@ -49,6 +41,10 @@ export function ApiAcceptInvitation() {
     ),
     ApiNotFoundResponse(
       SwaggerApiResponse.exception([
+        {
+          name: 'noticeNotFound',
+          example: { msg: '초대 정보가 존재하지 않습니다.' },
+        },
         {
           name: 'chatRoomNotFound',
           example: { msg: '존재하지 않는 채팅방입니다.' },

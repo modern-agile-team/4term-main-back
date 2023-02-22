@@ -11,6 +11,7 @@ import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { UserType } from 'src/common/configs/user-type.config';
 import { NoticeChats } from 'src/notices/entity/notice-chat.entity';
+import { Notices } from 'src/notices/entity/notices.entity';
 import { NoticeChatsRepository } from 'src/notices/repository/notices-chats.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { EntityManager, Timestamp } from 'typeorm';
@@ -295,13 +296,12 @@ export class ChatsControllerService {
       ? NoticeType.INVITE_HOST
       : NoticeType.INVITE_GUEST;
 
-    const noticeChat: NoticeChats =
-      await this.noticeChatsRepository.getNoticeChat({
-        userNo,
-        targetUserNo,
-        type: noticeType,
-        chatRoomNo,
-      });
+    const noticeChat: Notices = await this.noticeChatsRepository.getNotice({
+      userNo,
+      targetUserNo,
+      type: noticeType,
+      chatRoomNo,
+    });
     if (noticeChat) {
       throw new BadRequestException('이미 초대를 보낸 상태입니다.');
     }
@@ -332,15 +332,17 @@ export class ChatsControllerService {
 
   async acceptInvitation(
     userNo: number,
+    manager: EntityManager,
     chatRoomNo: number,
-    { senderNo, receiverNo, type }: AcceptInvitationDto,
+    { senderNo, type }: AcceptInvitationDto,
   ): Promise<void> {
-    if (userNo !== receiverNo) {
-      throw new BadRequestException(`초대받은 유저만 수락할 수 있습니다.`);
-    }
-    if (type !== NoticeType.INVITE_HOST && type !== NoticeType.INVITE_GUEST) {
-      throw new BadRequestException(`잘못된 Notice 타입입니다.`);
-    }
+    const noticeNo: number = await this.checkChatNotice(
+      userNo,
+      senderNo,
+      chatRoomNo,
+      type,
+    );
+
     const userType =
       type === NoticeType.INVITE_HOST ? UserType.HOST : UserType.GUEST;
 
@@ -356,15 +358,48 @@ export class ChatsControllerService {
       isNeededUser: false,
     });
 
-    await this.joinChatRoom({ userNo, chatRoomNo, userType });
+    await this.joinChatRoom(manager, { userNo, chatRoomNo, userType });
+    await this.deleteNotice(manager, noticeNo);
   }
 
-  private async joinChatRoom(chatUserInfo: ChatUser): Promise<void> {
+  private async checkChatNotice(
+    userNo: number,
+    senderNo: number,
+    chatRoomNo: number,
+    type: number,
+  ): Promise<number> {
+    const notice: Notices = await this.noticeChatsRepository.getNotice({
+      userNo,
+      targetUserNo: senderNo,
+      type,
+      chatRoomNo,
+    });
+    if (!notice) {
+      throw new NotFoundException(`초대 정보가 존재하지 않습니다.`);
+    }
+    return notice.no;
+  }
+
+  private async joinChatRoom(
+    manager: EntityManager,
+    chatUserInfo: ChatUser,
+  ): Promise<void> {
     const user = [chatUserInfo];
 
-    const affectedRow = await this.chatUsersRepository.createChatUsers(user);
+    const affectedRow: number = await manager
+      .getCustomRepository(ChatUsersRepository)
+      .createChatUsers(user);
     if (!affectedRow) {
       throw new InternalServerErrorException(`채팅방 유저 추가 오류입니다.`);
+    }
+  }
+
+  private async deleteNotice(manager: EntityManager, noticeNo: number) {
+    const deleteResult: number = await manager
+      .getCustomRepository(NoticesRepository)
+      .deleteNotice(noticeNo);
+    if (!deleteResult) {
+      throw new InternalServerErrorException(`알림 삭제에 실패했습니다.`);
     }
   }
 }
