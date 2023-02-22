@@ -1,35 +1,63 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
-import { EntityRepository, InsertResult, Repository } from 'typeorm';
+import {
+  EntityRepository,
+  InsertResult,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { ReportUsers } from '../entity/report-user.entity';
-import { Report } from '../interface/reports.interface';
+import { Report, ReportPagenation } from '../interface/reports.interface';
 
 @EntityRepository(ReportUsers)
 export class ReportUserRepository extends Repository<ReportUsers> {
-  //신고글 조회 관련
-  async getAllUserReports(): Promise<Report[]> {
+  async getReportUsers(page: number): Promise<ReportPagenation> {
     try {
-      const reportedusers = this.createQueryBuilder('ReportUsers')
-        .leftJoin('ReportUsers.reportNo', 'reports')
+      const query: SelectQueryBuilder<ReportUsers> = this.createQueryBuilder(
+        'reportUsers',
+      )
+        .leftJoin('reportUsers.reportNo', 'reports')
         .select([
-          'reports.no AS no',
-          'reports.userNo AS userNo',
+          'reportUsers.no AS no',
+          'reportUsers.report_no AS reportNo',
           'reports.title AS title',
           'reports.description AS description',
-          'ReportUsers.targetUserNo as targetUserNo',
+          'reportUsers.target_user_no AS targetUserNo',
+          'DATE_FORMAT(reports.created_date, "%Y.%m.%d %T") AS createdDate',
         ])
-        .where('ReportUsers.reportNo > 0')
-        .getRawMany();
+        .limit(5);
 
-      return reportedusers;
+      const totalPage: number = Math.ceil((await query.getCount()) / 10);
+
+      if (page > 1) {
+        query.offset((page - 1) * 5);
+      }
+
+      const reports: Report<string[]>[] = await query.getRawMany();
+
+      return { reports, totalPage, page };
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getAllReportedusers-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getReportUsers-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
 
-  // 신고글 작성 관련
+  async getReportUser(reportNo: number): Promise<ReportUsers> {
+    try {
+      const reportUser: ReportUsers = await this.createQueryBuilder()
+        .select()
+        .where('report_no = :reportNo', { reportNo })
+        .getOne();
+
+      return reportUser;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getReportUser-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async createUserReport(
     reportNo: number,
     userNo: number,

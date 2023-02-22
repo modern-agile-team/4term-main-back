@@ -1,6 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
+import { ResultSetHeader } from 'mysql2';
 import { NoticeType } from 'src/common/configs/notice-type.config';
-import { InsertRaw } from 'src/meetings/interface/meeting.interface';
 import {
   DeleteResult,
   EntityRepository,
@@ -18,13 +18,13 @@ import {
 @EntityRepository(Notices)
 export class NoticesRepository extends Repository<Notices> {
   async saveNotice(
-    noticeInfo: SavedNotice | SavedNotice[],
-  ): Promise<InsertRaw> {
+    notice: SavedNotice | SavedNotice[],
+  ): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder('notices')
         .insert()
         .into(Notices)
-        .values(noticeInfo)
+        .values(notice)
         .execute();
 
       return raw;
@@ -72,9 +72,14 @@ export class NoticesRepository extends Repository<Notices> {
 
   async getNoticeByNo(noticeNo: number): Promise<Notices> {
     try {
-      const notice: Notices = await this.createQueryBuilder()
-        .where('no = :noticeNo', { noticeNo })
-        .getOne();
+      const notice: Notices = await this.createQueryBuilder('notices')
+        .select([
+          'user_no AS userNo',
+          'type AS type',
+          'target_user_no AS targetUserNo',
+        ])
+        .where('notices.no = :noticeNo', { noticeNo })
+        .getRawOne();
 
       return notice;
     } catch (error) {
@@ -100,7 +105,7 @@ export class NoticesRepository extends Repository<Notices> {
           'userProfiles.nickname AS senderNickname',
           'profileImages.imageUrl AS senderProfileImage',
           'IF(notices.readDatetime, TRUE, FALSE) AS isRead',
-          'notices.createdDate AS createdDate',
+          'DATE_FORMAT(notices.createdDate, "%Y-%m-%d %h:%i") AS createdDate',
           `CASE 
             WHEN notices.type =${NoticeType.INVITE_GUEST} 
             OR notices.type = ${NoticeType.INVITE_HOST} 
@@ -109,6 +114,10 @@ export class NoticesRepository extends Repository<Notices> {
             OR notices.type = ${NoticeType.FRIEND_REQUEST_ACCEPTED}
               THEN JSON_OBJECT("friendNo", noticeFriends.friendNo)
             WHEN notices.type = ${NoticeType.GUEST_REQUEST}
+            OR notices.type = ${NoticeType.GUEST_REQUEST_REJECTED}
+            OR notices.type = ${NoticeType.HOST_REQUEST}
+            OR notices.type = ${NoticeType.HOST_REQUEST_ALL_ACCEPTED}
+            OR notices.type = ${NoticeType.HOST_REQUEST_REJECTED}
               THEN JSON_OBJECT("boardNo", noticeBoards.boardNo)
           END
           AS value`,
@@ -121,6 +130,21 @@ export class NoticesRepository extends Repository<Notices> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 유저 번호로 알림 조회(getNoticeByUserNo): 알 수 없는 서버 오류입니다.`,
+      );
+    }
+  }
+
+  async getCountOfUnreadNotices(userNo: number): Promise<number> {
+    try {
+      const countOfUnreadNotices: number = await this.createQueryBuilder()
+        .where('user_no = :userNo', { userNo })
+        .andWhere('read_datetime IS NULL', { userNo })
+        .getCount();
+
+      return countOfUnreadNotices;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 안 읽은 알림 개수 조회(getCountOfUnreadNotices): 알 수 없는 서버 오류입니다.`,
       );
     }
   }

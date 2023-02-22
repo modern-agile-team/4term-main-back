@@ -1,17 +1,22 @@
-import { OmitType } from '@nestjs/swagger';
-import { Reports } from '../entity/reports.entity';
-
-export interface ReportDetail {
-  reportNo: number;
-  targetBoardNo?: number;
-  targetUserNo?: number;
-}
-
-export interface Report {
-  no: number;
+export interface Report<T> {
+  no?: number;
+  reportNo?: number;
   title: string;
   description: string;
   userNo: number;
   targetBoardNo?: number;
   targetUserNo?: number;
+  createdDate?: Date;
+  imageUrls?: T;
+}
+
+export interface ReportImage<T> {
+  imageUrl: T;
+  announceNo?: number;
+}
+
+export interface ReportPagenation {
+  reports: Report<string[]>[];
+  totalPage: number;
+  page: number;
 }

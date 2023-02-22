@@ -18,7 +18,6 @@ import { NoticeBoards } from 'src/notices/entity/notice-board.entity';
 import { BoardHosts } from './board-host.entity';
 import { ChatList } from 'src/chats/entity/chat-list.entity';
 import { BoardGuestTeams } from './board-guest-team.entity';
-import { NoticeBoardHosts } from 'src/notices/entity/notice-board-host.entity';
 
 @Entity('boards')
 export class Boards extends BaseEntity {
@@ -61,8 +60,13 @@ export class Boards extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: true })
   location: string;
 
-  @Column({ type: 'datetime', name: 'meeting_time', nullable: true })
-  meetingTime: Date;
+  @Column({
+    type: 'varchar',
+    length: 255,
+    name: 'meeting_time',
+    nullable: true,
+  })
+  meetingTime: string;
 
   @Column({ type: 'int', nullable: false, name: 'recruit_male' })
   recruitMale: number;
@@ -88,12 +92,6 @@ export class Boards extends BaseEntity {
 
   @OneToMany((type) => NoticeBoards, (noticeBoards) => noticeBoards.boardNo)
   noticeBoard: NoticeBoards;
-
-  @OneToMany(
-    (type) => NoticeBoardHosts,
-    (noticeBoardHost) => noticeBoardHost.boardNo,
-  )
-  noticeBoardHost: NoticeBoardHosts;
 
   @OneToMany((type) => BoardHosts, (boardHosts) => boardHosts.boardNo, {
     onDelete: 'CASCADE',

@@ -12,13 +12,6 @@ export class VerifyEmailDto {
 
   @IsNotEmpty()
   @ApiProperty({
-    description: '사용자 비밀번호',
-    example: 'abc',
-  })
-  password: string;
-
-  @IsNotEmpty()
-  @ApiProperty({
     description: '이메일로 전송된 6자리 사용자 인증 코드',
     example: '123456',
   })

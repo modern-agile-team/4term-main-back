@@ -11,7 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { AnnouncesService } from './announces.service';
 import { CreateAnnounceDto } from './dto/create-announce.dto';
 import { APIResponse } from 'src/common/interface/interface';
@@ -80,49 +80,45 @@ export class AnnouncesController {
       userNo,
     );
 
-    return { response: { msg: '공지사항 생성 성공' } };
+    return { msg: '공지사항 생성 성공' };
   }
 
   // Patch Methods
-  @Patch('/:announcesNo')
+  @Patch('/:announceNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @UseInterceptors(FilesInterceptor('files', 10))
   @ApiUpdateAnnounce()
-  async updateAnnounces(
+  async updateAnnounce(
     @TransactionDecorator() manager: EntityManager,
     @GetUser() userNo: number,
-    @Param('announcesNo', ParseIntPipe) announcesNo: number,
+    @Param('announceNo', ParseIntPipe) announceNo: number,
     @Body() updateAnnounceDto: UpdateAnnounceDto,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<APIResponse> {
     await this.announcesService.editAnnounce(
       manager,
       userNo,
-      announcesNo,
+      announceNo,
       updateAnnounceDto,
       files,
     );
 
-    return { response: { msg: '공지사항 수정 성공' } };
+    return { msg: '공지사항 수정 성공' };
   }
 
   // Delete Methods
-  @Delete('/:announcesNo')
+  @Delete('/:announceNo')
   @UseInterceptors(TransactionInterceptor)
   @UseGuards(JwtAuthGuard)
   @ApiDeleteAnnounce()
-  async deleteAnnounces(
+  async deleteAnnounce(
     @TransactionDecorator() manager: EntityManager,
     @GetUser() userNo: number,
-    @Param('announcesNo', ParseIntPipe) announcesNo: number,
+    @Param('announceNo', ParseIntPipe) announceNo: number,
   ): Promise<APIResponse> {
-    await this.announcesService.deleteAnnounceByNo(
-      manager,
-      announcesNo,
-      userNo,
-    );
+    await this.announcesService.deleteAnnounce(manager, announceNo, userNo);
 
-    return { response: { msg: '공지사항 삭제 성공' } };
+    return { msg: '공지사항 삭제 성공' };
   }
 }

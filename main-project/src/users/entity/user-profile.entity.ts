@@ -22,7 +22,7 @@ export class UserProfile extends BaseEntity {
   @JoinColumn({ name: 'user_no' })
   userNo: number;
 
-  @Column({ type: 'varchar', length: 45 })
+  @Column({ type: 'varchar', length: 10 })
   nickname: string;
 
   @Column({ type: 'boolean', width: 1, default: false })
@@ -33,9 +33,6 @@ export class UserProfile extends BaseEntity {
 
   @Column({ type: 'varchar', length: 45, nullable: true })
   major: string;
-
-  @OneToOne((type) => Manners, (Manners) => Manners.userProfileNo)
-  mannerNo: Manners;
 
   @OneToOne(
     (type) => ProfileImages,

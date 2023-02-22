@@ -1,6 +1,6 @@
 export interface ChatRoom {
   chatRoomNo: number;
-  roomName: string;
+  roomName?: string;
   userNo?: number;
   boardNo?: number;
   chatRoomUsers?: number[];
@@ -28,7 +28,7 @@ export interface ChatUser extends Partial<ChatRoom> {
 }
 
 export interface ChatUserValidation extends Partial<ChatRoom> {
-  isUserNeeded: boolean;
+  isNeededUser: boolean;
 }
 
 export interface ChatRoomInvitation extends Partial<ChatRoom> {
@@ -40,4 +40,8 @@ export interface ChatRoomInvitation extends Partial<ChatRoom> {
 export interface FileUrl {
   chatLogNo: number;
   fileUrl: string;
+}
+
+export interface BoardGuestTeam {
+  teamNo: number;
 }

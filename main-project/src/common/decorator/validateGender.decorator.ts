@@ -26,13 +26,7 @@ const ValidateGender = () => {
   };
 };
 
-const valueToGender = (value: any) => {
-  if (value === null || value === undefined) {
-    return undefined;
-  }
-  if (typeof value === 'boolean') {
-    return value;
-  }
+const valueToGender = (value: string) => {
   if (value === '0') {
     return 'recruitFemale';
   }

@@ -1,19 +1,22 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { BadRequestException } from '@nestjs/common/exceptions';
+import { ConfigService } from '@nestjs/config';
 import { ResultSetHeader } from 'mysql2';
 import { AwsService } from 'src/aws/aws.service';
+import { Users } from 'src/users/entity/user.entity';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { EntityManager } from 'typeorm';
 import { CreateEnquiryDto } from './dto/create-enquiry.dto';
 import { CreateReplyDto } from './dto/create-reply.dto';
+import { EnquiryFilterDto } from './dto/enquiry-filter.dto';
 import { UpdateEnquiryDto } from './dto/update-enquiry.dto';
 import { UpdateReplyDto } from './dto/update-reply.dto';
-import { EnquiryReplies } from './entity/enquiry-reply.entity';
-import { Enquiry, Image, Reply } from './interface/enquiry.interface';
+import {
+  Enquiry,
+  EnquiryPagenation,
+  ImageInfo,
+  Reply,
+} from './interface/enquiry.interface';
 import { EnquiryImagesRepository } from './repository/enquiry-image.repository';
 import { EnquiryReplyImagesRepository } from './repository/enquiry-reply-image.repository';
 import { EnquiryRepliesRepository } from './repository/enquiry-reply.repository';
@@ -22,22 +25,42 @@ import { EnquiriesRepository } from './repository/enquiry.repository';
 @Injectable()
 export class EnquiriesService {
   constructor(
-    private readonly enquiriesRepository: EnquiriesRepository,
-    private readonly enquiryRepliesRepository: EnquiryRepliesRepository,
-    private readonly enquiryImagesRepository: EnquiryImagesRepository,
-    private readonly usersRepository: UsersRepository,
-
     private readonly awsService: AwsService,
+    private readonly configService: ConfigService,
   ) {}
-  // 문의사항 조회 관련
-  async getAllEnquiries(manager: EntityManager): Promise<Enquiry[]> {
-    const enquiries: Enquiry[] = await manager
-      .getCustomRepository(EnquiriesRepository)
-      .getAllEnquiries();
 
-    if (!enquiries.length) {
+  ADMIN_USER: number = this.configService.get<number>('ADMIN_USER');
+
+  // Get Methods
+  async getEnquiries(
+    manager: EntityManager,
+    { page }: EnquiryFilterDto,
+  ): Promise<EnquiryPagenation> {
+    const enquiries: EnquiryPagenation = await manager
+      .getCustomRepository(EnquiriesRepository)
+      .getEnquiries(page);
+
+    if (!enquiries.enquiry.length) {
       throw new NotFoundException(
-        `문의 전체 조회(getAllEnquiries): 문의 사항이 없습니다.`,
+        `문의 전체 조회(getEnquiries-service): 문의 사항이 없습니다.`,
+      );
+    }
+
+    return enquiries;
+  }
+
+  async getEnquiriesByUser(
+    manager: EntityManager,
+    { page }: EnquiryFilterDto,
+    userNo: number,
+  ): Promise<EnquiryPagenation> {
+    const enquiries: EnquiryPagenation = await manager
+      .getCustomRepository(EnquiriesRepository)
+      .getEnquiries(page, userNo);
+
+    if (!enquiries.enquiry.length) {
+      throw new NotFoundException(
+        `유저별 문의 조회(getEnquiriesByUser-service): 문의 사항이 없습니다.`,
       );
     }
 
@@ -48,55 +71,49 @@ export class EnquiriesService {
     manager: EntityManager,
     enquiryNo: number,
     userNo: number,
-  ): Promise<Enquiry> {
-    const enquiry: Enquiry = await this.getEnquiryByNo(manager, enquiryNo);
-    await this.validateWriter(userNo, enquiry);
-
-    return enquiry;
-  }
-
-  async getEnquiryByNo(
-    manager: EntityManager,
-    enquiryNo: number,
-  ): Promise<Enquiry> {
-    const enquiry: Enquiry = await manager
-      .getCustomRepository(EnquiriesRepository)
-      .getEnquiryByNo(enquiryNo);
-
+  ): Promise<Enquiry<string[]>> {
+    const enquiry: Enquiry<string[]> = await this.readEnquiry(
+      manager,
+      enquiryNo,
+    );
     if (!enquiry.no) {
       throw new NotFoundException(
-        `문의 상세 조회(getEnquiryByNo-service): ${enquiryNo}번 문의 사항이 없습니다.`,
+        `문의 상세 조회(getEnquiry-service): ${enquiryNo}번 문의 사항이 없습니다.`,
       );
     }
+
+    this.validateWriter(userNo, enquiry.userNo);
 
     return enquiry;
   }
 
-  async getAllReplies(manager: EntityManager): Promise<EnquiryReplies[]> {
-    const replies: EnquiryReplies[] = await manager
-      .getCustomRepository(EnquiryRepliesRepository)
-      .getAllReplies();
-
-    if (!replies.length) {
-      throw new NotFoundException(
-        `문의 답변 전체조회(getAllReplies-service): 답변이 없습니다.`,
-      );
-    }
-
-    return replies;
-  }
-
-  async getReplyByNo(
+  private async readEnquiry(
     manager: EntityManager,
     enquiryNo: number,
-  ): Promise<Reply> {
-    await this.getEnquiryByNo(manager, enquiryNo);
+  ): Promise<Enquiry<string[]>> {
+    const enquiry: Enquiry<string[]> = await manager
+      .getCustomRepository(EnquiriesRepository)
+      .getEnquiry(enquiryNo);
 
-    const reply: Reply = await manager
-      .getCustomRepository(EnquiryRepliesRepository)
-      .getReplyByNo(enquiryNo);
+    return enquiry;
+  }
 
-    if (!reply) {
+  async getReply(
+    manager: EntityManager,
+    enquiryNo: number,
+    userNo: number,
+  ): Promise<Reply<string[]>> {
+    const { imageUrls, ...enquiry }: Enquiry<string[]> = await this.getEnquiry(
+      manager,
+      enquiryNo,
+      userNo,
+    );
+
+    this.validateWriter(userNo, enquiry.userNo);
+
+    const reply: Reply<string[]> = await this.readReply(manager, enquiryNo);
+
+    if (!reply.no) {
       throw new NotFoundException(
         `문의 답변 상세조회(getReplyByNo-service): ${enquiryNo}번 문의사항의 답변이 없습니다.`,
       );
@@ -105,7 +122,18 @@ export class EnquiriesService {
     return reply;
   }
 
-  // 문의사항 생성 관련
+  private async readReply(
+    manager: EntityManager,
+    enquiryNo: number,
+  ): Promise<Reply<string[]>> {
+    const reply: Reply<string[]> = await manager
+      .getCustomRepository(EnquiryRepliesRepository)
+      .getReply(enquiryNo);
+
+    return reply;
+  }
+
+  // Post Methods
   async createEnquiry(
     manager: EntityManager,
     createEnquiryDto: CreateEnquiryDto,
@@ -119,7 +147,8 @@ export class EnquiriesService {
     );
 
     if (files.length) {
-      await this.uploadEnquiryImages(manager, enquiryNo, files);
+      const imageUrls: string[] = await this.uploadEnquiryImages(files);
+      await this.setEnquiryImages(manager, imageUrls, enquiryNo);
     }
   }
 
@@ -132,44 +161,22 @@ export class EnquiriesService {
       .getCustomRepository(EnquiriesRepository)
       .createEnquiry({ ...createEnquiryDto, userNo });
 
-    if (!insertId) {
-      throw new InternalServerErrorException(
-        `문의 사항 생성(setEnquiry-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-
     return insertId;
-  }
-
-  private async uploadEnquiryImages(
-    manager: EntityManager,
-    enquiryNo: number,
-    files: Express.Multer.File[],
-  ): Promise<void> {
-    const imageUrls: string[] = await this.awsService.uploadImages(
-      files,
-      'enquiry',
-    );
-    const images: Image[] = imageUrls.map((imageUrl: string) => {
-      return { enquiryNo, imageUrl };
-    });
-
-    await this.setEnquiryImages(manager, images);
   }
 
   private async setEnquiryImages(
     manager: EntityManager,
-    images: Image[],
+    imageUrls: string[],
+    enquiryNo: number,
   ): Promise<void> {
-    const { insertId }: ResultSetHeader = await manager
-      .getCustomRepository(EnquiryImagesRepository)
-      .setEnquiryImages(images);
+    const images: ImageInfo<string>[] = this.convertImageArray(
+      imageUrls,
+      enquiryNo,
+    );
 
-    if (!insertId) {
-      throw new InternalServerErrorException(
-        `문의사항 이미지 upload(setEnquiryImages-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+    await manager
+      .getCustomRepository(EnquiryImagesRepository)
+      .createEnquiryImages(images);
   }
 
   async createReply(
@@ -177,259 +184,297 @@ export class EnquiriesService {
     enquiryNo: number,
     files: Express.Multer.File[],
     manager: EntityManager,
+    userNo: number,
   ): Promise<void> {
-    await this.getEnquiryByNo(manager, enquiryNo);
-    await this.isCreated(manager, enquiryNo);
+    await this.validateAdmin(manager, userNo);
+    await this.getEnquiry(manager, enquiryNo, userNo);
+    await this.validateIsAnswered(enquiryNo, manager);
 
-    const reply: Reply = { ...createReplyDto, enquiryNo };
-    const replyNo = await this.setReply(manager, reply);
+    const replyNo = await this.setReply(manager, {
+      ...createReplyDto,
+      enquiryNo,
+    });
 
     if (files.length) {
-      await this.uploadReplyImages(manager, replyNo, files);
+      const imageUrls: string[] = await this.uploadReplyImages(files);
+      await this.setReplyImages(manager, imageUrls, replyNo);
     }
 
     await this.closeEnquiry(manager, enquiryNo);
   }
 
-  async isCreated(manager: EntityManager, enquiryNo: number): Promise<void> {
-    const reply: Reply = await manager
-      .getCustomRepository(EnquiryRepliesRepository)
-      .getReplyByNo(enquiryNo);
-    if (reply) {
-      throw new BadRequestException(
-        `답변 작성 확인(isCreated-service): 이미 답변이 작성된 문의사항입니다.`,
-      );
-    }
-  }
-
   private async setReply(
     manager: EntityManager,
-    reply: Reply,
+    reply: Reply<void>,
   ): Promise<number> {
     const { insertId }: ResultSetHeader = await manager
       .getCustomRepository(EnquiryRepliesRepository)
       .createReply(reply);
 
-    if (!insertId) {
-      throw new InternalServerErrorException(
-        `문의 답변 생성(setReply-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
-
     return insertId;
-  }
-
-  private async uploadReplyImages(
-    manager: EntityManager,
-    replyNo: number,
-    files: Express.Multer.File[],
-  ): Promise<void> {
-    const imageUrls = await this.awsService.uploadImages(files, 'reply');
-    const images: Image[] = imageUrls.map((imageUrl: string) => {
-      return { replyNo, imageUrl };
-    });
-    await this.setReplyImages(manager, images);
   }
 
   private async setReplyImages(
     manager: EntityManager,
-    images: Image[],
+    imageUrls: string[],
+    replyNo: number,
   ): Promise<void> {
-    const { insertId }: ResultSetHeader = await manager
-      .getCustomRepository(EnquiryReplyImagesRepository)
-      .setReplyImages(images);
+    const images: ImageInfo<string>[] = this.convertImageArray(
+      imageUrls,
+      undefined,
+      replyNo,
+    );
 
-    if (!insertId) {
-      throw new InternalServerErrorException(
-        `문의 답변 이미지 DB upload(setReplyImages-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
+    await manager
+      .getCustomRepository(EnquiryReplyImagesRepository)
+      .createReplyImages(images);
   }
 
   private async closeEnquiry(
     manager: EntityManager,
     enquiryNo: number,
   ): Promise<void> {
-    const isClosed: number = await manager
+    await manager
       .getCustomRepository(EnquiriesRepository)
       .closeEnquiry(enquiryNo);
-
-    if (!isClosed) {
-      throw new InternalServerErrorException(
-        `문의사항 답변상태 변경(closeEnquiry-service): 알 수 없는 서버 에러입니다.`,
-      );
-    }
   }
 
   //Patch Methods
-  async updateEnquiry(
+  async editEnquiry(
     userNo: number,
     enquiryNo: number,
     updateEnquiryDto: UpdateEnquiryDto,
     manager: EntityManager,
     files: Express.Multer.File[],
   ): Promise<void> {
-    const enquiry: Enquiry = await this.getEnquiryByNo(manager, enquiryNo);
-    await this.validateWriter(userNo, enquiry);
+    const { imageUrls, ...enquiry }: Enquiry<string[]> = await this.getEnquiry(
+      manager,
+      enquiryNo,
+      userNo,
+    );
+    this.validateWriter(enquiry.userNo, userNo);
 
-    await this.editEnquiry(manager, enquiryNo, updateEnquiryDto);
-
-    const { imageUrl }: Enquiry = enquiry;
-    const images: string[] = JSON.parse(imageUrl);
-    await this.editEnquiryimages(manager, images, files, enquiryNo);
+    await this.updateEnquiry(manager, enquiryNo, updateEnquiryDto);
+    await this.editEnquiryimages(manager, files, enquiryNo, imageUrls);
   }
 
-  private async editEnquiry(
+  private async updateEnquiry(
     manager: EntityManager,
     enquiryNo: number,
     updateEnquiryDto: UpdateEnquiryDto,
   ): Promise<void> {
-    const isEdited: number = await manager
+    await manager
       .getCustomRepository(EnquiriesRepository)
       .updateEnquiry(enquiryNo, updateEnquiryDto);
-
-    if (!isEdited) {
-      throw new InternalServerErrorException(
-        `문의사항 수정 오류 updateEnquiry-service.`,
-      );
-    }
   }
 
   private async editEnquiryimages(
     manager: EntityManager,
-    images: string[],
     files: Express.Multer.File[],
     enquiryNo: number,
+    imageUrls: string[],
   ): Promise<void> {
-    if (files.length) {
-      await this.awsService.deleteFiles(images);
-      await this.uploadEnquiryImages(manager, enquiryNo, files);
-    } else {
-      await this.awsService.deleteFiles(images);
+    if (!imageUrls.includes(null)) {
       await this.deleteEnquiryImages(manager, enquiryNo);
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    if (files.length) {
+      const images: string[] = await this.uploadEnquiryImages(files);
+      await this.setEnquiryImages(manager, images, enquiryNo);
     }
   }
-  //ssss
-  async updateReply(
+
+  async editReply(
     manager: EntityManager,
     enquiryNo: number,
     updateReplyDto: UpdateReplyDto,
     files: Express.Multer.File[],
+    userNo: number,
   ): Promise<void> {
-    const reply: Reply = await this.getReplyByNo(manager, enquiryNo);
+    await this.validateAdmin(manager, userNo);
+    await this.getEnquiry(manager, enquiryNo, userNo);
+    const { imageUrls, no }: Reply<string[]> = await this.getReply(
+      manager,
+      enquiryNo,
+      userNo,
+    );
 
-    await this.editReply(manager, enquiryNo, updateReplyDto);
-
-    const { imageUrl, no }: Reply = reply;
-    const images: string[] = JSON.parse(imageUrl);
-    await this.editReplyimages(manager, images, files, no);
+    await this.updateReply(manager, enquiryNo, updateReplyDto);
+    await this.editReplyimages(manager, files, no, imageUrls);
   }
 
-  private async editReply(
+  private async updateReply(
     manager: EntityManager,
     enquiryNo: number,
     updateReplyDto: UpdateReplyDto,
   ): Promise<void> {
-    const isEdited: number = await manager
+    await manager
       .getCustomRepository(EnquiryRepliesRepository)
       .updateReply(enquiryNo, updateReplyDto);
-
-    if (!isEdited) {
-      throw new InternalServerErrorException(
-        `문의사항 답변 수정 오류 editReply-service.`,
-      );
-    }
   }
 
   private async editReplyimages(
     manager: EntityManager,
-    images: string[],
     files: Express.Multer.File[],
     replyNo: number,
+    imageUrls: string[],
   ): Promise<void> {
-    if (files.length) {
-      await this.awsService.deleteFiles(images);
-      await this.uploadReplyImages(manager, replyNo, files);
-    } else {
-      await this.awsService.deleteFiles(images);
+    if (!imageUrls.includes(null)) {
       await this.deleteReplyImages(manager, replyNo);
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    if (files.length) {
+      const images: string[] = await this.uploadReplyImages(files);
+      await this.setReplyImages(manager, images, replyNo);
     }
   }
 
-  //문의사항 삭제 관련
-  async deleteEnquiryByNo(
+  // Delete Methods
+  async deleteEnquiry(
+    manager: EntityManager,
+    enquiryNo: number,
+    userNo: number,
+  ): Promise<void> {
+    const { imageUrls, ...enquiry }: Enquiry<string[]> = await this.getEnquiry(
+      manager,
+      enquiryNo,
+      userNo,
+    );
+    this.validateWriter(enquiry.userNo, userNo);
+
+    if (!imageUrls.includes(null)) {
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    await this.removeEnquiry(manager, enquiryNo);
+  }
+
+  private async removeEnquiry(
     manager: EntityManager,
     enquiryNo: number,
   ): Promise<void> {
-    await this.getEnquiryByNo(manager, enquiryNo);
-
-    const isDeleted: number = await manager
+    await manager
       .getCustomRepository(EnquiriesRepository)
       .deleteEnquiry(enquiryNo);
-
-    if (!isDeleted) {
-      throw new InternalServerErrorException(
-        `문의사항 삭제 오류 updateEnquiry-service.`,
-      );
-    }
   }
 
-  async deleteEnquiryImages(
+  private async deleteEnquiryImages(
     manager: EntityManager,
     enquiryNo: number,
   ): Promise<void> {
-    const isDeleted: number = await manager
+    await manager
       .getCustomRepository(EnquiryImagesRepository)
       .deleteEnquiryImages(enquiryNo);
-
-    if (!isDeleted) {
-      throw new InternalServerErrorException(
-        `문의사항 삭제 오류 updateEnquiry-service.`,
-      );
-    }
   }
 
-  async deleteReplyByEnquiryNo(
+  async deleteReply(
+    manager: EntityManager,
+    enquiryNo: number,
+    userNo: number,
+  ): Promise<void> {
+    await this.getEnquiry(manager, enquiryNo, userNo);
+    await this.validateAdmin(manager, userNo);
+    const { imageUrls }: Reply<string[]> = await this.getReply(
+      manager,
+      enquiryNo,
+      userNo,
+    );
+
+    if (!imageUrls.includes(null)) {
+      await this.awsService.deleteFiles(imageUrls);
+    }
+    await this.removeReply(manager, enquiryNo);
+  }
+
+  private async removeReply(
     manager: EntityManager,
     enquiryNo: number,
   ): Promise<void> {
-    await this.getEnquiryByNo(manager, enquiryNo);
-
-    const isDeleted: number = await manager
+    await manager
       .getCustomRepository(EnquiryRepliesRepository)
       .deleteReply(enquiryNo);
-
-    if (!isDeleted) {
-      throw new InternalServerErrorException(
-        `답변 삭제 오류 deleteReplyByEnquiryNo-service.`,
-      );
-    }
   }
 
   async deleteReplyImages(
     manager: EntityManager,
     replyNo: number,
   ): Promise<void> {
-    const isDeleted: number = await manager
+    await manager
       .getCustomRepository(EnquiryReplyImagesRepository)
       .deleteReplyImages(replyNo);
-
-    if (!isDeleted) {
-      throw new InternalServerErrorException(
-        `답변 삭제 오류 deleteReplyImages-service.`,
-      );
-    }
   }
 
   //function
-  private async validateWriter(
-    userNo: number,
-    enquiry: Enquiry,
-  ): Promise<void> {
-    if (enquiry.userNo != userNo) {
+  private validateWriter(userNo: number, writerNo: number): void {
+    if (writerNo !== userNo && this.ADMIN_USER !== userNo) {
       throw new BadRequestException(
         `사용자 검증(validateWriter-service): 잘못된 사용자의 접근입니다.`,
       );
     }
+  }
+
+  private async validateAdmin(manager: EntityManager, userNo: number) {
+    const { no }: Users = await manager
+      .getCustomRepository(UsersRepository)
+      .getUserByNo(userNo);
+
+    if (no !== this.ADMIN_USER) {
+      throw new BadRequestException(
+        '관리자 검증(validateAdmin-service): 관리자가 아닙니다.',
+      );
+    }
+  }
+
+  private convertImageArray(
+    imageUrls: string[],
+    enquiryNo?: number,
+    replyNo?: number,
+  ): ImageInfo<string>[] {
+    const images: ImageInfo<string>[] = enquiryNo
+      ? imageUrls.map((imageUrl: string) => {
+          return { enquiryNo, imageUrl };
+        })
+      : imageUrls.map((imageUrl: string) => {
+          return { replyNo, imageUrl };
+        });
+
+    return images;
+  }
+
+  private async validateIsAnswered(
+    enquiryNo: number,
+    manager: EntityManager,
+  ): Promise<void> {
+    const { no }: Reply<string[]> = await manager
+      .getCustomRepository(EnquiryRepliesRepository)
+      .getReply(enquiryNo);
+
+    if (no) {
+      throw new BadRequestException(
+        '답변 확인(validateIsAnswered-service): 답변 작성된 문의사항입니다.',
+      );
+    }
+  }
+
+  // s3
+  private async uploadEnquiryImages(
+    files: Express.Multer.File[],
+  ): Promise<string[]> {
+    const imageUrls: string[] = await this.awsService.uploadImages(
+      files,
+      'enquiry',
+    );
+
+    return imageUrls;
+  }
+
+  private async uploadReplyImages(
+    files: Express.Multer.File[],
+  ): Promise<string[]> {
+    const imageUrls: string[] = await this.awsService.uploadImages(
+      files,
+      'reply',
+    );
+
+    return imageUrls;
   }
 }

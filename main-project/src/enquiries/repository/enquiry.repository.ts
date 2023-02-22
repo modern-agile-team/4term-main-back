@@ -5,41 +5,24 @@ import {
   EntityRepository,
   InsertResult,
   Repository,
+  SelectQueryBuilder,
   UpdateResult,
 } from 'typeorm';
 import { UpdateEnquiryDto } from '../dto/update-enquiry.dto';
 import { Enquiries } from '../entity/enquiry.entity';
-import { Enquiry } from '../interface/enquiry.interface';
+import { Enquiry, EnquiryPagenation } from '../interface/enquiry.interface';
 
 @EntityRepository(Enquiries)
 export class EnquiriesRepository extends Repository<Enquiries> {
   //Get Methods
-  async getAllEnquiries(): Promise<Enquiry[]> {
+  async getEnquiries(
+    page: number,
+    userNo?: number,
+  ): Promise<EnquiryPagenation> {
     try {
-      const enquiries: Enquiry[] = await this.createQueryBuilder('enquiries')
-        .leftJoin('enquiries.userNo', 'users')
-        .select([
-          'enquiries.no AS no',
-          'users.no AS userNo',
-          'enquiries.title AS title',
-          'enquiries.isDone AS isDone',
-          'enquiries.description AS description',
-          `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
-        ])
-        .orderBy('no', 'DESC')
-        .getRawMany();
-      //TODO: 공지사항 전체조회 시 이미지 사용하는 지 토의
-      return enquiries;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} getAllEnquiries-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async getEnquiryByNo(enquiryNo: number): Promise<Enquiry> {
-    try {
-      const enquiry: Enquiry = await this.createQueryBuilder('enquiries')
+      const query: SelectQueryBuilder<Enquiries> = this.createQueryBuilder(
+        'enquiries',
+      )
         .leftJoin('enquiries.userNo', 'users')
         .leftJoin('enquiries.enquiryImages', 'images')
         .select([
@@ -48,16 +31,70 @@ export class EnquiriesRepository extends Repository<Enquiries> {
           'enquiries.title AS title',
           'enquiries.description AS description',
           'enquiries.isDone AS isDone',
-          `DATE_FORMAT(enquiries.createdDate, '%Y.%m.%d %T') AS createdDate`,
-          'JSON_ARRAYAGG(images.imageUrl) AS imageUrl',
+          'DATE_FORMAT(enquiries.createdDate, "%Y.%m.%d %T") AS createdDate',
+          'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
         ])
-        .where('enquiries.no = :enquiryNo', { enquiryNo })
-        .getRawOne();
+        .orderBy('no', 'DESC')
+        .groupBy('enquiries.no')
+        .limit(5);
 
-      return enquiry;
+      const totalPage: number = Math.ceil((await query.getCount()) / 5);
+
+      if (page > 1) {
+        query.offset((page - 1) * 5);
+      }
+      if (userNo) {
+        query.where('enquiries.userNo = :userNo', { userNo });
+      }
+
+      const enquiries = await query.getRawMany();
+
+      const convertEnquiry: Enquiry<string[]>[] = enquiries.map(
+        ({ imageUrls, ...enquiryInfo }) => {
+          const enquiry: Enquiry<string[]> = {
+            ...enquiryInfo,
+            imageUrls: JSON.parse(imageUrls),
+          };
+
+          return enquiry;
+        },
+      );
+
+      return { enquiry: convertEnquiry, totalPage, page };
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} getEnquiryByNo-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} getEnquiries-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getEnquiry(enquiryNo: number): Promise<Enquiry<string[]>> {
+    try {
+      const { imageUrls, ...enquiryInfo }: Enquiry<string> =
+        await this.createQueryBuilder('enquiries')
+          .leftJoin('enquiries.userNo', 'users')
+          .leftJoin('enquiries.enquiryImages', 'images')
+          .select([
+            'enquiries.no AS no',
+            'users.no AS userNo',
+            'enquiries.title AS title',
+            'enquiries.description AS description',
+            'enquiries.isDone AS isDone',
+            'DATE_FORMAT(enquiries.createdDate, "%Y.%m.%d %T") AS createdDate',
+            'JSON_ARRAYAGG(images.imageUrl) AS imageUrls',
+          ])
+          .where('enquiries.no = :enquiryNo', { enquiryNo })
+          .getRawOne();
+
+      const convertEnquiry: Enquiry<string[]> = {
+        ...enquiryInfo,
+        imageUrls: JSON.parse(imageUrls),
+      };
+
+      return convertEnquiry;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getEnquiry-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
@@ -83,15 +120,13 @@ export class EnquiriesRepository extends Repository<Enquiries> {
   async updateEnquiry(
     enquiryNo: number,
     updateEnquiryDto: UpdateEnquiryDto,
-  ): Promise<number> {
+  ): Promise<void> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .update(Enquiries)
         .set(updateEnquiryDto)
         .where('no = :enquiryNo', { enquiryNo })
         .execute();
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} updateEnquiry-repository: 알 수 없는 서버 에러입니다.`,
@@ -99,16 +134,13 @@ export class EnquiriesRepository extends Repository<Enquiries> {
     }
   }
 
-  async closeEnquiry(no: number): Promise<number> {
+  async closeEnquiry(no: number): Promise<void> {
     try {
-      const { affected }: UpdateResult = await this.createQueryBuilder()
+      await this.createQueryBuilder()
         .update(Enquiries)
         .set({ isDone: true })
         .where('no = :no', { no })
         .execute();
-      console.log(affected);
-
-      return affected;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} closeEnquiry-repository: 알 수 없는 서버 에러입니다.`,

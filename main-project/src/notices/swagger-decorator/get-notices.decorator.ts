@@ -19,7 +19,7 @@ export function ApiGetNotices() {
             senderNickname: 'aaa',
             senderProfileImage: 'abc',
             isRead: 0,
-            createdDate: '2023-01-16T04:19:47.137Z',
+            createdDate: '2023-02-07 02:03',
           },
           {
             noticeNo: 5,
@@ -28,7 +28,7 @@ export function ApiGetNotices() {
             senderNickname: 'aaa',
             senderProfileImage: 'abc',
             isRead: 0,
-            createdDate: '2023-01-16T04:19:47.137Z',
+            createdDate: '2023-02-07 02:03',
             boardNo: 1,
           },
           {
@@ -38,7 +38,7 @@ export function ApiGetNotices() {
             senderNickname: 'aaa',
             senderProfileImage: 'abc',
             isRead: 0,
-            createdDate: '2023-01-16T04:19:47.137Z',
+            createdDate: '2023-02-07 02:03',
             friendNo: 2,
           },
           {
@@ -48,7 +48,7 @@ export function ApiGetNotices() {
             senderNickname: 'aaa',
             senderProfileImage: 'abc',
             isRead: 0,
-            createdDate: '2023-01-16T04:19:47.137Z',
+            createdDate: '2023-02-07 02:03',
             friendNo: 1,
           },
           {
@@ -58,7 +58,7 @@ export function ApiGetNotices() {
             senderNickname: 'aaa',
             senderProfileImage: 'abc',
             isRead: 0,
-            createdDate: '2023-01-16T04:19:47.137Z',
+            createdDate: '2023-02-07 02:03',
             chatRoomNo: 1,
           },
           {
@@ -68,7 +68,7 @@ export function ApiGetNotices() {
             senderNickname: 'aaa',
             senderProfileImage: 'abc',
             isRead: 0,
-            createdDate: '2023-01-16T04:19:47.133Z',
+            createdDate: '2023-02-07 02:03',
             chatRoomNo: 1,
           },
         ],

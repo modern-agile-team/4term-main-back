@@ -1,16 +1,14 @@
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
 import { ResultSetHeader } from 'mysql2';
 import { AwsService } from 'src/aws/aws.service';
 import { Users } from 'src/users/entity/user.entity';
 import { UsersRepository } from 'src/users/repository/users.repository';
-import { EntityManager, UpdateResult } from 'typeorm';
+import { EntityManager } from 'typeorm';
 import { CreateAnnounceDto } from './dto/create-announce.dto';
 import { Announce, AnnounceImage } from './interface/announces.interface';
 import { AnnouncesRepository } from './repository/announce.repository';
@@ -19,12 +17,11 @@ import { AnnouncesImagesRepository } from './repository/announces-images.reposit
 @Injectable()
 export class AnnouncesService {
   constructor(
-    @InjectRepository(AnnouncesRepository)
     private readonly awsService: AwsService,
     private readonly configService: ConfigService,
   ) {}
 
-  ADMIN_USER: number = Number(this.configService.get<number>('ADMIN_USER'));
+  ADMIN_USER: number = this.configService.get<number>('ADMIN_USER');
 
   // 생성 관련
   async createAnnounce(
@@ -34,6 +31,7 @@ export class AnnouncesService {
     userNo: number,
   ): Promise<void> {
     await this.validateAdmin(manager, userNo);
+
     const announceNo: number = await this.setAnnounce(manager, announcesDto);
 
     if (files.length) {
@@ -58,7 +56,7 @@ export class AnnouncesService {
     imageUrls: string[],
     announceNo: number,
   ): Promise<void> {
-    const images: AnnounceImage<string>[] = await this.convertImageArray(
+    const images: AnnounceImage<string>[] = this.convertImageArray(
       announceNo,
       imageUrls,
     );
@@ -141,11 +139,11 @@ export class AnnouncesService {
   ) {
     await manager
       .getCustomRepository(AnnouncesRepository)
-      .updateAnnounces(announceNo, announcesDto);
+      .updateAnnounce(announceNo, announcesDto);
   }
 
   // 삭제 관련
-  async deleteAnnounceByNo(
+  async deleteAnnounce(
     manager: EntityManager,
     announceNo: number,
     userNo: number,
@@ -168,7 +166,7 @@ export class AnnouncesService {
   ): Promise<void> {
     await manager
       .getCustomRepository(AnnouncesRepository)
-      .deleteAnnouncesByNo(announceNo);
+      .deleteAnnounce(announceNo);
   }
 
   private async deleteAnnounceImages(
@@ -181,10 +179,10 @@ export class AnnouncesService {
   }
 
   // functions
-  private async convertImageArray(
+  private convertImageArray(
     announceNo: number,
     imageUrls: string[],
-  ): Promise<AnnounceImage<string>[]> {
+  ): AnnounceImage<string>[] {
     const images: AnnounceImage<string>[] = imageUrls.map(
       (imageUrl: string) => {
         return { announceNo, imageUrl };
@@ -194,7 +192,10 @@ export class AnnouncesService {
     return images;
   }
 
-  private async validateAdmin(manager: EntityManager, userNo: number) {
+  private async validateAdmin(
+    manager: EntityManager,
+    userNo: number,
+  ): Promise<void> {
     const { no }: Users = await manager
       .getCustomRepository(UsersRepository)
       .getUserByNo(userNo);
@@ -210,7 +211,7 @@ export class AnnouncesService {
   private async uploadImages(files: Express.Multer.File[]): Promise<string[]> {
     const imageUrls: string[] = await this.awsService.uploadImages(
       files,
-      'announce',
+      'announces',
     );
 
     return imageUrls;

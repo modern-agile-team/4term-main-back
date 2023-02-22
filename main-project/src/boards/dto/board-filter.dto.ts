@@ -1,6 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
 import { ValidateGender } from 'src/common/decorator/validateGender.decorator';
 import { ToBoolean } from 'src/common/decorator/validateValue.decorator';
 
@@ -13,7 +19,7 @@ export class BoardFilterDto {
   @ValidateGender()
   @IsString()
   @IsOptional()
-  gender: string;
+  readonly gender: string;
 
   @ApiProperty({
     example: '23',
@@ -23,7 +29,7 @@ export class BoardFilterDto {
   @IsNumber()
   @Type(() => Number)
   @IsOptional()
-  people: number;
+  readonly people: number;
 
   @ApiProperty({
     example: '23',
@@ -33,7 +39,7 @@ export class BoardFilterDto {
   @IsNumber()
   @Type(() => Number)
   @IsOptional()
-  page: number;
+  readonly page: number;
 
   @ApiProperty({
     example: '0 or false / 1 or true ',
@@ -43,15 +49,16 @@ export class BoardFilterDto {
   @IsBoolean()
   @ToBoolean()
   @IsOptional()
-  isDone: boolean;
+  readonly isDone: boolean;
 
   @ApiProperty({
     example: '0 or false / 1 or true ',
     description: '번개글 :1 or true, 일반 과팅이면 작성 안해도됨',
     required: false,
   })
+  @Min(1)
   @IsBoolean()
   @ToBoolean()
   @IsOptional()
-  isImpromptu: boolean;
+  readonly isImpromptu: boolean;
 }

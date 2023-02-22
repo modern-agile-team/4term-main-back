@@ -10,6 +10,7 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { ToBoolean } from 'src/common/decorator/validateValue.decorator';
 export class CreateBoardDto {
   @ApiProperty({
     example: '크리스마스를 즐기자',
@@ -36,6 +37,7 @@ export class CreateBoardDto {
     description: '번개 : 0, 일반 과팅 : 1, optional 변수',
   })
   @IsBoolean()
+  @ToBoolean()
   @IsOptional()
   isImpromptu: boolean;
 
@@ -47,10 +49,10 @@ export class CreateBoardDto {
   location: string;
 
   @ApiProperty({ example: '2022-12-25 19:30:00', description: '약속 시간' })
-  @Transform(({ value }) => new Date(value))
-  @IsDate()
+  @IsString()
+  // @Transform(({ value }) => new Date(value))
   @IsNotEmpty()
-  meetingTime: Date;
+  meetingTime: string;
 
   @ApiProperty({ example: 2, description: '남자 인원수' })
   @IsNumber()
