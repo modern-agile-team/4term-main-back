@@ -19,6 +19,7 @@ import {
   Board,
   GuestTeam,
   BoardPagenation,
+  GuestTeamPagenation,
 } from './interface/boards.interface';
 import { BoardFilterDto } from './dto/board-filter.dto';
 import { Cron, CronExpression } from '@nestjs/schedule/dist';
@@ -44,6 +45,7 @@ import { ApiDeleteBookmark } from './swagger-decorator/delete-bookmark.decorator
 import { ApiGetBoardsByUser } from './swagger-decorator/get- boards-by-user.decorator';
 import { GetBoardByUserDto } from './dto/get-board-by-user.dto';
 import { ApiGetGuestTemasByBoardNo } from './swagger-decorator/get-guest-teams-by-board-no.decorator';
+import { GuestTeamPagenationDto } from './dto/guest-team-pagenation.dto';
 
 @Controller('boards')
 @ApiTags('게시글 API')
@@ -109,19 +111,52 @@ export class BoardsController {
     return { msg: '유저별 게시글 조회 성공', response: { boards } };
   }
 
-  @Get('/guest-team/:boardNo')
+  @Get('/apply/:boardNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiGetGuestTemasByBoardNo()
   async getGuestTeamsByBoardNo(
+    @Query() { page }: GuestTeamPagenationDto,
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const guestTeams: GuestTeam<number[]>[] =
-      await this.boardService.getGuestTeamsByBoardNo(manager, userNo, boardNo);
+    const guestTeamMetaData: GuestTeamPagenation =
+      await this.boardService.getGuestTeamsByBoardNo(
+        manager,
+        userNo,
+        boardNo,
+        page,
+      );
 
-    return { msg: '여름 신청내역 조회 성공', response: { guestTeams } };
+    return {
+      msg: '특정 게시글에 대한여름 신청내역 전체조회',
+      response: { guestTeamMetaData },
+    };
+  }
+
+  @Get('/apply/:boardNo/:teamNo')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetGuestTemasByBoardNo()
+  async getGuestTeam(
+    @Param('teamNo', ParseIntPipe) teamNo: number,
+    @Param('boardNo', ParseIntPipe) boardNo: number,
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<APIResponse> {
+    const guestTeam: GuestTeam<number[]> =
+      await this.boardService.getGuestTeamByTeamNo(
+        manager,
+        teamNo,
+        boardNo,
+        userNo,
+      );
+
+    return {
+      msg: '여름 신청서 상세조회 성공',
+      response: { guestTeam },
+    };
   }
 
   // Post Methods

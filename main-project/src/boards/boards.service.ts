@@ -14,6 +14,7 @@ import {
   Host,
   GuestTeam,
   BoardPagenation,
+  GuestTeamPagenation,
 } from './interface/boards.interface';
 import { BoardBookmarksRepository } from './repository/board-bookmark.repository';
 import { BoardGuestsRepository as BoardGuestsRepository } from './repository/board-guest.repository';
@@ -145,14 +146,18 @@ export class BoardsService {
     manager: EntityManager,
     userNo: number,
     boardNo: number,
-  ): Promise<GuestTeam<number[]>[]> {
+    page: number,
+  ): Promise<GuestTeamPagenation> {
     await this.getBoard(manager, boardNo);
     await this.validateHost(manager, boardNo, userNo);
 
-    const guestTeams: GuestTeam<number[]>[] =
-      await this.readGuestTeamsByBoardNo(manager, boardNo);
+    const guestTeams: GuestTeamPagenation = await this.readGuestTeamsByBoardNo(
+      manager,
+      boardNo,
+      page,
+    );
 
-    if (!guestTeams.length) {
+    if (!guestTeams.guestTeams.length) {
       throw new BadRequestException(
         `여름 신청내역 조회(getGuestTeamsByBoardNo-service): 신청내역이 없습니다.`,
       );
@@ -164,12 +169,13 @@ export class BoardsService {
   async readGuestTeamsByBoardNo(
     manager: EntityManager,
     boardNo: number,
-  ): Promise<GuestTeam<number[]>[]> {
-    const guestTeams: GuestTeam<number[]>[] = await manager
+    page: number,
+  ): Promise<GuestTeamPagenation> {
+    const guestTeamMetaData: GuestTeamPagenation = await manager
       .getCustomRepository(BoardGuestTeamsRepository)
-      .getGuestTeamsByBoardNo(boardNo);
+      .getGuestTeamsByBoardNo(boardNo, page);
 
-    return guestTeams;
+    return guestTeamMetaData;
   }
 
   private async getAllGuestsByBoardNo(
@@ -181,6 +187,34 @@ export class BoardsService {
       .getAllGuestsByBoardNo(boardNo);
 
     return guests;
+  }
+
+  async getGuestTeamByTeamNo(
+    manager: EntityManager,
+    teamNo: number,
+    boardNo: number,
+    userNo: number,
+  ): Promise<GuestTeam<number[]>> {
+    await this.getBoard(manager, boardNo);
+    await this.validateHost(manager, boardNo, userNo);
+
+    const guestTeams: GuestTeam<number[]> = await this.readGuestTeamByTeamNo(
+      manager,
+      teamNo,
+    );
+
+    return guestTeams;
+  }
+
+  async readGuestTeamByTeamNo(
+    manager: EntityManager,
+    teamNo: number,
+  ): Promise<GuestTeam<number[]>> {
+    const guestTeams: GuestTeam<number[]> = await manager
+      .getCustomRepository(BoardGuestTeamsRepository)
+      .getGuestTeamByTeamNo(teamNo);
+
+    return guestTeams;
   }
 
   // 생성 관련
@@ -298,8 +332,10 @@ export class BoardsService {
     teamNo: number,
     guests: number[],
   ): Promise<void> {
-    const multipleGuests: Guest<boolean>[] = guests.map((el: number) => {
-      return { teamNo, userNo: el };
+    const multipleGuests: Guest<boolean>[] = guests.map((userNo, idx) => {
+      return idx === 0
+        ? { teamNo, userNo }
+        : { teamNo, userNo, isAnswered: true, isAccepted: true };
     });
 
     await manager
@@ -681,19 +717,6 @@ export class BoardsService {
     }
   }
 
-  private async validateIsHostMember(
-    manager: EntityManager,
-    boardNo: number,
-    userNo: number,
-  ): Promise<void> {
-    const hosts: Host<number[]> = await this.getHosts(manager, boardNo);
-    if (!hosts.users.includes(userNo)) {
-      throw new BadRequestException(
-        `사용자 검증 (validateHostMembers-service): 사용자는 해당 게시글에 초대받지 않았습니다.`,
-      );
-    }
-  }
-
   private async validateRecruits(
     manager: EntityManager,
     board: Board<number[]>,
@@ -740,7 +763,7 @@ export class BoardsService {
       boardNo,
     );
 
-    await this.validateIsHostMember(manager, boardNo, userNo);
+    await this.validateHost(manager, boardNo, userNo);
     await this.validateHostIsAnswered(manager, boardNo, userNo);
 
     !isAccepted

@@ -7,7 +7,7 @@ import {
   SelectQueryBuilder,
 } from 'typeorm';
 import { BoardGuestTeams } from '../entity/board-guest-team.entity';
-import { GuestTeam } from '../interface/boards.interface';
+import { GuestTeam, GuestTeamPagenation } from '../interface/boards.interface';
 
 @EntityRepository(BoardGuestTeams)
 export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
@@ -43,7 +43,8 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
 
   async getGuestTeamsByBoardNo(
     boardNo: number,
-  ): Promise<GuestTeam<number[]>[]> {
+    page: number,
+  ): Promise<GuestTeamPagenation> {
     try {
       const query: SelectQueryBuilder<BoardGuestTeams> =
         this.createQueryBuilder('teams')
@@ -56,7 +57,14 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
           ])
           .where('teams.boardNo = :boardNo', { boardNo })
           .groupBy('guests.teamNo')
-          .where('teams.isAccepted = TRUE');
+          .where('teams.isAccepted = TRUE')
+          .limit(10);
+
+      const totalPage: number = Math.ceil((await query.getCount()) / 10);
+
+      if (page > 1) {
+        query.offset((page - 1) * 10);
+      }
 
       const guestTeams = await query.getRawMany();
 
@@ -71,10 +79,42 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
         },
       );
 
-      return convertGuestTeams;
+      return { guestTeams: convertGuestTeams, totalPage, page };
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getGuestTeamsByBoardNo-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getGuestTeamByTeamNo(teamNo: number): Promise<GuestTeam<number[]>> {
+    try {
+      const {
+        guests,
+        ...guestTeam
+      }: Omit<GuestTeam<string>, 'isAccepted'> = await this.createQueryBuilder(
+        'teams',
+      )
+        .leftJoin('teams.boardGuest', 'guestss')
+        .select([
+          'teams.no AS no',
+          'teams.board_no AS boardNo',
+          'teams.title AS title',
+          'teams.description AS description',
+          'JSON_ARRAYAGG(guestss.userNo) AS guests',
+        ])
+        .where('teams.no = :teamNo', { teamNo })
+        .getRawOne();
+
+      const guestTeamInfo: GuestTeam<number[]> = {
+        ...guestTeam,
+        guests: JSON.parse(guests),
+      };
+
+      return guestTeamInfo;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getGuestTeamByTeamNo-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
