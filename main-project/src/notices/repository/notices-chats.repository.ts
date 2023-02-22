@@ -6,6 +6,7 @@ import {
 } from 'src/chats/interface/chat.interface';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { NoticeChats } from '../entity/notice-chat.entity';
+import { Notices } from '../entity/notices.entity';
 import { NoticeChatsInfo } from '../interface/notice.interface';
 ``;
 @EntityRepository(NoticeChats)
@@ -28,22 +29,20 @@ export class NoticeChatsRepository extends Repository<NoticeChats> {
     }
   }
 
-  async getNoticeChat(
-    ChatRoomInvitation: ChatRoomInvitation,
-  ): Promise<NoticeChats> {
+  async getNotice(ChatRoomInvitation: ChatRoomInvitation): Promise<Notices> {
     try {
-      const noticeChat: NoticeChats = await this.createQueryBuilder(
-        'notice_chats',
-      )
+      const notice: Notices = await this.createQueryBuilder('notice_chats')
         .leftJoin('notice_chats.noticeNo', 'notices')
-        .select(['notices.* '])
+        .select(['notices.no as no '])
         .where(
-          'notice_chats.chatRoomNo = :chatRoomNo AND notices.userNo = :userNo AND notices.type = :type AND notices.targetUserNo = :targetUserNo',
+          `notice_chats.chatRoomNo = :chatRoomNo 
+          AND notices.userNo = :userNo AND notices.type = :type 
+          AND notices.targetUserNo = :targetUserNo`,
           ChatRoomInvitation,
         )
         .getRawOne();
 
-      return noticeChat;
+      return notice;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 채팅 알람 확인 에러(checkNoticeChat): 알 수 없는 서버 오류입니다.`,
