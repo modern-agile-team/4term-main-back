@@ -61,12 +61,19 @@ export class FriendsController {
   @Patch('/requests/:friendNo/:senderNo')
   @ApiAcceptFriendRequest()
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   async acceptFriendRequest(
     @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
     @Param('friendNo', ParseIntPipe) friendNo: number,
     @Param('senderNo', ParseIntPipe) senderNo: number,
   ): Promise<APIResponse> {
-    await this.friendsService.acceptFriendRequest(userNo, friendNo, senderNo);
+    await this.friendsService.acceptFriendRequest(
+      userNo,
+      manager,
+      friendNo,
+      senderNo,
+    );
 
     return {
       msg: '친구 신청을 수락했습니다.',

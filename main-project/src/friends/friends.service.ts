@@ -16,12 +16,16 @@ import {
   FriendRequestValidation,
   FriendRequestStatus,
   NoticeFriend,
+  FriendNotice,
 } from './interface/friend.interface';
 import { FriendsRepository } from './repository/friends.repository';
 
 @Injectable()
 export class FriendsService {
-  constructor(private readonly friendsRepository: FriendsRepository) {}
+  constructor(
+    private readonly friendsRepository: FriendsRepository,
+    private readonly noticeFriendsRepository: NoticeFriendsRepository,
+  ) {}
 
   async sendFriendRequest(
     senderNo: number,
@@ -60,26 +64,37 @@ export class FriendsService {
 
   async acceptFriendRequest(
     userNo: number,
+    manager: EntityManager,
     friendNo: number,
     senderNo: number,
   ): Promise<void> {
-    const request = await this.checkRequest({
+    const notice: FriendNotice = await this.noticeFriendsRepository.getNotice({
+      userNo,
+      targetUserNo: senderNo,
+      friendNo,
+    });
+    if (!notice) {
+      throw new NotFoundException(`친구 요청이 존재하지 않습니다.`);
+    }
+    await this.checkRequest({
       receiverNo: userNo,
       senderNo,
       friendReqStatus: false,
     });
-    if (request.friendNo !== friendNo) {
-      throw new BadRequestException(`요청번호가 일치하지 않습니다.`);
-    }
 
-    await this.acceptFriendRequestByFriendNo(friendNo);
+    await this.acceptFriendRequestByFriendNo(manager, friendNo);
+    await this.deleteNotice(manager, notice.noticeNo);
   }
 
-  private async acceptFriendRequestByFriendNo(friendNo): Promise<void> {
-    const affected = await this.friendsRepository.acceptFriendRequestByFriendNo(
-      friendNo,
-    );
-    if (!affected) {
+  private async acceptFriendRequestByFriendNo(
+    manager: EntityManager,
+    friendNo: number,
+  ): Promise<void> {
+    const updateResult = await manager
+      .getCustomRepository(FriendsRepository)
+      .acceptFriendRequestByFriendNo(friendNo);
+
+    if (!updateResult) {
       throw new InternalServerErrorException(
         '친구 요청 수락에 실패하였습니다.',
       );
@@ -109,6 +124,18 @@ export class FriendsService {
       });
     if (!result) {
       throw new InternalServerErrorException('알람 생성에 실패하였습니다.');
+    }
+  }
+
+  private async deleteNotice(
+    manager: EntityManager,
+    noticeNo: number,
+  ): Promise<void> {
+    const deleteResult: number = await manager
+      .getCustomRepository(NoticesRepository)
+      .deleteNotice(noticeNo);
+    if (!deleteResult) {
+      throw new InternalServerErrorException(`알람 삭제에 실패했습니다.`);
     }
   }
 

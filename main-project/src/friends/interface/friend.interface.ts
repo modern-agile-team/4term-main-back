@@ -42,7 +42,9 @@ export interface NoticeFriend {
   friendNo?: number;
 }
 
-export interface NoticeUser {
-  noticeNo: number;
+export interface FriendNotice {
   userNo: number;
+  targetUserNo: number;
+  friendNo: number;
+  noticeNo?: number;
 }
