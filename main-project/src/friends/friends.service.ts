@@ -28,6 +28,9 @@ export class FriendsService {
     manager: EntityManager,
     receiverNo: number,
   ): Promise<void> {
+    if (senderNo === receiverNo) {
+      throw new BadRequestException(`잘못된 요청입니다.`);
+    }
     await this.checkRequest({
       senderNo,
       receiverNo,
