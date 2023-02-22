@@ -30,6 +30,7 @@ import { APiUploadFile } from './swagger/upload-file.decorator';
 import { ApiCreateChatRoom } from './swagger/create-chat-room.decorator';
 import { ApiRejecteInvitation } from './swagger/rejected-invitation.decorator';
 
+
 @Controller('chats')
 @ApiTags('채팅 APi')
 export class ChatsController {
