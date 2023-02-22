@@ -1,5 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
+import { BoardGuestTeam } from 'src/chats/interface/chat.interface';
 import {
   EntityRepository,
   InsertResult,
@@ -164,6 +165,23 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} deleteGuestTeam-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getGuestTeams(boardNo: number): Promise<BoardGuestTeam[]> {
+    try {
+      const guestTeam: BoardGuestTeam[] = await this.createQueryBuilder(
+        'board_guest_teams',
+      )
+        .select(['board_guest_teams.no as teamNo'])
+        .where('board_guest_teams.board_no = :boardNo', { boardNo })
+        .getRawMany();
+
+      return guestTeam;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getGuestTeam: 알 수 없는 서버 에러입니다.`,
       );
     }
   }
