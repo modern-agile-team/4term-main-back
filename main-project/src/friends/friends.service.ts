@@ -16,12 +16,16 @@ import {
   FriendRequestValidation,
   FriendRequestStatus,
   NoticeFriend,
+  FriendNotice,
 } from './interface/friend.interface';
 import { FriendsRepository } from './repository/friends.repository';
 
 @Injectable()
 export class FriendsService {
-  constructor(private readonly friendsRepository: FriendsRepository) {}
+  constructor(
+    private readonly friendsRepository: FriendsRepository,
+    private readonly noticeFriendsRepository: NoticeFriendsRepository,
+  ) {}
 
   async sendFriendRequest(
     senderNo: number,
@@ -60,26 +64,35 @@ export class FriendsService {
 
   async acceptFriendRequest(
     userNo: number,
+    manager: EntityManager,
     friendNo: number,
     senderNo: number,
   ): Promise<void> {
-    const request = await this.checkRequest({
+    const noticeNo: number = await this.checkNoticeExistence({
+      userNo,
+      targetUserNo: senderNo,
+      friendNo,
+    });
+
+    await this.checkRequest({
       receiverNo: userNo,
       senderNo,
       friendReqStatus: false,
     });
-    if (request.friendNo !== friendNo) {
-      throw new BadRequestException(`요청번호가 일치하지 않습니다.`);
-    }
 
-    await this.acceptFriendRequestByFriendNo(friendNo);
+    await this.acceptFriendRequestByFriendNo(manager, friendNo);
+    await this.deleteNotice(manager, noticeNo);
   }
 
-  private async acceptFriendRequestByFriendNo(friendNo): Promise<void> {
-    const affected = await this.friendsRepository.acceptFriendRequestByFriendNo(
-      friendNo,
-    );
-    if (!affected) {
+  private async acceptFriendRequestByFriendNo(
+    manager: EntityManager,
+    friendNo: number,
+  ): Promise<void> {
+    const updateResult = await manager
+      .getCustomRepository(FriendsRepository)
+      .acceptFriendRequestByFriendNo(friendNo);
+
+    if (!updateResult) {
       throw new InternalServerErrorException(
         '친구 요청 수락에 실패하였습니다.',
       );
@@ -112,6 +125,18 @@ export class FriendsService {
     }
   }
 
+  private async deleteNotice(
+    manager: EntityManager,
+    noticeNo: number,
+  ): Promise<void> {
+    const deleteResult: number = await manager
+      .getCustomRepository(NoticesRepository)
+      .deleteNotice(noticeNo);
+    if (!deleteResult) {
+      throw new InternalServerErrorException(`알람 삭제에 실패했습니다.`);
+    }
+  }
+
   async getReceivedRequests(receiverNo: number): Promise<Friends[]> {
     const receivedRequests: Friends[] =
       await this.friendsRepository.getReceivedRequests(receiverNo);
@@ -132,19 +157,40 @@ export class FriendsService {
     return friends;
   }
 
-  async refuseRequest(request: FriendRequestValidation): Promise<void> {
-    const { receiverNo, senderNo } = request;
+  async refuseRequest(
+    manager: EntityManager,
+    request: FriendRequestValidation,
+  ): Promise<void> {
+    const { receiverNo, senderNo, friendNo } = request;
     if (receiverNo === senderNo) {
       throw new BadRequestException('유저 번호가 중복됩니다.');
     }
+
+    const noticeNo: number = await this.checkNoticeExistence({
+      userNo: receiverNo,
+      targetUserNo: senderNo,
+      friendNo,
+    });
 
     await this.checkRequest({
       senderNo,
       receiverNo,
       friendReqStatus: false,
     });
+    await this.deleteRequest(manager, request);
+    await this.deleteNotice(manager, noticeNo);
+  }
 
-    await this.deleteRequest(request);
+  private async checkNoticeExistence(
+    friendRequest: FriendNotice,
+  ): Promise<number> {
+    const notice: FriendNotice = await this.noticeFriendsRepository.getNotice(
+      friendRequest,
+    );
+    if (!notice) {
+      throw new NotFoundException(`친구 요청이 존재하지 않습니다.`);
+    }
+    return notice.noticeNo;
   }
 
   async deleteFriend(
@@ -190,8 +236,13 @@ export class FriendsService {
     return Boolean(isFriend);
   }
 
-  private async deleteRequest(request: Friend): Promise<void> {
-    const deleteResult = await this.friendsRepository.deleteRequest(request);
+  private async deleteRequest(
+    manager: EntityManager,
+    request: Friend,
+  ): Promise<void> {
+    const deleteResult = await manager
+      .getCustomRepository(FriendsRepository)
+      .deleteRequest(request);
     if (!deleteResult) {
       throw new BadRequestException('친구 요청 삭제 오류입니다.');
     }
