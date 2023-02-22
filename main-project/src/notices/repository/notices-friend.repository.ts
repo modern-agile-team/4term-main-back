@@ -26,8 +26,10 @@ export class NoticeFriendsRepository extends Repository<NoticeFriends> {
       );
     }
   }
-  async getNotice(noticeUser: FriendNotice): Promise<FriendNotice> {
+  async getNotice(request: FriendNotice): Promise<FriendNotice> {
     try {
+      console.log(request);
+
       const notice: FriendNotice = await this.createQueryBuilder(
         'notice_friends',
       )
@@ -37,7 +39,7 @@ export class NoticeFriendsRepository extends Repository<NoticeFriends> {
           `notice_friends.friendNo = :friendNo
           AND notice.userNo = :userNo 
           AND notice.targetUserNo = :targetUserNo`,
-          noticeUser,
+          request,
         )
         .getRawOne();
 

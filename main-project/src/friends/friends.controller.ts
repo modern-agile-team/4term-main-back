@@ -109,12 +109,14 @@ export class FriendsController {
   @Delete('/requests/:friendNo/:senderNo')
   @ApiRefuseRequests()
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   async refuseRequest(
     @GetUser('userNo') receiverNo: number,
+    @TransactionDecorator() manager: EntityManager,
     @Param('friendNo', ParseIntPipe) friendNo: number,
     @Param('senderNo', ParseIntPipe) senderNo: number,
   ): Promise<APIResponse> {
-    await this.friendsService.refuseRequest({
+    await this.friendsService.refuseRequest(manager, {
       receiverNo,
       friendNo,
       senderNo,

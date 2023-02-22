@@ -2,6 +2,7 @@ import { applyDecorators } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
 } from '@nestjs/swagger';
@@ -26,6 +27,26 @@ export function ApiRefuseRequests() {
         {
           name: 'userDuplicateNumber',
           example: { msg: '유저 번호가 중복됩니다.' },
+        },
+        {
+          name: 'alreadyAcceptFriendRequest',
+          example: { msg: '이미 친구인 상태입니다.' },
+        },
+        {
+          name: 'FriendRequestPending',
+          example: { msg: '친구 요청 대기중입니다.' },
+        },
+      ]),
+    ),
+    ApiNotFoundResponse(
+      SwaggerApiResponse.exception([
+        {
+          name: 'noticeNotFound',
+          example: { msg: '친구 요청이 존재하지 않습니다.' },
+        },
+        {
+          name: 'friendRequestNotFound',
+          example: { msg: '친구 요청이 존재하지 않습니다.' },
         },
       ]),
     ),
