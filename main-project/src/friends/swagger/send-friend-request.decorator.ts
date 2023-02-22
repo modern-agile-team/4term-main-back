@@ -28,8 +28,12 @@ export function ApiSendFriendRequest() {
           example: { msg: '이미 친구인 상태입니다.' },
         },
         {
-          name: ' friendRequestPending',
+          name: 'friendRequestPending',
           example: { msg: '친구 요청 대기중입니다.' },
+        },
+        {
+          name: 'invalidRecipient',
+          exampel: { msg: '잘못된 요청입니다.' },
         },
       ]),
     ),
