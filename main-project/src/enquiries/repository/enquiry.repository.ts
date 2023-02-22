@@ -38,7 +38,7 @@ export class EnquiriesRepository extends Repository<Enquiries> {
         .groupBy('enquiries.no')
         .limit(5);
 
-      const totalPage: number = Math.ceil((await query.getCount()) / 10);
+      const totalPage: number = Math.ceil((await query.getCount()) / 5);
 
       if (page > 1) {
         query.offset((page - 1) * 5);

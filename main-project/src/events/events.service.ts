@@ -7,7 +7,11 @@ import { EntityManager } from 'typeorm';
 import { CreateEventDto } from './dto/create-event.dto';
 import { EventImagesRepository } from './repository/events-image.repository';
 import { EventsRepository } from './repository/events.repository';
-import { Event, EventImage } from './interface/events.interface';
+import {
+  Event,
+  EventImage,
+  EventPagenation,
+} from './interface/events.interface';
 import { EventFilterDto } from './dto/event-filter.dto';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { Users } from 'src/users/entity/user.entity';
@@ -72,18 +76,18 @@ export class EventsService {
   async getEvents(
     manager: EntityManager,
     eventFilterDto?: EventFilterDto,
-  ): Promise<Event<string[]>[]> {
-    const events: Event<string[]>[] = await manager
+  ): Promise<EventPagenation> {
+    const eventMetaData: EventPagenation = await manager
       .getCustomRepository(EventsRepository)
       .getEvents(eventFilterDto);
 
-    if (!events.length) {
+    if (!eventMetaData.events.length) {
       throw new NotFoundException(
         `이벤트 조회(getAllEvents-service): 이벤트가 없습니다.`,
       );
     }
 
-    return events;
+    return eventMetaData;
   }
 
   async getEvent(
