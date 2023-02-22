@@ -33,7 +33,7 @@ export function ApiSendFriendRequest() {
         },
         {
           name: 'invalidRecipient',
-          exampel: { msg: '잘못된 요청입니다.' },
+          example: { msg: '잘못된 요청입니다.' },
         },
       ]),
     ),
