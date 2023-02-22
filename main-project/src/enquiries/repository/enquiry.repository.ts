@@ -10,7 +10,7 @@ import {
 } from 'typeorm';
 import { UpdateEnquiryDto } from '../dto/update-enquiry.dto';
 import { Enquiries } from '../entity/enquiry.entity';
-import { Enquiry } from '../interface/enquiry.interface';
+import { Enquiry, EnquiryPagenation } from '../interface/enquiry.interface';
 
 @EntityRepository(Enquiries)
 export class EnquiriesRepository extends Repository<Enquiries> {
@@ -18,7 +18,7 @@ export class EnquiriesRepository extends Repository<Enquiries> {
   async getEnquiries(
     page: number,
     userNo?: number,
-  ): Promise<Enquiry<string[]>[]> {
+  ): Promise<EnquiryPagenation> {
     try {
       const query: SelectQueryBuilder<Enquiries> = this.createQueryBuilder(
         'enquiries',
@@ -37,6 +37,8 @@ export class EnquiriesRepository extends Repository<Enquiries> {
         .orderBy('no', 'DESC')
         .groupBy('enquiries.no')
         .limit(5);
+
+      const totalPage: number = Math.ceil((await query.getCount()) / 10);
 
       if (page > 1) {
         query.offset((page - 1) * 5);
@@ -58,7 +60,7 @@ export class EnquiriesRepository extends Repository<Enquiries> {
         },
       );
 
-      return convertEnquiry;
+      return { enquiry: convertEnquiry, totalPage, page };
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getEnquiries-repository: 알 수 없는 서버 에러입니다.`,

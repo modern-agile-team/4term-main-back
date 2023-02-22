@@ -40,7 +40,7 @@ export function ApiCreateEnquiry() {
           files: {
             type: 'string',
             format: 'binary',
-            description: '문의사항 이미지 파일',
+            description: '문의사항 이미지 파일 (send empty value해제 필수)',
           },
         },
       },

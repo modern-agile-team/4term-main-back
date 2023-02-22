@@ -42,7 +42,8 @@ export function ApiUpdateEnquiry() {
           files: {
             type: 'string',
             format: 'binary',
-            description: '답변 이미지 파일',
+            nullable: false,
+            description: '답변 이미지 파일 (send empty value해제 필수)',
           },
         },
       },
