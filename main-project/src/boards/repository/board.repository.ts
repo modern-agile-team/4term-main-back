@@ -318,13 +318,13 @@ export class BoardsRepository extends Repository<Boards> {
           'boards.no AS boardNo',
           'GROUP_CONCAT(DISTINCT hostProfile.nickname) AS hostsNickname',
           'GROUP_CONCAT(DISTINCT guestProfile.nickname) AS guestsNickname',
-          'GROUP_CONCAT(DISTINCT hostTeam.user_no) AS hostsUserNo',
-          'GROUP_CONCAT(DISTINCT guestTeam.user_no) AS guestsUserNo',
+          'GROUP_CONCAT(DISTINCT hostTeam.userNo) AS hostsUserNo',
+          'GROUP_CONCAT(DISTINCT guestTeam.userNo) AS guestsUserNo',
         ])
         .where(
           `boards.no = :boardNo 
-           AND boards.user_no = :userNo 
-           AND guestTeam.no = :guestTeamNo
+           AND boards.userNo = :userNo 
+           AND guestTeams.no = :guestTeamNo
            `,
           {
             boardNo,
