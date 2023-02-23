@@ -13,13 +13,48 @@ import { GuestTeam, GuestTeamPagenation } from '../interface/boards.interface';
 @EntityRepository(BoardGuestTeams)
 export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
   // 조회
+  async getTeamNoByUser(
+    boardNo: number,
+    userNo: number,
+  ): Promise<GuestTeam<number[]>> {
+    try {
+      const { guests, isAccepted, ...applies }: GuestTeam<string> =
+        await this.createQueryBuilder('teams')
+          .leftJoin('teams.boardGuest', 'guests')
+          .select([
+            'teams.no AS no',
+            'teams.board_no AS boardNo',
+            'teams.title AS title',
+            'teams.description AS description',
+            'JSON_ARRAYAGG(guests.userNo) AS guests',
+            'JSON_ARRAYAGG(guests.isAccepted) AS isAccepted',
+          ])
+          .where('teams.board_no = :boardNo', { boardNo })
+          .andWhere('guests.userNo = :userNo', { userNo })
+          .getRawOne();
+
+      const infomation: GuestTeam<number[]> = {
+        ...applies,
+        guests: JSON.parse(guests),
+        isAccepted: JSON.parse(isAccepted),
+      };
+
+      return infomation;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getTeamNoByUser-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async getGuestTeamInfo(teamNo: number): Promise<GuestTeam<number[]>> {
     try {
       const { guests, isAccepted, ...applies }: GuestTeam<string> =
         await this.createQueryBuilder('teams')
           .leftJoin('teams.boardGuest', 'guests')
           .select([
-            'guests.teamNo AS teamNo',
+            'teams.no AS no',
+            'teams.board_no AS boardNo',
             'teams.title AS title',
             'teams.description AS description',
             'JSON_ARRAYAGG(guests.userNo) AS guests',
@@ -84,38 +119,6 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getGuestTeamsByBoardNo-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
-  async getGuestTeamByTeamNo(teamNo: number): Promise<GuestTeam<number[]>> {
-    try {
-      const {
-        guests,
-        ...guestTeam
-      }: Omit<GuestTeam<string>, 'isAccepted'> = await this.createQueryBuilder(
-        'teams',
-      )
-        .leftJoin('teams.boardGuest', 'guestss')
-        .select([
-          'teams.no AS no',
-          'teams.board_no AS boardNo',
-          'teams.title AS title',
-          'teams.description AS description',
-          'JSON_ARRAYAGG(guestss.userNo) AS guests',
-        ])
-        .where('teams.no = :teamNo', { teamNo })
-        .getRawOne();
-
-      const guestTeamInfo: GuestTeam<number[]> = {
-        ...guestTeam,
-        guests: JSON.parse(guests),
-      };
-
-      return guestTeamInfo;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} getGuestTeamByTeamNo-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

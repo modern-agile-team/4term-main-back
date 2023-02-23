@@ -46,9 +46,9 @@ export interface Host<T> {
 
 export interface GuestTeam<T> {
   no?: number;
+  boardNo?: number;
   title: string;
   description: string;
-  boardNo?: number;
-  isAccepted?: T;
   guests?: T;
+  isAccepted?: T;
 }
