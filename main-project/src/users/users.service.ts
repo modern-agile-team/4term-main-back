@@ -102,7 +102,6 @@ export class UsersService {
   async updateProfileImage(
     userNo: number,
     profileImage: Express.Multer.File,
-    manager: EntityManager,
   ): Promise<string> {
     if (!profileImage) {
       throw new BadRequestException('프로필 이미지를 추가해 주세요');
@@ -118,21 +117,18 @@ export class UsersService {
       userNo,
       profileImage,
     );
-    await this.updateProfileImageByProfileNo(profileNo, newImageUrl, manager);
+    await this.updateProfileImageByProfileNo(profileNo, newImageUrl);
 
     return await this.updateAccessToken(userNo);
   }
 
-  async deleteProfileImage(
-    userNo: number,
-    manager: EntityManager,
-  ): Promise<string> {
+  async deleteProfileImage(userNo: number): Promise<string> {
     const { imageUrl, profileNo }: UserImage =
       await this.profileImageRepository.getProfileImage(userNo);
     if (!imageUrl) {
       throw new NotFoundException('프로필 이미지가 존재하지 않는 유저입니다.');
     }
-    await this.updateProfileImageByProfileNo(profileNo, null, manager);
+    await this.updateProfileImageByProfileNo(profileNo, null);
 
     return await this.updateAccessToken(userNo);
   }
@@ -443,11 +439,9 @@ export class UsersService {
   private async updateProfileImageByProfileNo(
     profileNo: number,
     imageUrl: string,
-    manager: EntityManager,
   ): Promise<void> {
-    const isProfileImageUpdated: number = await manager
-      .getCustomRepository(ProfileImagesRepository)
-      .updateProfileImage(profileNo, imageUrl);
+    const isProfileImageUpdated: number =
+      await this.profileImageRepository.updateProfileImage(profileNo, imageUrl);
 
     if (!isProfileImageUpdated) {
       throw new InternalServerErrorException(`프로필 이미지 수정 오류입니다.`);
