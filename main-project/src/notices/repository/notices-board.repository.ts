@@ -21,7 +21,7 @@ export class NoticeBoardsRepository extends Repository<NoticeBoards> {
     }
   }
 
-  async getHostNotice(boardNo: number, userNo: number) {
+  async getHostNotice(boardNo: number, userNo: number): Promise<Notices> {
     try {
       const notice: Notices = await this.createQueryBuilder('noticeBoards')
         .leftJoin('noticeBoards.noticeNo', 'notices')
@@ -38,7 +38,7 @@ export class NoticeBoardsRepository extends Repository<NoticeBoards> {
     }
   }
 
-  async getGuestNotice(boardNo: number, userNo: number) {
+  async getGuestNotice(boardNo: number, userNo: number): Promise<Notices> {
     try {
       const notice: Notices = await this.createQueryBuilder('noticeBoards')
         .leftJoin('noticeBoards.noticeNo', 'notices')
