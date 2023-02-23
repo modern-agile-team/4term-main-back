@@ -224,7 +224,7 @@ export class BoardsController {
     return { msg: '게시글 수정 성공' };
   }
 
-  @Patch('/:boardNo/invite/host')
+  @Patch('/:boardNo/invitation/host')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiAcceptHostInvite()
@@ -244,7 +244,7 @@ export class BoardsController {
     return { msg: '호스트 수락/거절 처리 성공' };
   }
 
-  @Patch('/:boardNo/invite/guest')
+  @Patch('/:boardNo/invitation/guest')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiAcceptGuestInvite()
