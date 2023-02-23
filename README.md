@@ -1,4 +1,4 @@
-# 4term-main-back
+# 4term-main-back.
 
 ## 커밋 컨벤션
 

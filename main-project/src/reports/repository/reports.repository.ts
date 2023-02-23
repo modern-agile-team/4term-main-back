@@ -7,18 +7,14 @@ import {
   SelectQueryBuilder,
 } from 'typeorm';
 import { CreateReportBoardDto } from '../dto/create-report-board.dto';
-import { ReportFilterDto } from '../dto/report-filter.dto';
 import { UpdateReportDto } from '../dto/update-report-board.dto';
 import { Reports } from '../entity/reports.entity';
-import { Report } from '../interface/reports.interface';
+import { Report, ReportPagenation } from '../interface/reports.interface';
 
 @EntityRepository(Reports)
 export class ReportRepository extends Repository<Reports> {
   //신고글 조회 관련
-  async getReports({
-    type,
-    page,
-  }: ReportFilterDto): Promise<Report<string[]>[]> {
+  async getReports(page: number): Promise<ReportPagenation> {
     try {
       const query: SelectQueryBuilder<Reports> = this.createQueryBuilder(
         'reports',
@@ -36,26 +32,15 @@ export class ReportRepository extends Repository<Reports> {
         .groupBy('reports.no')
         .limit(5);
 
+      const totalPage: number = Math.ceil((await query.getCount()) / 10);
+
       if (page > 1) {
         query.offset((page - 1) * 5);
       }
-      switch (type) {
-        case 0:
-          query.addSelect('reportedUsers.targetUserNo as tagetUserNo');
-          break;
-        case 1:
-          query.addSelect('reportedBoards.targetBoardNo as tagetBoardNo');
-          break;
-        default:
-          query.addSelect([
-            'reportedUsers.targetUserNo as tagetUserNo',
-            'reportedBoards.targetBoardNo as tagetBoardNo',
-          ]);
-      }
 
-      const reports = await query.getRawMany();
+      const reports: Report<string[]>[] = await query.getRawMany();
 
-      return reports;
+      return { reports, totalPage, page };
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 

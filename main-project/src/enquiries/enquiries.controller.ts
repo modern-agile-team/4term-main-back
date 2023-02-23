@@ -25,7 +25,11 @@ import { CreateReplyDto } from './dto/create-reply.dto';
 import { EnquiryFilterDto } from './dto/enquiry-filter.dto';
 import { UpdateEnquiryDto } from './dto/update-enquiry.dto';
 import { EnquiriesService } from './enquiries.service';
-import { Enquiry, Reply } from './interface/enquiry.interface';
+import {
+  Enquiry,
+  EnquiryPagenation,
+  Reply,
+} from './interface/enquiry.interface';
 import { ApiCreateEnquiry } from './swagger-decorator/create-enquiry.decorator';
 import { ApiCreateReply } from './swagger-decorator/create-reply.decorator';
 import { ApiDeleteEnquiry } from './swagger-decorator/delete-enquiry.decorator';
@@ -50,7 +54,7 @@ export class EnquiriesController {
     @TransactionDecorator() manager: EntityManager,
     @Query() enquiryFilterDto?: EnquiryFilterDto,
   ): Promise<APIResponse> {
-    const eunqiries: Enquiry<string[]>[] =
+    const eunqiries: EnquiryPagenation =
       await this.enquiriesService.getEnquiries(manager, enquiryFilterDto);
 
     return { msg: '문의사항 전체 조회 성공', response: { eunqiries } };
@@ -65,7 +69,7 @@ export class EnquiriesController {
     @GetUser() userNo: number,
     @Query() enquiryFilterDto?: EnquiryFilterDto,
   ): Promise<APIResponse> {
-    const eunqiries: Enquiry<string[]>[] =
+    const eunqiries: EnquiryPagenation =
       await this.enquiriesService.getEnquiriesByUser(
         manager,
         enquiryFilterDto,

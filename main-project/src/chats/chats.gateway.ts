@@ -12,10 +12,8 @@ import { Namespace, Socket } from 'socket.io';
 import { WebSocketAuthGuard } from 'src/common/guards/ws-jwt-auth.guard';
 import { APIResponse } from 'src/common/interface/interface';
 import { ChatsGatewayService } from './chats-gateway.service';
-import { CreateChatDto } from './dto/create-chat.dto';
 import { InitSocketDto } from './dto/init-socket.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
-import { ChatRoom, ChatRoomWithUsers } from './interface/chat.interface';
 import { WebSocketGetUser } from 'src/common/decorator/ws-get-user.decorator';
 import { WebSocketTransactionManager } from 'src/common/decorator/ws-transaction-manager.decorator';
 import { WebSocketTransactionInterceptor } from 'src/common/interceptor/ws-transaction-interceptor';
@@ -23,9 +21,7 @@ import { EntityManager } from 'typeorm';
 
 @WebSocketGateway(4000, {
   namespace: 'chat',
-  cors: {
-    origin: ['http://localhost:3001'],
-  },
+  cors: true,
 })
 export class ChatsGateway {
   constructor(private readonly chatGatewayService: ChatsGatewayService) {}
@@ -80,33 +76,6 @@ export class ChatsGateway {
     return { response: { chatRooms } };
   }
 
-  @SubscribeMessage('create-room')
-  @AsyncApiSub({
-    description: `채팅방 생성 
-    response: { chatRoomNo: number } 반환`,
-    channel: 'create-room',
-    message: {
-      payload: CreateChatDto,
-    },
-  })
-  @UseGuards(WebSocketAuthGuard)
-  @UseInterceptors(WebSocketTransactionInterceptor)
-  async handleCreateRoom(
-    @WebSocketGetUser() userNo: number,
-    @WebSocketTransactionManager() manager: EntityManager,
-    @ConnectedSocket() socket: Socket,
-    @MessageBody() messagePayload: CreateChatDto,
-  ): Promise<APIResponse> {
-    const chatRoom: ChatRoom = await this.chatGatewayService.createRoom(
-      manager,
-      socket,
-      userNo,
-      messagePayload,
-    );
-
-    return { response: { chatRoom } };
-  }
-
   @SubscribeMessage('message')
   @AsyncApiSub({
     description: `
@@ -146,6 +115,7 @@ export class ChatsGateway {
         );
     return { response: { messagePayload } };
   }
+
   @SubscribeMessage('leave-room')
   @UseGuards(WebSocketAuthGuard)
   async handleLeaveRoom(

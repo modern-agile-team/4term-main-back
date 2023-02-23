@@ -39,10 +39,11 @@ export function ApiUpdateEnquiry() {
             nullable: false,
             description: '문의사항 내용',
           },
-          file: {
+          files: {
             type: 'string',
             format: 'binary',
-            description: '답변 이미지 파일',
+            nullable: false,
+            description: '답변 이미지 파일 (send empty value해제 필수)',
           },
         },
       },

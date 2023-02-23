@@ -11,7 +11,12 @@ import { CreateReplyDto } from './dto/create-reply.dto';
 import { EnquiryFilterDto } from './dto/enquiry-filter.dto';
 import { UpdateEnquiryDto } from './dto/update-enquiry.dto';
 import { UpdateReplyDto } from './dto/update-reply.dto';
-import { Enquiry, ImageInfo, Reply } from './interface/enquiry.interface';
+import {
+  Enquiry,
+  EnquiryPagenation,
+  ImageInfo,
+  Reply,
+} from './interface/enquiry.interface';
 import { EnquiryImagesRepository } from './repository/enquiry-image.repository';
 import { EnquiryReplyImagesRepository } from './repository/enquiry-reply-image.repository';
 import { EnquiryRepliesRepository } from './repository/enquiry-reply.repository';
@@ -30,12 +35,12 @@ export class EnquiriesService {
   async getEnquiries(
     manager: EntityManager,
     { page }: EnquiryFilterDto,
-  ): Promise<Enquiry<string[]>[]> {
-    const enquiries: Enquiry<string[]>[] = await manager
+  ): Promise<EnquiryPagenation> {
+    const enquiries: EnquiryPagenation = await manager
       .getCustomRepository(EnquiriesRepository)
       .getEnquiries(page);
 
-    if (!enquiries.length) {
+    if (!enquiries.enquiry.length) {
       throw new NotFoundException(
         `문의 전체 조회(getEnquiries-service): 문의 사항이 없습니다.`,
       );
@@ -48,12 +53,12 @@ export class EnquiriesService {
     manager: EntityManager,
     { page }: EnquiryFilterDto,
     userNo: number,
-  ): Promise<Enquiry<string[]>[]> {
-    const enquiries: Enquiry<string[]>[] = await manager
+  ): Promise<EnquiryPagenation> {
+    const enquiries: EnquiryPagenation = await manager
       .getCustomRepository(EnquiriesRepository)
       .getEnquiries(page, userNo);
 
-    if (!enquiries.length) {
+    if (!enquiries.enquiry.length) {
       throw new NotFoundException(
         `유저별 문의 조회(getEnquiriesByUser-service): 문의 사항이 없습니다.`,
       );

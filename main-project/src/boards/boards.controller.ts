@@ -15,7 +15,12 @@ import { ApiTags } from '@nestjs/swagger';
 import { BoardsService } from './boards.service';
 import { CreateGuestTeamDto } from './dto/create-guest-team.dto';
 import { CreateBoardDto } from './dto/create-board.dto';
-import { Board } from './interface/boards.interface';
+import {
+  Board,
+  GuestTeam,
+  BoardPagenation,
+  GuestTeamPagenation,
+} from './interface/boards.interface';
 import { BoardFilterDto } from './dto/board-filter.dto';
 import { Cron, CronExpression } from '@nestjs/schedule/dist';
 import { APIResponse } from 'src/common/interface/interface';
@@ -38,6 +43,9 @@ import { GuestInviteDto } from './dto/guest-invite.dto';
 import { ApiDeleteBoard } from './swagger-decorator/delete-board.decorator';
 import { ApiDeleteBookmark } from './swagger-decorator/delete-bookmark.decorator';
 import { ApiGetBoardsByUser } from './swagger-decorator/get- boards-by-user.decorator';
+import { GetBoardByUserDto } from './dto/get-board-by-user.dto';
+import { ApiGetGuestTemasByBoardNo } from './swagger-decorator/get-guest-teams-by-board-no.decorator';
+import { GuestTeamPagenationDto } from './dto/guest-team-pagenation.dto';
 
 @Controller('boards')
 @ApiTags('게시글 API')
@@ -61,12 +69,12 @@ export class BoardsController {
     @TransactionDecorator() manager: EntityManager,
     @Query() boardFilterDto: BoardFilterDto,
   ): Promise<APIResponse> {
-    const boards: Board<void>[] = await this.boardService.getBoards(
+    const boardPagenation: BoardPagenation = await this.boardService.getBoards(
       manager,
       boardFilterDto,
     );
 
-    return { msg: '게시글 필터/전체 조회 성공', response: { boards } };
+    return { msg: '게시글 필터/전체 조회 성공', response: { boardPagenation } };
   }
 
   @Get('/:boardNo')
@@ -74,7 +82,7 @@ export class BoardsController {
   @UseInterceptors(TransactionInterceptor)
   @ApiGetBoard()
   async getBoardByNo(
-    @Param('boardNo') boardNo: number,
+    @Param('boardNo', ParseIntPipe) boardNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
     const board: Board<number[]> = await this.boardService.getBoard(
@@ -90,17 +98,65 @@ export class BoardsController {
   @UseInterceptors(TransactionInterceptor)
   @ApiGetBoardsByUser()
   async getBoardByUser(
-    @Param('type') type: number,
+    @Param('type') type: GetBoardByUserDto,
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
     const boards: Board<void>[] = await this.boardService.getBoardsByUser(
       manager,
       userNo,
-      type,
+      Number(type),
     );
 
     return { msg: '유저별 게시글 조회 성공', response: { boards } };
+  }
+
+  @Get('/apply/:boardNo')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetGuestTemasByBoardNo()
+  async getGuestTeamsByBoardNo(
+    @Query() { page }: GuestTeamPagenationDto,
+    @Param('boardNo', ParseIntPipe) boardNo: number,
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<APIResponse> {
+    const guestTeamMetaData: GuestTeamPagenation =
+      await this.boardService.getGuestTeamsByBoardNo(
+        manager,
+        userNo,
+        boardNo,
+        page,
+      );
+
+    return {
+      msg: '특정 게시글에 대한여름 신청내역 전체조회',
+      response: { guestTeamMetaData },
+    };
+  }
+
+  @Get('/apply/:boardNo/:teamNo')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetGuestTemasByBoardNo()
+  async getGuestTeam(
+    @Param('teamNo', ParseIntPipe) teamNo: number,
+    @Param('boardNo', ParseIntPipe) boardNo: number,
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<APIResponse> {
+    const guestTeam: GuestTeam<number[]> =
+      await this.boardService.getGuestTeamByTeamNo(
+        manager,
+        teamNo,
+        boardNo,
+        userNo,
+      );
+
+    return {
+      msg: '여름 신청서 상세조회 성공',
+      response: { guestTeam },
+    };
   }
 
   // Post Methods
@@ -123,7 +179,7 @@ export class BoardsController {
   @UseInterceptors(TransactionInterceptor)
   @ApiCreateBookmark()
   async createBookmark(
-    @Param('boardNo') boardNo: number,
+    @Param('boardNo', ParseIntPipe) boardNo: number,
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
@@ -137,7 +193,7 @@ export class BoardsController {
   @UseInterceptors(TransactionInterceptor)
   @ApiCreateGuestTeam()
   async createGuestTeam(
-    @Param('boardNo') boardNo: number,
+    @Param('boardNo', ParseIntPipe) boardNo: number,
     @GetUser() userNo: number,
     @Body() createGuestTeamDto: CreateGuestTeamDto,
     @TransactionDecorator() manager: EntityManager,
@@ -188,24 +244,24 @@ export class BoardsController {
     return { msg: '게시글 수락/거절 처리 성공' };
   }
 
-  @Patch('/:boardNo/invite/guest')
+  @Patch('/:teamNo/invite/guest')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiAcceptGuestInvite()
   async acceptGuestInvite(
-    @Param('boardNo', ParseIntPipe) boardNo: number,
+    @Param('teamNo', ParseIntPipe) teamNo: number,
     @Body() { isAccepted }: GuestInviteDto,
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
     await this.boardService.validateGuestInvite(
       manager,
-      boardNo,
+      teamNo,
       userNo,
       isAccepted,
     );
 
-    return { msg: '게시글 수락/거절 처리 성공' };
+    return { msg: '게스트 수락/거절 처리 성공' };
   }
 
   // Delete Methods

@@ -12,7 +12,7 @@ export class BoardGuestsRepository extends Repository<BoardGuests> {
         'boardGuest',
       )
         .leftJoin('boardGuest.teamNo', 'team')
-        .select('JSON_ARRAYAGG(boardGuest.userNo) AS userNo')
+        .select('JSON_ARRAYAGG(boardGuest.userNo) AS guests')
         .where('team.boardNo = :boardNo', { boardNo })
         .getRawOne();
 
@@ -26,14 +26,14 @@ export class BoardGuestsRepository extends Repository<BoardGuests> {
     }
   }
 
-  async getAnswer(boardNo: number, userNo: number): Promise<boolean> {
+  async getAnswer(teamNo: number, userNo: number): Promise<boolean> {
     try {
       const { isAnswered }: Guest<boolean> = await this.createQueryBuilder(
         'guests',
       )
         .leftJoin('guests.teamNo', 'team')
         .select(['guests.is_answered AS isAnswered'])
-        .where('team.board_no = :boardNo', { boardNo })
+        .where('team.no = :teamNo', { teamNo })
         .andWhere('guests.user_no = :userNo', { userNo })
         .getRawOne();
 

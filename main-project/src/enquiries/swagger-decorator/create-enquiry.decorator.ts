@@ -37,10 +37,10 @@ export function ApiCreateEnquiry() {
             nullable: false,
             description: '문의사항 내용',
           },
-          file: {
+          files: {
             type: 'string',
             format: 'binary',
-            description: '문의사항 이미지 파일',
+            description: '문의사항 이미지 파일 (send empty value해제 필수)',
           },
         },
       },

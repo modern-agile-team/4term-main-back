@@ -1,6 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
 import {
-  ApiBadRequestResponse,
   ApiBearerAuth,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -9,17 +8,21 @@ import {
 
 import { SwaggerApiResponse } from 'src/common/swagger/api-response.swagger';
 
-export function ApiAcceptHostInvite() {
+export function ApiGetGuestTemasByTeamNo() {
   return applyDecorators(
     ApiOperation({
-      summary: '게시글 생성 시 hostMembers 초대 수락/거절',
+      summary: '여름 신청서 상세조회',
     }),
     ApiBearerAuth(),
     ApiOkResponse(
-      SwaggerApiResponse.success(
-        'Api 작동 성공 msg 반환',
-        'Host 수락/거절 처리 성공',
-      ),
+      SwaggerApiResponse.success('여름 신청서 상세조회 성공', {
+        guestTeams: {
+          teamNo: 4,
+          title: 'tessssst',
+          description: 'desc',
+          guests: [16, 14],
+        },
+      }),
     ),
     ApiNotFoundResponse(
       SwaggerApiResponse.exception([
@@ -27,20 +30,16 @@ export function ApiAcceptHostInvite() {
           name: 'boardNotFound',
           example: { msg: `존재하지 않는 게시글 번호입니다.` },
         },
-      ]),
-    ),
-    ApiBadRequestResponse(
-      SwaggerApiResponse.exception([
         {
           name: 'isNotHostMember',
           example: {
-            msg: `사용자 검증 (validateHostMembers-service): 사용자는 해당 게시글에 초대받지 않았습니다.`,
+            msg: '호스트 확인(validateHost-service): 해당 게시글의 호스트멤버가 아닙니다.',
           },
         },
         {
-          name: 'alreadyAnswered',
+          name: 'guestTeamsNotFound',
           example: {
-            msg: `사용자 검증 (validateHostMembers-service): 사용자는 해당 게시글에 초대받지 않았습니다.`,
+            msg: '여름 신청내역 조회(getGuestTeamsByBoardNo-service): 신청내역이 없습니다.',
           },
         },
       ]),
