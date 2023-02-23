@@ -26,31 +26,12 @@ export class BoardGuestsRepository extends Repository<BoardGuests> {
     }
   }
 
-  async getAnswer(teamNo: number, userNo: number): Promise<boolean> {
-    try {
-      const { isAnswered }: Guest<boolean> = await this.createQueryBuilder(
-        'guests',
-      )
-        .leftJoin('guests.teamNo', 'team')
-        .select(['guests.is_answered AS isAnswered'])
-        .where('team.no = :teamNo', { teamNo })
-        .andWhere('guests.user_no = :userNo', { userNo })
-        .getRawOne();
-
-      return isAnswered;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} getAnswer-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
   // 수정
   async accpetGuestInvite(teamNo: number, userNo: number): Promise<void> {
     try {
       await this.createQueryBuilder()
         .update()
-        .set({ isAccepted: true, isAnswered: true })
+        .set({ isAccepted: true })
         .where('teamNo = :teamNo', { teamNo })
         .andWhere('userNo = :userNo', { userNo })
         .execute();

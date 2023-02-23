@@ -7,9 +7,5 @@ export class AcceptInvitationDto {
 
   @IsNumber()
   @IsNotEmpty()
-  receiverNo: number;
-
-  @IsNumber()
-  @IsNotEmpty()
   type: number;
 }
