@@ -38,6 +38,21 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
+  async getBoardByTeamNo(teamNo: number) {
+    try {
+      const board: Boards = await this.createQueryBuilder('boards')
+        .leftJoin('boards.teamNo', 'guestTeams')
+        .where('guestTeams.no = :teamNo', { teamNo })
+        .getOne();
+
+      return board;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getBoardByTeamNo-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
   async getBoardByNo(no: number): Promise<Board<number[]>> {
     try {
       const { hostMemberNums, hostMemberNicknames, ...board }: Board<string> =

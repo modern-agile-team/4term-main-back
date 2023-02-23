@@ -2,7 +2,7 @@ import { InternalServerErrorException } from '@nestjs/common';
 import {
   Friend,
   NoticeFriend,
-  NoticeUser,
+  FriendNotice,
 } from 'src/friends/interface/friend.interface';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { NoticeFriends } from '../entity/notice-friend.entity';
@@ -26,20 +26,24 @@ export class NoticeFriendsRepository extends Repository<NoticeFriends> {
       );
     }
   }
-  async getFriendNoByNoticeNo(noticeUser: NoticeUser): Promise<number> {
+  async getNotice(request: FriendNotice): Promise<FriendNotice> {
     try {
-      const { friendNo }: Friend = await this.createQueryBuilder(
+      console.log(request);
+
+      const notice: FriendNotice = await this.createQueryBuilder(
         'notice_friends',
       )
         .leftJoin('notice_friends.noticeNo', 'notice')
-        .select(['notice_friends.friendNo AS friendNo'])
+        .select(['notice.no AS noticeNo'])
         .where(
-          'notice_no = :noticeNo AND notice.targetUserNo = :userNo',
-          noticeUser,
+          `notice_friends.friendNo = :friendNo
+          AND notice.userNo = :userNo 
+          AND notice.targetUserNo = :targetUserNo`,
+          request,
         )
         .getRawOne();
 
-      return friendNo;
+      return notice;
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 친구 신청 번호 조회(getFriendNoByNoticeNo): 알 수 없는 서버 오류입니다.`,

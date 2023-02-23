@@ -108,18 +108,15 @@ export class UsersController {
 
   @ApiUpdateProfileImage()
   @UseInterceptors(FileInterceptor('file'))
-  @UseInterceptors(TransactionInterceptor)
   @UseGuards(JwtAuthGuard)
   @Put('/profile-image')
   async updateImage(
     @GetUser() userNo: number,
     @UploadedFile() image: Express.Multer.File,
-    @TransactionDecorator() manager: EntityManager,
   ) {
     const accessToken: string = await this.usersService.updateProfileImage(
       userNo,
       image,
-      manager,
     );
 
     return {
@@ -129,16 +126,11 @@ export class UsersController {
   }
 
   @ApiDeleteProfileImage()
-  @UseInterceptors(TransactionInterceptor)
   @UseGuards(JwtAuthGuard)
   @Delete('/profile-image')
-  async deleteProfileImage(
-    @GetUser() userNo: number,
-    @TransactionDecorator() manager: EntityManager,
-  ) {
+  async deleteProfileImage(@GetUser() userNo: number) {
     const accessToken: string = await this.usersService.deleteProfileImage(
       userNo,
-      manager,
     );
 
     return {

@@ -37,6 +37,11 @@ export function ApiCreateEvent() {
             nullable: false,
             description: '이벤트 내용',
           },
+          files: {
+            type: 'string',
+            format: 'binary',
+            description: '이벤트 이미지 파일  (send empty value해제 필수)',
+          },
         },
       },
     }),
