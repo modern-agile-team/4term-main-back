@@ -35,12 +35,12 @@ export class NoticesRepository extends Repository<Notices> {
     }
   }
 
-  async deleteNotice(no: number): Promise<number> {
+  async deleteNotice(no: number | number[]): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()
         .from(Notices)
-        .where({ no })
+        .where('no IN (:no)', { no })
         .execute();
 
       return affected;
@@ -145,6 +145,22 @@ export class NoticesRepository extends Repository<Notices> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 안 읽은 알림 개수 조회(getCountOfUnreadNotices): 알 수 없는 서버 오류입니다.`,
+      );
+    }
+  }
+
+  async getNoticeByBoardNo(boardNo: number): Promise<Notices[]> {
+    try {
+      const notices: Notices[] = await this.createQueryBuilder('notices')
+        .leftJoin('notices.noticeBoards', 'noticeBoards')
+        .select(['notices.no AS no'])
+        .where('noticeBoards.board_no = :boardNo', { boardNo })
+        .getRawMany();
+
+      return notices;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 게시글 번호로 알림 조회(getNoticeByBoardNo): 알 수 없는 서버 오류입니다.`,
       );
     }
   }
