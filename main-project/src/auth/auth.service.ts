@@ -86,10 +86,10 @@ export class AuthService {
     { email, password }: SignInDto,
     manager: EntityManager,
   ): Promise<User> {
-    await this.validateUserNotCreated(email);
-    if ((await this.cacheManager.get(email)) !== 'valid') {
-      throw new UnauthorizedException('인증되지 않은 이메일입니다.');
-    }
+    // await this.validateUserNotCreated(email);
+    // if ((await this.cacheManager.get(email)) !== 'valid') {
+    //   throw new UnauthorizedException('인증되지 않은 이메일입니다.');
+    // }
 
     const user: User = await this.saveUser(email, manager);
     await this.saveAuthentication({ userNo: user.userNo, password }, manager);
