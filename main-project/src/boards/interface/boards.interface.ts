@@ -36,15 +36,19 @@ export interface Guest<T> {
 }
 
 export interface Host<T> {
-  users: T;
-  acceptedResults: T;
+  users?: T;
+  acceptedResults?: T;
+  userNo?: number;
+  boardNo?: number;
+  isAccepted?: boolean;
+  isAnswered?: boolean;
 }
 
 export interface GuestTeam<T> {
   no?: number;
+  boardNo?: number;
   title: string;
   description: string;
-  boardNo?: number;
-  isAccepted?: T;
   guests?: T;
+  isAccepted?: T;
 }
