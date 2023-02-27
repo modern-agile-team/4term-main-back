@@ -8,6 +8,8 @@ import { ResultSetHeader } from 'mysql2';
 import { NoticeType } from 'src/common/configs/notice-type.config';
 import { NoticeFriendsRepository } from 'src/notices/repository/notices-friend.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
+import { SearchedUser } from 'src/users/interface/user.interface';
+import { UserProfilesRepository } from 'src/users/repository/user-profiles.repository';
 import { EntityManager } from 'typeorm';
 import { Friends } from './entity/friend.entity';
 import {
@@ -17,6 +19,8 @@ import {
   FriendRequestStatus,
   NoticeFriend,
   FriendNotice,
+  SentFriendRequest,
+  ReceivedFriendRequest,
 } from './interface/friend.interface';
 import { FriendsRepository } from './repository/friends.repository';
 
@@ -25,6 +29,7 @@ export class FriendsService {
   constructor(
     private readonly friendsRepository: FriendsRepository,
     private readonly noticeFriendsRepository: NoticeFriendsRepository,
+    private readonly userProfilesRepository: UserProfilesRepository,
   ) {}
 
   async sendFriendRequest(
@@ -137,15 +142,17 @@ export class FriendsService {
     }
   }
 
-  async getReceivedRequests(receiverNo: number): Promise<Friends[]> {
-    const receivedRequests: Friends[] =
+  async getReceivedRequests(
+    receiverNo: number,
+  ): Promise<ReceivedFriendRequest[]> {
+    const receivedRequests: ReceivedFriendRequest[] =
       await this.friendsRepository.getReceivedRequests(receiverNo);
 
     return receivedRequests;
   }
 
-  async getSentRequests(senderNo: number): Promise<Friends[]> {
-    const sentRequests: Friends[] =
+  async getSentRequests(senderNo: number): Promise<SentFriendRequest[]> {
+    const sentRequests: SentFriendRequest[] =
       await this.friendsRepository.getSentRequests(senderNo);
 
     return sentRequests;
@@ -272,5 +279,21 @@ export class FriendsService {
       : new BadRequestException(`친구 요청 대기중입니다.`);
 
     throw error;
+  }
+
+  async searchNotFriendUsers(
+    userNo: number,
+    nickname: string,
+  ): Promise<SearchedUser[]> {
+    const friendSubQuery = this.friendsRepository.getSubQuery(userNo, nickname);
+
+    const users: SearchedUser[] =
+      await this.userProfilesRepository.getNotFriendUsers(
+        userNo,
+        nickname,
+        friendSubQuery,
+      );
+
+    return users;
   }
 }
