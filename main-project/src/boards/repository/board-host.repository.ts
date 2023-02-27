@@ -30,26 +30,8 @@ export class BoardHostsRepository extends Repository<BoardHosts> {
     }
   }
 
-  async getAnswer(boardNo: number, userNo: number): Promise<boolean> {
-    try {
-      const { isAnswered }: BoardHosts = await this.createQueryBuilder()
-        .select(['is_answered AS isAnswered'])
-        .where('board_no = :boardNo', { boardNo })
-        .andWhere('user_no = :userNo', { userNo })
-        .getRawOne();
-
-      return isAnswered;
-    } catch (error) {
-      throw new InternalServerErrorException(
-        `${error} getAnswer-repository: 알 수 없는 서버 에러입니다.`,
-      );
-    }
-  }
-
   // 생성
-  async createHosts(
-    hosts: Pick<BoardHosts, 'boardNo' | 'userNo'>[],
-  ): Promise<void> {
+  async createHosts(hosts: Host<void>[]): Promise<void> {
     try {
       await this.createQueryBuilder()
         .insert()
@@ -68,7 +50,7 @@ export class BoardHostsRepository extends Repository<BoardHosts> {
     try {
       await this.createQueryBuilder()
         .update(BoardHosts)
-        .set({ isAccepted: true, isAnswered: true })
+        .set({ isAccepted: true })
         .where('boardNo = :boardNo', { boardNo })
         .andWhere('userNo = :userNo', { userNo })
         .execute();
