@@ -2,10 +2,12 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { ResultSetHeader } from 'mysql2';
 import { Payload } from 'src/auth/interface/auth.interface';
 import { UserStatus } from 'src/common/configs/user-status.config';
+import { Friends } from 'src/friends/entity/friend.entity';
 import {
   EntityRepository,
   InsertResult,
   Repository,
+  SelectQueryBuilder,
   UpdateResult,
 } from 'typeorm';
 import { UserProfile } from '../entity/user-profile.entity';
@@ -131,6 +133,36 @@ export class UserProfilesRepository extends Repository<UserProfile> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} 유저 학과 변경(updateUserMajor) :알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getNotFriendUsers(
+    userNo: number,
+    nickname: string,
+    friendSubQuery: SelectQueryBuilder<Friends>,
+  ): Promise<SearchedUser[]> {
+    try {
+      return await this.createQueryBuilder('user_profiles')
+        .leftJoin('user_profiles.profileImage', 'userProfileImage')
+        .select([
+          'user_profiles.userNo AS userNo',
+          'user_profiles.nickname AS nickname',
+          'user_profiles.description AS description',
+          'userProfileImage.imageUrl AS profileImage',
+        ])
+        .where('user_profiles.userNo != :userNo', { userNo })
+        .andWhere('user_profiles.nickname LIKE :nickname', {
+          nickname: `%${nickname}%`,
+        })
+        .andWhere(
+          `user_profiles.nickname NOT IN (${friendSubQuery.getQuery()})`,
+        )
+        .setParameters(friendSubQuery.getParameters())
+        .getRawMany();
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 친구가 아닌 유저 검색(getNotFriendUsers): 알 수 없는 서버 에러입니다.`,
       );
     }
   }

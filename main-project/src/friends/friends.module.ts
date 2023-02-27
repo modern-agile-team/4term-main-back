@@ -6,6 +6,7 @@ import { FriendsRepository } from './repository/friends.repository';
 import { UsersRepository } from 'src/users/repository/users.repository';
 import { NoticesRepository } from 'src/notices/repository/notices.repository';
 import { NoticeFriendsRepository } from 'src/notices/repository/notices-friend.repository';
+import { UserProfilesRepository } from 'src/users/repository/user-profiles.repository';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { NoticeFriendsRepository } from 'src/notices/repository/notices-friend.r
       UsersRepository,
       NoticesRepository,
       NoticeFriendsRepository,
+      UserProfilesRepository,
     ]),
   ],
   controllers: [FriendsController],
