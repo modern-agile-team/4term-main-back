@@ -48,6 +48,30 @@ export class FriendsController {
     return { response: { friends } };
   }
 
+  @Get('/requests/received')
+  @ApiGetReceivedRequests()
+  @UseGuards(JwtAuthGuard)
+  async getReceivedRequests(
+    @GetUser('userNo') receiverNo: number,
+  ): Promise<APIResponse> {
+    const receivedRequests: ReceivedFriendRequest[] =
+      await this.friendsService.getReceivedRequests(receiverNo);
+
+    return { response: { receivedRequests } };
+  }
+
+  @Get('/requests/sent')
+  @ApiGetSentRequests()
+  @UseGuards(JwtAuthGuard)
+  async getSentRequests(
+    @GetUser('userNo') senderNo: number,
+  ): Promise<APIResponse> {
+    const sentFriendRequests: SentFriendRequest[] =
+      await this.friendsService.getSentRequests(senderNo);
+
+    return { response: { sentFriendRequests } };
+  }
+
   @Post('/requests/:receiverNo')
   @ApiSendFriendRequest()
   @UseGuards(JwtAuthGuard)
@@ -84,30 +108,6 @@ export class FriendsController {
     return {
       msg: '친구 신청을 수락했습니다.',
     };
-  }
-
-  @Get('/requests/received')
-  @ApiGetReceivedRequests()
-  @UseGuards(JwtAuthGuard)
-  async getReceivedRequests(
-    @GetUser('userNo') receiverNo: number,
-  ): Promise<APIResponse> {
-    const receivedRequests: ReceivedFriendRequest[] =
-      await this.friendsService.getReceivedRequests(receiverNo);
-
-    return { response: { receivedRequests } };
-  }
-
-  @Get('/requests/sent')
-  @ApiGetSentRequests()
-  @UseGuards(JwtAuthGuard)
-  async getSentRequests(
-    @GetUser('userNo') senderNo: number,
-  ): Promise<APIResponse> {
-    const sentFriendRequests: SentFriendRequest[] =
-      await this.friendsService.getSentRequests(senderNo);
-
-    return { response: { sentFriendRequests } };
   }
 
   @Delete('/requests/:friendNo/:senderNo')
