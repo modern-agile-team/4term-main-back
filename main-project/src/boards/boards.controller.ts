@@ -83,11 +83,13 @@ export class BoardsController {
   @ApiGetBoard()
   async getBoardByNo(
     @Param('boardNo', ParseIntPipe) boardNo: number,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const board: Board<number[]> = await this.boardService.getBoard(
+    const board: Board<number[], string[]> = await this.boardService.getBoard(
       manager,
       boardNo,
+      userNo,
     );
 
     return { msg: '게시글 상세조회 성공', response: { board } };
@@ -102,7 +104,7 @@ export class BoardsController {
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const boards: Board<void>[] = await this.boardService.getBoardsByUser(
+    const boards: Board<void, void>[] = await this.boardService.getBoardsByUser(
       manager,
       userNo,
       Number(type),

@@ -24,9 +24,4 @@ export class CreateProfileDto {
   @IsString()
   @IsOptional()
   description: string;
-
-  @MaxLength(45)
-  @IsString()
-  @IsNotEmpty()
-  major: string;
 }
