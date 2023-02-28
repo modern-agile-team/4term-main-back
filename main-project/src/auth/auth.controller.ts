@@ -5,6 +5,7 @@ import {
   Get,
   Patch,
   Post,
+  Param,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common/decorators';
@@ -108,8 +109,8 @@ export class AuthController {
   }
 
   @ApiGetEmailCode()
-  @Get('/email-code')
-  async getEmailCode(@Body() { email }: EmailDto) {
+  @Get('/email-code/:email')
+  async getEmailCode(@Param('email') email: string) {
     await this.authService.getEmailCode(email);
 
     return { msg: '이메일 인증 코드가 전송되었습니다' };
