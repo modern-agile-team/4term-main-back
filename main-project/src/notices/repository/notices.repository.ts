@@ -35,12 +35,12 @@ export class NoticesRepository extends Repository<Notices> {
     }
   }
 
-  async deleteNotice(no: number): Promise<number> {
+  async deleteNotice(no: number | number[]): Promise<number> {
     try {
       const { affected }: DeleteResult = await this.createQueryBuilder()
         .delete()
         .from(Notices)
-        .where({ no })
+        .where('no IN (:no)', { no })
         .execute();
 
       return affected;
