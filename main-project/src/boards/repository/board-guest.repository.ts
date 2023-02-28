@@ -1,7 +1,7 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, Repository } from 'typeorm';
 import { BoardGuests } from '../entity/board-guest.entity';
-import { Board, Guest, GuestTeam } from '../interface/boards.interface';
+import { Guest, GuestTeam } from '../interface/boards.interface';
 
 @EntityRepository(BoardGuests)
 export class BoardGuestsRepository extends Repository<BoardGuests> {

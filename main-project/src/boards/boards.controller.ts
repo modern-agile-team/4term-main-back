@@ -83,11 +83,13 @@ export class BoardsController {
   @ApiGetBoard()
   async getBoardByNo(
     @Param('boardNo', ParseIntPipe) boardNo: number,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const board: Board<number[]> = await this.boardService.getBoard(
+    const board: Board<number[], string[]> = await this.boardService.getBoard(
       manager,
       boardNo,
+      userNo,
     );
 
     return { msg: '게시글 상세조회 성공', response: { board } };
@@ -102,7 +104,7 @@ export class BoardsController {
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const boards: Board<void>[] = await this.boardService.getBoardsByUser(
+    const boards: Board<void, void>[] = await this.boardService.getBoardsByUser(
       manager,
       userNo,
       Number(type),
@@ -224,7 +226,7 @@ export class BoardsController {
     return { msg: '게시글 수정 성공' };
   }
 
-  @Patch('/:boardNo/invite/host')
+  @Patch('/:boardNo/invitation/host')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiAcceptHostInvite()
@@ -244,7 +246,7 @@ export class BoardsController {
     return { msg: '호스트 수락/거절 처리 성공' };
   }
 
-  @Patch('/:boardNo/invite/guest')
+  @Patch('/:boardNo/invitation/guest')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiAcceptGuestInvite()
