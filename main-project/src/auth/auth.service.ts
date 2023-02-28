@@ -61,6 +61,12 @@ export class AuthService {
   }
 
   async getEmailCode(email: string): Promise<void> {
+    const emailFormat =
+      /^([0-9a-zA-Z_\.-]+)@([0-9a-zA-Z_-]+)(\.[0-9a-zA-Z_-]+){1,2}$/;
+    if (!emailFormat.test(email)) {
+      throw new BadRequestException('올바르지 않은 이메일 형식');
+    }
+
     await this.validateUserNotCreated(email);
     const validationKey = this.getEmailValidationKey();
     await this.cacheManager.set(email, validationKey, {
