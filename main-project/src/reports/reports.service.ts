@@ -419,9 +419,9 @@ export class ReportsService {
     manager: EntityManager,
     boardNo: number,
   ): Promise<void> {
-    const { no }: Board<number[]> = await manager
+    const { no }: Board<number[], string[]> = await manager
       .getCustomRepository(BoardsRepository)
-      .getBoardByNo(boardNo);
+      .getBoardByNo(boardNo, null);
 
     if (!no) {
       throw new BadRequestException(

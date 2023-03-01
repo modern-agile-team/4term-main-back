@@ -53,36 +53,44 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async getBoardByNo(no: number): Promise<Board<number[]>> {
+  async getBoardByNo(
+    no: number,
+    userNo: number,
+  ): Promise<Board<number[], string[]>> {
     try {
-      const { hostMemberNums, hostMemberNicknames, ...board }: Board<string> =
-        await this.createQueryBuilder('boards')
-          .leftJoin('boards.userNo', 'users')
-          .leftJoin('users.userProfileNo', 'profile')
-          .leftJoin('boards.hosts', 'hosts')
-          .leftJoin('hosts.userNo', 'hostUsers')
-          .leftJoin('hostUsers.userProfileNo', 'hostProfile')
-          .select([
-            'boards.no AS no',
-            'boards.userNo AS hostUserNo',
-            'profile.nickname AS hostNickname',
-            'boards.title AS title',
-            'boards.description AS description',
-            'boards.location AS location',
-            'boards.isDone AS isDone',
-            'boards.recruitMale AS recruitMale',
-            'boards.recruitFemale AS recruitFemale',
-            'boards.isImpromptu AS isImpromptu',
-            'boards.meetingTime AS meetingTime',
-            `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
-            'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
-            'JSON_ARRAYAGG(hostProfile.nickname) AS hostMemberNicknames',
-          ])
-          .where('boards.no = :no', { no })
-          .andWhere('hosts.board_no = :no', { no })
-          .getRawOne();
+      const {
+        hostMemberNums,
+        hostMemberNicknames,
+        ...board
+      }: Board<string, string> = await this.createQueryBuilder('boards')
+        .leftJoin('boards.userNo', 'users')
+        .leftJoin('boards.boardBookmark', 'bookmarks')
+        .leftJoin('users.userProfileNo', 'profile')
+        .leftJoin('boards.hosts', 'hosts')
+        .leftJoin('hosts.userNo', 'hostUsers')
+        .leftJoin('hostUsers.userProfileNo', 'hostProfile')
+        .select([
+          'boards.no AS no',
+          'boards.userNo AS hostUserNo',
+          'profile.nickname AS hostNickname',
+          'boards.title AS title',
+          'boards.description AS description',
+          'boards.location AS location',
+          'boards.isDone AS isDone',
+          'boards.recruitMale AS recruitMale',
+          'boards.recruitFemale AS recruitFemale',
+          'boards.isImpromptu AS isImpromptu',
+          'boards.meetingTime AS meetingTime',
+          `IF(bookmarks.board_no = boards.no AND bookmarks.user_no = ${userNo}, TRUE, FALSE) AS bookmakrs`,
+          `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
+          'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
+          'JSON_ARRAYAGG(hostProfile.nickname) AS hostMemberNicknames',
+        ])
+        .where('boards.no = :no', { no })
+        .andWhere('hosts.board_no = :no', { no })
+        .getRawOne();
 
-      const convertBoard: Board<number[]> = {
+      const convertBoard: Board<number[], string[]> = {
         ...board,
         hostMemberNums: JSON.parse(hostMemberNums),
         hostMemberNicknames: JSON.parse(hostMemberNicknames),
@@ -151,7 +159,7 @@ export class BoardsRepository extends Repository<Boards> {
       if (page > 1) {
         query.offset((page - 1) * 10);
       }
-      const boards: Board<string[]>[] = await query.getRawMany();
+      const boards: Board<number[], string[]>[] = await query.getRawMany();
 
       return { boards, totalPage, page };
     } catch (error) {
@@ -161,7 +169,10 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async getBoardsByUser(userNo: number, type: number): Promise<Board<void>[]> {
+  async getBoardsByUser(
+    userNo: number,
+    type: number,
+  ): Promise<Board<void, void>[]> {
     try {
       const boards: SelectQueryBuilder<Boards> = this.createQueryBuilder(
         'boards',

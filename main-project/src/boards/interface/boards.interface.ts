@@ -1,4 +1,4 @@
-export class Board<T> {
+export class Board<T, U> {
   no?: number;
   hostUserNo?: number;
   hostNickname?: string;
@@ -10,13 +10,14 @@ export class Board<T> {
   recruitMale: number;
   recruitFemale: number;
   isImpromptu: boolean;
+  bookmark: boolean;
   hostMemberNums?: T;
-  hostMemberNicknames?: T;
+  hostMemberNicknames?: U;
   createdDate?: Date;
 }
 
 export class BoardPagenation {
-  boards: Board<string[]>[];
+  boards: Board<number[], string[]>[];
   totalPage: number;
   page: number;
 }
