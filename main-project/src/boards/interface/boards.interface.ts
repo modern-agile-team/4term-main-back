@@ -23,7 +23,8 @@ export class BoardPagenation {
 }
 
 export class GuestTeamPagenation {
-  guestTeams: GuestTeam<number[]>[];
+  guestTeams: GuestTeam<number[], GuestProfile>[];
+  acceptedGuestTeamNo: number | null;
   totalPage: number;
   page: number;
 }
@@ -32,7 +33,6 @@ export interface Guest<T> {
   no?: number;
   teamNo: number;
   userNo: number;
-  isAnswered?: boolean;
   isAccepted?: T;
 }
 
@@ -42,14 +42,21 @@ export interface Host<T> {
   userNo?: number;
   boardNo?: number;
   isAccepted?: boolean;
-  isAnswered?: boolean;
 }
 
-export interface GuestTeam<T> {
+export interface GuestTeam<T, U> {
   no?: number;
   boardNo?: number;
   title: string;
   description: string;
-  guests?: T;
+  createdDate?: Date;
+  guests?: U;
+  // guestMembers?: GuestProfile | string;
   isAccepted?: T;
+}
+
+export interface GuestProfile {
+  no: number;
+  nicknmae: string;
+  profileImage: string;
 }

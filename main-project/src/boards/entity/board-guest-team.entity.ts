@@ -1,11 +1,14 @@
 import {
   BaseEntity,
   Column,
+  CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { BoardGuests } from './board-guest.entity';
 import { Boards } from './board.entity';
@@ -41,4 +44,13 @@ export class BoardGuestTeams extends BaseEntity {
     name: 'is_accepted',
   })
   isAccepted: boolean;
+
+  @CreateDateColumn({ name: 'created_date' })
+  createdDate: Date;
+
+  @UpdateDateColumn({ default: null, name: 'updated_date' })
+  updatedDate: Date;
+
+  @DeleteDateColumn({ name: 'deleted_date' })
+  deletedDate: Date;
 }
