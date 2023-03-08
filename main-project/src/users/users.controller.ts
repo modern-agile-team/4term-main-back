@@ -1,4 +1,4 @@
-import { Controller, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, UploadedFile, UseInterceptors } from "@nestjs/common";
 import {
   Body,
   Post,
@@ -9,42 +9,42 @@ import {
   Param,
   Get,
   Query,
-} from '@nestjs/common/decorators';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { GetUser } from 'src/common/decorator/get-user.decorator';
-import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
-import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
-import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
-import { EntityManager } from 'typeorm';
-import { CreateProfileDto } from './dto/create-profile.dto';
-import { UpdateProfileDto } from './dto/update-profile.dto';
-import { MajorDto } from './dto/user-major.dto';
+} from "@nestjs/common/decorators";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { Cron, CronExpression } from "@nestjs/schedule";
+import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
+import { GetUser } from "src/common/decorator/get-user.decorator";
+import { TransactionDecorator } from "src/common/decorator/transaction-manager.decorator";
+import { JwtAuthGuard } from "src/common/guards/jwt-auth.guard";
+import { TransactionInterceptor } from "src/common/interceptor/transaction-interceptor";
+import { EntityManager } from "typeorm";
+import { CreateProfileDto } from "./dto/create-profile.dto";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
+import { MajorDto } from "./dto/user-major.dto";
 import {
   CertificateForJudgment,
   EntireProfile,
   SearchedUser,
   User,
-} from './interface/user.interface';
-import { ApiConfirmUser } from './swagger-decorator/confirm-user.decorator';
-import { ApiCreateCertificate } from './swagger-decorator/create-certificate.decorator';
-import { ApiCreateProfile } from './swagger-decorator/create-profile.decorator';
-import { ApiDeleteProfileImage } from './swagger-decorator/delete-profile-image.decorator';
-import { ApiDenyUser } from './swagger-decorator/deny-user.decorator';
-import { ApiGetUserCertificates } from './swagger-decorator/get-certificates.decorator';
-import { ApiGetOthersProfile } from './swagger-decorator/get-others-profile.decorator';
-import { ApiGetUserProfile } from './swagger-decorator/get-profile.decorator';
-import { ApiGetUserByNickname } from './swagger-decorator/get-user-by-nickname.decorator';
-import { ApiUpdateCertificate } from './swagger-decorator/update-certificate.decorator';
-import { ApiUpdateMajor } from './swagger-decorator/update-major.decorator';
-import { ApiUpdateProfileImage } from './swagger-decorator/update-profile-image.decorator';
-import { ApiUpdateProfile } from './swagger-decorator/update-profile.decorator';
-import { ApiValidateNickname } from './swagger-decorator/validate-nickname.decorator';
-import { UsersService } from './users.service';
+} from "./interface/user.interface";
+import { ApiConfirmUser } from "./swagger-decorator/confirm-user.decorator";
+import { ApiCreateCertificate } from "./swagger-decorator/create-certificate.decorator";
+import { ApiCreateProfile } from "./swagger-decorator/create-profile.decorator";
+import { ApiDeleteProfileImage } from "./swagger-decorator/delete-profile-image.decorator";
+import { ApiDenyUser } from "./swagger-decorator/deny-user.decorator";
+import { ApiGetUserCertificates } from "./swagger-decorator/get-certificates.decorator";
+import { ApiGetOthersProfile } from "./swagger-decorator/get-others-profile.decorator";
+import { ApiGetUserProfile } from "./swagger-decorator/get-profile.decorator";
+import { ApiGetUserByNickname } from "./swagger-decorator/get-user-by-nickname.decorator";
+import { ApiUpdateCertificate } from "./swagger-decorator/update-certificate.decorator";
+import { ApiUpdateMajor } from "./swagger-decorator/update-major.decorator";
+import { ApiUpdateProfileImage } from "./swagger-decorator/update-profile-image.decorator";
+import { ApiUpdateProfile } from "./swagger-decorator/update-profile.decorator";
+import { ApiValidateNickname } from "./swagger-decorator/validate-nickname.decorator";
+import { UsersService } from "./users.service";
 
-@ApiTags('유저 API')
-@Controller('users')
+@ApiTags("유저 API")
+@Controller("users")
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
@@ -54,7 +54,7 @@ export class UsersController {
     await this.usersService.deleteUsersSuspendJoin(manager);
 
     return {
-      msg: '가입 중단 유저 목록이 삭제되었습니다.',
+      msg: "가입 중단 유저 목록이 삭제되었습니다.",
     };
   }
 
@@ -64,123 +64,123 @@ export class UsersController {
     await this.usersService.hardDeleteUsers(manager);
 
     return {
-      msg: '탈퇴한 유저 영구 삭제',
+      msg: "탈퇴한 유저 영구 삭제",
     };
   }
 
   @ApiCreateProfile()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor("file"))
   @UseInterceptors(TransactionInterceptor)
-  @Post('/:userNo/profile')
+  @Post("/:userNo/profile")
   async createUserProfile(
-    @Param('userNo') userNo: number,
+    @Param("userNo") userNo: number,
     @UploadedFile() profileImage: Express.Multer.File,
     @Body() createProfileDto: CreateProfileDto,
-    @TransactionDecorator() manager: EntityManager,
+    @TransactionDecorator() manager: EntityManager
   ) {
     const user: User = await this.usersService.createUserProfile(
       userNo,
       createProfileDto,
       profileImage,
-      manager,
+      manager
     );
 
-    return { msg: '프로필이 등록되었습니다.', response: { user } };
+    return { msg: "프로필이 등록되었습니다.", response: { user } };
   }
 
   @ApiUpdateProfile()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @Patch('/profile')
+  @Patch("/profile")
   async updateProfile(
     @GetUser() userNo: number,
     @Body() updateProfielDto: UpdateProfileDto,
-    @TransactionDecorator() manager: EntityManager,
+    @TransactionDecorator() manager: EntityManager
   ) {
     const user: User = await this.usersService.updateUserProfile(
       userNo,
       updateProfielDto,
-      manager,
+      manager
     );
 
-    return { msg: '프로필이 수정되었습니다.', response: { user } };
+    return { msg: "프로필이 수정되었습니다.", response: { user } };
   }
 
   @ApiUpdateProfileImage()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor("file"))
   @UseGuards(JwtAuthGuard)
-  @Put('/profile-image')
+  @Put("/profile-image")
   async updateImage(
     @GetUser() userNo: number,
-    @UploadedFile() image: Express.Multer.File,
+    @UploadedFile() image: Express.Multer.File
   ) {
     const accessToken: string = await this.usersService.updateProfileImage(
       userNo,
-      image,
+      image
     );
 
     return {
-      msg: '프로필 이미지가 수정되었습니다.',
+      msg: "프로필 이미지가 수정되었습니다.",
       response: { accessToken },
     };
   }
 
   @ApiDeleteProfileImage()
   @UseGuards(JwtAuthGuard)
-  @Delete('/profile-image')
+  @Delete("/profile-image")
   async deleteProfileImage(@GetUser() userNo: number) {
     const accessToken: string = await this.usersService.deleteProfileImage(
-      userNo,
+      userNo
     );
 
     return {
-      msg: '프로필 이미지가 삭제되었습니다.',
+      msg: "프로필 이미지가 삭제되었습니다.",
       response: { accessToken },
     };
   }
 
   @ApiCreateCertificate()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor("file"))
   @UseInterceptors(TransactionInterceptor)
-  @Post('/:userNo/certificate')
+  @Post("/:userNo/certificate")
   async createUserCertificate(
-    @Param('userNo') userNo: number,
+    @Param("userNo") userNo: number,
     @Body() { major }: MajorDto,
     @UploadedFile() file: Express.Multer.File,
-    @TransactionDecorator() manager: EntityManager,
+    @TransactionDecorator() manager: EntityManager
   ) {
     const user: User = await this.usersService.createUserCertificate(
       userNo,
       major,
       file,
-      manager,
+      manager
     );
 
-    return { msg: '유저 학적 파일이 업로드되었습니다.', response: { user } };
+    return { msg: "유저 학적 파일이 업로드되었습니다.", response: { user } };
   }
 
   @ApiUpdateCertificate()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor("file"))
   @UseInterceptors(TransactionInterceptor)
-  @Patch('/:userNo/denied-certificate')
+  @Patch("/:userNo/denied-certificate")
   async resubmitUserCertificate(
-    @Param('userNo') userNo: number,
+    @Param("userNo") userNo: number,
     @Body() { major }: MajorDto,
     @UploadedFile() file: Express.Multer.File,
-    @TransactionDecorator() manager: EntityManager,
+    @TransactionDecorator() manager: EntityManager
   ) {
     const user: User = await this.usersService.resubmitUserCertificate(
       userNo,
       major,
       file,
-      manager,
+      manager
     );
 
-    return { msg: '학적 정보가 재등록되었습니다.', response: { user } };
+    return { msg: "학적 정보가 재등록되었습니다.", response: { user } };
   }
 
   @ApiOperation({
-    summary: '회원 탈퇴',
+    summary: "회원 탈퇴",
   })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -188,108 +188,107 @@ export class UsersController {
   async softDeleteUser(@GetUser() userNo: number) {
     await this.usersService.softDeleteUser(userNo);
 
-    return { msg: '유저가 삭제되었습니다.' };
+    return { msg: "유저가 삭제되었습니다." };
   }
 
   @ApiConfirmUser()
   @UseInterceptors(TransactionInterceptor)
   @UseGuards(JwtAuthGuard)
-  @Patch('/valid-certificates/:certificateNo')
+  @Patch("/valid-certificates/:certificateNo")
   async confirmUser(
     @GetUser() adminNo: number,
-    @Param('certificateNo') certificateNo: number,
-    @TransactionDecorator() manager: EntityManager,
+    @Param("certificateNo") certificateNo: number,
+    @TransactionDecorator() manager: EntityManager
   ) {
     await this.usersService.confirmUser(adminNo, certificateNo, manager);
 
-    return { msg: '유저 학적 정보가 수락되었습니다.' };
+    return { msg: "유저 학적 정보가 수락되었습니다." };
   }
 
   @ApiGetUserByNickname()
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getUserByNickname(@Query('nickname') nickname: string) {
+  async getUserByNickname(@Query("nickname") nickname: string) {
     const users: SearchedUser[] = await this.usersService.getUserByNickname(
-      nickname,
+      nickname
     );
 
-    return { msg: '유저 닉네임으로 조회 성공', response: { users } };
+    return { msg: "유저 닉네임으로 조회 성공", response: { users } };
   }
 
   @ApiValidateNickname()
-  @UseGuards(JwtAuthGuard)
-  @Get('/valid-nicknames/:nickname')
-  async isValidUserNickname(@Param('nickname') nickname: string) {
+  @Get("/valid-nicknames/:nickname")
+  async isValidUserNickname(@Param("nickname") nickname: string) {
     const isValidNickname: boolean = await this.usersService.isValidNickname(
-      nickname,
+      nickname
     );
 
-    return { msg: '닉네임 중복 여부 확인', response: { isValidNickname } };
+    return { msg: "닉네임 중복 여부 확인", response: { isValidNickname } };
   }
 
   @ApiDenyUser()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @Delete('/certificates/:certificateNo')
+  @Delete("/certificates/:certificateNo")
   async denyUserCertificate(
     @GetUser() adminNo: number,
-    @Param('certificateNo') certificateNo: number,
-    @TransactionDecorator() manager: EntityManager,
+    @Param("certificateNo") certificateNo: number,
+    @TransactionDecorator() manager: EntityManager
   ) {
     await this.usersService.denyUserCertificate(
       adminNo,
       certificateNo,
-      manager,
+      manager
     );
 
-    return { msg: '유저 학적 정보가 반려되었습니다.' };
+    return { msg: "유저 학적 정보가 반려되었습니다." };
   }
 
   @ApiUpdateMajor()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @UseInterceptors(FileInterceptor('file'))
-  @Patch('/major')
+  @UseInterceptors(FileInterceptor("file"))
+  @Patch("/major")
   async updateMajor(
     @GetUser() userNo: number,
     @Body() { major }: MajorDto,
     @UploadedFile() file: Express.Multer.File,
-    @TransactionDecorator() manager: EntityManager,
+    @TransactionDecorator() manager: EntityManager
   ) {
     await this.usersService.updateUserMajor(userNo, major, file, manager);
 
-    return { msg: '학과 변경 신청이 완료되었습니다.' };
+    return { msg: "학과 변경 신청이 완료되었습니다." };
   }
 
   @ApiGetOthersProfile()
   @UseGuards(JwtAuthGuard)
-  @Get('/:userNo/profile')
-  async getOhtersProfile(@Param('userNo') userNo: number) {
+  @Get("/:userNo/profile")
+  async getOhtersProfile(@Param("userNo") userNo: number) {
     const userProfile: EntireProfile = await this.usersService.getOthersProfile(
-      userNo,
+      userNo
     );
 
-    return { msg: '프로필 조회 성공', response: { userProfile } };
+    return { msg: "프로필 조회 성공", response: { userProfile } };
   }
 
   @ApiGetUserProfile()
   @UseGuards(JwtAuthGuard)
-  @Get('/profile')
+  @Get("/profile")
   async getUserProfile(@GetUser() userNo: number) {
     const userProfile: EntireProfile = await this.usersService.getUserProfile(
-      userNo,
+      userNo
     );
 
-    return { msg: '개인 상세 프로필 조회 성공', response: { userProfile } };
+    return { msg: "개인 상세 프로필 조회 성공", response: { userProfile } };
   }
 
   @ApiGetUserCertificates()
   @UseGuards(JwtAuthGuard)
-  @Get('/certificates')
+  @Get("/certificates")
   async getUserCertificates(@GetUser() adminNo: number) {
     const certificates: CertificateForJudgment[] =
       await this.usersService.getCertificates(adminNo);
 
-    return { msg: '학적 정보 조회 성공', response: { certificates } };
+    return { msg: "학적 정보 조회 성공", response: { certificates } };
   }
 }

@@ -9,12 +9,17 @@ import {
   InsertResult,
   Repository,
   SelectQueryBuilder,
+  UpdateResult,
 } from 'typeorm';
 import { BoardFilterDto } from '../dto/board-filter.dto';
 import { CreateBoardDto } from '../dto/create-board.dto';
 import { UpdateBoardDto } from '../dto/update-board.dto';
 import { Boards } from '../entity/board.entity';
-import { Board, BoardPagenation } from '../interface/boards.interface';
+import {
+  Board,
+  BoardPagenation,
+  HostProfile,
+} from '../interface/boards.interface';
 
 @EntityRepository(Boards)
 export class BoardsRepository extends Repository<Boards> {
@@ -56,19 +61,21 @@ export class BoardsRepository extends Repository<Boards> {
   async getBoardByNo(
     no: number,
     userNo: number,
-  ): Promise<Board<number[], string[]>> {
+  ): Promise<Board<number[], string[], HostProfile>> {
     try {
       const {
         hostMemberNums,
         hostMemberNicknames,
+        hostMembers,
         ...board
-      }: Board<string, string> = await this.createQueryBuilder('boards')
+      }: Board<string, string, string> = await this.createQueryBuilder('boards')
         .leftJoin('boards.userNo', 'users')
         .leftJoin('boards.boardBookmark', 'bookmarks')
         .leftJoin('users.userProfileNo', 'profile')
         .leftJoin('boards.hosts', 'hosts')
         .leftJoin('hosts.userNo', 'hostUsers')
         .leftJoin('hostUsers.userProfileNo', 'hostProfile')
+        .leftJoin('hostProfile.profileImage', 'hostProfileImages')
         .select([
           'boards.no AS no',
           'boards.userNo AS hostUserNo',
@@ -82,18 +89,20 @@ export class BoardsRepository extends Repository<Boards> {
           'boards.isImpromptu AS isImpromptu',
           'boards.meetingTime AS meetingTime',
           `IF(bookmarks.board_no = boards.no AND bookmarks.user_no = ${userNo}, TRUE, FALSE) AS bookmakrs`,
-          `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
+          'boards.createdDate AS createdDate',
           'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
           'JSON_ARRAYAGG(hostProfile.nickname) AS hostMemberNicknames',
+          'JSON_ARRAYAGG(JSON_OBJECT("userNo", hosts.userNo, "nickname",hostProfile.nickname, "profileImage", hostProfileImages.image_url)) AS hostMembers',
         ])
         .where('boards.no = :no', { no })
         .andWhere('hosts.board_no = :no', { no })
         .getRawOne();
 
-      const convertBoard: Board<number[], string[]> = {
+      const convertBoard: Board<number[], string[], HostProfile> = {
         ...board,
         hostMemberNums: JSON.parse(hostMemberNums),
         hostMemberNicknames: JSON.parse(hostMemberNicknames),
+        hostMembers: JSON.parse(hostMembers),
       };
 
       return convertBoard;
@@ -110,6 +119,7 @@ export class BoardsRepository extends Repository<Boards> {
     page,
     isDone,
     isImpromptu,
+    take,
   }: BoardFilterDto): Promise<BoardPagenation> {
     try {
       const query: SelectQueryBuilder<Boards> = this.createQueryBuilder(
@@ -154,12 +164,16 @@ export class BoardsRepository extends Repository<Boards> {
           isImpromptu,
         });
       }
+      if (take) {
+        query.limit(take);
+      }
       const totalPage: number = Math.ceil((await query.getCount()) / 10);
 
       if (page > 1) {
         query.offset((page - 1) * 10);
       }
-      const boards: Board<number[], string[]>[] = await query.getRawMany();
+      const boards: Board<number[], string[], HostProfile>[] =
+        await query.getRawMany();
 
       return { boards, totalPage, page };
     } catch (error) {
@@ -172,7 +186,7 @@ export class BoardsRepository extends Repository<Boards> {
   async getBoardsByUser(
     userNo: number,
     type: number,
-  ): Promise<Board<void, void>[]> {
+  ): Promise<Board<void, void, HostProfile>[]> {
     try {
       const boards: SelectQueryBuilder<Boards> = this.createQueryBuilder(
         'boards',
@@ -280,7 +294,7 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async closeBoard(): Promise<void> {
+  async closeImpromptuBoard(): Promise<void> {
     try {
       await this.createQueryBuilder()
         .update(Boards)
@@ -291,7 +305,23 @@ export class BoardsRepository extends Repository<Boards> {
         .execute();
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} closeImpromptuBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async closeBoard(boardNo: number): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(Boards)
+        .set({ isDone: true })
+        .where('no = :boardNo', { boardNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} closeBoard-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

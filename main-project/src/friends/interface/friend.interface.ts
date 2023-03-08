@@ -48,3 +48,17 @@ export interface FriendNotice {
   friendNo: number;
   noticeNo?: number;
 }
+
+export interface SentFriendRequest {
+  receiverUserNo: string;
+  receiverUserNickname: string;
+  receiverUserDescription: string;
+  receiverUserProfileImage: string;
+}
+
+export interface ReceivedFriendRequest {
+  senderUserNo: string;
+  senderUserNickname: string;
+  senderUserDescription: string;
+  senderUserProfileImage: string;
+}

@@ -1,20 +1,19 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, Repository } from 'typeorm';
 import { BoardGuests } from '../entity/board-guest.entity';
-import { Guest, GuestTeam } from '../interface/boards.interface';
+import { Guest, GuestProfile, GuestTeam } from '../interface/boards.interface';
 
 @EntityRepository(BoardGuests)
 export class BoardGuestsRepository extends Repository<BoardGuests> {
   // 조회
   async getAllGuestsByBoardNo(boardNo: number): Promise<number[]> {
     try {
-      const guestTeam: GuestTeam<string> = await this.createQueryBuilder(
-        'boardGuest',
-      )
-        .leftJoin('boardGuest.teamNo', 'team')
-        .select('JSON_ARRAYAGG(boardGuest.userNo) AS guests')
-        .where('team.boardNo = :boardNo', { boardNo })
-        .getRawOne();
+      const guestTeam: GuestTeam<string, string> =
+        await this.createQueryBuilder('boardGuest')
+          .leftJoin('boardGuest.teamNo', 'team')
+          .select('JSON_ARRAYAGG(boardGuest.userNo) AS guests')
+          .where('team.boardNo = :boardNo', { boardNo })
+          .getRawOne();
 
       const guests: number[] = JSON.parse(guestTeam.guests);
 

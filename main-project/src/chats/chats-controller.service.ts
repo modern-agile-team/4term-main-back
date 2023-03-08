@@ -78,6 +78,11 @@ export class ChatsControllerService {
           await this.createChatRoomNotice(receiverNo, userNo, manager),
       ),
     );
+
+    const affected = await this.boardRepository.closeBoard(boardNo);
+    if (!affected) {
+      throw new BadRequestException('게시글 모집마감 처리를 실패했습니다.');
+    }
   }
 
   private async createChatRoomNotice(
