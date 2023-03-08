@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Board } from 'src/boards/interface/boards.interface';
+import { Board, HostProfile } from 'src/boards/interface/boards.interface';
 import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { EntityManager } from 'typeorm';
 import { CreateReportBoardDto } from './dto/create-report-board.dto';
@@ -419,7 +419,7 @@ export class ReportsService {
     manager: EntityManager,
     boardNo: number,
   ): Promise<void> {
-    const { no }: Board<number[], string[]> = await manager
+    const { no }: Board<number[], string[], HostProfile> = await manager
       .getCustomRepository(BoardsRepository)
       .getBoardByNo(boardNo, null);
 

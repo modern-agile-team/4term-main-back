@@ -16,6 +16,7 @@ import {
   BoardPagenation,
   GuestTeamPagenation,
   GuestProfile,
+  HostProfile,
 } from './interface/boards.interface';
 import { BoardBookmarksRepository } from './repository/board-bookmark.repository';
 import { BoardGuestsRepository as BoardGuestsRepository } from './repository/board-guest.repository';
@@ -86,8 +87,8 @@ export class BoardsService {
     manager: EntityManager,
     userNo: number,
     type: number,
-  ): Promise<Board<void, void>[]> {
-    const boards: Board<void, void>[] = await manager
+  ): Promise<Board<void, void, HostProfile>[]> {
+    const boards: Board<void, void, HostProfile>[] = await manager
       .getCustomRepository(BoardsRepository)
       .getBoardsByUser(userNo, type);
 
@@ -98,12 +99,9 @@ export class BoardsService {
     manager: EntityManager,
     boardNo: number,
     userNo: number,
-  ): Promise<Board<number[], string[]>> {
-    const board: Board<number[], string[]> = await this.readBoardByNo(
-      manager,
-      boardNo,
-      userNo,
-    );
+  ): Promise<Board<number[], string[], HostProfile>> {
+    const board: Board<number[], string[], HostProfile> =
+      await this.readBoardByNo(manager, boardNo, userNo);
 
     if (!board.no) {
       throw new NotFoundException(
@@ -118,8 +116,8 @@ export class BoardsService {
     manager: EntityManager,
     boardNo: number,
     userNo: number,
-  ): Promise<Board<number[], string[]>> {
-    const board: Board<number[], string[]> = await manager
+  ): Promise<Board<number[], string[], HostProfile>> {
+    const board: Board<number[], string[], HostProfile> = await manager
       .getCustomRepository(BoardsRepository)
       .getBoardByNo(boardNo, userNo);
 
@@ -346,7 +344,7 @@ export class BoardsService {
       recruitMale,
       recruitFemale,
       hostMemberNums,
-    }: Board<number[], string[]> = await this.getBoard(
+    }: Board<number[], string[], HostProfile> = await this.getBoard(
       manager,
       boardNo,
       userNo,
@@ -570,11 +568,8 @@ export class BoardsService {
     boardNo: number,
     userNo: number,
   ): Promise<void> {
-    const { hostUserNo }: Board<number[], string[]> = await this.getBoard(
-      manager,
-      boardNo,
-      userNo,
-    );
+    const { hostUserNo }: Board<number[], string[], HostProfile> =
+      await this.getBoard(manager, boardNo, userNo);
     this.validateWriter(hostUserNo, userNo);
     await this.removeBoard(manager, boardNo);
   }
@@ -833,7 +828,7 @@ export class BoardsService {
 
   private async validateRecruits(
     manager: EntityManager,
-    board: Board<number[], string[]>,
+    board: Board<number[], string[], HostProfile>,
     updateBoardDto: UpdateBoardDto,
   ): Promise<void> {
     const guests: number[] = await this.getAllGuestsByBoardNo(
@@ -917,7 +912,7 @@ export class BoardsService {
     userNo: number,
     updateBoardDto: UpdateBoardDto,
   ): Promise<void> {
-    const board: Board<number[], string[]> = await this.getBoard(
+    const board: Board<number[], string[], HostProfile> = await this.getBoard(
       manager,
       boardNo,
       userNo,
