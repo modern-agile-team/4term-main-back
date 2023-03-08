@@ -83,7 +83,7 @@ export class BoardsRepository extends Repository<Boards> {
           'boards.isImpromptu AS isImpromptu',
           'boards.meetingTime AS meetingTime',
           `IF(bookmarks.board_no = boards.no AND bookmarks.user_no = ${userNo}, TRUE, FALSE) AS bookmakrs`,
-          `DATE_FORMAT(boards.createdDate, '%Y.%m.%d %T') AS createdDate`,
+          'boards.createdDate AS createdDate',
           'JSON_ARRAYAGG(hosts.userNo) AS hostMemberNums',
           'JSON_ARRAYAGG(hostProfile.nickname) AS hostMemberNicknames',
         ])

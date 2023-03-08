@@ -20,6 +20,7 @@ import {
   GuestTeam,
   BoardPagenation,
   GuestTeamPagenation,
+  GuestProfile,
 } from './interface/boards.interface';
 import { BoardFilterDto } from './dto/board-filter.dto';
 import { Cron, CronExpression } from '@nestjs/schedule/dist';
@@ -146,7 +147,7 @@ export class BoardsController {
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const guestTeam: GuestTeam<number[]> =
+    const guestTeam: GuestTeam<number[], GuestProfile> =
       await this.boardService.getGuestTeamByTeamNo(
         manager,
         teamNo,

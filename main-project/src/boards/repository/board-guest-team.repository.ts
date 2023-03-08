@@ -8,7 +8,11 @@ import {
   SelectQueryBuilder,
 } from 'typeorm';
 import { BoardGuestTeams } from '../entity/board-guest-team.entity';
-import { GuestTeam, GuestTeamPagenation } from '../interface/boards.interface';
+import {
+  GuestProfile,
+  GuestTeam,
+  GuestTeamPagenation,
+} from '../interface/boards.interface';
 
 @EntityRepository(BoardGuestTeams)
 export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
@@ -16,9 +20,9 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
   async getTeamNoByUser(
     boardNo: number,
     userNo: number,
-  ): Promise<GuestTeam<number[]>> {
+  ): Promise<GuestTeam<number[], GuestProfile>> {
     try {
-      const { guests, isAccepted, ...applies }: GuestTeam<string> =
+      const { guests, isAccepted, ...applies }: GuestTeam<string, string> =
         await this.createQueryBuilder('teams')
           .leftJoin('teams.boardGuest', 'guests')
           .select([
@@ -33,7 +37,7 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
           .andWhere('guests.userNo = :userNo', { userNo })
           .getRawOne();
 
-      const infomation: GuestTeam<number[]> = {
+      const infomation: GuestTeam<number[], GuestProfile> = {
         ...applies,
         guests: JSON.parse(guests),
         isAccepted: JSON.parse(isAccepted),
@@ -47,23 +51,29 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
     }
   }
 
-  async getGuestTeamInfo(teamNo: number): Promise<GuestTeam<number[]>> {
+  async getGuestTeamInfo(
+    teamNo: number,
+  ): Promise<GuestTeam<number[], GuestProfile>> {
     try {
-      const { guests, isAccepted, ...applies }: GuestTeam<string> =
+      const { guests, isAccepted, ...applies }: GuestTeam<string, string> =
         await this.createQueryBuilder('teams')
           .leftJoin('teams.boardGuest', 'guests')
+          .leftJoin('guests.userNo', 'users')
+          .leftJoin('users.userProfileNo', 'profiles')
+          .leftJoin('profiles.profileImage', 'profileImages')
           .select([
             'teams.no AS no',
             'teams.board_no AS boardNo',
             'teams.title AS title',
             'teams.description AS description',
-            'JSON_ARRAYAGG(guests.userNo) AS guests',
+            'teams.createdDate AS createdDate',
             'JSON_ARRAYAGG(guests.isAccepted) AS isAccepted',
+            'JSON_ARRAYAGG(JSON_OBJECT("userNo", guests.userNo, "nickname",profiles.nickname, "profileImage", profileImages.image_url)) AS guests',
           ])
           .where('teams.no = :teamNo', { teamNo })
           .getRawOne();
 
-      const infomation: GuestTeam<number[]> = {
+      const infomation: GuestTeam<number[], GuestProfile> = {
         ...applies,
         guests: JSON.parse(guests),
         isAccepted: JSON.parse(isAccepted),
@@ -104,16 +114,15 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
 
       const guestTeams = await query.getRawMany();
 
-      const convertGuestTeams: GuestTeam<number[]>[] = guestTeams.map(
-        ({ guests, ...guetTemaInfo }) => {
-          const guetTeam: GuestTeam<number[]> = {
+      const convertGuestTeams: GuestTeam<number[], GuestProfile>[] =
+        guestTeams.map(({ guests, ...guetTemaInfo }) => {
+          const guetTeam: GuestTeam<number[], GuestProfile> = {
             ...guetTemaInfo,
             guests: JSON.parse(guests),
           };
 
           return guetTeam;
-        },
-      );
+        });
 
       return { guestTeams: convertGuestTeams, totalPage, page };
     } catch (error) {
@@ -145,7 +154,7 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
 
   // 생성
   async createGuestTeam(
-    participation: GuestTeam<boolean>,
+    participation: GuestTeam<boolean, GuestProfile>,
   ): Promise<ResultSetHeader> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
