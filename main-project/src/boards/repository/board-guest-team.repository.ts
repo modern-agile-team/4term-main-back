@@ -80,7 +80,7 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
   async getGuestTeamsByBoardNo(
     boardNo: number,
     page: number,
-  ): Promise<GuestTeamPagenation> {
+  ): Promise<Omit<GuestTeamPagenation, 'acceptedGuestTeamNo'>> {
     try {
       const query: SelectQueryBuilder<BoardGuestTeams> =
         this.createQueryBuilder('teams')
@@ -93,7 +93,7 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
           ])
           .where('teams.boardNo = :boardNo', { boardNo })
           .groupBy('guests.teamNo')
-          .where('teams.isAccepted = TRUE')
+          .andWhere('teams.isAccepted = TRUE')
           .limit(10);
 
       const totalPage: number = Math.ceil((await query.getCount()) / 10);
@@ -119,6 +119,26 @@ export class BoardGuestTeamsRepository extends Repository<BoardGuestTeams> {
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getGuestTeamsByBoardNo-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async getAcceptedGuestTeamNo(
+    boardNo: number,
+  ): Promise<Pick<BoardGuestTeams, 'no'>> {
+    try {
+      const guestTeam: Pick<BoardGuestTeams, 'no'> =
+        await this.createQueryBuilder('teams')
+          .leftJoin('teams.boardNo', 'boards')
+          .leftJoin('boards.chatBoard', 'chatLists')
+          .select(['teams.no AS no'])
+          .where('chatLists.board_no = :boardNo', { boardNo })
+          .getRawOne();
+
+      return guestTeam;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} getGuestTeamInfo-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

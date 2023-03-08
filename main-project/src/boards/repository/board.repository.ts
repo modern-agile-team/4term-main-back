@@ -9,6 +9,7 @@ import {
   InsertResult,
   Repository,
   SelectQueryBuilder,
+  UpdateResult,
 } from 'typeorm';
 import { BoardFilterDto } from '../dto/board-filter.dto';
 import { CreateBoardDto } from '../dto/create-board.dto';
@@ -110,6 +111,7 @@ export class BoardsRepository extends Repository<Boards> {
     page,
     isDone,
     isImpromptu,
+    take,
   }: BoardFilterDto): Promise<BoardPagenation> {
     try {
       const query: SelectQueryBuilder<Boards> = this.createQueryBuilder(
@@ -153,6 +155,9 @@ export class BoardsRepository extends Repository<Boards> {
         query.andWhere(`boards.isImpromptu = :isImpromptu`, {
           isImpromptu,
         });
+      }
+      if (take) {
+        query.limit(take);
       }
       const totalPage: number = Math.ceil((await query.getCount()) / 10);
 
@@ -280,7 +285,7 @@ export class BoardsRepository extends Repository<Boards> {
     }
   }
 
-  async closeBoard(): Promise<void> {
+  async closeImpromptuBoard(): Promise<void> {
     try {
       await this.createQueryBuilder()
         .update(Boards)
@@ -291,7 +296,23 @@ export class BoardsRepository extends Repository<Boards> {
         .execute();
     } catch (error) {
       throw new InternalServerErrorException(
-        `${error} updateBoard-repository: 알 수 없는 서버 에러입니다.`,
+        `${error} closeImpromptuBoard-repository: 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
+
+  async closeBoard(boardNo: number): Promise<number> {
+    try {
+      const { affected }: UpdateResult = await this.createQueryBuilder()
+        .update(Boards)
+        .set({ isDone: true })
+        .where('no = :boardNo', { boardNo })
+        .execute();
+
+      return affected;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} closeBoard-repository: 알 수 없는 서버 에러입니다.`,
       );
     }
   }

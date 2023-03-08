@@ -42,6 +42,16 @@ export class BoardFilterDto {
   readonly page: number;
 
   @ApiProperty({
+    example: '5',
+    description: '가져올 게시글 갯수 ',
+    required: false,
+  })
+  @IsNumber()
+  @Type(() => Number)
+  @IsOptional()
+  readonly take: number;
+
+  @ApiProperty({
     example: '0 or false / 1 or true ',
     description: '모집 현황 - 0 or false / 1 or true',
     required: false,

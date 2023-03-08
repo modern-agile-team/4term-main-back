@@ -62,7 +62,6 @@ export class BoardsController {
 
   //Get Methods
   @Get()
-  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiGetBoards()
   async getBoards(

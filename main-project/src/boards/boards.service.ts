@@ -34,6 +34,8 @@ import { SavedNotice } from 'src/notices/interface/notice.interface';
 import { Boards } from './entity/board.entity';
 import { Notices } from 'src/notices/entity/notices.entity';
 import { BoardHosts } from './entity/board-host.entity';
+import { BoardGuestTeams } from './entity/board-guest-team.entity';
+import { number } from 'joi';
 
 @Injectable()
 export class BoardsService {
@@ -53,7 +55,7 @@ export class BoardsService {
     try {
       await queryRunner.manager
         .getCustomRepository(BoardsRepository)
-        .closeBoard();
+        .closeImpromptuBoard();
       await queryRunner.commitTransaction();
     } catch (error) {
       await queryRunner?.rollbackTransaction();
@@ -167,13 +169,10 @@ export class BoardsService {
     page: number,
   ): Promise<GuestTeamPagenation> {
     await this.getBoard(manager, boardNo, userNo);
-    await this.validateHost(manager, boardNo, userNo);
+    // await this.validateHost(manager, boardNo, userNo);
 
-    const guestTeams: GuestTeamPagenation = await this.readGuestTeamsByBoardNo(
-      manager,
-      boardNo,
-      page,
-    );
+    const guestTeams: Omit<GuestTeamPagenation, 'acceptedGuestTeamNo'> =
+      await this.readGuestTeamsByBoardNo(manager, boardNo, page);
 
     if (!guestTeams.guestTeams.length) {
       throw new BadRequestException(
@@ -181,17 +180,37 @@ export class BoardsService {
       );
     }
 
-    return guestTeams;
+    const acceptedGuestTeamNo: number | null =
+      await this.readAcceptedGuestTeamNo(manager, boardNo);
+
+    const guestTeamsMetaData: GuestTeamPagenation = {
+      ...guestTeams,
+      acceptedGuestTeamNo,
+    };
+
+    return guestTeamsMetaData;
+  }
+
+  private async readAcceptedGuestTeamNo(
+    manager: EntityManager,
+    boardNo: number,
+  ): Promise<number | null> {
+    const acceptedGuestTeam: Pick<BoardGuestTeams, 'no'> = await manager
+      .getCustomRepository(BoardGuestTeamsRepository)
+      .getAcceptedGuestTeamNo(boardNo);
+
+    return !acceptedGuestTeam ? null : acceptedGuestTeam.no;
   }
 
   async readGuestTeamsByBoardNo(
     manager: EntityManager,
     boardNo: number,
     page: number,
-  ): Promise<GuestTeamPagenation> {
-    const guestTeamMetaData: GuestTeamPagenation = await manager
-      .getCustomRepository(BoardGuestTeamsRepository)
-      .getGuestTeamsByBoardNo(boardNo, page);
+  ): Promise<Omit<GuestTeamPagenation, 'acceptedGuestTeamNo'>> {
+    const guestTeamMetaData: Omit<GuestTeamPagenation, 'acceptedGuestTeamNo'> =
+      await manager
+        .getCustomRepository(BoardGuestTeamsRepository)
+        .getGuestTeamsByBoardNo(boardNo, page);
 
     return guestTeamMetaData;
   }
