@@ -20,6 +20,8 @@ import {
   GuestTeam,
   BoardPagenation,
   GuestTeamPagenation,
+  GuestProfile,
+  HostProfile,
 } from './interface/boards.interface';
 import { BoardFilterDto } from './dto/board-filter.dto';
 import { Cron, CronExpression } from '@nestjs/schedule/dist';
@@ -62,7 +64,6 @@ export class BoardsController {
 
   //Get Methods
   @Get()
-  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiGetBoards()
   async getBoards(
@@ -86,11 +87,8 @@ export class BoardsController {
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const board: Board<number[], string[]> = await this.boardService.getBoard(
-      manager,
-      boardNo,
-      userNo,
-    );
+    const board: Board<number[], string[], HostProfile> =
+      await this.boardService.getBoard(manager, boardNo, userNo);
 
     return { msg: '게시글 상세조회 성공', response: { board } };
   }
@@ -104,11 +102,8 @@ export class BoardsController {
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const boards: Board<void, void>[] = await this.boardService.getBoardsByUser(
-      manager,
-      userNo,
-      Number(type),
-    );
+    const boards: Board<void, void, HostProfile>[] =
+      await this.boardService.getBoardsByUser(manager, userNo, Number(type));
 
     return { msg: '유저별 게시글 조회 성공', response: { boards } };
   }
@@ -147,7 +142,7 @@ export class BoardsController {
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const guestTeam: GuestTeam<number[]> =
+    const guestTeam: GuestTeam<number[], GuestProfile> =
       await this.boardService.getGuestTeamByTeamNo(
         manager,
         teamNo,

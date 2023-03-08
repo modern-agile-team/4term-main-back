@@ -1,4 +1,4 @@
-export class Board<T, U> {
+export class Board<T, U, X> {
   no?: number;
   hostUserNo?: number;
   hostNickname?: string;
@@ -13,17 +13,19 @@ export class Board<T, U> {
   bookmark: boolean;
   hostMemberNums?: T;
   hostMemberNicknames?: U;
+  hostMembers: X;
   createdDate?: Date;
 }
 
 export class BoardPagenation {
-  boards: Board<number[], string[]>[];
+  boards: Board<number[], string[], HostProfile>[];
   totalPage: number;
   page: number;
 }
 
 export class GuestTeamPagenation {
-  guestTeams: GuestTeam<number[]>[];
+  guestTeams: GuestTeam<number[], GuestProfile>[];
+  acceptedGuestTeamNo: number | null;
   totalPage: number;
   page: number;
 }
@@ -32,7 +34,6 @@ export interface Guest<T> {
   no?: number;
   teamNo: number;
   userNo: number;
-  isAnswered?: boolean;
   isAccepted?: T;
 }
 
@@ -42,14 +43,22 @@ export interface Host<T> {
   userNo?: number;
   boardNo?: number;
   isAccepted?: boolean;
-  isAnswered?: boolean;
 }
 
-export interface GuestTeam<T> {
+export interface GuestTeam<T, U> {
   no?: number;
   boardNo?: number;
   title: string;
   description: string;
-  guests?: T;
+  createdDate?: Date;
+  guests?: U;
   isAccepted?: T;
 }
+
+export class GuestProfile {
+  no: number;
+  nicknmae: string;
+  profileImage: string;
+}
+
+export interface HostProfile extends GuestProfile {}
