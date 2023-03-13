@@ -19,7 +19,7 @@ import { APIResponse } from 'src/common/interface/interface';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { EntityManager } from 'typeorm';
-import { Delete, UseGuards } from '@nestjs/common/decorators';
+import { UseGuards } from '@nestjs/common/decorators';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { ApiGetPreviousChatLog } from './swagger/get-previous-chat-log.decorator';

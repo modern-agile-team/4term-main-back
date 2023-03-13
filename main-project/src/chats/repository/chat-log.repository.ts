@@ -91,4 +91,13 @@ export class ChatLogRepository extends Repository<ChatLog> {
       );
     }
   }
+  async ttttt() {
+    try {
+      const meeting = await this.createQueryBuilder('chat_log')
+        .leftJoin('chat_log.meetingNo', 'meeting')
+        .select(['meeting.*', 'chat_log.*'])
+        .getRawMany();
+      console.log(meeting);
+    } catch (error) {}
+  }
 }
