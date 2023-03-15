@@ -74,7 +74,7 @@ export class ChatsGateway {
     return { response: { chatRooms } };
   }
 
-  @SubscribeMessage('message')
+  @SubscribeMessage('send-message')
   @AsyncApiSub({
     description: `
     메세지 전송 채팅일때 response: 
@@ -90,7 +90,7 @@ export class ChatsGateway {
         "http"
       ] 
     }반환`,
-    channel: 'message',
+    channel: 'send-message',
     message: {
       payload: MessagePayloadDto,
     },
@@ -127,10 +127,17 @@ export class ChatsGateway {
   }
 
   @SubscribeMessage('send-meeting')
+  @UseGuards(WebSocketAuthGuard)
   async handleSendMeeting(
-    @MessageBody()
-    meeting: SendMeetingDto,
+    @WebSocketGetUser() userNo: number,
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() messagePayload: SendMeetingDto,
   ) {
-    console.log(meeting);
+    await this.chatGatewayService.sendMeetingMessage(
+      socket,
+      userNo,
+      messagePayload,
+    );
+    return { success: true };
   }
 }

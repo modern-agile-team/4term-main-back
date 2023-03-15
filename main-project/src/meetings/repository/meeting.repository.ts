@@ -203,4 +203,24 @@ export class MeetingRepository extends Repository<Meetings> {
       );
     }
   }
+
+  async getMeetingByChatRoomAndMeetingNumber(
+    meetingNo,
+    chatRoomNo,
+  ): Promise<Meetings> {
+    try {
+      const meeting: Meetings = await this.createQueryBuilder()
+        .where('no = :meetingNo AND chat_room_no= :chatRoomNo', {
+          meetingNo,
+          chatRoomNo,
+        })
+        .getRawOne();
+
+      return meeting;
+    } catch (error) {
+      throw new InternalServerErrorException(
+        `${error} 약속 조회(getMeetingByChatRoomAndMeetingNumber): 알 수 없는 서버 에러입니다.`,
+      );
+    }
+  }
 }

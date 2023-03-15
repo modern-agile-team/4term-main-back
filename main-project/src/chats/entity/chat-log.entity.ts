@@ -34,7 +34,7 @@ export class ChatLog extends BaseEntity {
     nullable: true,
   })
   @JoinColumn({ name: 'meeting_no' })
-  meetingNo;
+  meetingNo: number;
 
   @Column({ nullable: true })
   message: string;

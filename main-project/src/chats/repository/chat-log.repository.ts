@@ -2,10 +2,11 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { MessagePayloadDto } from '../dto/message-payload.dto';
 import { ChatLog } from '../entity/chat-log.entity';
+import { ChatMessage } from '../interface/chat.interface';
 
 @EntityRepository(ChatLog)
 export class ChatLogRepository extends Repository<ChatLog> {
-  async saveMessage(messagePayload: MessagePayloadDto): Promise<number> {
+  async saveMessage(messagePayload: ChatMessage): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()
@@ -90,14 +91,5 @@ export class ChatLogRepository extends Repository<ChatLog> {
         `${error}: 채팅로그 불러오기(getRecentChatLog): 알 수 없는 서버 에러입니다.`,
       );
     }
-  }
-  async ttttt() {
-    try {
-      const meeting = await this.createQueryBuilder('chat_log')
-        .leftJoin('chat_log.meetingNo', 'meeting')
-        .select(['meeting.*', 'chat_log.*'])
-        .getRawMany();
-      console.log(meeting);
-    } catch (error) {}
   }
 }
