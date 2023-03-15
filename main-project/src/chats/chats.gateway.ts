@@ -6,7 +6,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { UseGuards, UsePipes } from '@nestjs/common/decorators';
+import { UseFilters, UseGuards, UsePipes } from '@nestjs/common/decorators';
 import { AsyncApiSub } from 'nestjs-asyncapi';
 import { Namespace, Socket } from 'socket.io';
 import { WebSocketAuthGuard } from 'src/common/guards/ws-jwt-auth.guard';
@@ -19,12 +19,14 @@ import { WebSocketTransactionManager } from 'src/common/decorator/ws-transaction
 import { WebSocketTransactionInterceptor } from 'src/common/interceptor/ws-transaction-interceptor';
 import { EntityManager } from 'typeorm';
 import { SendMeetingDto } from './dto/send-meeting.dto';
+import { WebSocketExceptionFilter } from 'src/common/exceptions/ws-exception-filter';
 
 @WebSocketGateway(4000, {
   namespace: 'chat',
   cors: true,
 })
 @UsePipes(new ValidationPipe())
+@UseFilters(new WebSocketExceptionFilter())
 export class ChatsGateway {
   constructor(private readonly chatGatewayService: ChatsGatewayService) {}
 
