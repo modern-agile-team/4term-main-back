@@ -11,7 +11,7 @@ export class MessagePayloadDto {
 
   @IsString()
   @ApiProperty({
-    example: 3,
+    example: '안녕하세요',
   })
   message?: string;
 

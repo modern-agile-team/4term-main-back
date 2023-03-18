@@ -20,6 +20,7 @@ import { WebSocketTransactionInterceptor } from 'src/common/interceptor/ws-trans
 import { EntityManager } from 'typeorm';
 import { SendMeetingDto } from './dto/send-meeting.dto';
 import { WebSocketExceptionFilter } from 'src/common/exceptions/ws-exception-filter';
+import { number } from 'joi';
 
 @WebSocketGateway(4000, {
   namespace: 'chat',
@@ -59,8 +60,14 @@ export class ChatsGateway {
 
   @SubscribeMessage('init-socket')
   @AsyncApiSub({
-    description: `소켓 초기화 socket auth 헤더 token으로 전달 
-    response: [{ roomName: string, chatRoomNo: number, users:[{userNo:number, nickname:string, profileImage:string}] }] 반환`,
+    description: `
+    *소켓 초기화* 
+
+    클라이언트
+    소켓 초기화 socket auth 헤더 token으로 토큰 전달 
+    
+    서버
+    [{ roomName: string, chatRoomNo: number, users:[{userNo:number, nickname:string, profileImage:string}] }] 반환`,
     channel: 'init-socket',
     message: {
       payload: InitSocketDto,
@@ -79,19 +86,24 @@ export class ChatsGateway {
   @SubscribeMessage('send-message')
   @AsyncApiSub({
     description: `
-    메세지 전송 채팅일때 response: 
+    *주의 서버로 보내는 이벤트는 send-message 서버에서 클라이언트로 받는 이벤트는 message*
+    
+    서버
+    message이벤트로 emit하는 내용 
+    채팅일때: 
     { "userNo": 1,
       "chatRoomNo": 3,
       "message": 3,
     }  
-    이미지일때 
+
+    이미지일때: 
     { "userNo": 1,
       "chatRoomNo": 3,
       "uploadedFileUrls": [
         "http",
         "http"
       ] 
-    }반환`,
+    }`,
     channel: 'send-message',
     message: {
       payload: MessagePayloadDto,
@@ -117,6 +129,21 @@ export class ChatsGateway {
   }
 
   @SubscribeMessage('leave-room')
+  @AsyncApiSub({
+    description: `
+    *채팅방 나가기*    
+    
+    클라이언트
+    socket auth 헤더 token으로 토큰 전달 
+    message body에 chatRoomNo 전달
+
+    서버
+    success: true, msg: 채팅방 나가기 완료`,
+    channel: 'leave-room',
+    message: {
+      payload: MessagePayloadDto,
+    },
+  })
   @UseGuards(WebSocketAuthGuard)
   async handleLeaveRoom(
     @WebSocketGetUser() userNo: number,
@@ -129,6 +156,24 @@ export class ChatsGateway {
   }
 
   @SubscribeMessage('send-meeting')
+  @AsyncApiSub({
+    description: `
+    *약속 전송*
+
+    클라이언트 
+    socket auth 헤더 token으로 토큰 전달
+    body로 약속정보 전달 (SendMeetingDto 참고)
+
+    서버
+    response: success: true반환 
+
+    이벤트 message를 통해 
+    meeting: { location: string, time:date } 전달`,
+    channel: 'send-meeting',
+    message: {
+      payload: SendMeetingDto,
+    },
+  })
   @UseGuards(WebSocketAuthGuard)
   async handleSendMeeting(
     @WebSocketGetUser() userNo: number,
