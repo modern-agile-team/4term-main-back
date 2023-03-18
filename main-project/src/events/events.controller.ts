@@ -12,7 +12,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { Event } from './interface/events.interface';
+import { Event, EventPagenation } from './interface/events.interface';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 import { APIResponse } from 'src/common/interface/interface';
@@ -44,7 +44,7 @@ export class EventsController {
     @TransactionDecorator() manager: EntityManager,
     @Query() eventFilterDto: EventFilterDto,
   ): Promise<APIResponse> {
-    const events: Event<string[]>[] = await this.eventsService.getEvents(
+    const events: EventPagenation = await this.eventsService.getEvents(
       manager,
       eventFilterDto,
     );

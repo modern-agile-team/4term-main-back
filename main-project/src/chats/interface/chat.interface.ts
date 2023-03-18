@@ -45,3 +45,10 @@ export interface FileUrl {
 export interface BoardGuestTeam {
   teamNo: number;
 }
+
+export interface ChatMessage {
+  chatRoomNo: number;
+  userNo: number;
+  message?: string;
+  meetingNo?: number;
+}

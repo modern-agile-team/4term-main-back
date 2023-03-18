@@ -16,8 +16,13 @@ import { TransactionDecorator } from 'src/common/decorator/transaction-manager.d
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { APIResponse } from 'src/common/interface/interface';
+import { SearchedUser } from 'src/users/interface/user.interface';
 import { EntityManager } from 'typeorm';
 import { FriendsService } from './friends.service';
+import {
+  ReceivedFriendRequest,
+  SentFriendRequest,
+} from './interface/friend.interface';
 import { ApiAcceptFriendRequest } from './swagger/accept-friend-request.decorator';
 import { ApiDeleteFriend } from './swagger/delete-friend.decorator';
 import { ApiGetFriends } from './swagger/get-friends.decorator';
@@ -25,6 +30,7 @@ import { ApiGetReceivedRequests } from './swagger/get-received-requests.decorato
 import { ApiGetSentRequests } from './swagger/get-sent-requests.decorator';
 import { ApiRefuseRequests } from './swagger/refuse-request.decorator';
 import { ApiSearchFriends } from './swagger/search-friends.decorator';
+import { ApiSearchNotFriendUsers } from './swagger/search-not-friends.decorator';
 import { ApiSendFriendRequest } from './swagger/send-friend-request.decorator';
 import { ApiValidateFriend } from './swagger/validate-friend.decorator';
 
@@ -40,6 +46,30 @@ export class FriendsController {
     const friends = await this.friendsService.getFriends(userNo);
 
     return { response: { friends } };
+  }
+
+  @Get('/requests/received')
+  @ApiGetReceivedRequests()
+  @UseGuards(JwtAuthGuard)
+  async getReceivedRequests(
+    @GetUser('userNo') receiverNo: number,
+  ): Promise<APIResponse> {
+    const receivedRequests: ReceivedFriendRequest[] =
+      await this.friendsService.getReceivedRequests(receiverNo);
+
+    return { response: { receivedRequests } };
+  }
+
+  @Get('/requests/sent')
+  @ApiGetSentRequests()
+  @UseGuards(JwtAuthGuard)
+  async getSentRequests(
+    @GetUser('userNo') senderNo: number,
+  ): Promise<APIResponse> {
+    const sentFriendRequests: SentFriendRequest[] =
+      await this.friendsService.getSentRequests(senderNo);
+
+    return { response: { sentFriendRequests } };
   }
 
   @Post('/requests/:receiverNo')
@@ -61,53 +91,36 @@ export class FriendsController {
   @Patch('/requests/:friendNo/:senderNo')
   @ApiAcceptFriendRequest()
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   async acceptFriendRequest(
     @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
     @Param('friendNo', ParseIntPipe) friendNo: number,
     @Param('senderNo', ParseIntPipe) senderNo: number,
   ): Promise<APIResponse> {
-    await this.friendsService.acceptFriendRequest(userNo, friendNo, senderNo);
+    await this.friendsService.acceptFriendRequest(
+      userNo,
+      manager,
+      friendNo,
+      senderNo,
+    );
 
     return {
       msg: '친구 신청을 수락했습니다.',
     };
   }
 
-  @Get('/requests/received')
-  @ApiGetReceivedRequests()
-  @UseGuards(JwtAuthGuard)
-  async getReceivedRequests(
-    @GetUser('userNo') receiverNo: number,
-  ): Promise<APIResponse> {
-    const receivedRequests = await this.friendsService.getReceivedRequests(
-      receiverNo,
-    );
-
-    return { response: { receivedRequests } };
-  }
-
-  @Get('/requests/sent')
-  @ApiGetSentRequests()
-  @UseGuards(JwtAuthGuard)
-  async getSentRequests(
-    @GetUser('userNo') senderNo: number,
-  ): Promise<APIResponse> {
-    const sentFriendRequests = await this.friendsService.getSentRequests(
-      senderNo,
-    );
-
-    return { response: { sentFriendRequests } };
-  }
-
   @Delete('/requests/:friendNo/:senderNo')
   @ApiRefuseRequests()
   @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
   async refuseRequest(
     @GetUser('userNo') receiverNo: number,
+    @TransactionDecorator() manager: EntityManager,
     @Param('friendNo', ParseIntPipe) friendNo: number,
     @Param('senderNo', ParseIntPipe) senderNo: number,
   ): Promise<APIResponse> {
-    await this.friendsService.refuseRequest({
+    await this.friendsService.refuseRequest(manager, {
       receiverNo,
       friendNo,
       senderNo,
@@ -148,6 +161,18 @@ export class FriendsController {
     return {
       response: { searchResult },
     };
+  }
+
+  @Get('/not-friends/:nickname')
+  @ApiSearchNotFriendUsers()
+  @UseGuards(JwtAuthGuard)
+  async searchNotFriendUsers(
+    @GetUser('userNo', ParseIntPipe) userNo: number,
+    @Param('nickname') nickname: string,
+  ): Promise<APIResponse> {
+    const searchResult: SearchedUser[] =
+      await this.friendsService.searchNotFriendUsers(userNo, nickname);
+    return { response: { searchResult } };
   }
 
   @Get('/validate/:friendUserNo')

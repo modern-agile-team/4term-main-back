@@ -42,7 +42,23 @@ export interface NoticeFriend {
   friendNo?: number;
 }
 
-export interface NoticeUser {
-  noticeNo: number;
+export interface FriendNotice {
   userNo: number;
+  targetUserNo: number;
+  friendNo: number;
+  noticeNo?: number;
+}
+
+export interface SentFriendRequest {
+  receiverUserNo: string;
+  receiverUserNickname: string;
+  receiverUserDescription: string;
+  receiverUserProfileImage: string;
+}
+
+export interface ReceivedFriendRequest {
+  senderUserNo: string;
+  senderUserNickname: string;
+  senderUserDescription: string;
+  senderUserProfileImage: string;
 }

@@ -9,11 +9,15 @@ import { Socket } from 'socket.io';
 import { Boards } from 'src/boards/entity/board.entity';
 import { BoardsRepository } from 'src/boards/repository/board.repository';
 import { UserType } from 'src/common/configs/user-type.config';
+import { Meetings } from 'src/meetings/entity/meeting.entity';
+import { MeetingRepository } from 'src/meetings/repository/meeting.repository';
 import { EntityManager } from 'typeorm';
 import { CreateChatDto } from './dto/create-chat.dto';
 import { MessagePayloadDto } from './dto/message-payload.dto';
+import { SendMeetingDto } from './dto/send-meeting.dto';
 import { ChatList } from './entity/chat-list.entity';
 import {
+  ChatMessage,
   ChatRoom,
   ChatRoomBeforeCreate,
   ChatRoomOfBoard,
@@ -32,7 +36,7 @@ export class ChatsGatewayService {
     private readonly chatListRepository: ChatListRepository,
     private readonly chatUsersRepository: ChatUsersRepository,
     private readonly chatLogRepository: ChatLogRepository,
-    private readonly boardRepository: BoardsRepository,
+    private readonly meetingRepository: MeetingRepository,
   ) {}
 
   async initSocket(socket, userNo: number): Promise<any> {
@@ -71,8 +75,7 @@ export class ChatsGatewayService {
     const { chatRoomNo, message }: MessagePayloadDto = messagePayload;
 
     await this.checkChatRoom(chatRoomNo, userNo);
-
-    await this.saveMessage(messagePayload);
+    await this.saveMessage({ chatRoomNo, userNo, message });
 
     socket.broadcast.to(`${chatRoomNo}`).emit('message', {
       message,
@@ -91,10 +94,10 @@ export class ChatsGatewayService {
 
     await this.checkChatRoom(chatRoomNo, userNo);
 
-    const chatLogNo: number = await this.saveMessageByEntityManager(
-      manager,
-      messagePayload,
-    );
+    const chatLogNo: number = await this.saveMessageByEntityManager(manager, {
+      chatRoomNo,
+      userNo,
+    });
 
     await this.saveFileUrls(manager, messagePayload, chatLogNo);
 
@@ -107,7 +110,7 @@ export class ChatsGatewayService {
 
   private async saveMessageByEntityManager(
     manager: EntityManager,
-    messagePayload: MessagePayloadDto,
+    messagePayload: ChatMessage,
   ): Promise<number> {
     const insertId: number = await manager
       .getCustomRepository(ChatLogRepository)
@@ -139,7 +142,7 @@ export class ChatsGatewayService {
     }
   }
 
-  private async saveMessage(messagePayload: MessagePayloadDto): Promise<void> {
+  private async saveMessage(messagePayload: ChatMessage): Promise<void> {
     const insertId: number = await this.chatLogRepository.saveMessage(
       messagePayload,
     );
@@ -167,6 +170,7 @@ export class ChatsGatewayService {
       throw new BadRequestException('채팅방에 유저의 정보가 없습니다.');
     }
   }
+
   async leaveChatRoom(
     userNo: number,
     socket: Socket,
@@ -179,5 +183,31 @@ export class ChatsGatewayService {
     socket.broadcast
       .to(`${chatRoomNo}`)
       .emit('message', { message: `${userNo}가 나갔습니다.` });
+  }
+
+  async sendMeetingMessage(
+    socket: Socket,
+    userNo: number,
+    messagePayload: SendMeetingDto,
+  ) {
+    const { location, time, chatRoomNo, meetingNo } = messagePayload;
+
+    await this.checkMeetingExistence(meetingNo, chatRoomNo);
+    await this.saveMessage({ chatRoomNo, userNo, meetingNo });
+
+    socket.broadcast
+      .to(`${chatRoomNo}`)
+      .emit('message', { meeting: { location, time } });
+  }
+
+  private async checkMeetingExistence(meetingNo, chatRoomNo): Promise<void> {
+    const meeting: Meetings =
+      await this.meetingRepository.getMeetingByChatRoomAndMeetingNumber(
+        meetingNo,
+        chatRoomNo,
+      );
+    if (!meeting) {
+      throw new NotFoundException(`해당하는 약속 정보를 찾을 수 없습니다.`);
+    }
   }
 }

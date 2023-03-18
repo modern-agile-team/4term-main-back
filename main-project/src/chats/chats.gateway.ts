@@ -1,4 +1,4 @@
-import { Logger, UseInterceptors } from '@nestjs/common';
+import { Logger, UseInterceptors, ValidationPipe } from '@nestjs/common';
 import {
   ConnectedSocket,
   MessageBody,
@@ -6,7 +6,7 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { UseGuards } from '@nestjs/common/decorators';
+import { UseFilters, UseGuards, UsePipes } from '@nestjs/common/decorators';
 import { AsyncApiSub } from 'nestjs-asyncapi';
 import { Namespace, Socket } from 'socket.io';
 import { WebSocketAuthGuard } from 'src/common/guards/ws-jwt-auth.guard';
@@ -18,11 +18,15 @@ import { WebSocketGetUser } from 'src/common/decorator/ws-get-user.decorator';
 import { WebSocketTransactionManager } from 'src/common/decorator/ws-transaction-manager.decorator';
 import { WebSocketTransactionInterceptor } from 'src/common/interceptor/ws-transaction-interceptor';
 import { EntityManager } from 'typeorm';
+import { SendMeetingDto } from './dto/send-meeting.dto';
+import { WebSocketExceptionFilter } from 'src/common/exceptions/ws-exception-filter';
 
 @WebSocketGateway(4000, {
   namespace: 'chat',
   cors: true,
 })
+@UsePipes(new ValidationPipe())
+@UseFilters(new WebSocketExceptionFilter())
 export class ChatsGateway {
   constructor(private readonly chatGatewayService: ChatsGatewayService) {}
 
@@ -40,10 +44,6 @@ export class ChatsGateway {
 
     this.nsp.adapter.on('leave-room', (room, id) => {
       this.logger.log(`"Socket:${id}"이 "Room:${room}"에서 나갔습니다.`);
-    });
-
-    this.nsp.adapter.on('delete-room', (roomName) => {
-      this.logger.log(`"Room:${roomName}"이 삭제되었습니다.`);
     });
 
     this.logger.log('웹소켓 서버 초기화');
@@ -76,7 +76,7 @@ export class ChatsGateway {
     return { response: { chatRooms } };
   }
 
-  @SubscribeMessage('message')
+  @SubscribeMessage('send-message')
   @AsyncApiSub({
     description: `
     메세지 전송 채팅일때 response: 
@@ -92,7 +92,7 @@ export class ChatsGateway {
         "http"
       ] 
     }반환`,
-    channel: 'message',
+    channel: 'send-message',
     message: {
       payload: MessagePayloadDto,
     },
@@ -126,5 +126,20 @@ export class ChatsGateway {
     await this.chatGatewayService.leaveChatRoom(userNo, socket, chatRoomNo);
 
     return { msg: '채팅방 나가기 완료' };
+  }
+
+  @SubscribeMessage('send-meeting')
+  @UseGuards(WebSocketAuthGuard)
+  async handleSendMeeting(
+    @WebSocketGetUser() userNo: number,
+    @ConnectedSocket() socket: Socket,
+    @MessageBody() messagePayload: SendMeetingDto,
+  ) {
+    await this.chatGatewayService.sendMeetingMessage(
+      socket,
+      userNo,
+      messagePayload,
+    );
+    return { success: true };
   }
 }

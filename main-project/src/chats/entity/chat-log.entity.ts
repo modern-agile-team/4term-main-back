@@ -1,3 +1,5 @@
+import { type } from 'os';
+import { Meetings } from 'src/meetings/entity/meeting.entity';
 import { Users } from 'src/users/entity/user.entity';
 import {
   BaseEntity,
@@ -7,6 +9,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { ChatFileUrls } from './chat-file-urls.entity';
@@ -26,6 +29,12 @@ export class ChatLog extends BaseEntity {
   @ManyToOne((type) => Users, (users) => users.chatLogUserNo)
   @JoinColumn({ name: 'user_no' })
   userNo: number;
+
+  @OneToOne(() => Meetings, (meetings) => meetings.chatLogNo, {
+    nullable: true,
+  })
+  @JoinColumn({ name: 'meeting_no' })
+  meetingNo: number;
 
   @Column({ nullable: true })
   message: string;

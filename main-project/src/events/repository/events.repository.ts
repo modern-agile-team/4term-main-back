@@ -8,13 +8,13 @@ import {
 import { EventFilterDto } from '../dto/event-filter.dto';
 import { CreateEventDto } from '../dto/create-event.dto';
 import { Events } from '../entity/events.entity';
-import { Event } from '../interface/events.interface';
+import { Event, EventPagenation } from '../interface/events.interface';
 import { ResultSetHeader } from 'mysql2';
 
 @EntityRepository(Events)
 export class EventsRepository extends Repository<Events> {
   //  조회 관련
-  async getEvents({ page, done }: EventFilterDto): Promise<Event<string[]>[]> {
+  async getEvents({ page, done }: EventFilterDto): Promise<EventPagenation> {
     try {
       const query: SelectQueryBuilder<Events> = this.createQueryBuilder(
         'events',
@@ -31,6 +31,8 @@ export class EventsRepository extends Repository<Events> {
         .orderBy('no', 'DESC')
         .groupBy('events.no')
         .limit(5);
+
+      const totalPage: number = Math.ceil((await query.getCount()) / 5);
 
       if (page > 1) {
         query.offset((page - 1) * 5);
@@ -52,7 +54,7 @@ export class EventsRepository extends Repository<Events> {
         },
       );
 
-      return convertEvents;
+      return { events: convertEvents, totalPage, page };
     } catch (error) {
       throw new InternalServerErrorException(
         `${error} getEvents-repository: 알 수 없는 서버 에러입니다.`,

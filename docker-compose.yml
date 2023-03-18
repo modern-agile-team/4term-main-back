@@ -18,7 +18,7 @@ services:
     nest1:
         build:
             context: .
-            dockerfile: ./dockerfilecd
+            dockerfile: ./dockerfile
         env_file: .env
         image: ghcr.io/klaus9267/summer-auto-deploy
         ports:

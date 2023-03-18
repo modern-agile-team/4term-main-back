@@ -33,6 +33,7 @@ export interface SearchedUser {
   userNo: number;
   nickname: string;
   profileImage: string;
+  description?: string
 }
 
 export interface Certificate {

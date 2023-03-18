@@ -5,6 +5,7 @@ import {
   EntityRepository,
   InsertResult,
   Repository,
+  SelectQueryBuilder,
   UpdateResult,
 } from 'typeorm';
 import { Friends } from '../entity/friend.entity';
@@ -13,6 +14,8 @@ import {
   FriendInfo,
   FriendRequestStatus,
   FriendToSearch,
+  ReceivedFriendRequest,
+  SentFriendRequest,
 } from '../interface/friend.interface';
 
 @EntityRepository(Friends)
@@ -54,9 +57,13 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async getReceivedRequests(receiverNo: number): Promise<Friends[]> {
+  async getReceivedRequests(
+    receiverNo: number,
+  ): Promise<ReceivedFriendRequest[]> {
     try {
-      const result = await this.createQueryBuilder('friends')
+      const result: ReceivedFriendRequest[] = await this.createQueryBuilder(
+        'friends',
+      )
         .leftJoin('friends.senderNo', 'senderUser')
         .leftJoin('senderUser.userProfileNo', 'senderUserProfile')
         .leftJoin('senderUserProfile.profileImage', 'senderUserProfileImage')
@@ -79,9 +86,11 @@ export class FriendsRepository extends Repository<Friends> {
     }
   }
 
-  async getSentRequests(senderNo: number): Promise<Friends[]> {
+  async getSentRequests(senderNo: number): Promise<SentFriendRequest[]> {
     try {
-      const result = await this.createQueryBuilder('friends')
+      const result: SentFriendRequest[] = await this.createQueryBuilder(
+        'friends',
+      )
         .leftJoin('friends.receiverNo', 'receiverUser')
         .leftJoin('receiverUser.userProfileNo', 'receiverUserProfile')
         .leftJoin(
@@ -300,5 +309,35 @@ export class FriendsRepository extends Repository<Friends> {
         `${error}: 친구 검색(searchFriendByNickname): 알 수 없는 서버 에러입니다. `,
       );
     }
+  }
+
+  getSubQuery(userNo: number, nickname: string): SelectQueryBuilder<Friends> {
+    const friends: SelectQueryBuilder<Friends> = this.createQueryBuilder(
+      'friends',
+    )
+      .leftJoin('friends.receiverNo', 'receiverUser')
+      .leftJoin('receiverUser.userProfileNo', 'receiverUserProfile')
+      .leftJoin('receiverUserProfile.profileImage', 'receiverUserProfileImage')
+      .leftJoin('friends.senderNo', 'senderUser')
+      .leftJoin('senderUser.userProfileNo', 'senderUserProfile')
+      .leftJoin('senderUserProfile.profileImage', 'senderUserProfileImage')
+      .select([
+        `IF(friends.receiverNo = ${userNo} , senderUserProfile.nickname, receiverUserProfile.nickname) AS friendNickname`,
+      ])
+      .where(
+        `friends.receiverNo = :userNo AND senderUserProfile.nickname LIKE :nickname AND friends.isAccept = 1`,
+        {
+          nickname: `%${nickname}%`,
+          userNo,
+        },
+      )
+      .orWhere(
+        `friends.senderNo = :userNo AND receiverUserProfile.nickname LIKE :nickname AND friends.isAccept = 1`,
+        {
+          nickname: `%${nickname}%`,
+          userNo,
+        },
+      );
+    return friends;
   }
 }

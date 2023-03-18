@@ -1,4 +1,5 @@
 import { ChatList } from 'src/chats/entity/chat-list.entity';
+import { ChatLog } from 'src/chats/entity/chat-log.entity';
 import {
   BaseEntity,
   Column,
@@ -44,4 +45,7 @@ export class Meetings extends BaseEntity {
   })
   @JoinColumn({ name: 'chat_room_no' })
   chatRoomNo: number;
+
+  @OneToOne(() => ChatLog, (chatLog) => chatLog.meetingNo)
+  chatLogNo;
 }

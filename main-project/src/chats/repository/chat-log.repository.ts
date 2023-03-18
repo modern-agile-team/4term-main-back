@@ -2,10 +2,11 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { EntityRepository, InsertResult, Repository } from 'typeorm';
 import { MessagePayloadDto } from '../dto/message-payload.dto';
 import { ChatLog } from '../entity/chat-log.entity';
+import { ChatMessage } from '../interface/chat.interface';
 
 @EntityRepository(ChatLog)
 export class ChatLogRepository extends Repository<ChatLog> {
-  async saveMessage(messagePayload: MessagePayloadDto): Promise<number> {
+  async saveMessage(messagePayload: ChatMessage): Promise<number> {
     try {
       const { raw }: InsertResult = await this.createQueryBuilder()
         .insert()

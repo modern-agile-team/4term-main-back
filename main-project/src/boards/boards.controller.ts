@@ -19,6 +19,9 @@ import {
   Board,
   GuestTeam,
   BoardPagenation,
+  GuestTeamPagenation,
+  GuestProfile,
+  HostProfile,
 } from './interface/boards.interface';
 import { BoardFilterDto } from './dto/board-filter.dto';
 import { Cron, CronExpression } from '@nestjs/schedule/dist';
@@ -44,6 +47,7 @@ import { ApiDeleteBookmark } from './swagger-decorator/delete-bookmark.decorator
 import { ApiGetBoardsByUser } from './swagger-decorator/get- boards-by-user.decorator';
 import { GetBoardByUserDto } from './dto/get-board-by-user.dto';
 import { ApiGetGuestTemasByBoardNo } from './swagger-decorator/get-guest-teams-by-board-no.decorator';
+import { GuestTeamPagenationDto } from './dto/guest-team-pagenation.dto';
 
 @Controller('boards')
 @ApiTags('게시글 API')
@@ -60,7 +64,6 @@ export class BoardsController {
 
   //Get Methods
   @Get()
-  @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiGetBoards()
   async getBoards(
@@ -81,12 +84,11 @@ export class BoardsController {
   @ApiGetBoard()
   async getBoardByNo(
     @Param('boardNo', ParseIntPipe) boardNo: number,
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const board: Board<number[]> = await this.boardService.getBoard(
-      manager,
-      boardNo,
-    );
+    const board: Board<number[], string[], HostProfile> =
+      await this.boardService.getBoard(manager, boardNo, userNo);
 
     return { msg: '게시글 상세조회 성공', response: { board } };
   }
@@ -100,28 +102,58 @@ export class BoardsController {
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const boards: Board<void>[] = await this.boardService.getBoardsByUser(
-      manager,
-      userNo,
-      Number(type),
-    );
+    const boards: Board<void, void, HostProfile>[] =
+      await this.boardService.getBoardsByUser(manager, userNo, Number(type));
 
     return { msg: '유저별 게시글 조회 성공', response: { boards } };
   }
 
-  @Get('/guest-team/:boardNo')
+  @Get('/apply/:boardNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiGetGuestTemasByBoardNo()
   async getGuestTeamsByBoardNo(
+    @Query() { page }: GuestTeamPagenationDto,
     @Param('boardNo', ParseIntPipe) boardNo: number,
     @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
   ): Promise<APIResponse> {
-    const guestTeams: GuestTeam<number[]>[] =
-      await this.boardService.getGuestTeamsByBoardNo(manager, userNo, boardNo);
+    const guestTeamMetaData: GuestTeamPagenation =
+      await this.boardService.getGuestTeamsByBoardNo(
+        manager,
+        userNo,
+        boardNo,
+        page,
+      );
 
-    return { msg: '여름 신청내역 조회 성공', response: { guestTeams } };
+    return {
+      msg: '특정 게시글에 대한여름 신청내역 전체조회',
+      response: { guestTeamMetaData },
+    };
+  }
+
+  @Get('/apply/:boardNo/:teamNo')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  @ApiGetGuestTemasByBoardNo()
+  async getGuestTeam(
+    @Param('teamNo', ParseIntPipe) teamNo: number,
+    @Param('boardNo', ParseIntPipe) boardNo: number,
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+  ): Promise<APIResponse> {
+    const guestTeam: GuestTeam<number[], GuestProfile> =
+      await this.boardService.getGuestTeamByTeamNo(
+        manager,
+        teamNo,
+        boardNo,
+        userNo,
+      );
+
+    return {
+      msg: '여름 신청서 상세조회 성공',
+      response: { guestTeam },
+    };
   }
 
   // Post Methods
@@ -189,7 +221,7 @@ export class BoardsController {
     return { msg: '게시글 수정 성공' };
   }
 
-  @Patch('/:boardNo/invite/host')
+  @Patch('/:boardNo/invitation/host')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiAcceptHostInvite()
@@ -206,10 +238,10 @@ export class BoardsController {
       isAccepted,
     );
 
-    return { msg: '게시글 수락/거절 처리 성공' };
+    return { msg: '호스트 수락/거절 처리 성공' };
   }
 
-  @Patch('/:boardNo/invite/guest')
+  @Patch('/:boardNo/invitation/guest')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
   @ApiAcceptGuestInvite()
