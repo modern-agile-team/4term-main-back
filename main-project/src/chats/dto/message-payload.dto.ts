@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class MessagePayloadDto {
   @IsNotEmpty()
@@ -10,14 +16,17 @@ export class MessagePayloadDto {
   chatRoomNo: number;
 
   @IsString()
+  @IsOptional()
   @ApiProperty({
     example: '안녕하세요',
   })
-  message?: string;
+  message: string;
 
-  @IsString()
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
   @ApiProperty({
     example: ['http', 'http'],
   })
-  uploadedFileUrls?: string[];
+  uploadedFileUrls: string[];
 }
