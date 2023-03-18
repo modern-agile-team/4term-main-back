@@ -30,14 +30,29 @@ export class ChatLogRepository extends Repository<ChatLog> {
       const previousChatLog = await this.createQueryBuilder('chat_log')
         .leftJoin('chat_log.userNo', 'user')
         .leftJoin('chat_log.chatFileUrl', 'chatFileUrl')
+        .leftJoin('chat_log.meetingNo', 'meeting')
         .select([
           'chat_log.no AS chatLogNo',
           'user.no AS userNo',
           'chat_log.sended_time AS sendedTime',
-          `IFNULL(chat_log.message ,chatFileUrl.file_url) AS message`,
         ])
+        .addSelect(
+          `CASE 
+      WHEN chat_log.message IS NOT NULL THEN chat_log.message 
+      WHEN chat_log.meetingNo IS NOT NULL THEN CONCAT(meeting.location, '/', meeting.time) 
+      ELSE GROUP_CONCAT(chatFileUrl.fileUrl SEPARATOR ', ') END`,
+          `field`,
+        )
+        .addSelect(
+          `CASE 
+        WHEN chat_log.message IS NOT NULL THEN 'Message' 
+        WHEN chat_log.meetingNo IS NOT NULL THEN 'Meeting' 
+        ELSE 'ImageUrl' END`,
+          `type`,
+        )
         .where('chat_log.chat_room_no = :chatRoomNo', { chatRoomNo })
         .andWhere(`chat_log.no < :currentChatLogNo`, { currentChatLogNo })
+        .groupBy('chat_log.no')
         .orderBy('chat_log.no', 'DESC')
         .limit(30)
         .getRawMany();
@@ -57,13 +72,28 @@ export class ChatLogRepository extends Repository<ChatLog> {
       )
         .leftJoin('chat_log.userNo', 'user')
         .leftJoin('chat_log.chatFileUrl', 'chatFileUrl')
+        .leftJoin('chat_log.meetingNo', 'meeting')
         .select([
           'chat_log.no AS chatLogNo',
           'user.no AS userNo',
-          `IFNULL(chat_log.message ,chatFileUrl.file_url) AS message`,
           'chat_log.sended_time AS sendedTime',
         ])
+        .addSelect(
+          `CASE 
+        WHEN chat_log.message IS NOT NULL THEN chat_log.message 
+        WHEN chat_log.meetingNo IS NOT NULL THEN CONCAT(meeting.location, '/', meeting.time) 
+        ELSE GROUP_CONCAT(chatFileUrl.fileUrl SEPARATOR ', ') END`,
+          `field`,
+        )
+        .addSelect(
+          `CASE 
+          WHEN chat_log.message IS NOT NULL THEN 'Message' 
+          WHEN chat_log.meetingNo IS NOT NULL THEN 'Meeting' 
+          ELSE 'ImageUrl' END`,
+          `type`,
+        )
         .where('chat_log.chat_room_no = :chatRoomNo', { chatRoomNo })
+        .groupBy('chat_log.no')
         .orderBy('chat_log.no', 'DESC')
         .limit(30)
         .getRawMany();
