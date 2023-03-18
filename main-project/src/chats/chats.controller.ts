@@ -19,7 +19,7 @@ import { APIResponse } from 'src/common/interface/interface';
 import { TransactionInterceptor } from 'src/common/interceptor/transaction-interceptor';
 import { TransactionDecorator } from 'src/common/decorator/transaction-manager.decorator';
 import { EntityManager } from 'typeorm';
-import { Delete, UseGuards } from '@nestjs/common/decorators';
+import { UseGuards } from '@nestjs/common/decorators';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { GetUser } from 'src/common/decorator/get-user.decorator';
 import { ApiGetPreviousChatLog } from './swagger/get-previous-chat-log.decorator';
@@ -37,23 +37,18 @@ export class ChatsController {
     private readonly chatControllerService: ChatsControllerService,
     private readonly awsService: AwsService,
   ) {}
-  @Post('/:boardNo/:guestTeamNo')
-  @ApiCreateChatRoom()
+
+  @Get('/:chatRoomNo/chat-log')
+  @ApiGetCurrentChatLog()
   @UseGuards(JwtAuthGuard)
-  @UseInterceptors(TransactionInterceptor)
-  async createChatRoom(
+  async getCurrentChatLog(
     @GetUser() userNo: number,
-    @TransactionDecorator() manager: EntityManager,
-    @Param('boardNo', ParseIntPipe) boardNo: number,
-    @Param('guestTeamNo', ParseIntPipe) guestTeamNo: number,
+    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
   ): Promise<APIResponse> {
-    await this.chatControllerService.createChatRoom(
-      userNo,
-      manager,
-      boardNo,
-      guestTeamNo,
-    );
-    return { msg: '여름 신청 수락' };
+    const currentChatLog: ChatLog[] =
+      await this.chatControllerService.getCurrentChatLog(userNo, chatRoomNo);
+
+    return { response: { currentChatLog } };
   }
 
   @Get('/:chatRoomNo/chat-log/:currentChatLogNo')
@@ -74,39 +69,23 @@ export class ChatsController {
     return { response: { previousChatLog } };
   }
 
-  @Get('/:chatRoomNo/chat-log')
-  @ApiGetCurrentChatLog()
-  @UseGuards(JwtAuthGuard)
-  async getCurrentChatLog(
-    @GetUser() userNo: number,
-    @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-  ): Promise<APIResponse> {
-    const currentChatLog: ChatLog[] =
-      await this.chatControllerService.getCurrentChatLog(userNo, chatRoomNo);
-
-    return { response: { currentChatLog } };
-  }
-
-  @Post('/:chatRoomNo/invitation/:userNo')
+  @Post('/:chatRoomNo/invitation')
+  @ApiRejecteInvitation()
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  @ApiInviteUser()
-  async inviteUser(
-    @GetUser() targetUserNo: number,
+  async rejecteInvitation(
+    @GetUser() userNo: number,
     @TransactionDecorator() manager: EntityManager,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Param('userNo', ParseIntPipe) userNo: number,
+    @Body() invitation: AcceptInvitationDto,
   ): Promise<APIResponse> {
-    await this.chatControllerService.inviteUser(
-      userNo,
+    await this.chatControllerService.rejecteInvitation(
       manager,
-      targetUserNo,
+      userNo,
       chatRoomNo,
+      invitation,
     );
-
-    return {
-      msg: '채팅방 초대 성공',
-    };
+    return { msg: '채팅방 초대 거절 성공' };
   }
 
   @Patch('/:chatRoomNo/invitation')
@@ -131,23 +110,26 @@ export class ChatsController {
     };
   }
 
-  @Post('/:chatRoomNo/invitation')
-  @ApiRejecteInvitation()
+  @Post('/:chatRoomNo/invitation/:userNo')
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(TransactionInterceptor)
-  async rejecteInvitation(
-    @GetUser() userNo: number,
+  @ApiInviteUser()
+  async inviteUser(
+    @GetUser() targetUserNo: number,
     @TransactionDecorator() manager: EntityManager,
     @Param('chatRoomNo', ParseIntPipe) chatRoomNo: number,
-    @Body() invitation: AcceptInvitationDto,
+    @Param('userNo', ParseIntPipe) userNo: number,
   ): Promise<APIResponse> {
-    await this.chatControllerService.rejecteInvitation(
-      manager,
+    await this.chatControllerService.inviteUser(
       userNo,
+      manager,
+      targetUserNo,
       chatRoomNo,
-      invitation,
     );
-    return { msg: '채팅방 초대 거절 성공' };
+
+    return {
+      msg: '채팅방 초대 성공',
+    };
   }
 
   @Post('/:chatRoomNo/files')
@@ -166,5 +148,24 @@ export class ChatsController {
       msg: `파일 업로드 성공`,
       response: { uploadedFileUrlList },
     };
+  }
+
+  @Post('/:boardNo/:guestTeamNo')
+  @ApiCreateChatRoom()
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(TransactionInterceptor)
+  async createChatRoom(
+    @GetUser() userNo: number,
+    @TransactionDecorator() manager: EntityManager,
+    @Param('boardNo', ParseIntPipe) boardNo: number,
+    @Param('guestTeamNo', ParseIntPipe) guestTeamNo: number,
+  ): Promise<APIResponse> {
+    await this.chatControllerService.createChatRoom(
+      userNo,
+      manager,
+      boardNo,
+      guestTeamNo,
+    );
+    return { msg: '여름 신청 수락' };
   }
 }

@@ -28,8 +28,6 @@ export class NoticeFriendsRepository extends Repository<NoticeFriends> {
   }
   async getNotice(request: FriendNotice): Promise<FriendNotice> {
     try {
-      console.log(request);
-
       const notice: FriendNotice = await this.createQueryBuilder(
         'notice_friends',
       )
