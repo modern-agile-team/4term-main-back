@@ -109,17 +109,14 @@ export class ChatsGateway {
       payload: MessagePayloadDto,
     },
   })
-  // @UseGuards(WebSocketAuthGuard)
+  @UseGuards(WebSocketAuthGuard)
   @UseInterceptors(WebSocketTransactionInterceptor)
   async handleSendMessage(
-    // @WebSocketGetUser() userNo: number,
+    @WebSocketGetUser() userNo: number,
     @WebSocketTransactionManager() manager: EntityManager,
     @ConnectedSocket() socket: Socket,
     @MessageBody() messagePayload: MessagePayloadDto,
   ): Promise<APIResponse> {
-    const userNo = 29;
-    console.log(29);
-
     messagePayload.hasOwnProperty('message')
       ? await this.chatGatewayService.sendChat(socket, messagePayload, userNo)
       : await this.chatGatewayService.sendFile(
